@@ -84,27 +84,13 @@ static_assert(sizeof(WBSessionKeyPacket) == WBSessionKeyPacket::SIZE_BYTES, "ALW
 // This part is not encrypted !
 class WBDataHeader{
 public:
-    // nonce:  56bit block_idx + 8bit fragment_idx
-    static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
-    static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
-    // conversion from / to nonce
-    static uint64_t calculateNonce(const uint64_t block_idx,const uint8_t fragment_idx){
-        assert(block_idx<=MAX_BLOCK_IDX); // should never happen
-        return htobe64(((block_idx & BLOCK_IDX_MASK) << 8) + fragment_idx);
-    }
-    static uint64_t calculateBlockIdx(const uint64_t nonce){
-        return be64toh(nonce) >> 8;
-    }
-    static uint8_t calculateFragmentIdx(const uint64_t nonce){
-        return (uint8_t) (be64toh(nonce) & 0xff);
-    }
     explicit WBDataHeader(uint64_t nonce1):nonce(nonce1){};
-    uint8_t getFragmentIdx()const{
+    /*uint8_t getFragmentIdx()const{
         return calculateFragmentIdx(nonce);
     }
     uint64_t getBlockIdx()const{
         return calculateBlockIdx(nonce);
-    }
+    }*/
 public:
     const uint8_t packet_type=WFB_PACKET_DATA;
     const uint64_t nonce;  // big endian, nonce = block_idx << 8 + fragment_idx

@@ -37,6 +37,21 @@ public:
     const int FEC_N;  // RS total number of fragments in block default 12
     const int N_PRIMARY_FRAGMENTS=FEC_K;
     const int N_SECONDARY_FRAGMENTS=FEC_N-FEC_K;
+    // Helper functions
+    // nonce:  56bit block_idx + 8bit fragment_idx
+    static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
+    static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
+    // conversion from / to nonce
+    static uint64_t calculateNonce(const uint64_t block_idx,const uint8_t fragment_idx){
+        assert(block_idx<=MAX_BLOCK_IDX); // should never happen
+        return htobe64(((block_idx & BLOCK_IDX_MASK) << 8) + fragment_idx);
+    }
+    static uint64_t calculateBlockIdx(const uint64_t nonce){
+        return be64toh(nonce) >> 8;
+    }
+    static uint8_t calculateFragmentIdx(const uint64_t nonce){
+        return (uint8_t) (be64toh(nonce) & 0xff);
+    }
 };
 
 // Takes a continuous stream of packets and
@@ -77,9 +92,7 @@ public:
         assert(size <= MAX_PAYLOAD_SIZE);
         // Use FEC_K==0 to not only disable FEC, but also the RX queue on the RX
         if(fec.FEC_K == 0) {
-            const auto nonce=WBDataHeader::calculateNonce(currBlockIdx, currFragmentIdx);
-            //WBDataPacket wbDataPacket{nonce, buf, size};
-            //outputDataCallback(wbDataPacket);
+            const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
             outputDataCallback(nonce,buf,size);
             currBlockIdx++;
             return;
@@ -127,7 +140,7 @@ public:
     // returns true if the block_idx has reached its maximum
     // You want to send a new session key in this case
     bool resetOnOverflow() {
-        if (currBlockIdx > WBDataHeader::MAX_BLOCK_IDX) {
+        if (currBlockIdx > FEC::MAX_BLOCK_IDX) {
             currBlockIdx = 0;
             currFragmentIdx=0;
             return true;
@@ -152,10 +165,8 @@ private:
     // construct WB data packet, from either primary or secondary fragment
     // then forward via the callback
     void send_block_fragment(const std::size_t packet_size) const {
-        const auto nonce=WBDataHeader::calculateNonce(currBlockIdx, currFragmentIdx);
+        const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
         const uint8_t *dataP = fragments[currFragmentIdx];
-        //WBDataPacket packet{nonce, dataP, packet_size};
-        //outputDataCallback(packet);
         outputDataCallback(nonce,dataP,packet_size);
     }
 };
@@ -361,16 +372,16 @@ public:
         }
         // Use FEC_K==0 to completely disable FEC and skip the RX queue
         if(fec->FEC_K == 0) {
-            const auto packetSeq=WBDataHeader::calculateBlockIdx(nonce);
+            const auto packetSeq=FEC::calculateBlockIdx(nonce);
             processRawDataBlockFecDisabled(packetSeq,decrypted);
             return true;
         }
         // normal FEC processing
-        const uint64_t block_idx=WBDataHeader::calculateBlockIdx(nonce);
-        const uint8_t fragment_idx=WBDataHeader::calculateFragmentIdx(nonce);
+        const uint64_t block_idx=FEC::calculateBlockIdx(nonce);
+        const uint8_t fragment_idx=FEC::calculateFragmentIdx(nonce);
 
         // Should never happen due to generating new session key on tx side
-        if (block_idx > WBDataHeader::MAX_BLOCK_IDX) {
+        if (block_idx > FEC::MAX_BLOCK_IDX) {
             std::cerr<<"block_idx overflow\n";
             return false;
         }
