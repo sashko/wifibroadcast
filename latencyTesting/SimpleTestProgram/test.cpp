@@ -1,4 +1,5 @@
 #include "TimeHelper.hpp"
+#include "Helper.hpp"
 #include "UDPSender.h"
 #include "UDPReceiver.h"
 #include "StringHelper.hpp"
@@ -11,26 +12,6 @@
 #include <sys/resource.h>
 #include <assert.h>
 
-
-static void fillBufferWithRandomData(std::vector<uint8_t>& data){
-    const std::size_t size=data.size();
-    for(std::size_t i=0;i<size;i++){
-        data[i] = rand() % 255;
-    }
-}
-
-// Create a buffer filled with random data of size sizeByes
-std::vector<uint8_t> createRandomDataBuffer(const ssize_t sizeBytes){
-  std::vector<uint8_t> buf(sizeBytes);
-  fillBufferWithRandomData(buf);
-  return buf;
-}
-// same as above but return shared ptr
-std::shared_ptr<std::vector<uint8_t>> createRandomDataBuffer2(const ssize_t sizeBytes){
-  auto buf=std::make_shared<std::vector<uint8_t>>(sizeBytes);
-  fillBufferWithRandomData(*buf);
-  return buf;
-}
 
 class PacketInfoData{
 public:
@@ -176,7 +157,7 @@ static void test_latency(const Options& o){
     std:size_t writtenBytes=0;
     std::size_t writtenPackets=0;
     for(int i=0;i<o.N_PACKETS;i++){
-        auto buff=createRandomDataBuffer2(o.PACKET_SIZE);
+        auto buff=GenericHelper::createRandomDataBuffer2(o.PACKET_SIZE);
         // If enabled,store sent data for later validation
         if(COMPARE_RECEIVED_DATA){
             sentDataSave.mMutex.lock();

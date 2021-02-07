@@ -62,6 +62,12 @@ namespace GenericHelper{
         fillBufferWithRandomData(buf);
         return buf;
     }
+    // same as above but return shared ptr
+    std::shared_ptr<std::vector<uint8_t>> createRandomDataBuffer2(const ssize_t sizeBytes){
+        auto buf=std::make_shared<std::vector<uint8_t>>(sizeBytes);
+        fillBufferWithRandomData(*buf);
+        return buf;
+    }
     bool compareVectors(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
         if(sb.size()!=rb.size()){
             return false;
