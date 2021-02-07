@@ -289,6 +289,9 @@ public:
     uint64_t getBlockIdx()const{
         return block_idx;
     }
+    uint64_t calculateSequenceNumber(uint8_t fragmentIdx)const{
+        return block_idx * fec.FEC_K + fragmentIdx;
+    }
 private:
     //reference to the FEC decoder (needed for k,n). Doesn't change
     const FEC& fec;
@@ -404,7 +407,7 @@ private:
 
         const uint8_t *payload = primaryFragment + sizeof(FECDataHeader);
         const uint16_t packet_size = packet_hdr->get();
-        const uint64_t packet_seq = rxRingItem.getBlockIdx() * fec->FEC_K + fragmentIdx;
+        const uint64_t packet_seq = rxRingItem.calculateSequenceNumber(fragmentIdx);
 
         if (packet_seq > seq + 1) {
             const auto packetsLost=(packet_seq - seq - 1);
