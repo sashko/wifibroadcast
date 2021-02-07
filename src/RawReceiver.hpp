@@ -17,6 +17,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <pcap/pcap.h>
+#include <poll.h>
 
 // This is a single header-only file you can use to build your own wifibroadcast link
 // It doesn't specify if / what FEC to use and so on
@@ -243,7 +244,6 @@ public:
     BaseAvgCalculator<int> nOfPacketsPolledFromPcapQueuePerIteration;
 };
 
-#include <poll.h>
 
 // This class supports more than one Receiver (aka multiple wlan adapters)
 // 3 Callbacks to register:
