@@ -42,7 +42,7 @@ public:
             fclose(fp);
         }
     }
-    // Don't forget to send the session key after creating a new one
+    // Don't forget to send the session key after creating a new one !
     void makeNewSessionKey(std::array<uint8_t,crypto_box_NONCEBYTES>& sessionKeyNonce,std::array<uint8_t,crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES>& sessionKeyData){
         randombytes_buf(session_key.data(), sizeof(session_key));
         randombytes_buf(sessionKeyNonce.data(), sizeof(sessionKeyNonce));
@@ -52,7 +52,7 @@ public:
         }
     }
     // Encrypt the payload using a public nonce. (aka sequence number)
-    // The nonce is not included in the raw encrypted payload, but used for the checksum stuff
+    // The nonce is not included in the raw encrypted payload, but used for the checksum stuff to make sure packet cannot be tampered with
     std::vector<uint8_t> encryptPacket(const uint64_t nonce,const uint8_t* payload,std::size_t payloadSize){
         if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
             return std::vector<uint8_t>(payload,payload+payloadSize);
