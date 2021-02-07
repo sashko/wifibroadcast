@@ -16,8 +16,6 @@
 // For developing or when encryption is not important, you can use this default seed to
 // create deterministic rx and tx keys
 static const std::array<unsigned char,crypto_box_SEEDBYTES> DEFAULT_ENCRYPTION_SEED={0};
-// use this one if you are worried about CPU usage when using encryption
-//#define DO_NOT_ENCRYPT_DATA_BUT_PROVIDE_BACKWARDS_COMPABILITY
 
 class Encryptor {
 public:
@@ -76,9 +74,8 @@ private:
     std::array<uint8_t, crypto_box_SECRETKEYBYTES> tx_secretkey{};
     std::array<uint8_t, crypto_box_PUBLICKEYBYTES> rx_publickey{};
     std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> session_key{};
+    // use this one if you are worried about CPU usage when using encryption
     const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
-public:
-    // re-send this packet each time a new session key is created
 };
 
 class Decryptor {
@@ -107,6 +104,7 @@ public:
         memset(session_key.data(), '\0', sizeof(session_key));
     }
 private:
+    // use this one if you are worried about CPU usage when using encryption
     const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
 public:
     std::array<uint8_t, crypto_box_SECRETKEYBYTES> rx_secretkey{};
