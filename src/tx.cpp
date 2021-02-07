@@ -52,7 +52,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, int k, int n, const 
         std::cerr<<"Please do not use a flush interval of 0 (would hog the cpu)\n";
     }
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-    outputDataCallback=std::bind(&WBTransmitter::sendFecBlock, this, std::placeholders::_1,std::placeholders::_2,std::placeholders::_3);
+    outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     mInputSocket=SocketHelper::openUdpSocketForRx(udp_port);
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", udp_port,radio_port,wlan.c_str(),(int)flushInterval.count());
     // Don't forget to write K,N into the session key packet. K,N Doesn't change on the tx
@@ -80,7 +80,7 @@ void WBTransmitter::sendPacket(const AbstractWBPacket& abstractWbPacket) {
 #endif
 }
 
-void WBTransmitter::sendFecBlock(const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize) {
+void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce, const uint8_t* payload, const std::size_t payloadSize) {
     //std::cout << "WBTransmitter::sendFecBlock"<<(int)wbDataPacket.payloadSize<<"\n";
     const WBDataHeader wbDataHeader(nonce);
     const auto encryptedData=mEncryptor.encryptPacket(nonce,payload,payloadSize);
