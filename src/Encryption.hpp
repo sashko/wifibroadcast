@@ -23,7 +23,7 @@ class Encryptor {
 public:
     // enable a default deterministic encryption key by using std::nullopt
     // else, pass path to file with encryption keys
-    explicit Encryptor(std::optional<std::string> keypair) {
+    explicit Encryptor(std::optional<std::string> keypair,const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE=false):DISABLE_ENCRYPTION_FOR_PERFORMANCE(DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
         if(keypair==std::nullopt){
             // use default encryption keys
             crypto_box_seed_keypair(rx_publickey.data(),tx_secretkey.data(),DEFAULT_ENCRYPTION_SEED.data());
@@ -56,9 +56,9 @@ public:
     // Encrypt the payload using a public nonce. (aka sequence number)
     // The nonce is not included in the raw encrypted payload, but used for the checksum stuff
     std::vector<uint8_t> encryptPacket(const uint64_t nonce,const uint8_t* payload,std::size_t payloadSize){
-#ifdef DO_NOT_ENCRYPT_DATA_BUT_PROVIDE_BACKWARDS_COMPABILITY
-        return std::vector<uint8_t>(payload,payload+payloadSize);
-#else
+        if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
+            return std::vector<uint8_t>(payload,payload+payloadSize);
+        }
         std::vector<uint8_t> encryptedData=std::vector<uint8_t>(payloadSize+ crypto_aead_chacha20poly1305_ABYTES);
         long long unsigned int ciphertext_len;
         crypto_aead_chacha20poly1305_encrypt(encryptedData.data(), &ciphertext_len,
@@ -70,13 +70,13 @@ public:
         // (the documentation says 'write up to n bytes' but they probably mean (write exactly n bytes unless an error occurs)
         assert(encryptedData.size()==ciphertext_len);
         return encryptedData;
-#endif
     }
 private:
     // tx->rx keypair
     std::array<uint8_t, crypto_box_SECRETKEYBYTES> tx_secretkey{};
     std::array<uint8_t, crypto_box_PUBLICKEYBYTES> rx_publickey{};
     std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> session_key{};
+    const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
 public:
     // re-send this packet each time a new session key is created
 };
@@ -85,7 +85,7 @@ class Decryptor {
 public:
     // enable a default deterministic encryption key by using std::nullopt
     // else, pass path to file with encryption keys
-    explicit Decryptor(std::optional<std::string> keypair) {
+    explicit Decryptor(std::optional<std::string> keypair,const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE=false):DISABLE_ENCRYPTION_FOR_PERFORMANCE(DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
         if(keypair==std::nullopt){
             crypto_box_seed_keypair(tx_publickey.data(),rx_secretkey.data(),DEFAULT_ENCRYPTION_SEED.data());
             std::cout<<"Using default keys\n";
@@ -106,6 +106,8 @@ public:
         }
         memset(session_key.data(), '\0', sizeof(session_key));
     }
+private:
+    const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
 public:
     std::array<uint8_t, crypto_box_SECRETKEYBYTES> rx_secretkey{};
 public:
@@ -134,9 +136,9 @@ public:
 
     // returns decrypted data on success
     std::optional<std::vector<uint8_t>> decryptPacket(const uint64_t nonce,const uint8_t* encryptedPayload,std::size_t encryptedPayloadSize) {
-#ifdef DO_NOT_ENCRYPT_DATA_BUT_PROVIDE_BACKWARDS_COMPABILITY
-        return std::vector<uint8_t>(encryptedPayload,encryptedPayload+encryptedPayloadSize);
-#else
+        if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
+            return std::vector<uint8_t>(encryptedPayload,encryptedPayload+encryptedPayloadSize);
+        }
         std::vector<uint8_t> decrypted;
         decrypted.resize(encryptedPayloadSize-crypto_aead_chacha20poly1305_ABYTES);
 
@@ -152,7 +154,6 @@ public:
         }
         assert(decrypted.size()==decrypted_len);
         return decrypted;
-#endif
     }
 };
 
