@@ -286,13 +286,14 @@ public:
         // n of reconstructed packets
         return indicesMissingPrimaryFragments.size();
     }
+    uint64_t getBlockIdx()const{
+        return block_idx;
+    }
 private:
     //reference to the FEC decoder (needed for k,n). Doesn't change
     const FEC& fec;
-public:
     // the block idx marks which block this element currently refers to
     uint64_t block_idx=0;
-private:
     // n of primary fragments that are already sent out
     int nAlreadyForwardedPrimaryFragments=0;
     // for each fragment (via fragment_idx) store if it has been received yet
@@ -403,7 +404,7 @@ private:
 
         const uint8_t *payload = primaryFragment + sizeof(FECDataHeader);
         const uint16_t packet_size = packet_hdr->get();
-        const uint64_t packet_seq = rxRingItem.block_idx * fec->FEC_K + fragmentIdx;
+        const uint64_t packet_seq = rxRingItem.getBlockIdx() * fec->FEC_K + fragmentIdx;
 
         if (packet_seq > seq + 1) {
             const auto packetsLost=(packet_seq - seq - 1);
@@ -464,7 +465,7 @@ private:
         // remove the oldest block
         auto oldestBlockIdx=rxRingPopFront();
         auto oldestBlock=*rx_ring[oldestBlockIdx];
-        std::cerr<<"Forwarding block that is not yet fully finished "<<oldestBlock.block_idx<<" with n fragments"<<oldestBlock.getNAvailableFragments()<<"\n";
+        std::cerr<<"Forwarding block that is not yet fully finished "<<oldestBlock.getBlockIdx()<<" with n fragments"<<oldestBlock.getNAvailableFragments()<<"\n";
         forwardMissingPrimaryFragmentsIfAvailable(oldestBlock,false);
         //
         return rxRingPushBack();
@@ -475,7 +476,7 @@ private:
     int get_block_ring_idx(const uint64_t block_idx) {
         // check if block is already in the ring
         for (int i = rx_ring_front, c = rx_ring_alloc; c > 0; i = modN(i + 1, FECDecoder::RX_RING_SIZE), c--) {
-            if (rx_ring[i]->block_idx == block_idx) return i;
+            if (rx_ring[i]->getBlockIdx() == block_idx) return i;
         }
 
         // check if block is already known and not in the ring then it is already processed
