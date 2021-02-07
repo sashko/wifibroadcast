@@ -145,7 +145,7 @@ void Aggregator::processPacket(const uint8_t WLAN_IDX,const pcap_pkthdr& hdr,con
         const WBDataHeader& wbDataHeader=*((WBDataHeader*)payload);
         assert(wbDataHeader.packet_type==WFB_PACKET_DATA);
 
-        const auto decryptedPayload=mDecryptor.decryptPacket(wbDataHeader.nonce,payload,payloadSize);
+        const auto decryptedPayload=mDecryptor.decryptPacket(wbDataHeader.nonce,payload,payloadSize,wbDataHeader);
         if(decryptedPayload == std::nullopt){
             std::cerr << "unable to decrypt packet :" << std::to_string(wbDataHeader.nonce) << "\n";
             count_p_decryption_err ++;

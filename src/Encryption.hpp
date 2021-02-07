@@ -2,6 +2,7 @@
 #ifndef ENCRYPTION_HPP
 #define ENCRYPTION_HPP
 
+//#include "wifibroadcast.hpp"
 #include "HelperSources/Helper.hpp"
 #include <cstdio>
 #include <stdexcept>
@@ -53,7 +54,8 @@ public:
     }
     // Encrypt the payload using a public nonce. (aka sequence number)
     // The nonce is not included in the raw encrypted payload, but used for the checksum stuff to make sure packet cannot be tampered with
-    std::vector<uint8_t> encryptPacket(const uint64_t nonce,const uint8_t* payload,std::size_t payloadSize){
+    template<class T>
+    std::vector<uint8_t> encryptPacket(const uint64_t nonce, const uint8_t* payload, std::size_t payloadSize, const T& extradata){
         if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
             return std::vector<uint8_t>(payload,payload+payloadSize);
         }
@@ -61,7 +63,7 @@ public:
         long long unsigned int ciphertext_len;
         crypto_aead_chacha20poly1305_encrypt(encryptedData.data(), &ciphertext_len,
                                              payload, payloadSize,
-                                             (uint8_t *)&nonce, sizeof(uint64_t),
+                                             (uint8_t *)&extradata, sizeof(extradata),
                                              nullptr,
                                              (uint8_t *) (&nonce), session_key.data());
         // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated
@@ -133,7 +135,8 @@ public:
     }
 
     // returns decrypted data on success
-    std::optional<std::vector<uint8_t>> decryptPacket(const uint64_t nonce,const uint8_t* encryptedPayload,std::size_t encryptedPayloadSize) {
+    template<class T>
+    std::optional<std::vector<uint8_t>> decryptPacket(const uint64_t nonce,const uint8_t* encryptedPayload,std::size_t encryptedPayloadSize,const T& extradata) {
         if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
             return std::vector<uint8_t>(encryptedPayload,encryptedPayload+encryptedPayloadSize);
         }
@@ -146,7 +149,7 @@ public:
         if (crypto_aead_chacha20poly1305_decrypt(decrypted.data(), &decrypted_len,
                                                  nullptr,
                                                  encryptedPayload,cLen,
-                                                 (uint8_t*)&nonce,sizeof(uint64_t),
+                                                 (uint8_t*)&extradata,sizeof(extradata),
                                                  (uint8_t *) (&nonce), session_key.data()) != 0) {
             return std::nullopt;
         }

@@ -83,7 +83,7 @@ void WBTransmitter::sendPacket(const AbstractWBPacket& abstractWbPacket) {
 void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce, const uint8_t* payload, const std::size_t payloadSize) {
     //std::cout << "WBTransmitter::sendFecBlock"<<(int)wbDataPacket.payloadSize<<"\n";
     const WBDataHeader wbDataHeader(nonce);
-    const auto encryptedData=mEncryptor.encryptPacket(nonce,payload,payloadSize);
+    const auto encryptedData=mEncryptor.encryptPacket(nonce,payload,payloadSize,wbDataHeader);
     //
     sendPacket({(const uint8_t*)&wbDataHeader,sizeof(WBDataHeader),encryptedData.data(),encryptedData.size()});
 #ifdef ENABLE_ADVANCED_DEBUGGING

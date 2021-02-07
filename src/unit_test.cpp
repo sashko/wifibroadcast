@@ -175,9 +175,9 @@ namespace TestEncryption{
         const WBDataHeader wbDataHeader{nonce};
 
         //const auto encrypted= encryptor.encryptWBDataPacket(wbDataPacket);
-        const auto encrypted=encryptor.encryptPacket(wbDataHeader.nonce,data.data(),data.size());
+        const auto encrypted=encryptor.encryptPacket(wbDataHeader.nonce,data.data(),data.size(),wbDataHeader);
 
-        const auto decrypted=decryptor.decryptPacket(wbDataHeader.nonce,encrypted.data(), encrypted.size());
+        const auto decrypted=decryptor.decryptPacket(wbDataHeader.nonce,encrypted.data(), encrypted.size(),wbDataHeader);
 
         assert(decrypted!=std::nullopt);
         assert(GenericHelper::compareVectors(data,*decrypted) == true);
