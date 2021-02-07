@@ -591,8 +591,15 @@ public:
     // It makes no sense to hold on to any blocks. Future packets won't help you to recover any blocks that might still be in the pipeline
     // For example, if the RX doesn't receive anything for N ms any data that is going to arrive will not have a smaller or equal block index than the blocks that are currently in the queue
     void flushRxRing(){
-        std::cout<<"Flushing pipeline\n";
+        std::cout<<"Flushing pipeline "<<rx_ring_alloc<<"\n";
         while(rx_ring_alloc>0){
+            auto idx=rxRingPopFront();
+            forwardMissingPrimaryFragmentsIfAvailable(*rx_ring[idx],false);
+        }
+    }
+    void decreaseRxRingSizeToOne(){
+        std::cout<<"Decreasing ring size from "<<rx_ring_alloc<<"to 1"<<"\n";
+        while(rx_ring_alloc>1){
             auto idx=rxRingPopFront();
             forwardMissingPrimaryFragmentsIfAvailable(*rx_ring[idx],false);
         }
