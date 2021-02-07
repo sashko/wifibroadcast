@@ -184,7 +184,7 @@ public:
 public:
     // Use this once the decoder is done with this item and uses it for a different block
     void repurpose(const uint64_t new_block_idx= 0){
-        block_idx = new_block_idx;
+        blockIdx = new_block_idx;
         nAlreadyForwardedPrimaryFragments = 0;
         nAvailablePrimaryFragments=0;
         nAvailableSecondaryFragments=0;
@@ -298,16 +298,16 @@ public:
         return indicesMissingPrimaryFragments.size();
     }
     uint64_t getBlockIdx()const{
-        return block_idx;
+        return blockIdx;
     }
     uint64_t calculateSequenceNumber(uint8_t fragmentIdx)const{
-        return block_idx * fec.FEC_K + fragmentIdx;
+        return fragmentIdx + blockIdx * fec.FEC_K;
     }
 private:
     //reference to the FEC decoder (needed for k,n). Doesn't change
     const FEC& fec;
     // the block idx marks which block this element currently refers to
-    uint64_t block_idx=0;
+    uint64_t blockIdx=0;
     // n of primary fragments that are already sent out
     int nAlreadyForwardedPrimaryFragments=0;
     // for each fragment (via fragment_idx) store if it has been received yet
