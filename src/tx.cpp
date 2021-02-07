@@ -82,14 +82,10 @@ void WBTransmitter::sendPacket(const AbstractWBPacket& abstractWbPacket) {
 
 void WBTransmitter::sendFecBlock(const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize) {
     //std::cout << "WBTransmitter::sendFecBlock"<<(int)wbDataPacket.payloadSize<<"\n";
-    //const auto data= mEncryptor.makeEncryptedPacketIncludingHeader(wbDataPacket);
-    //const auto encryptedData=mEncryptor.encryptWBDataPacket(wbDataPacket);
+    const WBDataHeader wbDataHeader(nonce);
     const auto encryptedData=mEncryptor.encryptPacket(nonce,payload,payloadSize);
-    WBDataHeader wbDataHeader(nonce);
-
+    //
     sendPacket({(const uint8_t*)&wbDataHeader,sizeof(WBDataHeader),encryptedData.data(),encryptedData.size()});
-    //const auto encryptedWBDataPacket=mEncryptor.encryptWBDataPacket(wbDataPacket);
-    //sendPacket((uint8_t*)&encryptedWBDataPacket.wbDataHeader,sizeof(WBDataHeader),encryptedWBDataPacket.payload,encryptedWBDataPacket.payloadSize);
 #ifdef ENABLE_ADVANCED_DEBUGGING
     //LatencyTestingPacket latencyTestingPacket;
     //sendPacket((uint8_t*)&latencyTestingPacket,sizeof(latencyTestingPacket));
@@ -106,7 +102,7 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
     // this calls a callback internally
     FECEncoder::encodePacket(buf,size);
     if(FECEncoder::resetOnOverflow()){
-        // running out of sequence numbers should never happen during the lifetime of the TX instance
+        // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
         mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
         sendSessionKey();
     }
