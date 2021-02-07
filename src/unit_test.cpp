@@ -28,7 +28,7 @@
 #include "wifibroadcast.hpp"
 #include "FEC.hpp"
 
-#include "Helper.hpp"
+#include "HelperSources/Helper.hpp"
 #include "Encryption.hpp"
 
 // Simple unit testing for the lib that doesn't require wifi cards

@@ -2,7 +2,7 @@
 #ifndef ENCRYPTION_HPP
 #define ENCRYPTION_HPP
 
-#include "Helper.hpp"
+#include "HelperSources/Helper.hpp"
 #include <cstdio>
 #include <stdexcept>
 #include <vector>

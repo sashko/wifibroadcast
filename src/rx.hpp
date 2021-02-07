@@ -18,7 +18,7 @@
 #include "wifibroadcast.hpp"
 #include "Encryption.hpp"
 #include "FEC.hpp"
-#include "Helper.hpp"
+#include "HelperSources/Helper.hpp"
 #include "OpenHDStatisticsWriter.hpp"
 #include "HelperSources/TimeHelper.hpp"
 

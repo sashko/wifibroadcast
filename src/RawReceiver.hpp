@@ -5,7 +5,7 @@
 #ifndef WIFIBROADCAST_RAWRECEIVER_H
 #define WIFIBROADCAST_RAWRECEIVER_H
 
-#include "Helper.hpp"
+#include "HelperSources/Helper.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "Ieee80211Header.hpp"
 #include "RadiotapHeader.hpp"
