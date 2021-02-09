@@ -15,4 +15,4 @@ cpu resources.
 You can use FEC_K,N==0 for telemetry in general (as long as the upper level deals with packet re-ordering
 And have the option to go for FEC_K,N==1 if your upper level cannot deal with packet re-ordering.
 
-And if you need "packet safety", do the re-sending of packets at the upper level, using a bidirectional FEC_K,N==0 or 1 link
+And if you need "quaranteed packet delivery", do the re-sending of packets at the upper level, using a bidirectional FEC_K,N==0 or 1 link
