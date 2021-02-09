@@ -23,3 +23,6 @@ The encryption part serves 2 purposes: On the one hand,it encrypt the packets. O
 # Overhead
 If the link is not active (e.g. no data is feed into the tx) this layer does not send any packets (not even the session key packets). The used wifi bitrate is 0 in this case.
 If the link is active (e.g. data is fed into the tx) the packet overhead is one packet every SESSION_KEY_ANNOUNCE_DELTA ms and 1+8+2=11 bytes per data packet.
+
+# Where to set FEC_K,N:
+As an improvement compared to svpcom, the FEC_K,N values only need to be set on the TX. The RX receives this information using the session key packet(s) and configures itself accordingly.
