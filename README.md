@@ -12,7 +12,7 @@ cpu resources.
 2) If tx uses FEC_K==1 and FEC_N==1 the rx forwards packets in order and without duplicates, but when using multiple RX this could mean packets arriving late are dropped even though received (same behaviour as original svpcom)
 3) With FEC_K>1 and FEC_N>1 the rx behaves just as you are used from svpcom-wifibroadcast.
 
-You can use FEC_K,N==0 for telemetry in general (as long as the upper level deals with packet re-ordering
+You can use FEC_K,N==0 for telemetry in general (as long as the upper level deals with packet re-ordering).\
 And have the option to go for FEC_K,N==1 if your upper level cannot deal with packet re-ordering.
 
 And if you need "quaranteed packet delivery", do the re-sending of packets at the upper level, using a bidirectional FEC_K,N==0 or 1 link
