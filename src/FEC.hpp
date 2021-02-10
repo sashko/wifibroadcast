@@ -363,7 +363,7 @@ public:
         for(auto& rxBlock:rx_ring){
             rxBlock->repurpose();
         }
-        mMapPacketSeqNrFecDisabled.clear();
+        fecDisabledMapOfReceivedSeqNr.clear();
     }
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
     bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t>& decrypted){
@@ -573,28 +573,29 @@ private:
     }
 private:
     // Add a limit here to not allocate infinite amounts of memory
-    static constexpr std::size_t MAX_SIZE_OF_MAP_SEQ_NR_FEC_DISABLED=100;
-    std::map<uint64_t,void*> mMapPacketSeqNrFecDisabled;
+    static constexpr std::size_t FEC_DISABLED_MAX_SIZE_OF_MAP=100;
+    std::map<uint64_t,void*> fecDisabledMapOfReceivedSeqNr;
+    //No duplicates, but packets out of order are possible
+    //saves the last FEC_DISABLED_MAX_SIZE_OF_MAP sequence numbers. If the sequence number of a new packet is already inside the map, it is discarded (duplicate)
     void processRawDataBlockFecDisabled(const uint64_t packetSeq,const std::vector<uint8_t>& decrypted){
-        // saves the last MAX_SIZE_OF_MAP sequence numbers. If the sequence number of a new packet is already inside the map, it is discarded (duplicate)
         if(seq==0){
             // first ever packet. Map should be empty
-            mMapPacketSeqNrFecDisabled.clear();
+            fecDisabledMapOfReceivedSeqNr.clear();
             mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-            mMapPacketSeqNrFecDisabled.insert({packetSeq,nullptr});
+            fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
             seq=1;
         }
         // check if packet is already known (inside the map)
-        const auto search = mMapPacketSeqNrFecDisabled.find(packetSeq);
-        if(search==mMapPacketSeqNrFecDisabled.end()){
+        const auto search = fecDisabledMapOfReceivedSeqNr.find(packetSeq);
+        if(search == fecDisabledMapOfReceivedSeqNr.end()){
             // if packet is not in the map it was not yet received(unless it is older than MAX_SIZE_OF_MAP, but that is basically impossible)
             mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-            mMapPacketSeqNrFecDisabled.insert({packetSeq,nullptr});
+            fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
         }// else this is a duplicate
         // house keeping, do not increase size to infinity
-        if(mMapPacketSeqNrFecDisabled.size() >= MAX_SIZE_OF_MAP_SEQ_NR_FEC_DISABLED - 1){
+        if(fecDisabledMapOfReceivedSeqNr.size() >= FEC_DISABLED_MAX_SIZE_OF_MAP - 1){
             // remove oldest element
-            mMapPacketSeqNrFecDisabled.erase(mMapPacketSeqNrFecDisabled.begin());
+            fecDisabledMapOfReceivedSeqNr.erase(fecDisabledMapOfReceivedSeqNr.begin());
         }
 
         /*// here we buffer nothing, but still make sure that packets only are forwarded with increasing sequence number
