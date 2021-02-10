@@ -576,6 +576,7 @@ private:
     static constexpr std::size_t FEC_DISABLED_MAX_SIZE_OF_MAP=100;
     std::map<uint64_t,void*> fecDisabledMapOfReceivedSeqNr;
     //No duplicates, but packets out of order are possible
+    //counting lost packets doesn't work in this mode. It should be done by the upper level
     //saves the last FEC_DISABLED_MAX_SIZE_OF_MAP sequence numbers. If the sequence number of a new packet is already inside the map, it is discarded (duplicate)
     void processRawDataBlockFecDisabled(const uint64_t packetSeq,const std::vector<uint8_t>& decrypted){
         if(seq==0){
@@ -597,21 +598,6 @@ private:
             // remove oldest element
             fecDisabledMapOfReceivedSeqNr.erase(fecDisabledMapOfReceivedSeqNr.begin());
         }
-
-        /*// here we buffer nothing, but still make sure that packets only are forwarded with increasing sequence number
-        // If one RX was used only, this would not be needed. But with multiple RX we can have duplicates
-        if(seq!=0 && packetSeq<=seq){
-            // either duplicate or we are already ahead of this index
-            return;
-        }
-        //also write lost packet count in this mode
-        if (packetSeq > seq + 1) {
-            const auto packetsLost=(packetSeq - seq - 1);
-            //std::cerr<<packetsLost<<"packets lost\n";
-            count_p_lost += packetsLost;
-        }
-        mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-        seq=packetSeq;*/
     }
 public:
     // By doing so you are telling the pipeline:
