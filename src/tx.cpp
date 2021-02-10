@@ -257,7 +257,7 @@ int main(int argc, char *const *argv) {
                        "This is an advanced option that removes duplicates, but doesn't check for packet order.\n"
                        "(UDP also allows duplicates but we want to get rid of duplicates as fast as possible to save memory bandwidth)\n."
                        "Latency overhead is 0 in this mode.\n"
-                       "If you don't know what this means, use FEC_K==1 and FEC_N==1 for a similar effect.\n";
+                       "If you don't know what this means, use FEC_K==1 and FEC_N==1 for no duplicates and no packet re-ordering.\n";
             exit(1);
         }
     }else{
