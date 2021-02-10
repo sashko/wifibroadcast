@@ -254,8 +254,9 @@ int main(int argc, char *const *argv) {
         // Use K=0 and N=0 to have no FEC correction (advanced option for applications that want to do FEC or similar in the upper level)
         if(n!=0){
             std::cerr<<"Use K=0 only in combination with N=0.\n"
-                       "This is an advanced option that only removes duplicates, but doesn't check for packet order (UDP also allows duplicates but we want to get rid of duplicates as fast as possible"
-                       "to save memory bandwidth).Latency overhead is 0 in this mode.\n"
+                       "This is an advanced option that removes duplicates, but doesn't check for packet order.\n"
+                       "(UDP also allows duplicates but we want to get rid of duplicates as fast as possible to save memory bandwidth)\n."
+                       "Latency overhead is 0 in this mode.\n"
                        "If you don't know what this means, use FEC_K==1 and FEC_N==1 for a similar effect.\n";
             exit(1);
         }
