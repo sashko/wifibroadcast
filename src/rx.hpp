@@ -40,11 +40,11 @@ static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD=4;
 
 // This class processes the received wifi data (decryption and FEC)
 // and forwards it via UDP.
-class Aggregator: private FECDecoder{
+class WBReceiver: private FECDecoder{
 public:
-    Aggregator(const std::string &client_addr, int client_udp_port,uint8_t radio_port,const std::string &keypair);
+    WBReceiver(const std::string &client_addr, int client_udp_port, uint8_t radio_port, const std::string &keypair);
 
-    ~Aggregator();
+    ~WBReceiver();
 
     void
     processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);

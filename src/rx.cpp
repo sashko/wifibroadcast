@@ -32,20 +32,20 @@
 #include <sstream>
 
 
-Aggregator::Aggregator(const std::string &client_addr, int client_udp_port,uint8_t radio_port,const std::string &keypair) :
+WBReceiver::WBReceiver(const std::string &client_addr, int client_udp_port, uint8_t radio_port, const std::string &keypair) :
 FECDecoder(),
 CLIENT_UDP_PORT(client_udp_port),
 RADIO_PORT(radio_port),
 mDecryptor(keypair){
     sockfd = SocketHelper::open_udp_socket_for_tx(client_addr,client_udp_port);
-    FECDecoder::mSendDecodedPayloadCallback=std::bind(&Aggregator::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
+    FECDecoder::mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
 }
 
-Aggregator::~Aggregator() {
+WBReceiver::~WBReceiver() {
     close(sockfd);
 }
 
-void Aggregator::dump_stats() {
+void WBReceiver::dump_stats() {
     // first forward to OpenHD
     openHdStatisticsWriter.writeStats({
                                               count_p_all, count_p_decryption_err, count_p_decryption_ok, count_p_fec_recovered, count_p_lost, count_p_bad, rssiForWifiCard
@@ -70,7 +70,7 @@ void Aggregator::dump_stats() {
 #endif
 }
 
-void Aggregator::processPacket(const uint8_t WLAN_IDX,const pcap_pkthdr& hdr,const uint8_t* pkt){
+void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, const uint8_t* pkt){
 #ifdef ENABLE_ADVANCED_DEBUGGING
     const auto tmp=GenericHelper::timevalToTimePointSystemClock(hdr.ts);
     const auto latency=std::chrono::system_clock::now() -tmp;
@@ -192,7 +192,7 @@ void Aggregator::processPacket(const uint8_t WLAN_IDX,const pcap_pkthdr& hdr,con
     }
 }
 
-void Aggregator::flushFecPipeline() {
+void WBReceiver::flushFecPipeline() {
     FECDecoder::flushRxRing();
 }
 
@@ -252,13 +252,13 @@ int main(int argc, char *const *argv) {
         rxInterfaces.emplace_back(argv[optind + i]);
     }
     try {
-        std::shared_ptr<Aggregator> agg=std::make_shared<Aggregator>(client_addr, client_udp_port,radio_port, keypair);
+        std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(client_addr, client_udp_port, radio_port, keypair);
         //radio_loop(agg,rxInterfaces, radio_port, log_interval,flush_interval);
         //std::unique_ptr<MultiRxPcapReceiver> mMultiRxPcapReceiver=std::make_unique<MultiRxPcapReceiver>(rxInterfaces,)
         MultiRxPcapReceiver receiver(rxInterfaces,radio_port,log_interval,flush_interval,
-                                     std::bind(&Aggregator::processPacket, agg.get(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-                                     std::bind(&Aggregator::dump_stats, agg.get()),
-                                     std::bind(&Aggregator::flushFecPipeline, agg.get()));
+                                     std::bind(&WBReceiver::processPacket, agg.get(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+                                     std::bind(&WBReceiver::dump_stats, agg.get()),
+                                     std::bind(&WBReceiver::flushFecPipeline, agg.get()));
         receiver.loop();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());
