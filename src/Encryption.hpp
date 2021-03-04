@@ -23,7 +23,7 @@ class Encryptor {
 public:
     // enable a default deterministic encryption key by using std::nullopt
     // else, pass path to file with encryption keys
-    explicit Encryptor(std::optional<std::string> keypair,const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE=true):DISABLE_ENCRYPTION_FOR_PERFORMANCE(DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
+    explicit Encryptor(std::optional<std::string> keypair,const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE=false):DISABLE_ENCRYPTION_FOR_PERFORMANCE(DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
         if(keypair==std::nullopt){
             // use default encryption keys
             crypto_box_seed_keypair(rx_publickey.data(),tx_secretkey.data(),DEFAULT_ENCRYPTION_SEED.data());
@@ -85,7 +85,7 @@ class Decryptor {
 public:
     // enable a default deterministic encryption key by using std::nullopt
     // else, pass path to file with encryption keys
-    explicit Decryptor(std::optional<std::string> keypair,const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE=true):DISABLE_ENCRYPTION_FOR_PERFORMANCE(DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
+    explicit Decryptor(std::optional<std::string> keypair,const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE=false):DISABLE_ENCRYPTION_FOR_PERFORMANCE(DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
         if(keypair==std::nullopt){
             crypto_box_seed_keypair(tx_publickey.data(),rx_secretkey.data(),DEFAULT_ENCRYPTION_SEED.data());
             std::cout<<"Using default keys\n";

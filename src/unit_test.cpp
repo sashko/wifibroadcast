@@ -184,6 +184,18 @@ namespace TestEncryption{
     }
 }
 
+namespace TestOther{
+    static void testNonce(){
+        for(int i=0;i<20;i++){
+            for(int j=0;j<20;j++){
+                auto nonce=FEC::calculateNonce(i,j);
+                assert(FEC::calculateBlockIdx(nonce)==i);
+                assert(FEC::calculateFragmentIdx(nonce)==j);
+            }
+        }
+    }
+}
+
 int main(int argc, char *argv[]){
     std::cout<<"Tests for Wifibroadcast\n";
     try {
@@ -212,7 +224,8 @@ int main(int argc, char *argv[]){
         //
         std::cout<<"Testing Encryption\n";
         TestEncryption::test();
-
+        //
+        TestOther::testNonce();
     }catch (std::runtime_error &e) {
         std::cerr<<"Error: "<<std::string(e.what());
         exit(1);

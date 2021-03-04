@@ -43,9 +43,9 @@ public:
     static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
     static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
     // conversion from / to nonce
-    static uint64_t calculateNonce(const uint64_t block_idx,const uint8_t fragment_idx){
-        assert(block_idx<=MAX_BLOCK_IDX); // should never happen
-        return htobe64(((block_idx & BLOCK_IDX_MASK) << 8) + fragment_idx);
+    static uint64_t calculateNonce(const uint64_t blockIdx, const uint8_t fragmentIdx){
+        assert(blockIdx <= MAX_BLOCK_IDX); // should never happen
+        return htobe64(((blockIdx & BLOCK_IDX_MASK) << 8) + fragmentIdx);
     }
     static uint64_t calculateBlockIdx(const uint64_t nonce){
         return be64toh(nonce) >> 8;
