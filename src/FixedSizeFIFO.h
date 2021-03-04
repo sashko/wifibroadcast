@@ -19,7 +19,7 @@ private:
     int rx_ring_front = 0; // current packet
     int rx_ring_alloc = 0; // number of allocated entries
 public:
-    explicit FixedSizeFIFO(std::size_t MAX_CAPACITY){
+    explicit FixedSizeFIFO(){
 
     }
     static inline int modN(int x, int base) {
