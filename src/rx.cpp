@@ -203,6 +203,7 @@ int main(int argc, char *const *argv) {
     // use -1 for no flush interval
     std::chrono::milliseconds flush_interval{-1};
     int client_udp_port = 5600;
+    // default to localhost
     std::string client_addr = "127.0.0.1";
     std::string keypair = "gs.key";
 

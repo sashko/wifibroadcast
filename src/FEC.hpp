@@ -464,10 +464,6 @@ private:
         assert(rx_ring_alloc >= 0);
         return ret;
     }
-    // Peek the oldest element of the rx ring
-    int rxRingPeekFront()const{
-        return rx_ring_front;
-    }
     // makes space for 1 new element
     // return its index (this is now the latest element)
     int rxRingPushBack(){
@@ -475,6 +471,10 @@ private:
         rx_ring_alloc += 1;
         assert(rx_ring_alloc<=RX_RING_SIZE);
         return idx;
+    }
+    // Peek the oldest element of the rx ring
+    int rxRingPeekFront()const{
+        return rx_ring_front;
     }
     int rxRingSize()const{
         return rx_ring_alloc;
@@ -499,6 +499,7 @@ private:
         //
         return rxRingPushBack();
     }
+
     // If block is already known and not in the ring anymore return -1
     // else if block is already in the ring return its index or if block is not yet
     // in the ring add as many blocks as needed and then return its index
