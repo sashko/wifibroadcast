@@ -19,6 +19,7 @@
 #include <functional>
 #include <map>
 
+
 // NOTE: When working with FEC, people seem to use the terms block, fragments and more in different context(s).
 // I use (and highly recommend this to anyone else) the following notation:
 // A primary fragment is a data packet
@@ -327,6 +328,7 @@ private:
     std::chrono::steady_clock::time_point creationTime;
 };
 
+
 // Takes a continuous stream of packets (data and fec correction packets) and
 // processes them such that the output is exactly (or as close as possible) to the
 // Input stream fed to FECEncoder.
@@ -461,6 +463,10 @@ private:
         rx_ring_alloc -= 1;
         assert(rx_ring_alloc >= 0);
         return ret;
+    }
+    // Peek the oldest element of the rx ring
+    int rxRingPeekFront()const{
+        return rx_ring_front;
     }
     // makes space for 1 new element
     // return its index (this is now the latest element)
@@ -625,6 +631,8 @@ public:
     void forceForwardBlocksOlderThan(const std::chrono::nanoseconds& maxLatency){
         // loop through all blocks in queue. If we find a block that is older than N ms
         // "forward it" even though it is missing packets
+        // get the age in nanoseconds of the currently "oldest" block
+
     }
 protected:
     uint64_t count_p_fec_recovered=0;
