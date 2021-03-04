@@ -144,7 +144,9 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
 
         const auto decryptedPayload=mDecryptor.decryptPacket(wbDataHeader.nonce,payload,payloadSize,wbDataHeader);
         if(decryptedPayload == std::nullopt){
-            std::cerr << "unable to decrypt packet :" << std::to_string(wbDataHeader.nonce) << "\n";
+            const int blockIdx=FEC::calculateBlockIdx(wbDataHeader.nonce);
+            const int fragmentIdx=FEC::calculateFragmentIdx(wbDataHeader.nonce);
+            std::cerr << "unable to decrypt packet :" << std::to_string(wbDataHeader.nonce)<<"("<<fragmentIdx<<":"<<blockIdx<<")\n";
             count_p_decryption_err ++;
             return;
         }
