@@ -13,6 +13,8 @@
 #include <sodium.h>
 
 // Single Header file that can be used to add encryption to a lossy unidirectional link
+// Other than encryption, (which might not seem important to the average user) this also adds packet validation, e.g. makes it impossible
+// to receive data from a non-OpenHD wlan device
 
 // For developing or when encryption is not important, you can use this default seed to
 // create deterministic rx and tx keys
