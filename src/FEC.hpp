@@ -190,6 +190,7 @@ public:
         nAvailableSecondaryFragments=0;
         // mark every fragment as not yet received
         std::fill(fragment_map.begin(),fragment_map.end(),FragmentStatus::UNAVAILABLE);
+        creationTime=std::chrono::steady_clock::now();
     }
     // returns true if the fragment at position fragmentIdx has been already received
     bool hasFragment(const uint8_t fragmentIdx)const{
@@ -303,6 +304,9 @@ public:
     uint64_t calculateSequenceNumber(uint8_t fragmentIdx)const{
         return fragmentIdx + blockIdx * fec.FEC_K;
     }
+    std::chrono::steady_clock::time_point getCreationTime()const{
+        return creationTime;
+    }
 private:
     //reference to the FEC decoder (needed for k,n). Doesn't change
     const FEC& fec;
@@ -320,6 +324,7 @@ private:
     std::vector<std::size_t> originalSizeOfFragments;
     int nAvailablePrimaryFragments=0;
     int nAvailableSecondaryFragments=0;
+    std::chrono::steady_clock::time_point creationTime;
 };
 
 // Takes a continuous stream of packets (data and fec correction packets) and
@@ -616,6 +621,10 @@ public:
             auto idx=rxRingPopFront();
             forwardMissingPrimaryFragmentsIfAvailable(*rx_ring[idx],false);
         }
+    }
+    void forceForwardBlocksOlderThan(const std::chrono::nanoseconds& maxLatency){
+        // loop through all blocks in queue. If we find a block that is older than N ms
+        // "forward it" even though it is missing packets
     }
 protected:
     uint64_t count_p_fec_recovered=0;
