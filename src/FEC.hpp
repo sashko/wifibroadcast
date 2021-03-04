@@ -502,34 +502,34 @@ private:
     // If block is already known and not in the ring anymore return -1
     // else if block is already in the ring return its index or if block is not yet
     // in the ring add as many blocks as needed and then return its index
-    int get_block_ring_idx(const uint64_t block_idx) {
+    int rxRingFindBlockByIdx(const uint64_t blockIdx) {
         // check if block is already in the ring
         for (int i = rx_ring_front, c = rx_ring_alloc; c > 0; i = modN(i + 1, FECDecoder::RX_RING_SIZE), c--) {
-            if (rx_ring[i]->getBlockIdx() == block_idx) return i;
+            if (rx_ring[i]->getBlockIdx() == blockIdx) return i;
         }
 
         // check if block is already known and not in the ring then it is already processed
-        if (last_known_block != (uint64_t) -1 && block_idx <= last_known_block) {
+        if (last_known_block != (uint64_t) -1 && blockIdx <= last_known_block) {
             return -1;
         }
         // add as many blocks as we need ( the rx ring mustn't have any gaps between the block indices)
-        const int new_blocks = (int) std::min(last_known_block != (uint64_t) -1 ? block_idx - last_known_block : 1,
+        const int new_blocks = (int) std::min(last_known_block != (uint64_t) -1 ? blockIdx - last_known_block : 1,
                                         (uint64_t) FECDecoder::RX_RING_SIZE);
         assert (new_blocks > 0);
 
-        last_known_block = block_idx;
+        last_known_block = blockIdx;
         int ring_idx = -1;
 
         for (int i = 0; i < new_blocks; i++) {
             ring_idx = rxRingPushBackSafe();
-            const auto newBlockIdx=block_idx + i + 1 - new_blocks;
+            const auto newBlockIdx= blockIdx + i + 1 - new_blocks;
             rx_ring[ring_idx]->repurpose(newBlockIdx);
         }
         return ring_idx;
     }
 
     void processFECBlockWitRxQueue(const uint64_t block_idx, const uint8_t fragment_idx, const std::vector<uint8_t>& decrypted){
-        const int ring_idx = get_block_ring_idx(block_idx);
+        const int ring_idx = rxRingFindBlockByIdx(block_idx);
         //ignore already processed blocks
         if (ring_idx < 0) return;
         // cannot be nullptr
