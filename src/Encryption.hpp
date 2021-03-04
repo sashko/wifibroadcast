@@ -2,7 +2,6 @@
 #ifndef ENCRYPTION_HPP
 #define ENCRYPTION_HPP
 
-//#include "wifibroadcast.hpp"
 #include "HelperSources/Helper.hpp"
 #include <cstdio>
 #include <stdexcept>
