@@ -97,21 +97,6 @@ namespace RawTransmitterHelper {
         //if (pcap_setnonblock(p, 1, errbuf) != 0) throw runtime_error(string_format("set_nonblock failed: %s", errbuf));
         return p;
     }
-    // @param tx_fd: UDP ports
-    static std::vector<pollfd> udpPortsToPollFd(const std::vector<int> &tx_fd){
-        std::vector<pollfd> ret;
-        ret.resize(tx_fd.size());
-        memset(ret.data(), '\0', ret.size()*sizeof(pollfd));
-        for(std::size_t i=0;i<tx_fd.size();i++){
-            int fd=tx_fd[i];
-            if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK) < 0) {
-                throw std::runtime_error(StringFormat::convert("Unable to set socket into nonblocked mode: %s", strerror(errno)));
-            }
-            ret[i].fd = fd;
-            ret[i].events = POLLIN;
-        }
-        return ret;
-    }
 }
 
 // Pcap Transmitter injects packets into the wifi adapter using pcap
