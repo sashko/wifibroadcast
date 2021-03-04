@@ -167,34 +167,26 @@ namespace TestEncryption{
         WBSessionKeyPacket sessionKeyPacket;
         encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
         assert(decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData) == true);
-
-        const auto data=GenericHelper::createRandomDataBuffer(MAX_PAYLOAD_SIZE);
-        const uint64_t block_idx = 0;
-        const uint8_t fragment_idx = 0;
-        const auto nonce=FEC::calculateNonce(block_idx,fragment_idx);
-        const WBDataHeader wbDataHeader{nonce};
-
-        //const auto encrypted= encryptor.encryptWBDataPacket(wbDataPacket);
-        const auto encrypted=encryptor.encryptPacket(wbDataHeader.nonce,data.data(),data.size(),wbDataHeader);
-
-        const auto decrypted=decryptor.decryptPacket(wbDataHeader.nonce,encrypted.data(), encrypted.size(),wbDataHeader);
-
-        assert(decrypted!=std::nullopt);
-        assert(GenericHelper::compareVectors(data,*decrypted) == true);
-    }
-}
-
-namespace TestOther{
-    static void testNonce(){
         for(int i=0;i<20;i++){
             for(int j=0;j<20;j++){
-                auto nonce=FEC::calculateNonce(i,j);
-                assert(FEC::calculateBlockIdx(nonce)==i);
-                assert(FEC::calculateFragmentIdx(nonce)==j);
+                const auto data=GenericHelper::createRandomDataBuffer(MAX_PAYLOAD_SIZE);
+                const uint64_t block_idx = i;
+                const uint8_t fragment_idx = j;
+                const auto nonce=FEC::calculateNonce(block_idx,fragment_idx);
+                const WBDataHeader wbDataHeader(nonce);
+
+                //const auto encrypted= encryptor.encryptWBDataPacket(wbDataPacket);
+                const auto encrypted=encryptor.encryptPacket(wbDataHeader.nonce,data.data(),data.size(),wbDataHeader);
+
+                const auto decrypted=decryptor.decryptPacket(wbDataHeader.nonce,encrypted.data(), encrypted.size(),wbDataHeader);
+
+                assert(decrypted!=std::nullopt);
+                assert(GenericHelper::compareVectors(data,*decrypted) == true);
             }
         }
     }
 }
+
 
 int main(int argc, char *argv[]){
     std::cout<<"Tests for Wifibroadcast\n";
@@ -225,7 +217,6 @@ int main(int argc, char *argv[]){
         std::cout<<"Testing Encryption\n";
         TestEncryption::test();
         //
-        TestOther::testNonce();
     }catch (std::runtime_error &e) {
         std::cerr<<"Error: "<<std::string(e.what());
         exit(1);

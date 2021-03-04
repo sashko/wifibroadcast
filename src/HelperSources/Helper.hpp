@@ -62,6 +62,13 @@ namespace GenericHelper{
         fillBufferWithRandomData(buf);
         return buf;
     }
+    // Create a buffer filled with random data where size is chosen Randomly between [minSizeB..maxSizeB]
+    std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB,const ssize_t maxSizeB){
+        auto sizeBytes=rand() % maxSizeB;
+        if(sizeBytes<minSizeB)sizeBytes=minSizeB;
+        return createRandomDataBuffer(sizeBytes);
+    }
+
     // same as above but return shared ptr
     std::shared_ptr<std::vector<uint8_t>> createRandomDataBuffer2(const ssize_t sizeBytes){
         auto buf=std::make_shared<std::vector<uint8_t>>(sizeBytes);
