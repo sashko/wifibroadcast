@@ -538,7 +538,7 @@ private:
         block.addFragment(fragment_idx, decrypted.data(), decrypted.size());
         //std::cout<<"Allocated entries "<<rx_ring_alloc<<"\n";
 
-        if (ring_idx == rx_ring_front) {
+        if (ring_idx == rxRingPeekFront()) {
             // forward packets until the first gap
             forwardMissingPrimaryFragmentsIfAvailable(block);
             // We are done with this block if either all fragments have been forwarded or it can be recovered
@@ -561,6 +561,10 @@ private:
             // If this block can be fully recovered or all primary fragments are available this triggers a flush
             if(block.allPrimaryFragmentsAreAvailable() || block.allPrimaryFragmentsCanBeRecovered()){
                 // send all queued packets in all unfinished blocks before and remove them
+                /*while (auto tmp=rxRingPopFront()!=ring_idx){
+                    forwardMissingPrimaryFragmentsIfAvailable(*rx_ring[tmp], false);
+                }*/
+
                 int nrm = modN(ring_idx - rx_ring_front, RX_RING_SIZE);
                 while(nrm > 0) {
                     forwardMissingPrimaryFragmentsIfAvailable(*rx_ring[rx_ring_front], false);
