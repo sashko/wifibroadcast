@@ -181,7 +181,7 @@ int main(int argc, char *const *argv) {
     // use -1 for no flush interval
     std::chrono::milliseconds flushInterval=std::chrono::milliseconds(-1);
 
-    RadiotapHeader::UserSelectableParams params{20, false, 0, false, 1};
+    RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, 1};
 
     std::string keypair = "drone.key";
 
@@ -205,19 +205,19 @@ int main(int argc, char *const *argv) {
                 radio_port = atoi(optarg);
                 break;
             case 'B':
-                params.bandwidth = atoi(optarg);
+                wifiParams.bandwidth = atoi(optarg);
                 break;
             case 'G':
-                params.short_gi = (optarg[0] == 's' || optarg[0] == 'S');
+                wifiParams.short_gi = (optarg[0] == 's' || optarg[0] == 'S');
                 break;
             case 'S':
-                params.stbc = atoi(optarg);
+                wifiParams.stbc = atoi(optarg);
                 break;
             case 'L':
-                params.ldpc = atoi(optarg);
+                wifiParams.ldpc = atoi(optarg);
                 break;
             case 'M':
-                params.mcs_index = atoi(optarg);
+                wifiParams.mcs_index = atoi(optarg);
                 break;
             case 'f':
                 flushInterval=std::chrono::milliseconds(atoi(optarg));
@@ -229,7 +229,7 @@ int main(int argc, char *const *argv) {
                         argv[0]);
                 fprintf(stderr,
                         "Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d flushInterval=%d\n",
-                        keypair.c_str(), k, n, udp_port, radio_port,params.bandwidth,params.short_gi ? "short" : "long",params.stbc,params.ldpc,params.mcs_index,
+                        keypair.c_str(), k, n, udp_port, radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index,
                         (int)std::chrono::duration_cast<std::chrono::milliseconds>(flushInterval).count());
                 fprintf(stderr, "Radio MTU: %lu\n", (unsigned long) MAX_PAYLOAD_SIZE);
                 fprintf(stderr, "WFB version "
@@ -242,7 +242,7 @@ int main(int argc, char *const *argv) {
         goto show_usage;
     }
     const auto wlan=argv[optind];
-    RadiotapHeader radiotapHeader{params};
+    RadiotapHeader radiotapHeader{wifiParams};
 
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&radiotapHeader,sizeof(RadiotapHeader));
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader80211n, sizeof(OldRadiotapHeaders::u8aRadiotapHeader80211n));
