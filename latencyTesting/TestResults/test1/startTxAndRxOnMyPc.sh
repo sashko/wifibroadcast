@@ -14,13 +14,13 @@ ASUS="wlx244bfeb71c05" #ASUS card
 #MY_RX="wlxc4e9840e3cbe" #tp-link rx
 #MY_RX_SECONDARY="wlxc4e984126183"
 
-MY_TX=$ASUS
-MY_RX=$TAOBAO
-#MY_TX="wlan0" #rpi testing
-#MY_RX="wlan1" #rpi testing
+#MY_TX=$ASUS
+#MY_RX=$TAOBAO
+MY_TX="wlan0" #rpi testing, alfa
+MY_RX="wlan1" #rpi testing, taobao
 
-WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
-#WFB_FOLDER="/home/pi/Desktop/wifibroadcast"
+#WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
+WFB_FOLDER="/home/pi/Desktop/wifibroadcast"
 
 FEC_K=1
 FEC_N=1
