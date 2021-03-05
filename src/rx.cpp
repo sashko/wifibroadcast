@@ -256,7 +256,6 @@ int main(int argc, char *const *argv) {
     }
     try {
         std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(client_addr, client_udp_port, radio_port, keypair);
-
         MultiRxPcapReceiver receiver(rxInterfaces,radio_port,log_interval,flush_interval,
                                      std::bind(&WBReceiver::processPacket, agg.get(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
                                      std::bind(&WBReceiver::dump_stats, agg.get()),

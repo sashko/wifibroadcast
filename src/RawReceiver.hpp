@@ -28,11 +28,11 @@ namespace RawReceiverHelper{
     static void iteratePcapTimestamps(pcap_t* ppcap){
         int* availableTimestamps;
         const int nTypes=pcap_list_tstamp_types(ppcap,&availableTimestamps);
-        std::cout<<"N available timestamp types "<<nTypes<<"\n";
+        //std::cout<<"N available timestamp types "<<nTypes<<"\n";
         for(int i=0;i<nTypes;i++){
             const char* name=pcap_tstamp_type_val_to_name(availableTimestamps[i]);
             const char* description=pcap_tstamp_type_val_to_description(availableTimestamps[i]);
-            std::cout<<"Name: "<<std::string(name)<<" Description: "<<std::string(description)<<"\n";
+            //std::cout<<"Name: "<<std::string(name)<<" Description: "<<std::string(description)<<"\n";
             if(availableTimestamps[i]==PCAP_TSTAMP_HOST){
                 std::cout<<"Setting timestamp to host\n";
                 pcap_set_tstamp_type(ppcap,PCAP_TSTAMP_HOST);
@@ -265,19 +265,20 @@ public:
         const int N_RECEIVERS = rxInterfaces.size();
         mReceivers.resize(N_RECEIVERS);
         mReceiverFDs.resize(N_RECEIVERS);
-
         memset(mReceiverFDs.data(), '\0', mReceiverFDs.size()*sizeof(pollfd));
         std::stringstream ss;
-        ss<<"MultiRxPcapReceiver"<<" Assigned ID: "<<radio_port<<" FLUSH_INTERVAL(ms):"<<(int)flush_interval.count()<<" LOG_INTERVAL(ms)"<<(int)log_interval.count()<<" Assigned WLAN(s):";
+        ss<<"MultiRxPcapReceiver"<<" Assigned ID: "<<radio_port<<" FLUSH_INTERVAL(ms):"<<(int)flush_interval.count()<<" LOG_INTERVAL(ms)"<<(int)log_interval.count()<<" Assigned WLAN(s):[";
+        for(const auto s:rxInterfaces){
+            ss<<s<<",";
+        }
+        ss<<"]";
+        std::cout<<ss.str()<<"\n";
 
         for (int i = 0; i < N_RECEIVERS; i++) {
             mReceivers[i] = std::make_unique<PcapReceiver>(rxInterfaces[i], i, radio_port,mCallbackData);
             mReceiverFDs[i].fd = mReceivers[i]->getfd();
             mReceiverFDs[i].events = POLLIN;
-            ss<<rxInterfaces[i]<<" ";
         }
-        std::cout<<ss.str()<<"\n";
-        std::cout<<ss.str()<<"\n";
         if(flush_interval>log_interval){
             std::cerr<<"Please use a flush interval smaller than the log interval\n";
         }

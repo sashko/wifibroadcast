@@ -165,7 +165,9 @@ namespace TestEncryption{
         Encryptor encryptor("gs.key");
         Decryptor decryptor("drone.key");
         WBSessionKeyPacket sessionKeyPacket;
+        // make session key (tx)
         encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
+        // and "receive" session key (rx)
         assert(decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData) == true);
         for(int i=0;i<20;i++){
             for(int j=0;j<20;j++){

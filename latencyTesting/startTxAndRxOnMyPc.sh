@@ -47,7 +47,7 @@ sudo iwconfig $MY_RX channel $MY_WIFI_CHANNEL
 # $WFB_FOLDER/wfb_tx -k $FEC_K -n $FEC_N -u 6000 -p 60 -M 7 -K $WFB_FOLDER/drone.key $MY_TX
 xterm -hold -e $WFB_FOLDER/wfb_tx -k $FEC_K -n $FEC_N -u 6000 -p 60 -M 4 -B 40 -K $WFB_FOLDER/drone.key  $MY_TX &
 
-$WFB_FOLDER/wfb_rx -c 127.0.0.1 -u 6100 -p 60 -K $WFB_FOLDER/gs.key  $MY_RX
+$WFB_FOLDER/wfb_rx -c 127.0.0.1 -u 6100 -p 60 -K $WFB_FOLDER/gs.key $MY_RX
 
 #other usefull commands:
 #sudo iw dev
