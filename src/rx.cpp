@@ -129,19 +129,20 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
     //std::cout<<"DurationOrConnectionId:"<<(int)tmpHeader->getDurationOrConnectionId()<<"\n";
 
     // now to the actual payload
-    const uint8_t *payload=parsedPacket->payload;
-    const size_t payloadSize=parsedPacket->payloadSize;
-    if(payload[0]==WFB_PACKET_DATA){
-        if (payloadSize < sizeof(WBDataHeader) + sizeof(FECDataHeader)) {
+    const uint8_t *packetPayload=parsedPacket->payload;
+    const size_t packetPayloadSize=parsedPacket->payloadSize;
+    if(packetPayload[0] == WFB_PACKET_DATA){
+        if (packetPayloadSize < sizeof(WBDataHeader) + sizeof(FECDataHeader)) {
             std::cerr<<"Too short packet (fec header missing)\n";
             count_p_bad++;
             return;
         }
         // FEC data or FEC correction packet
-        const WBDataHeader& wbDataHeader=*((WBDataHeader*)payload);
+        const WBDataHeader& wbDataHeader=*((WBDataHeader*)packetPayload);
         assert(wbDataHeader.packet_type==WFB_PACKET_DATA);
 
-        const auto decryptedPayload=mDecryptor.decryptPacket(wbDataHeader.nonce,payload+sizeof(WBDataHeader),payloadSize-sizeof(WBDataHeader),wbDataHeader);
+        const auto decryptedPayload=mDecryptor.decryptPacket(wbDataHeader.nonce,packetPayload + sizeof(WBDataHeader),
+                                                             packetPayloadSize - sizeof(WBDataHeader), wbDataHeader);
         if(decryptedPayload == std::nullopt){
             const int blockIdx=FEC::calculateBlockIdx(wbDataHeader.nonce);
             const int fragmentIdx=FEC::calculateFragmentIdx(wbDataHeader.nonce);
@@ -157,8 +158,8 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         if(!FECDecoder::validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)){
             count_p_bad++;
         }
-    }else if(payload[0]==WFB_PACKET_KEY) {
-        if (payloadSize != WBSessionKeyPacket::SIZE_BYTES) {
+    }else if(packetPayload[0] == WFB_PACKET_KEY) {
+        if (packetPayloadSize != WBSessionKeyPacket::SIZE_BYTES) {
             std::cerr << "invalid session key packet\n";
             count_p_bad++;
             return;
@@ -187,7 +188,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
     }
 #endif
     else{
-        std::cerr<<"Unknown packet type "<<(int)payload[0]<<" \n";
+        std::cerr << "Unknown packet type " << (int)packetPayload[0] << " \n";
         count_p_bad += 1;
         return;
     }
