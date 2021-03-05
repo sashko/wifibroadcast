@@ -133,12 +133,11 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
     const size_t payloadSize=parsedPacket->payloadSize;
     if(payload[0]==WFB_PACKET_DATA){
         if (payloadSize < sizeof(WBDataHeader) + sizeof(FECDataHeader)) {
-            std::cerr<<"short packet (fec header)\n";
+            std::cerr<<"Too short packet (fec header missing)\n";
             count_p_bad++;
             return;
         }
         // FEC data or FEC correction packet
-        //WBDataPacket encryptedWbDataPacket=WBDataPacket::createFromRawMemory(payload, payloadSize);
         const WBDataHeader& wbDataHeader=*((WBDataHeader*)payload);
         assert(wbDataHeader.packet_type==WFB_PACKET_DATA);
 
