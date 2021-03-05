@@ -267,12 +267,13 @@ public:
         mReceiverFDs.resize(N_RECEIVERS);
         memset(mReceiverFDs.data(), '\0', mReceiverFDs.size()*sizeof(pollfd));
         std::stringstream ss;
-        ss<<"MultiRxPcapReceiver"<<" Assigned ID: "<<radio_port<<" FLUSH_INTERVAL(ms):"<<(int)flush_interval.count()<<" LOG_INTERVAL(ms)"<<(int)log_interval.count()<<" Assigned WLAN(s):[";
+        ss<<"MultiRxPcapReceiver"<<" Assigned ID: "<<radio_port<<" Assigned WLAN(s):[";
         for(const auto s:rxInterfaces){
             ss<<s<<",";
         }
         ss<<"]";
         std::cout<<ss.str()<<"\n";
+        std::cout<<"FLUSH_INTERVAL(ms):"<<(int)flush_interval.count()<<" LOG_INTERVAL(ms)"<<(int)log_interval.count()<<"\n";
 
         for (int i = 0; i < N_RECEIVERS; i++) {
             mReceivers[i] = std::make_unique<PcapReceiver>(rxInterfaces[i], i, radio_port,mCallbackData);

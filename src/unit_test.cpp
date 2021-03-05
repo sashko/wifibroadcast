@@ -169,6 +169,7 @@ namespace TestEncryption{
         encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
         // and "receive" session key (rx)
         assert(decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData) == true);
+        // now encrypt a couple of packets and decrypt them again afterwards
         for(int i=0;i<20;i++){
             for(int j=0;j<20;j++){
                 const auto data=GenericHelper::createRandomDataBuffer(MAX_PAYLOAD_SIZE);

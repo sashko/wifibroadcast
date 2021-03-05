@@ -142,7 +142,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         const WBDataHeader& wbDataHeader=*((WBDataHeader*)payload);
         assert(wbDataHeader.packet_type==WFB_PACKET_DATA);
 
-        const auto decryptedPayload=mDecryptor.decryptPacket(wbDataHeader.nonce,payload,payloadSize,wbDataHeader);
+        const auto decryptedPayload=mDecryptor.decryptPacket(wbDataHeader.nonce,payload+sizeof(WBDataHeader),payloadSize-sizeof(WBDataHeader),wbDataHeader);
         if(decryptedPayload == std::nullopt){
             const int blockIdx=FEC::calculateBlockIdx(wbDataHeader.nonce);
             const int fragmentIdx=FEC::calculateFragmentIdx(wbDataHeader.nonce);
