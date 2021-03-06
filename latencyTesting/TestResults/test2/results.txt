@@ -24,3 +24,5 @@ nReceivedPacketsWhereContentDoesntMatch 0
 LostPacketsSeqNrDiffs 
 ------- Latency between (I<=>O) ------- 
 min=578.356995us max=5.108000ms avg=2.190000ms N samples=67999
+
+Anything higher than 37 MBit/s and the latency increases greatly
