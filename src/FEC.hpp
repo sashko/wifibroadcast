@@ -179,8 +179,14 @@ private:
 // or if it is ready for the FEC reconstruction step.
 class RxBlock{
 public:
-    explicit RxBlock(const FEC& fec, const uint64_t block_idx=0): fec(fec), fragment_map(fec.FEC_N, FragmentStatus::UNAVAILABLE), fragments(fec.FEC_N), originalSizeOfFragments(fec.FEC_N){
-        repurpose(block_idx);
+    explicit RxBlock(const FEC& fec, const uint64_t blockIdx1): fec(fec), fragment_map(fec.FEC_N, FragmentStatus::UNAVAILABLE), fragments(fec.FEC_N), originalSizeOfFragments(fec.FEC_N){
+        blockIdx = blockIdx1;
+        nAlreadyForwardedPrimaryFragments = 0;
+        nAvailablePrimaryFragments=0;
+        nAvailableSecondaryFragments=0;
+        // mark every fragment as not yet received
+        std::fill(fragment_map.begin(),fragment_map.end(),FragmentStatus::UNAVAILABLE);
+        creationTime=std::chrono::steady_clock::now();
     }
     // No copy constructor for safety
     RxBlock(const RxBlock&)=delete;
@@ -194,16 +200,6 @@ public:
     }
     ~RxBlock()= default;
 public:
-    // Use this once the decoder is done with this item and uses it for a different block
-    void repurpose(const uint64_t new_block_idx= 0){
-        blockIdx = new_block_idx;
-        nAlreadyForwardedPrimaryFragments = 0;
-        nAvailablePrimaryFragments=0;
-        nAvailableSecondaryFragments=0;
-        // mark every fragment as not yet received
-        std::fill(fragment_map.begin(),fragment_map.end(),FragmentStatus::UNAVAILABLE);
-        creationTime=std::chrono::steady_clock::now();
-    }
     // returns true if the fragment at position fragmentIdx has been already received
     bool hasFragment(const uint8_t fragmentIdx)const{
         return fragment_map[fragmentIdx]==AVAILABLE;
@@ -368,20 +364,11 @@ public:
         seq = 0;
         // rx ring part. Remove anything still in the queue
         rx_ring.clear();
-        /*rx_ring_front = 0;
-        rx_ring_alloc = 0;*/
         last_known_block = (uint64_t) -1;
-        // re-allocate the rx ring if new FEC parameters are used
+        // save new fec params if changed
         if(fec== nullptr || fec->FEC_K!=K || fec->FEC_N != N){
             fec=std::make_unique<FEC>(K,N);
-            /*for(int i=0;i<RX_RING_SIZE;i++){
-                rx_ring[i]=std::make_unique<RxBlock>(*fec);
-            }*/
         }
-        // we now have information about FEC K,N since it came with the encryption packet
-        /*for(auto& rxBlock:rx_ring){
-            rxBlock->repurpose();
-        }*/
         fecDisabledMapOfReceivedSeqNr.clear();
     }
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
