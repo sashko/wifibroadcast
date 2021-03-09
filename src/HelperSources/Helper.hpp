@@ -80,6 +80,7 @@ namespace GenericHelper{
         for(std::size_t i=0;i<nBuffers;i++){
             buffers.push_back(GenericHelper::createRandomDataBuffer(minSizeB, maxSizeB));
         }
+        return buffers;
     }
     bool compareVectors(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
         if(sb.size()!=rb.size()){

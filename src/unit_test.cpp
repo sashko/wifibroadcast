@@ -61,12 +61,8 @@ namespace TestFEC{
 
     static void testRxQueue(const int k, const int n){
         std::cout<<"Test rx queue. K:"<<k<<" N:"<<n<<"\n";
-        constexpr auto QUEUE_SIZE=2;
-        std::vector<std::vector<uint8_t>> testIn;
-        for(std::size_t i=0;i<QUEUE_SIZE*k;i++){
-            const auto size=(rand() % MAX_PAYLOAD_SIZE)+1;
-            testIn.push_back(GenericHelper::createRandomDataBuffer(size));
-        }
+        constexpr auto QUEUE_SIZE=20;
+        const auto testIn=GenericHelper::createRandomDataBuffers(QUEUE_SIZE*k,MAX_PAYLOAD_SIZE,MAX_PAYLOAD_SIZE);
         FECEncoder encoder(k,n);
         FECDecoder decoder(k,n);
         // begin test
@@ -85,16 +81,18 @@ namespace TestFEC{
             testOut.emplace_back(payload,payload+payloadSize);
         };
         decoder.mSendDecodedPayloadCallback=cb2;
-
+        // add fragments (primary fragments only to not overcomplicate things)
+        // but in the following order:
+        // block 0, fragment 0, block 1, fragment 0, block 2, fragment 0, ... until block X, fragment n
         for(int frIdx=0; frIdx < k; frIdx++){
             for(int i=0;i<QUEUE_SIZE;i++){
                 const auto idx=i*n + frIdx;
+                std::cout<<"adding"<<idx<<"\n";
                 const auto& packet=fecPackets.at(idx);
                 decoder.validateAndProcessPacket(packet.first,packet.second);
             }
         }
-
-
+        // and then check if in and out match
         for(std::size_t i=0;i<testIn.size();i++){
             std::cout<<"Step\n";
             const auto& in=testIn[i];
@@ -106,21 +104,14 @@ namespace TestFEC{
     // No packet loss
     // Fixed packet size
     static void testWithoutPacketLossFixedPacketSize(const int k, const int n, const std::size_t N_PACKETS){
-        std::vector<std::vector<uint8_t>> testIn;
-        for(std::size_t i=0;i<N_PACKETS;i++){
-            testIn.push_back(GenericHelper::createRandomDataBuffer(1024));
-        }
+        auto testIn=GenericHelper::createRandomDataBuffers(N_PACKETS,MAX_PAYLOAD_SIZE,MAX_PAYLOAD_SIZE);
         testWithoutPacketLoss(k, n, testIn);
     }
 
     // No packet loss
     // Dynamic packet size (up to N bytes)
     static void testWithoutPacketLossDynamicPacketSize(const int k, const int n, const std::size_t N_PACKETS){
-        std::vector<std::vector<uint8_t>> testIn;
-        for(std::size_t i=0;i<N_PACKETS;i++){
-            const auto size=(rand() % MAX_PAYLOAD_SIZE)+1;
-            testIn.push_back(GenericHelper::createRandomDataBuffer(size));
-        }
+        auto testIn=GenericHelper::createRandomDataBuffers(N_PACKETS,1,MAX_PAYLOAD_SIZE);
         testWithoutPacketLoss(k, n, testIn);
     }
 
@@ -257,7 +248,7 @@ int main(int argc, char *argv[]){
             const uint8_t n=fecParam.second;
             TestFEC::testWithoutPacketLossFixedPacketSize(k, n, N_PACKETS);
             TestFEC::testWithoutPacketLossDynamicPacketSize(k, n, N_PACKETS);
-            //TestFEC::testRxQueue(k,n);
+            TestFEC::testRxQueue(k,n);
             for(int dropMode=0;dropMode<3;dropMode++){
                 TestFEC::testWithPacketLossButEverythingIsRecoverable(k, n, N_PACKETS, dropMode);
             }
