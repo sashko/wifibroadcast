@@ -446,13 +446,18 @@ private:
 private:
     // Here is everything you need when using the RX queue to account for packet re-ordering due to multiple wifi cards
     static constexpr auto RX_RING_MAX_SIZE = 20;
+    // we need the following operations on this data structure:
+    // 1) push()
+    // 2) pop()
+    // 3) find_if()
+    // Due to 3) a std::queue is not enough
     std::deque<std::unique_ptr<RxBlock>> rx_ring;
     uint64_t last_known_block = ((uint64_t) -1);  //id of last known block
 
     // create a new RxBlock for the specified block_idx and push it into the queue
     // NOTE: Checks first if this operation would increase the size of the queue over its max capacity
     // In this case, the only solution is to remove the oldest block before adding the new one
-    std::unique_ptr<RxBlock>& rxRingCreateNewSafe(const uint64_t block_idx){
+    void rxRingCreateNewSafe(const uint64_t block_idx){
         // check: make sure to always put blocks into the queue in order !
         if(!rx_ring.empty()){
             assert(rx_ring.front()->getBlockIdx() == (block_idx + 1));
@@ -461,7 +466,7 @@ private:
         if(rx_ring.size() < RX_RING_MAX_SIZE){
             auto newB=std::make_unique<RxBlock>(*fec,block_idx);
             rx_ring.push_back(std::move(newB));
-            return rx_ring.front();
+            return;
         }
         //Ring overflow. This means that there are more unfinished blocks than ring size
         //Possible solutions:
@@ -478,13 +483,12 @@ private:
         // now we are guaranteed to have space for one new block
         auto newB=std::make_unique<RxBlock>(*fec,block_idx);
         rx_ring.push_back(std::move(newB));
-        return rx_ring.front();
     }
 
     // If block is already known and not in the queue anymore return nullptr
     // else if block is inside the ring return pointer to it
     // and if it is not inside the ring add as many blocks as needed, then return pointer to it
-    RxBlock* rxRingFindBlockByIdx(const uint64_t blockIdx) {
+    RxBlock* rxRingFindCreateBlockByIdx(const uint64_t blockIdx) {
         // check if block is already in the ring
         auto found=std::find_if(rx_ring.begin(), rx_ring.end(),
                                 [&blockIdx](const std::unique_ptr<RxBlock>& block) { return block->getBlockIdx() == blockIdx;});
@@ -504,7 +508,7 @@ private:
         last_known_block = blockIdx;
 
         for(int i=0;i<new_blocks;i++){
-            auto& tmp= rxRingCreateNewSafe(blockIdx + i - new_blocks);
+            rxRingCreateNewSafe(blockIdx + i - new_blocks);
         }
         //assert(rx_ring.front()->getBlockIdx()==blockIdx);
         return rx_ring.front().get();
@@ -512,7 +516,7 @@ private:
 
 
     void processFECBlockWitRxQueue(const uint64_t block_idx, const uint8_t fragment_idx, const std::vector<uint8_t>& decrypted){
-        auto blockP= rxRingFindBlockByIdx(block_idx);
+        auto blockP= rxRingFindCreateBlockByIdx(block_idx);
         //ignore already processed blocks
         if (blockP==nullptr) return;
         // cannot be nullptr
