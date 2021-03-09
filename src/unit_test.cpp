@@ -257,7 +257,7 @@ int main(int argc, char *argv[]){
             const uint8_t n=fecParam.second;
             TestFEC::testWithoutPacketLossFixedPacketSize(k, n, N_PACKETS);
             TestFEC::testWithoutPacketLossDynamicPacketSize(k, n, N_PACKETS);
-            TestFEC::testRxQueue(k,n);
+            //TestFEC::testRxQueue(k,n);
             for(int dropMode=0;dropMode<3;dropMode++){
                 TestFEC::testWithPacketLossButEverythingIsRecoverable(k, n, N_PACKETS, dropMode);
             }

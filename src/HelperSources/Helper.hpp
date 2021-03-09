@@ -50,6 +50,7 @@ namespace StringFormat{
 }
 
 namespace GenericHelper{
+    // fill buffer with random bytes
     static void fillBufferWithRandomData(std::vector<uint8_t>& data){
         const std::size_t size=data.size();
         for(std::size_t i=0;i<size;i++){
@@ -62,25 +63,22 @@ namespace GenericHelper{
         fillBufferWithRandomData(buf);
         return buf;
     }
-    // Create a buffer filled with random data where size is chosen Randomly between [minSizeB..maxSizeB]
-    std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB,const ssize_t maxSizeB){
-        auto sizeBytes=rand() % maxSizeB;
-        if(sizeBytes<minSizeB)sizeBytes=minSizeB;
-        return createRandomDataBuffer(sizeBytes);
-    }
-
     // same as above but return shared ptr
     std::shared_ptr<std::vector<uint8_t>> createRandomDataBuffer2(const ssize_t sizeBytes){
-        auto buf=std::make_shared<std::vector<uint8_t>>(sizeBytes);
-        fillBufferWithRandomData(*buf);
-        return buf;
+        return std::make_shared<std::vector<uint8_t>>(createRandomDataBuffer(sizeBytes));
     }
-    // create n random data buffers with size [1,maxSizeBytes]
-    std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t maxSizeBytes,int nBuffers){
-        std::vector<std::vector<uint8_t>> testIn;
+    // Create a buffer filled with random data where size is chosen Randomly between [minSizeB,...,maxSizeB]
+    std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB,const ssize_t maxSizeB){
+        // https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
+        const auto sizeBytes = rand()%(maxSizeB-minSizeB + 1) + minSizeB;
+        return createRandomDataBuffer(sizeBytes);
+    }
+    // create n random data buffers with size [minSizeB,...,maxSizeB]
+    std::vector<std::vector<uint8_t>> createRandomDataBuffers(int nBuffers, const std::size_t minSizeB, const std::size_t maxSizeB){
+        assert(minSizeB >= 0);
+        std::vector<std::vector<uint8_t>> buffers;
         for(std::size_t i=0;i<nBuffers;i++){
-            const auto size=(rand() % maxSizeBytes)+1;
-            testIn.push_back(GenericHelper::createRandomDataBuffer(size));
+            buffers.push_back(GenericHelper::createRandomDataBuffer(minSizeB, maxSizeB));
         }
     }
     bool compareVectors(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
