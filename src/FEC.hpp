@@ -457,7 +457,7 @@ private:
         if(!rx_ring.empty()){
             assert(rx_ring.front()->getBlockIdx() == (block_idx + 1));
         }
-        // we can return early if this operation doesn't exceed the queue size limit
+        // we can return early if this operation doesn't exceed the size limit
         if(rx_ring.size() < RX_RING_MAX_SIZE){
             auto newB=std::make_unique<RxBlock>(*fec,block_idx);
             rx_ring.push_back(std::move(newB));
@@ -506,6 +506,7 @@ private:
         for(int i=0;i<new_blocks;i++){
             auto& tmp= rxRingCreateNewSafe(blockIdx + i - new_blocks);
         }
+        //assert(rx_ring.front()->getBlockIdx()==blockIdx);
         return rx_ring.front().get();
     }
 
@@ -564,7 +565,6 @@ private:
             }
         }
     }
-
 private:
     // Add a limit here to not allocate infinite amounts of memory
     static constexpr std::size_t FEC_DISABLED_MAX_SIZE_OF_MAP=100;
