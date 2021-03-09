@@ -489,7 +489,9 @@ private:
         // check if block is already in the ring
         auto found=std::find_if(rx_queue.begin(), rx_queue.end(),
                                 [&blockIdx](const std::unique_ptr<RxBlock>& block) { return block->getBlockIdx() == blockIdx;});
-
+        if(found != rx_queue.end()){
+            return found->get();
+        }
         // check if block is already known and not in the ring then it is already processed
         if (last_known_block != (uint64_t) -1 && blockIdx <= last_known_block) {
             return nullptr;

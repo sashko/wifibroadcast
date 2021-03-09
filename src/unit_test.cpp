@@ -59,6 +59,50 @@ namespace TestFEC{
         }
     }
 
+    static void testRxQueue(const int k, const int n){
+        std::cout<<"Test rx queue. K:"<<k<<" N:"<<n<<"\n";
+        constexpr auto QUEUE_SIZE=1;
+        std::vector<std::vector<uint8_t>> testIn;
+        for(std::size_t i=0;i<QUEUE_SIZE*n;i++){
+            const auto size=(rand() % MAX_PAYLOAD_SIZE)+1;
+            testIn.push_back(GenericHelper::createRandomDataBuffer(size));
+        }
+        FECEncoder encoder(k,n);
+        FECDecoder decoder(k,n);
+        // begin test
+        std::vector<std::pair<uint64_t,std::vector<uint8_t>>> fecPackets;
+        const auto cb1=[&fecPackets](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
+            fecPackets.emplace_back(nonce,std::vector<uint8_t>(payload,payload +payloadSize));
+        };
+        encoder.outputDataCallback=cb1;
+        // process all input packets
+        for(const auto& in:testIn){
+            encoder.encodePacket(in.data(),in.size());
+        }
+        // now add them to the decoder (queue):
+        std::vector<std::vector<uint8_t>> testOut;
+        const auto cb2=[&testOut](const uint8_t * payload,std::size_t payloadSize)mutable{
+            testOut.emplace_back(payload,payload+payloadSize);
+        };
+        decoder.mSendDecodedPayloadCallback=cb2;
+
+        for(int frIdx=0; frIdx < k; frIdx++){
+            for(int i=0;i<QUEUE_SIZE;i++){
+                const auto idx=i*n + frIdx;
+                const auto& packet=fecPackets.at(idx);
+                decoder.validateAndProcessPacket(packet.first,packet.second);
+            }
+        }
+
+
+        for(std::size_t i=0;i<testIn.size();i++){
+            std::cout<<"Step\n";
+            const auto& in=testIn[i];
+            const auto& out=testOut[i];
+            assert(GenericHelper::compareVectors(in,out)==true);
+        }
+    }
+
     // No packet loss
     // Fixed packet size
     static void testWithoutPacketLossFixedPacketSize(const int k, const int n, const std::size_t N_PACKETS){
@@ -213,6 +257,7 @@ int main(int argc, char *argv[]){
             const uint8_t n=fecParam.second;
             TestFEC::testWithoutPacketLossFixedPacketSize(k, n, N_PACKETS);
             TestFEC::testWithoutPacketLossDynamicPacketSize(k, n, N_PACKETS);
+            //TestFEC::testRxQueue(k,n);
             for(int dropMode=0;dropMode<3;dropMode++){
                 TestFEC::testWithPacketLossButEverythingIsRecoverable(k, n, N_PACKETS, dropMode);
             }
