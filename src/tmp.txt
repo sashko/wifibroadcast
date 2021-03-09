@@ -1,0 +1,148 @@
+
+
+std::array<std::unique_ptr<RxBlock>,RX_RING_SIZE> rx_ring;
+    int rx_ring_front = 0; // current packet
+    int rx_ring_alloc = 0; // number of allocated entries
+
+ //
+    static inline int modN(int x, int base) {
+        return (base + (x % base)) % base;
+    }
+
+
+    // removes the first (oldest) element
+    // returns the index of the removed element
+    int rxRingPopFront(){
+        const auto ret=rx_ring_front;
+        rx_ring_front = modN(rx_ring_front + 1, RX_RING_SIZE);
+        rx_ring_alloc -= 1;
+        assert(rx_ring_alloc >= 0);
+        return ret;
+    }
+
+    // makes space for 1 new element
+    // return its index (this is now the latest element)
+    int rxRingPushBack(){
+        int idx = modN(rx_ring_front + rx_ring_alloc, RX_RING_SIZE);
+        rx_ring_alloc += 1;
+        assert(rx_ring_alloc<=RX_RING_SIZE);
+        return idx;
+    }
+    // Peek the oldest element of the rx ring
+    int rxRingPeekFront()const{
+        return rx_ring_front;
+    }
+    int rxRingSize()const{
+        return rx_ring_alloc;
+    }
+
+
+
+
+    // if enough space is available, same like push back
+        // if not enough space is available,it drops the oldest block, and also sends any fragments of this block that are not forwarded yet
+        int rxRingPushBackSafe() {
+            if (rx_ring_alloc < RX_RING_SIZE) {
+                return rxRingPushBack();
+            }
+            //Ring overflow. This means that there are more unfinished blocks than ring size
+            //Possible solutions:
+            //1. Increase ring size. Do this if you have large variance of packet travel time throught WiFi card or network stack.
+            //   Some cards can do this due to packet reordering inside, diffent chipset and/or firmware or your RX hosts have different CPU power.
+            //2. Reduce packet injection speed or try to unify RX hardware.
+
+            // remove the oldest block
+            auto oldestBlockIdx=rxRingPopFront();
+            auto& oldestBlock=*rx_ring[oldestBlockIdx];
+            std::cerr<<"Forwarding block that is not yet fully finished "<<oldestBlock.getBlockIdx()<<" with n fragments"<<oldestBlock.getNAvailableFragments()<<"\n";
+            forwardMissingPrimaryFragmentsIfAvailable(oldestBlock,false);
+            //
+            return rxRingPushBack();
+        }
+
+
+// If block is already known and not in the ring anymore return -1
+    // else if block is already in the ring return its index or if block is not yet
+    // in the ring add as many blocks as needed and then return its index
+    int rxRingFindBlockByIdx(const uint64_t blockIdx) {
+        // check if block is already in the ring
+        for (int i = rx_ring_front, c = rx_ring_alloc; c > 0; i = modN(i + 1, FECDecoder::RX_RING_SIZE), c--) {
+            if (rx_ring[i]->getBlockIdx() == blockIdx) return i;
+        }
+
+        // check if block is already known and not in the ring then it is already processed
+        if (last_known_block != (uint64_t) -1 && blockIdx <= last_known_block) {
+            return -1;
+        }
+        // add as many blocks as we need ( the rx ring mustn't have any gaps between the block indices)
+        const int new_blocks = (int) std::min(last_known_block != (uint64_t) -1 ? blockIdx - last_known_block : 1,
+                                        (uint64_t) FECDecoder::RX_RING_SIZE);
+        assert (new_blocks > 0);
+
+        last_known_block = blockIdx;
+        int ring_idx = -1;
+
+        for (int i = 0; i < new_blocks; i++) {
+            ring_idx = rxRingPushBackSafe();
+            const auto newBlockIdx= blockIdx + i + 1 - new_blocks;
+            rx_ring[ring_idx]->repurpose(newBlockIdx);
+        }
+        return ring_idx;
+    }
+
+void processFECBlockWitRxQueue(const uint64_t block_idx, const uint8_t fragment_idx, const std::vector<uint8_t>& decrypted){
+        const int ring_idx = rxRingFindBlockByIdx(block_idx);
+        //ignore already processed blocks
+        if (ring_idx < 0) return;
+        // cannot be nullptr
+        RxBlock& block = *rx_ring[ring_idx].get();
+        // ignore already processed fragments
+        if(block.hasFragment(fragment_idx)){
+            return;
+        }
+        block.addFragment(fragment_idx, decrypted.data(), decrypted.size());
+        //std::cout<<"Allocated entries "<<rx_ring_alloc<<"\n";
+
+        if (ring_idx == rxRingPeekFront()) {
+            // we are in the front of the queue (e.g. at the oldest block)
+            // forward packets until the first gap
+            forwardMissingPrimaryFragmentsIfAvailable(block);
+            // We are done with this block if either all fragments have been forwarded or it can be recovered
+            if(block.allPrimaryFragmentsHaveBeenForwarded()){
+                // remove block when done with it
+                rxRingPopFront();
+                return;
+            }
+            if(block.allPrimaryFragmentsCanBeRecovered()){
+                count_p_fec_recovered+=block.reconstructAllMissingData();
+                forwardMissingPrimaryFragmentsIfAvailable(block);
+                assert(block.allPrimaryFragmentsHaveBeenForwarded());
+                // remove block when done with it
+                rxRingPopFront();
+                return;
+            }
+            return;
+        }else{
+            // we are not in the front of the queue but somewhere else
+            // If this block can be fully recovered or all primary fragments are available this triggers a flush
+            if(block.allPrimaryFragmentsAreAvailable() || block.allPrimaryFragmentsCanBeRecovered()){
+                // send all queued packets in all unfinished blocks before and remove them
+                while(rxRingPeekFront() != ring_idx){
+                    auto tmp=rxRingPopFront();
+                    forwardMissingPrimaryFragmentsIfAvailable(*rx_ring[tmp], false);
+                }
+                // then process the block who is fully recoverable or has no gaps in the primary fragments
+                if(block.allPrimaryFragmentsAreAvailable()){
+                    forwardMissingPrimaryFragmentsIfAvailable(block);
+                    assert(block.allPrimaryFragmentsHaveBeenForwarded());
+                }else{
+                    // apply fec for this block
+                    count_p_fec_recovered+=block.reconstructAllMissingData();
+                    forwardMissingPrimaryFragmentsIfAvailable(block);
+                    assert(block.allPrimaryFragmentsHaveBeenForwarded());
+                }
+                // remove block
+                rxRingPopFront();
+            }
+        }
+    }
