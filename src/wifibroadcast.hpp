@@ -98,15 +98,19 @@ static_assert(sizeof(WBDataHeader)==8+1,"ALWAYS_TRUE");
 class FECDataHeader {
 private:
     // private member to make sure it has always the right endian
-    uint16_t packet_size; // big endian
+    uint16_t packet_size;
+    //uint16_t packet_size : 15; // big endian | 15 bits packet size
+    //bool isSecondaryFragment: 1 ;          //|  1 bit flag, set if this is a secondary (FEC) packet
 public:
     explicit FECDataHeader(std::size_t packetSize1){
         // convert to big endian if needed
         packet_size=htobe16(packetSize1);
+        //packet_size=packetSize1;
     }
     // convert from big endian if needed
     std::size_t get()const{
         return be16toh(packet_size);
+        //return (std::size_t) packet_size;
     }
 }  __attribute__ ((packed));
 static_assert(sizeof(FECDataHeader) == 2, "ALWAYS_TRUE");
