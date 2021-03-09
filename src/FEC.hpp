@@ -418,7 +418,7 @@ private:
      * Forward the primary (data) fragment at index fragmentIdx via the output callback
      */
     void forwardPrimaryFragment(RxBlock& block, const uint8_t fragmentIdx){
-        std::cout<<"forwardPrimaryFragment("<<(int)block.getBlockIdx()<<","<<(int)fragmentIdx<<")\n";
+        //std::cout<<"forwardPrimaryFragment("<<(int)block.getBlockIdx()<<","<<(int)fragmentIdx<<")\n";
         assert(block.hasFragment(fragmentIdx));
         const uint8_t* primaryFragment= block.getDataPrimaryFragment(fragmentIdx);
         const FECDataHeader *packet_hdr = (FECDataHeader*) primaryFragment;
@@ -443,7 +443,6 @@ private:
             }
         }
     }
-
 public:
     // Here is everything you need when using the RX queue to account for packet re-ordering due to multiple wifi cards
     static constexpr auto RX_QUEUE_MAX_SIZE = 20;
@@ -526,7 +525,7 @@ private:
         }
         block.addFragment(fragment_idx, decrypted.data(), decrypted.size());
         if (block == *rx_queue.front()) {
-            std::cout<<"In front\n";
+            //std::cout<<"In front\n";
             // we are in the front of the queue (e.g. at the oldest block)
             // forward packets until the first gap
             forwardMissingPrimaryFragmentsIfAvailable(block);
@@ -546,7 +545,7 @@ private:
             }
             return;
         }else{
-            std::cout<<"Not in front\n";
+            //std::cout<<"Not in front\n";
             // we are not in the front of the queue but somewhere else
             // If this block can be fully recovered or all primary fragments are available this triggers a flush
             if(block.allPrimaryFragmentsAreAvailable() || block.allPrimaryFragmentsCanBeRecovered()){
