@@ -75,6 +75,14 @@ namespace GenericHelper{
         fillBufferWithRandomData(*buf);
         return buf;
     }
+    // create n random data buffers with size [1,maxSizeBytes]
+    std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t maxSizeBytes,int nBuffers){
+        std::vector<std::vector<uint8_t>> testIn;
+        for(std::size_t i=0;i<nBuffers;i++){
+            const auto size=(rand() % maxSizeBytes)+1;
+            testIn.push_back(GenericHelper::createRandomDataBuffer(size));
+        }
+    }
     bool compareVectors(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
         if(sb.size()!=rb.size()){
             return false;
