@@ -82,6 +82,11 @@ namespace GenericHelper{
         const int result=memcmp (sb.data(),rb.data(),sb.size());
         return result==0;
     }
+    void assertVectorsEqual(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
+        assert(sb.size()==rb.size());
+        const int result=memcmp (sb.data(),rb.data(),sb.size());
+        assert(result==0);
+    }
     using namespace std::chrono;
     constexpr nanoseconds timevalToDuration(timeval tv){
         auto duration = seconds{tv.tv_sec}

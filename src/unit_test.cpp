@@ -51,7 +51,7 @@ namespace TestFEC{
         decoder.mSendDecodedPayloadCallback=cb2;
         // If there is no data loss the packets should arrive immediately
         for(std::size_t i=0;i<testIn.size();i++){
-            std::cout<<"Step\n";
+            //std::cout<<"Step\n";
             const auto& in=testIn[i];
             encoder.encodePacket(in.data(),in.size());
             const auto& out=testOut[i];
@@ -61,9 +61,9 @@ namespace TestFEC{
 
     static void testRxQueue(const int k, const int n){
         std::cout<<"Test rx queue. K:"<<k<<" N:"<<n<<"\n";
-        constexpr auto QUEUE_SIZE=1;
+        constexpr auto QUEUE_SIZE=2;
         std::vector<std::vector<uint8_t>> testIn;
-        for(std::size_t i=0;i<QUEUE_SIZE*n;i++){
+        for(std::size_t i=0;i<QUEUE_SIZE*k;i++){
             const auto size=(rand() % MAX_PAYLOAD_SIZE)+1;
             testIn.push_back(GenericHelper::createRandomDataBuffer(size));
         }
@@ -99,7 +99,7 @@ namespace TestFEC{
             std::cout<<"Step\n";
             const auto& in=testIn[i];
             const auto& out=testOut[i];
-            assert(GenericHelper::compareVectors(in,out)==true);
+            GenericHelper::assertVectorsEqual(in,out);
         }
     }
 
@@ -257,7 +257,7 @@ int main(int argc, char *argv[]){
             const uint8_t n=fecParam.second;
             TestFEC::testWithoutPacketLossFixedPacketSize(k, n, N_PACKETS);
             TestFEC::testWithoutPacketLossDynamicPacketSize(k, n, N_PACKETS);
-            //TestFEC::testRxQueue(k,n);
+            TestFEC::testRxQueue(k,n);
             for(int dropMode=0;dropMode<3;dropMode++){
                 TestFEC::testWithPacketLossButEverythingIsRecoverable(k, n, N_PACKETS, dropMode);
             }
