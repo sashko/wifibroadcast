@@ -51,6 +51,7 @@ namespace TestFEC{
         decoder.mSendDecodedPayloadCallback=cb2;
         // If there is no data loss the packets should arrive immediately
         for(std::size_t i=0;i<testIn.size();i++){
+            std::cout<<"Step\n";
             const auto& in=testIn[i];
             encoder.encodePacket(in.data(),in.size());
             const auto& out=testOut[i];
@@ -207,7 +208,7 @@ int main(int argc, char *argv[]){
                 {6,12},{8,16},{12,24},
                 {4,6},{12,14}
         };
-        for(auto fecParam:fecParams){
+        for(const auto& fecParam:fecParams){
             const uint8_t k=fecParam.first;
             const uint8_t n=fecParam.second;
             TestFEC::testWithoutPacketLossFixedPacketSize(k, n, N_PACKETS);

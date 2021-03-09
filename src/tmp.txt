@@ -146,3 +146,15 @@ void processFECBlockWitRxQueue(const uint64_t block_idx, const uint8_t fragment_
             }
         }
     }
+
+
+    std::cout<<"Queue size:"<<rx_queue.size()<<"\n";
+            if(rx_queue.size()==1){
+                std::cout<<"lol"<<rx_queue.front()->getBlockIdx()<<"\n";
+            }
+            if(found != rx_queue.end()){
+                std::cout<<"F\n";
+                return found->get();
+            }else {
+                std::cout<<"Not F\n";
+            }
