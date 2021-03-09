@@ -464,13 +464,19 @@ private:
 
     uint64_t last_known_block = ((uint64_t) -1);  //id of last known block
 
+    // create a new RxBlock for the specified block_idx and push it into the queue
+    // NOTE: Checks first if this operation would increase the size of the queue over its max capacity
+    // In this case, the only solution is to remove the oldest block before adding the new one
+    std::unique_ptr<RxBlock>& rxRingCreateNewSafe(const uint64_t block_idx){
+        // check: make sure to always put blocks into the queue in order !
+        if(!rx_ring2.empty()){
+            assert(rx_ring2.front()->getBlockIdx()==(block_idx+1));
+        }
 
-    // if enough space is available, same like push back
-    // if not enough space is available,it drops the oldest block, and also sends any fragments of this block that are not forwarded yet
-    std::unique_ptr<RxBlock>& rxRingPushBackSafe(){
+        // we can return early if this operation doesn't exceed the queue size limit
         if(rx_ring2.size()<RX_RING_SIZE){
-            auto newB=std::make_unique<RxBlock>(*fec);
-            rx_ring2.push_back(std::make_unique<RxBlock>(*fec));
+            auto newB=std::make_unique<RxBlock>(*fec,block_idx);
+            rx_ring2.push_back(std::move(newB));
             return rx_ring2.front();
         }
         //Ring overflow. This means that there are more unfinished blocks than ring size
@@ -486,7 +492,7 @@ private:
         rx_ring2.pop_front();
 
         // now we are guaranteed to have space for one new block
-        auto newB=std::make_unique<RxBlock>(*fec);
+        auto newB=std::make_unique<RxBlock>(*fec,block_idx);
         rx_ring2.push_back(std::move(newB));
         return rx_ring2.front();
     }
@@ -514,9 +520,7 @@ private:
         last_known_block = blockIdx;
 
         for(int i=0;i<new_blocks;i++){
-            auto& tmp= rxRingPushBackSafe();
-            const auto newBlockIdx= blockIdx + i + 1 - new_blocks;
-            tmp->repurpose(newBlockIdx);
+            auto& tmp= rxRingCreateNewSafe(blockIdx + i - new_blocks);
         }
         return rx_ring2.front().get();
     }
