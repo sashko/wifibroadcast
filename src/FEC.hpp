@@ -443,9 +443,11 @@ private:
             }
         }
     }
-private:
+
+public:
     // Here is everything you need when using the RX queue to account for packet re-ordering due to multiple wifi cards
-    static constexpr auto RX_RING_MAX_SIZE = 20;
+    static constexpr auto RX_QUEUE_MAX_SIZE = 20;
+private:
     // since we also need to search this data structure, a std::queue is not enough.
     // since we have an upper limit on the size of this dequeue, it is basically a searchable ring buffer
     std::deque<std::unique_ptr<RxBlock>> rx_queue;
@@ -461,7 +463,7 @@ private:
             assert(rx_queue.back()->getBlockIdx() == (blockIdx - 1));
         }
         // we can return early if this operation doesn't exceed the size limit
-        if(rx_queue.size() < RX_RING_MAX_SIZE){
+        if(rx_queue.size() < RX_QUEUE_MAX_SIZE){
             rx_queue.push_back(std::make_unique<RxBlock>(*fec, blockIdx));
             return;
         }
@@ -500,7 +502,7 @@ private:
         // add as many blocks as we need ( the rx ring mustn't have any gaps between the block indices).
         // but there is no point in adding more blocks than RX_RING_SIZE
         const int new_blocks = (int) std::min(last_known_block != (uint64_t) -1 ? blockIdx - last_known_block : 1,
-                                              (uint64_t) FECDecoder::RX_RING_MAX_SIZE);
+                                              (uint64_t) FECDecoder::RX_QUEUE_MAX_SIZE);
         last_known_block = blockIdx;
 
         for(int i=0;i<new_blocks;i++){

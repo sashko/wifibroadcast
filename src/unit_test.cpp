@@ -61,7 +61,7 @@ namespace TestFEC{
 
     static void testRxQueue(const int k, const int n){
         std::cout<<"Test rx queue. K:"<<k<<" N:"<<n<<"\n";
-        constexpr auto QUEUE_SIZE=20;
+        constexpr auto QUEUE_SIZE=FECDecoder::RX_QUEUE_MAX_SIZE;
         const auto testIn=GenericHelper::createRandomDataBuffers(QUEUE_SIZE*k,MAX_PAYLOAD_SIZE,MAX_PAYLOAD_SIZE);
         FECEncoder encoder(k,n);
         FECDecoder decoder(k,n);
