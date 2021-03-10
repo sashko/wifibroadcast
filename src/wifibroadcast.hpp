@@ -49,8 +49,8 @@
  * ** if WFB_PACKET_KEY
  * *** WBSessionKeyPacket
  * ** if WFB_PACKET_DATA
- * *** WBDataHeader
- * **** encrypted payload data (dynamic size)
+ * *** uint64_t nonce (usage left up to the implementation,e.g FEC)
+ * *** payload, left up to the implementation (e.g. FEC)
  */
 
 static constexpr const uint8_t WFB_PACKET_DATA=0x1;
@@ -87,8 +87,7 @@ public:
     explicit WBDataHeader(uint64_t nonce1):nonce(nonce1){};
 public:
     const uint8_t packet_type=WFB_PACKET_DATA;
-    const uint64_t nonce;  // big endian, nonce = block_idx << 8 + fragment_idx
-    //const uint8_t reserved=0;
+    const uint64_t nonce;  // it is left up to the implementation on how to use nonce
 }  __attribute__ ((packed));
 static_assert(sizeof(WBDataHeader)==8+1,"ALWAYS_TRUE");
 
@@ -115,6 +114,6 @@ static constexpr const auto WB_FRAME_MAX_PAYLOAD=(PCAP_MAX_PACKET_SIZE - Radiota
 // 429496.7295 / 60 / 60 = 119.304647083 hours which is also completely overkill for OpenHD (and after this time span, a "reset" of the sequence number happens anyways)
 // unsigned 24 bits holds 16777215 . At 1000 blocks per second this allows the tx to create blocks for 16777.215 seconds or 4.6 hours. That should cover a flight (and after 4.6h a reset happens,
 // which means you might lose a couple of blocks once every 4.6 h )
-// and 8 bits holds max 255. At a max payload size of ~1400 bytes this would
+// and 8 bits holds max 255.
 
 #endif //__WIFIBROADCAST_HPP__
