@@ -118,6 +118,8 @@ private:
     uint8_t currFragmentIdx = 0;
     size_t currMaxPacketSize = 0;
     std::vector<uint8_t*> fragments;
+    std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
+    std::vector<uint8_t*> writtenPrimaryFragments;
 public:
     void encodePacket(const uint8_t *buf,const size_t size) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
@@ -154,6 +156,10 @@ public:
             return;
         }
         // once enough data has been buffered, create all the secondary fragments
+        std::vector<uint8_t*> primaryFragmentsList(fec.N_PRIMARY_FRAGMENTS);
+        for(int i=0;i<fec.N_PRIMARY_FRAGMENTS;i++){
+            primaryFragmentsList[i]=(fragments[i]);
+        }
         //fecEncode((const uint8_t **) block, block + FEC_K, max_packet_size);
         fec_encode(currMaxPacketSize, (const unsigned char**)fragments.data(), fec.N_PRIMARY_FRAGMENTS, (unsigned char**)&fragments[fec.FEC_K], fec.N_SECONDARY_FRAGMENTS);
         //fecEncode(max_packet_size,fragments,N_PRIMARY_FRAGMENTS,N_SECONDARY_FRAGMENTS);

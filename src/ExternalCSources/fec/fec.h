@@ -47,5 +47,23 @@ void fec_license(void);
 }
 #endif
 
+#ifdef __cplusplus
+#include <vector>
+#include <array>
+
+/**
+ * @param blockSize Size of each FEC block. Each block must have the same size for FEC.
+ * @param data_blocks list of pointers to raw data chunks (read-only), has to be pre-allocated.
+ * @param fec_blocks list of pointers to raw data chunks (write-only), has to be pre-allocated.
+ * As many fec_blocks pointers as supplied here, this many fec secondary packets will be generated
+ */
+void fecEncode(unsigned int blockSize,const std::vector<const uint8_t*>& data_blocks,std::vector<uint8_t*>& fec_blocks){
+    fec_encode(blockSize,(const unsigned char**)data_blocks.data(),data_blocks.size(),(unsigned char**)fec_blocks.data(),fec_blocks.size());
+}
+
+
+
+#endif
+
 #endif //FEC_2_H
 
