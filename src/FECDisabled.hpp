@@ -31,6 +31,7 @@ public:
         }
     }
 private:
+    // With a 64 bit sequence number we will NEVER overrun, no matter how long the tx/rx are running
     uint64_t currPacketIndex=0;
 };
 
