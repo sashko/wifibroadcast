@@ -206,22 +206,17 @@ namespace TestEncryption{
         // and "receive" session key (rx)
         assert(decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData) == true);
         // now encrypt a couple of packets and decrypt them again afterwards
-        for(int i=0;i<20;i++){
-            for(int j=0;j<20;j++){
-                const auto data=GenericHelper::createRandomDataBuffer(FEC_MAX_PAYLOAD_SIZE);
-                const uint64_t block_idx = i;
-                const uint8_t fragment_idx = j;
-                const auto nonce=FEC::calculateNonce(block_idx,fragment_idx);
-                const WBDataHeader wbDataHeader(nonce);
+        for(uint64_t nonce=0; nonce < 20; nonce++){
+            const auto data=GenericHelper::createRandomDataBuffer(FEC_MAX_PAYLOAD_SIZE);
+            const WBDataHeader wbDataHeader(nonce);
 
-                //const auto encrypted= encryptor.encryptWBDataPacket(wbDataPacket);
-                const auto encrypted=encryptor.encryptPacket(wbDataHeader.nonce,data.data(),data.size(),wbDataHeader);
+            //const auto encrypted= encryptor.encryptWBDataPacket(wbDataPacket);
+            const auto encrypted=encryptor.encryptPacket(wbDataHeader.nonce,data.data(),data.size(),wbDataHeader);
 
-                const auto decrypted=decryptor.decryptPacket(wbDataHeader.nonce,encrypted.data(), encrypted.size(),wbDataHeader);
+            const auto decrypted=decryptor.decryptPacket(wbDataHeader.nonce,encrypted.data(), encrypted.size(),wbDataHeader);
 
-                assert(decrypted!=std::nullopt);
-                assert(GenericHelper::compareVectors(data,*decrypted) == true);
-            }
+            assert(decrypted!=std::nullopt);
+            assert(GenericHelper::compareVectors(data,*decrypted) == true);
         }
     }
 }
