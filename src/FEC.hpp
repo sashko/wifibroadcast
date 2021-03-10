@@ -36,8 +36,9 @@ private:
     //uint16_t packet_size : 15; // big endian | 15 bits packet size
     //bool isSecondaryFragment: 1 ;          //|  1 bit flag, set if this is a secondary (FEC) packet
 public:
-    explicit FECPrimaryFragmentHeader(std::size_t packetSize1){
-        assert(packetSize1<=(2^15));
+    explicit FECPrimaryFragmentHeader(const std::size_t packetSize1){
+        //std::cout<<"packetS"<<packetSize1<<"\n";
+        assert(packetSize1<=pow(2,15));
         // convert to big endian if needed
         packet_size=htobe16(packetSize1);
         //packet_size=packetSize1;
