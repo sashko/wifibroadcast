@@ -62,7 +62,7 @@ namespace TestFEC{
     static void testRxQueue(const int k, const int n){
         std::cout<<"Test rx queue. K:"<<k<<" N:"<<n<<"\n";
         constexpr auto QUEUE_SIZE=FECDecoder::RX_QUEUE_MAX_SIZE;
-        const auto testIn=GenericHelper::createRandomDataBuffers(QUEUE_SIZE*k,MAX_PAYLOAD_SIZE,MAX_PAYLOAD_SIZE);
+        const auto testIn=GenericHelper::createRandomDataBuffers(QUEUE_SIZE*k, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
         FECEncoder encoder(k,n);
         FECDecoder decoder(k,n);
         // begin test
@@ -104,14 +104,14 @@ namespace TestFEC{
     // No packet loss
     // Fixed packet size
     static void testWithoutPacketLossFixedPacketSize(const int k, const int n, const std::size_t N_PACKETS){
-        auto testIn=GenericHelper::createRandomDataBuffers(N_PACKETS,MAX_PAYLOAD_SIZE,MAX_PAYLOAD_SIZE);
+        auto testIn=GenericHelper::createRandomDataBuffers(N_PACKETS, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
         testWithoutPacketLoss(k, n, testIn);
     }
 
     // No packet loss
     // Dynamic packet size (up to N bytes)
     static void testWithoutPacketLossDynamicPacketSize(const int k, const int n, const std::size_t N_PACKETS){
-        auto testIn=GenericHelper::createRandomDataBuffers(N_PACKETS,1,MAX_PAYLOAD_SIZE);
+        auto testIn=GenericHelper::createRandomDataBuffers(N_PACKETS, 1, FEC_MAX_PAYLOAD_SIZE);
         testWithoutPacketLoss(k, n, testIn);
     }
 
@@ -189,7 +189,7 @@ namespace TestFEC{
     static void testWithPacketLossButEverythingIsRecoverable(const int k, const int n, const std::size_t N_PACKETS, const int DROP_MODE){
         std::vector<std::vector<uint8_t>> testIn;
         for(std::size_t i=0;i<N_PACKETS;i++){
-            const auto size=(rand() % MAX_PAYLOAD_SIZE)+1;
+            const auto size= (rand() % FEC_MAX_PAYLOAD_SIZE) + 1;
             testIn.push_back(GenericHelper::createRandomDataBuffer(size));
         }
         testWithPacketLossButEverythingIsRecoverable(k, n, testIn,DROP_MODE, true);
@@ -208,7 +208,7 @@ namespace TestEncryption{
         // now encrypt a couple of packets and decrypt them again afterwards
         for(int i=0;i<20;i++){
             for(int j=0;j<20;j++){
-                const auto data=GenericHelper::createRandomDataBuffer(MAX_PAYLOAD_SIZE);
+                const auto data=GenericHelper::createRandomDataBuffer(FEC_MAX_PAYLOAD_SIZE);
                 const uint64_t block_idx = i;
                 const uint8_t fragment_idx = j;
                 const auto nonce=FEC::calculateNonce(block_idx,fragment_idx);

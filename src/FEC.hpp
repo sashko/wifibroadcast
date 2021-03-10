@@ -13,6 +13,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <array>
 #include <cstring>
 #include <stdexcept>
 #include <iostream>
@@ -25,6 +26,28 @@
 // A primary fragment is a data packet
 // A secondary fragment is a data correction (FEC) packet
 // K primary and N-K secondary fragments together form a FEC block
+
+// this header is written before the data of each primary FEC fragment
+// ONLY for primary FEC fragments though ! (up to n bytes workaround)
+class FECDataHeader {
+private:
+    // private member to make sure it has always the right endian
+    uint16_t packet_size;
+    //uint16_t packet_size : 15; // big endian | 15 bits packet size
+    //bool isSecondaryFragment: 1 ;          //|  1 bit flag, set if this is a secondary (FEC) packet
+public:
+    explicit FECDataHeader(std::size_t packetSize1){
+        // convert to big endian if needed
+        packet_size=htobe16(packetSize1);
+        //packet_size=packetSize1;
+    }
+    // convert from big endian if needed
+    std::size_t get()const{
+        return be16toh(packet_size);
+        //return (std::size_t) packet_size;
+    }
+}  __attribute__ ((packed));
+static_assert(sizeof(FECDataHeader) == 2, "ALWAYS_TRUE");
 
 // c++ wrapper for the FEC library
 // If K and N were known at compile time we could make this much cleaner !
@@ -55,6 +78,12 @@ public:
     }
 };
 
+// 1510-(13+24+9+16+2)
+//A: Any UDP with packet size <= 1466. For example x264 inside RTP or Mavlink.
+static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
+static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(FECDataHeader);
+static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
+
 // Takes a continuous stream of packets and
 // encodes them via FEC such that they can be decoded by FECDecoder
 // The encoding is slightly different from traditional FEC. It
@@ -73,7 +102,7 @@ public:
         fec_init();
         fragments.resize(fec.FEC_N);
         for (int i = 0; i < fec.FEC_N; i++) {
-            fragments[i] = new uint8_t[MAX_FEC_PAYLOAD];
+            fragments[i] = new uint8_t[FEC_MAX_PACKET_SIZE];
         }
     }
     ~FECEncoder() {
@@ -90,7 +119,7 @@ private:
     std::vector<uint8_t*> fragments;
 public:
     void encodePacket(const uint8_t *buf,const size_t size) {
-        assert(size <= MAX_PAYLOAD_SIZE);
+        assert(size <= FEC_MAX_PAYLOAD_SIZE);
         // Use FEC_K==0 to not only disable FEC, but also the RX queue on the RX
         if(fec.FEC_K == 0) {
             const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
@@ -107,7 +136,7 @@ public:
         // zero out the remaining bytes such that FEC always sees zeroes
         // same is done on the rx. These zero bytes are never transmitted via wifi
         const auto writtenDataSize= sizeof(FECDataHeader) + size;
-        memset(fragments[currFragmentIdx] + writtenDataSize, '\0', MAX_FEC_PAYLOAD - writtenDataSize);
+        memset(fragments[currFragmentIdx] + writtenDataSize, '\0', FEC_MAX_PACKET_SIZE - writtenDataSize);
 
         // send primary fragments immediately before calculating the FECs
         send_block_fragment(sizeof(dataHeader) + size);
@@ -227,7 +256,7 @@ public:
         // write the data (doesn't matter if FEC data or correction packet)
         memcpy(fragments[fragment_idx].data(),data,dataLen);
         // set the rest to zero such that FEC works
-        memset(fragments[fragment_idx].data()+dataLen, '\0', MAX_FEC_PAYLOAD-dataLen);
+        memset(fragments[fragment_idx].data()+dataLen, '\0', FEC_MAX_PACKET_SIZE - dataLen);
         // mark it as available
         fragment_map[fragment_idx] = RxBlock::AVAILABLE;
         // store the size of the received fragment for later use in the fec step
@@ -327,7 +356,7 @@ private:
     // size of all these vectors is always FEC_N
     std::vector<FragmentStatus> fragment_map;
     // holds all the data for all received fragments (if fragment_map says UNAVALIABLE at this position, content is undefined)
-    std::vector<std::array<uint8_t,MAX_FEC_PAYLOAD>> fragments;
+    std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> fragments;
     // holds the original size for all received fragments
     std::vector<std::size_t> originalSizeOfFragments;
     int nAvailablePrimaryFragments=0;
@@ -433,7 +462,7 @@ private:
             count_p_lost += packetsLost;
         }
         seq = packet_seq;
-        if (packet_size > MAX_PAYLOAD_SIZE) {
+        if (packet_size > FEC_MAX_PAYLOAD_SIZE) {
             // this should never happen !
             std::cerr<<"corrupted packet on FECDecoder out "<<seq<<"\n";
         } else {

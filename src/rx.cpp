@@ -108,7 +108,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         count_p_bad++;
         return;
     }
-    if (parsedPacket->payloadSize > MAX_FORWARDER_PACKET_SIZE) {
+    if (parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
         std::cerr<<"Discarding packet due to payload exceeding max "<<(int)parsedPacket->payloadSize<<"\n";
         count_p_bad++;
         return;
@@ -153,7 +153,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
 
         count_p_decryption_ok++;
 
-        assert(decryptedPayload->size() <= MAX_FEC_PAYLOAD);
+        assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
 
         if(!FECDecoder::validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)){
             count_p_bad++;

@@ -81,7 +81,7 @@ static_assert(sizeof(WBSessionKeyPacket) == WBSessionKeyPacket::SIZE_BYTES, "ALW
 
 
 // This header comes with each FEC packet (primary or secondary)
-// This part is not encrypted !
+// This part is not encrypted ! (though used for checksum)
 class WBDataHeader{
 public:
     explicit WBDataHeader(uint64_t nonce1):nonce(nonce1){};
@@ -93,30 +93,6 @@ public:
 static_assert(sizeof(WBDataHeader)==8+1,"ALWAYS_TRUE");
 
 
-// this header is written before the data of each primary FEC fragment
-// ONLY for primary FEC fragments though ! (up to n bytes workaround)
-class FECDataHeader {
-private:
-    // private member to make sure it has always the right endian
-    uint16_t packet_size;
-    //uint16_t packet_size : 15; // big endian | 15 bits packet size
-    //bool isSecondaryFragment: 1 ;          //|  1 bit flag, set if this is a secondary (FEC) packet
-public:
-    explicit FECDataHeader(std::size_t packetSize1){
-        // convert to big endian if needed
-        packet_size=htobe16(packetSize1);
-        //packet_size=packetSize1;
-    }
-    // convert from big endian if needed
-    std::size_t get()const{
-        return be16toh(packet_size);
-        //return (std::size_t) packet_size;
-    }
-}  __attribute__ ((packed));
-static_assert(sizeof(FECDataHeader) == 2, "ALWAYS_TRUE");
-
-
-
 struct LatencyTestingPacket{
     const uint8_t packet_type=WFB_PACKET_LATENCY_BEACON;
     const int64_t timestampNs=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -124,17 +100,21 @@ struct LatencyTestingPacket{
 
 // The final packet size ( radiotap header + iee80211 header + payload ) is never bigger than that
 // the reasoning behind this value: https://github.com/svpcom/wifibroadcast/issues/69
-static constexpr const auto MAX_PCAP_PACKET_SIZE=1510;
+static constexpr const auto PCAP_MAX_PACKET_SIZE=1510;
 // Max n of wifi cards connected as an RX array
 static constexpr const auto MAX_RX_INTERFACES=8;
-
-// 1510-(13+24+9+16+2)
-//A: Any UDP with packet size <= 1466. For example x264 inside RTP or Mavlink.
-static constexpr const auto MAX_PAYLOAD_SIZE=(MAX_PCAP_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES - sizeof(WBDataHeader) - sizeof(FECDataHeader) - crypto_aead_chacha20poly1305_ABYTES);
-static constexpr const auto MAX_FEC_PAYLOAD=(MAX_PCAP_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES - sizeof(WBDataHeader) - crypto_aead_chacha20poly1305_ABYTES);
-static constexpr const auto MAX_FORWARDER_PACKET_SIZE=(MAX_PCAP_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES);
+// This is the max number of bytes usable for the (FEC) implementation
+static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE=(PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES);
+static constexpr const auto WB_FRAME_MAX_PAYLOAD=(PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES - sizeof(WBDataHeader) - crypto_aead_chacha20poly1305_ABYTES);
 
 // comment this for a release
 //#define ENABLE_ADVANCED_DEBUGGING
+
+// quick math regarding sequence numbers:
+//uint32_t holds max 4294967295 . At 10 000 pps (packets per seconds) (which is already completely out of reach) this allows the tx to run for 429496.7295 seconds
+// 429496.7295 / 60 / 60 = 119.304647083 hours which is also completely overkill for OpenHD (and after this time span, a "reset" of the sequence number happens anyways)
+// unsigned 24 bits holds 16777215 . At 1000 blocks per second this allows the tx to create blocks for 16777.215 seconds or 4.6 hours. That should cover a flight (and after 4.6h a reset happens,
+// which means you might lose a couple of blocks once every 4.6 h )
+// and 8 bits holds max 255. At a max payload size of ~1400 bytes this would
 
 #endif //__WIFIBROADCAST_HPP__

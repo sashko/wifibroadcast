@@ -109,7 +109,7 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
 }
 
 void WBTransmitter::loop() {
-    std::array<uint8_t,MAX_PAYLOAD_SIZE> buf{};
+    std::array<uint8_t,FEC_MAX_PAYLOAD_SIZE> buf{};
     std::chrono::steady_clock::time_point session_key_announce_ts{};
     std::chrono::steady_clock::time_point log_ts{};
     // send the key a couple of times on startup to increase the likeliness it is received
@@ -137,7 +137,7 @@ void WBTransmitter::loop() {
         //}
 
         // we set the timeout earlier when creating the socket
-        const ssize_t message_length = recvfrom(mInputSocket, buf.data(), MAX_PAYLOAD_SIZE, 0, nullptr, nullptr);
+        const ssize_t message_length = recvfrom(mInputSocket, buf.data(), FEC_MAX_PAYLOAD_SIZE, 0, nullptr, nullptr);
         if(std::chrono::steady_clock::now()>=log_ts){
             const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
             std::cout<<runTimeMs<<"\tTX "<<nPacketsFromUdpPort<<":"<<nInjectedPackets<<"\n";
@@ -185,7 +185,7 @@ int main(int argc, char *const *argv) {
 
     std::string keypair = "drone.key";
 
-    std::cout<<"MAX_PAYLOAD_SIZE:"<<MAX_PAYLOAD_SIZE<<"\n";
+    std::cout << "MAX_PAYLOAD_SIZE:" << FEC_MAX_PAYLOAD_SIZE << "\n";
 
     while ((opt = getopt(argc, argv, "K:k:n:u:r:p:B:G:S:L:M:f:")) != -1) {
         switch (opt) {
@@ -231,7 +231,7 @@ int main(int argc, char *const *argv) {
                         "Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d flushInterval=%d\n",
                         keypair.c_str(), k, n, udp_port, radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index,
                         (int)std::chrono::duration_cast<std::chrono::milliseconds>(flushInterval).count());
-                fprintf(stderr, "Radio MTU: %lu\n", (unsigned long) MAX_PAYLOAD_SIZE);
+                fprintf(stderr, "Radio MTU: %lu\n", (unsigned long) FEC_MAX_PAYLOAD_SIZE);
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
                 "\n");
