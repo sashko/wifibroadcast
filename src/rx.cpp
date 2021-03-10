@@ -132,7 +132,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
     const uint8_t *packetPayload=parsedPacket->payload;
     const size_t packetPayloadSize=parsedPacket->payloadSize;
     if(packetPayload[0] == WFB_PACKET_DATA){
-        if (packetPayloadSize < sizeof(WBDataHeader) + sizeof(FECDataHeader)) {
+        if (packetPayloadSize < sizeof(WBDataHeader) + sizeof(FECPrimaryFragmentHeader)) {
             std::cerr<<"Too short packet (fec header missing)\n";
             count_p_bad++;
             return;

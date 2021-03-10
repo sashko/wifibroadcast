@@ -29,14 +29,14 @@
 
 // this header is written before the data of each primary FEC fragment
 // ONLY for primary FEC fragments though ! (up to n bytes workaround)
-class FECDataHeader {
+class FECPrimaryFragmentHeader {
 private:
     // private member to make sure it has always the right endian
     uint16_t packet_size;
     //uint16_t packet_size : 15; // big endian | 15 bits packet size
     //bool isSecondaryFragment: 1 ;          //|  1 bit flag, set if this is a secondary (FEC) packet
 public:
-    explicit FECDataHeader(std::size_t packetSize1){
+    explicit FECPrimaryFragmentHeader(std::size_t packetSize1){
         // convert to big endian if needed
         packet_size=htobe16(packetSize1);
         //packet_size=packetSize1;
@@ -47,7 +47,7 @@ public:
         //return (std::size_t) packet_size;
     }
 }  __attribute__ ((packed));
-static_assert(sizeof(FECDataHeader) == 2, "ALWAYS_TRUE");
+static_assert(sizeof(FECPrimaryFragmentHeader) == 2, "ALWAYS_TRUE");
 
 // c++ wrapper for the FEC library
 // If K and N were known at compile time we could make this much cleaner !
@@ -81,7 +81,7 @@ public:
 // 1510-(13+24+9+16+2)
 //A: Any UDP with packet size <= 1466. For example x264 inside RTP or Mavlink.
 static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
-static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(FECDataHeader);
+static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(FECPrimaryFragmentHeader);
 static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
 
 // Takes a continuous stream of packets and
@@ -127,7 +127,7 @@ public:
             currBlockIdx++;
             return;
         }
-        FECDataHeader dataHeader(size);
+        FECPrimaryFragmentHeader dataHeader(size);
         // write the size of the data part into each primary fragment.
         // This is needed for the 'up to n bytes' workaround
         memcpy(fragments[currFragmentIdx], &dataHeader, sizeof(dataHeader));
@@ -135,7 +135,7 @@ public:
         memcpy(fragments[currFragmentIdx] + sizeof(dataHeader), buf, size);
         // zero out the remaining bytes such that FEC always sees zeroes
         // same is done on the rx. These zero bytes are never transmitted via wifi
-        const auto writtenDataSize= sizeof(FECDataHeader) + size;
+        const auto writtenDataSize= sizeof(FECPrimaryFragmentHeader) + size;
         memset(fragments[currFragmentIdx] + writtenDataSize, '\0', FEC_MAX_PACKET_SIZE - writtenDataSize);
 
         // send primary fragments immediately before calculating the FECs
@@ -450,9 +450,9 @@ private:
         //std::cout<<"forwardPrimaryFragment("<<(int)block.getBlockIdx()<<","<<(int)fragmentIdx<<")\n";
         assert(block.hasFragment(fragmentIdx));
         const uint8_t* primaryFragment= block.getDataPrimaryFragment(fragmentIdx);
-        const FECDataHeader *packet_hdr = (FECDataHeader*) primaryFragment;
+        const FECPrimaryFragmentHeader *packet_hdr = (FECPrimaryFragmentHeader*) primaryFragment;
 
-        const uint8_t *payload = primaryFragment + sizeof(FECDataHeader);
+        const uint8_t *payload = primaryFragment + sizeof(FECPrimaryFragmentHeader);
         const uint16_t packet_size = packet_hdr->get();
         const uint64_t packet_seq = block.calculateSequenceNumber(fragmentIdx);
 
