@@ -542,7 +542,7 @@ private:
         }
         block.addFragment(fragment_idx, decrypted.data(), decrypted.size());
         if (block == *rx_queue.front()) {
-            std::cout<<"In front\n";
+            //std::cout<<"In front\n";
             // we are in the front of the queue (e.g. at the oldest block)
             // forward packets until the first gap
             forwardMissingPrimaryFragmentsIfAvailable(block);
