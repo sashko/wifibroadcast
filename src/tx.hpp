@@ -40,7 +40,7 @@
 // Each input UDP port has to be assigned with a Unique ID to differentiate between streams on the RX
 // It does all the FEC encoding & encryption for this stream, then uses PcapTransmitter to inject the generated packets
 // FEC can be either enabled or disabled.
-class WBTransmitter: {
+class WBTransmitter {
 public:
     WBTransmitter(RadiotapHeader radiotapHeader, int k, int m, const std::string &keypair, uint8_t radio_port,
                   int udp_port, const std::string &wlan,std::chrono::milliseconds flushInterval);
