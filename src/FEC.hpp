@@ -447,9 +447,12 @@ private:
             count_p_lost += packetsLost;
         }
         seq = packet_seq;
+        //std::cout<<block.getNAvailableFragments()<<" "<<block.nAvailablePrimaryFragments<<" "<<block.nAvailableSecondaryFragments<<"\n";
+        //std::cout<<fec.N_PRIMARY_FRAGMENTS<<" "<<fec.N_SECONDARY_FRAGMENTS<<"\n";
+
         if (packet_size > FEC_MAX_PAYLOAD_SIZE) {
             // this should never happen !
-            std::cerr<<"corrupted packet on FECDecoder out "<<seq<<"\n";
+            std::cerr<<"corrupted packet on FECDecoder out ("<<block.getBlockIdx()<<":"<<(int)fragmentIdx<<") : "<<packet_size<<"B\n";
         } else {
             // we use packets of size 0 to flush the tx pipeline
             if(packet_size>0){
@@ -539,7 +542,7 @@ private:
         }
         block.addFragment(fragment_idx, decrypted.data(), decrypted.size());
         if (block == *rx_queue.front()) {
-            //std::cout<<"In front\n";
+            std::cout<<"In front\n";
             // we are in the front of the queue (e.g. at the oldest block)
             // forward packets until the first gap
             forwardMissingPrimaryFragmentsIfAvailable(block);

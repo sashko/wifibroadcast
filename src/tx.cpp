@@ -37,7 +37,7 @@
 #include <thread>
 
 
-WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, int k, int n, const std::string &keypair, uint8_t radio_port, int udp_port,
+WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const int k,const int n, const std::string &keypair, uint8_t radio_port, int udp_port,
                              const std::string &wlan,const std::chrono::milliseconds flushInterval) :
         mPcapTransmitter(wlan),
         RADIO_PORT(radio_port),
@@ -62,8 +62,8 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, int k, int n, const 
     mInputSocket=SocketHelper::openUdpSocketForRx(udp_port);
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", udp_port,radio_port,wlan.c_str(),(int)flushInterval.count());
     // Don't forget to write K,N into the session key packet. K,N Doesn't change on the tx
-    sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS=n;
-    sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS=k-n;
+    sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS=k;
+    sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS=n-k;
 }
 
 WBTransmitter::~WBTransmitter() {

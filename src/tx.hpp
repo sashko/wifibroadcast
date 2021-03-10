@@ -51,7 +51,7 @@ private:
     // send the current session key via WIFI (located in mEncryptor)
     void sendSessionKey();
     // for the FEC encoder
-    void sendFecPrimaryOrSecondaryFragment(const uint64_t nonce, const uint8_t* payload, const size_t payloadSize);
+    void sendFecPrimaryOrSecondaryFragment(const uint64_t nonce, const uint8_t* payload,const size_t payloadSize);
     // send packet by prefixing data with the current IEE and Radiotap header
     void sendPacket(const AbstractWBPacket& abstractWbPacket);
     // this one is used for injecting packets
