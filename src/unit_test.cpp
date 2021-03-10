@@ -227,10 +227,7 @@ int main(int argc, char *argv[]){
     try {
         std::cout<<"Testing FEC\n";
         const int N_PACKETS=1200;
-        // first, test with fec disabled
-        TestFEC::testWithoutPacketLossDynamicPacketSize(0, 0, N_PACKETS);
-
-        // now with FEC enabled
+        // only test with FEC enabled
         const std::vector<std::pair<uint8_t,uint8_t>> fecParams={
                 {1,3},
                 {3,5},{3,6},{6,8},{6,9},
