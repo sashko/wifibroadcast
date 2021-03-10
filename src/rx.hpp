@@ -41,7 +41,7 @@ static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD=4;
 
 // This class processes the received wifi data (decryption and FEC)
 // and forwards it via UDP.
-class WBReceiver: private FECDecoder,FECDisabledDecoder{
+class WBReceiver{
 public:
     WBReceiver(const std::string &client_addr, int client_udp_port, uint8_t radio_port, const std::string &keypair);
 
@@ -75,6 +75,8 @@ private:
     OpenHDStatisticsWriter openHdStatisticsWriter{RADIO_PORT};
     //We know that once we get the first session key packet
     bool IS_FEC_ENABLED=false;
+    std::unique_ptr<FECDecoder> mFECDDecoder;
+    std::unique_ptr<FECDisabledDecoder> mFECDisabledDecoder;
 public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
     // time between <packet arrives at pcap processing queue> <<->> <packet is pulled out of pcap by RX>

@@ -598,7 +598,7 @@ private:
 public:
     void decreaseRxRingSize(int newSize){
         std::cout << "Decreasing ring size from " << rx_queue.size() << "to " << newSize << "\n";
-        while(rx_queue.size() > 1){
+        while(rx_queue.size() >newSize){
             forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), false);
             rx_queue.pop_front();
         }
@@ -614,7 +614,7 @@ public:
         // "forward it" even though it is missing packets
         // get the age in nanoseconds of the currently "oldest" block
     }
-protected:
+public:
     uint64_t count_p_fec_recovered=0;
     uint64_t count_p_lost=0;
     //

@@ -39,7 +39,6 @@
 
 WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, int k, int n, const std::string &keypair, uint8_t radio_port, int udp_port,
                              const std::string &wlan,const std::chrono::milliseconds flushInterval) :
-        FECEncoder(k,n),
         mPcapTransmitter(wlan),
         RADIO_PORT(radio_port),
         mEncryptor(keypair),
@@ -53,13 +52,18 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, int k, int n, const 
         std::cerr<<"Please do not use a flush interval of 0 (would hog the cpu)\n";
     }
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-    FECEncoder::outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-    FECDisabledEncoder::outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    if(IS_FEC_ENABLED){
+        mFecEncoder=std::make_unique<FECEncoder>(k,n);
+        mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    }else{
+        mFecDisabledEncoder=std::make_unique<FECDisabledEncoder>();
+        mFecDisabledEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    }
     mInputSocket=SocketHelper::openUdpSocketForRx(udp_port);
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", udp_port,radio_port,wlan.c_str(),(int)flushInterval.count());
     // Don't forget to write K,N into the session key packet. K,N Doesn't change on the tx
-    sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS=FECEncoder::fec.N_PRIMARY_FRAGMENTS;
-    sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS=FECEncoder::fec.N_SECONDARY_FRAGMENTS;
+    sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS=n;
+    sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS=k-n;
 }
 
 WBTransmitter::~WBTransmitter() {
@@ -103,14 +107,14 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
     //std::cout << "WBTransmitter::send_packet\n";
     // this calls a callback internally
     if(IS_FEC_ENABLED){
-        FECEncoder::encodePacket(buf,size);
-        if(FECEncoder::resetOnOverflow()){
+        mFecEncoder->encodePacket(buf,size);
+        if(mFecEncoder->resetOnOverflow()){
             // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
             mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
             sendSessionKey();
         }
     }else{
-        FECDisabledEncoder::encodePacket(buf,size);
+        mFecDisabledEncoder->encodePacket(buf,size);
     }
 }
 
@@ -166,7 +170,9 @@ void WBTransmitter::loop() {
                     // smaller than 0 means no flush enabled
                     // else we didn't receive data for FLUSH_INTERVAL ms
                     // if nothing needs to be flushed, this call returns immediately
-                    finishCurrentBlock();
+                    if(mFecEncoder){
+                        mFecEncoder->finishCurrentBlock();
+                    }
                 }
                 continue;
             }

@@ -33,13 +33,10 @@
 
 
 WBReceiver::WBReceiver(const std::string &client_addr, int client_udp_port, uint8_t radio_port, const std::string &keypair) :
-FECDecoder(),
 CLIENT_UDP_PORT(client_udp_port),
 RADIO_PORT(radio_port),
 mDecryptor(keypair){
     sockfd = SocketHelper::open_udp_socket_for_tx(client_addr,client_udp_port);
-    FECDecoder::mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
-    FECDisabledDecoder::mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
 }
 
 WBReceiver::~WBReceiver() {
@@ -47,6 +44,8 @@ WBReceiver::~WBReceiver() {
 }
 
 void WBReceiver::dump_stats() {
+    const auto count_p_fec_recovered=mFECDDecoder ? mFECDDecoder->count_p_fec_recovered : 0;
+    const auto count_p_lost=mFECDDecoder ? mFECDDecoder->count_p_lost : 0;
     // first forward to OpenHD
     openHdStatisticsWriter.writeStats({
                                               count_p_all, count_p_decryption_err, count_p_decryption_ok, count_p_fec_recovered, count_p_lost, count_p_bad, rssiForWifiCard
@@ -156,11 +155,11 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
 
         assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
         if(IS_FEC_ENABLED){
-            if(!FECDecoder::validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)){
+            if(!mFECDDecoder->validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)){
                 count_p_bad++;
             }
         }else{
-            FECDisabledDecoder::processRawDataBlockFecDisabled(wbDataHeader.nonce,*decryptedPayload);
+            mFECDisabledDecoder->processRawDataBlockFecDisabled(wbDataHeader.nonce,*decryptedPayload);
         }
     }else if(packetPayload[0] == WFB_PACKET_KEY) {
         if (packetPayloadSize != WBSessionKeyPacket::SIZE_BYTES) {
@@ -174,9 +173,14 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
             count_p_decryption_ok++;
             IS_FEC_ENABLED=sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS!=0;
             if(IS_FEC_ENABLED){
-                FECDecoder::resetNewSession(sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS,
+                mFECDDecoder=std::make_unique<FECDecoder>();
+                mFECDDecoder->mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
+                mFECDDecoder->resetNewSession(sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS,
                                             sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS +
                                             sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS);
+            }else{
+                mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
+                mFECDisabledDecoder->mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
             }
         } else {
             count_p_decryption_ok++;
@@ -202,7 +206,9 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
 }
 
 void WBReceiver::flushFecPipeline() {
-    FECDecoder::flushRxRing();
+    if(mFECDDecoder){
+        mFECDDecoder->flushRxRing();
+    }
 }
 
 int main(int argc, char *const *argv) {
