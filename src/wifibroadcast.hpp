@@ -19,6 +19,9 @@
 #ifndef __WIFIBROADCAST_HPP__
 #define __WIFIBROADCAST_HPP__
 
+#include "Ieee80211Header.hpp"
+#include "RadiotapHeader.hpp"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>
@@ -39,8 +42,6 @@
 #include <chrono>
 #include <optional>
 
-#include "Ieee80211Header.hpp"
-#include "RadiotapHeader.hpp"
 
 /**
  * Wifibroadcast protocol:
