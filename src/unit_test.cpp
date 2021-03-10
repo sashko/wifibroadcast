@@ -227,6 +227,8 @@ int main(int argc, char *argv[]){
     try {
         std::cout<<"Testing FEC\n";
         const int N_PACKETS=1200;
+        TestFEC::testWithoutPacketLossFixedPacketSize(1,2, N_PACKETS);
+        TestFEC::testWithoutPacketLossFixedPacketSize(2,2, N_PACKETS);
         // only test with FEC enabled
         const std::vector<std::pair<uint8_t,uint8_t>> fecParams={
                 {1,3},
