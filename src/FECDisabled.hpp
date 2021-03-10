@@ -17,7 +17,7 @@
 #include <functional>
 #include <map>
 
-// FEC Disabled is an optional user input. In this case, These 2 classes are used.
+// FEC Disabled is an optional user input (K==N==0). In this case, These 2 classes are used.
 
 class FECDisabledEncoder{
 public:
