@@ -38,7 +38,7 @@ private:
 public:
     explicit FECPrimaryFragmentHeader(const std::size_t packetSize1){
         //std::cout<<"packetS"<<packetSize1<<"\n";
-        assert(packetSize1<=pow(2,15));
+        //assert(packetSize1<=pow(2,15));
         // convert to big endian if needed
         packet_size=htobe16(packetSize1);
         //packet_size=packetSize1;
@@ -376,12 +376,7 @@ private:
 class FECDecoder{
 public:
     // If K,N is known at construction time
-    FECDecoder(int k, int n){
-        fec_init();
-        resetNewSession(k,n);
-    }
-    // If K,N is not known at construction time. Don't forget to call resetNewSession() in this case !
-    FECDecoder(){
+    FECDecoder(int k, int n):fec(k,n){
         fec_init();
     }
     ~FECDecoder() = default;
@@ -390,25 +385,18 @@ public:
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;
 private:
     //K,N can change on the receiver side !
-    std::unique_ptr<FEC> fec=nullptr;
+    //std::unique_ptr<FEC> fec=nullptr;
+    const FEC fec;
 public:
     // FEC K,N is fixed per session
-    void resetNewSession(const int K,const int N) {
+    void resetNewSession() {
         seq = 0;
         // rx ring part. Remove anything still in the queue
         rx_queue.clear();
         last_known_block = (uint64_t) -1;
-        // save new fec params if changed
-        if(fec== nullptr || fec->FEC_K!=K || fec->FEC_N != N){
-            fec=std::make_unique<FEC>(K,N);
-        }
     }
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
     bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t>& decrypted){
-        if(fec==nullptr){
-            std::cout<<"FEC K,N is not set yet\n";
-            return false;
-        }
         // normal FEC processing
         const uint64_t block_idx=FEC::calculateBlockIdx(nonce);
         const uint8_t fragment_idx=FEC::calculateFragmentIdx(nonce);
@@ -419,7 +407,7 @@ public:
             return false;
         }
         // fragment index must be in the range [0,...,FEC_N[
-        if (fragment_idx >= fec->FEC_N) {
+        if (fragment_idx >= fec.FEC_N) {
             std::cerr<<"invalid fragment_idx:"<<fragment_idx<<"\n";
             return false;
         }
@@ -489,7 +477,7 @@ private:
         }
         // we can return early if this operation doesn't exceed the size limit
         if(rx_queue.size() < RX_QUEUE_MAX_SIZE){
-            rx_queue.push_back(std::make_unique<RxBlock>(*fec, blockIdx));
+            rx_queue.push_back(std::make_unique<RxBlock>(fec, blockIdx));
             return;
         }
         //Ring overflow. This means that there are more unfinished blocks than ring size
@@ -506,7 +494,7 @@ private:
         rx_queue.pop_front();
 
         // now we are guaranteed to have space for one new block
-        rx_queue.push_back(std::make_unique<RxBlock>(*fec, blockIdx));
+        rx_queue.push_back(std::make_unique<RxBlock>(fec, blockIdx));
     }
 
     // If block is already known and not in the queue anymore return nullptr

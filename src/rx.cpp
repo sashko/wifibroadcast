@@ -155,6 +155,10 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
 
         assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
         if(IS_FEC_ENABLED){
+            if(mFECDDecoder== nullptr){
+                std::cout<<"FEC K,N is not set yet\n";
+                return;
+            }
             if(!mFECDDecoder->validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)){
                 count_p_bad++;
             }
@@ -173,11 +177,10 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
             count_p_decryption_ok++;
             IS_FEC_ENABLED=sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS!=0;
             if(IS_FEC_ENABLED){
-                mFECDDecoder=std::make_unique<FECDecoder>();
+                mFECDDecoder=std::make_unique<FECDecoder>(sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS,
+                                                          sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS +
+                                                          sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS);
                 mFECDDecoder->mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
-                mFECDDecoder->resetNewSession(sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS,
-                                            sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS +
-                                            sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS);
             }else{
                 mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
                 mFECDisabledDecoder->mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
