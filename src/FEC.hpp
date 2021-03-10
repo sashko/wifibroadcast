@@ -57,6 +57,8 @@ class FEC{
 public:
     explicit FEC(int k, int n) : FEC_K(k), FEC_N(n){
         assert(n>=k);
+        assert(n!=0);
+        assert(k!=0);
     }
 public:
     const int FEC_K;  // RS number of primary fragments in block default 8
@@ -119,18 +121,12 @@ private:
     uint8_t currFragmentIdx = 0;
     size_t currMaxPacketSize = 0;
     std::vector<uint8_t*> fragments;
-    std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
-    std::vector<uint8_t*> writtenPrimaryFragments;
+    // Pre-allocated to hold all primary and secondary fragments
+    //std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
 public:
     void encodePacket(const uint8_t *buf,const size_t size) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
-        // Use FEC_K==0 to not only disable FEC, but also the RX queue on the RX
-        if(fec.FEC_K == 0) {
-            const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
-            outputDataCallback(nonce,buf,size);
-            currBlockIdx++;
-            return;
-        }
+
         FECPrimaryFragmentHeader dataHeader(size);
         // write the size of the data part into each primary fragment.
         // This is needed for the 'up to n bytes' workaround
@@ -406,19 +402,12 @@ public:
         if(fec== nullptr || fec->FEC_K!=K || fec->FEC_N != N){
             fec=std::make_unique<FEC>(K,N);
         }
-        fecDisabledMapOfReceivedSeqNr.clear();
     }
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
     bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t>& decrypted){
         if(fec==nullptr){
             std::cout<<"FEC K,N is not set yet\n";
             return false;
-        }
-        // Use FEC_K==0 to completely disable FEC and skip the RX queue
-        if(fec->FEC_K == 0) {
-            const auto packetSeq=FEC::calculateBlockIdx(nonce);
-            processRawDataBlockFecDisabled(packetSeq,decrypted);
-            return true;
         }
         // normal FEC processing
         const uint64_t block_idx=FEC::calculateBlockIdx(nonce);
@@ -604,34 +593,6 @@ private:
                 // remove block
                 rx_queue.pop_front();
             }
-        }
-    }
-private:
-    // Add a limit here to not allocate infinite amounts of memory
-    static constexpr std::size_t FEC_DISABLED_MAX_SIZE_OF_MAP=100;
-    std::map<uint64_t,void*> fecDisabledMapOfReceivedSeqNr;
-    //No duplicates, but packets out of order are possible
-    //counting lost packets doesn't work in this mode. It should be done by the upper level
-    //saves the last FEC_DISABLED_MAX_SIZE_OF_MAP sequence numbers. If the sequence number of a new packet is already inside the map, it is discarded (duplicate)
-    void processRawDataBlockFecDisabled(const uint64_t packetSeq,const std::vector<uint8_t>& decrypted){
-        if(seq==0){
-            // first ever packet. Map should be empty
-            fecDisabledMapOfReceivedSeqNr.clear();
-            mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-            fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
-            seq=1;
-        }
-        // check if packet is already known (inside the map)
-        const auto search = fecDisabledMapOfReceivedSeqNr.find(packetSeq);
-        if(search == fecDisabledMapOfReceivedSeqNr.end()){
-            // if packet is not in the map it was not yet received(unless it is older than MAX_SIZE_OF_MAP, but that is basically impossible)
-            mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-            fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
-        }// else this is a duplicate
-        // house keeping, do not increase size to infinity
-        if(fecDisabledMapOfReceivedSeqNr.size() >= FEC_DISABLED_MAX_SIZE_OF_MAP - 1){
-            // remove oldest element
-            fecDisabledMapOfReceivedSeqNr.erase(fecDisabledMapOfReceivedSeqNr.begin());
         }
     }
 public:

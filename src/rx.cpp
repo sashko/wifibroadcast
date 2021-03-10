@@ -39,6 +39,7 @@ RADIO_PORT(radio_port),
 mDecryptor(keypair){
     sockfd = SocketHelper::open_udp_socket_for_tx(client_addr,client_udp_port);
     FECDecoder::mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
+    FECDisabledDecoder::mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
 }
 
 WBReceiver::~WBReceiver() {
@@ -154,9 +155,12 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         count_p_decryption_ok++;
 
         assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
-
-        if(!FECDecoder::validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)){
-            count_p_bad++;
+        if(IS_FEC_ENABLED){
+            if(!FECDecoder::validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)){
+                count_p_bad++;
+            }
+        }else{
+            FECDisabledDecoder::processRawDataBlockFecDisabled(wbDataHeader.nonce,*decryptedPayload);
         }
     }else if(packetPayload[0] == WFB_PACKET_KEY) {
         if (packetPayloadSize != WBSessionKeyPacket::SIZE_BYTES) {
@@ -168,9 +172,12 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         if (mDecryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)) {
             // We got a new session key (aka a session key that has not been received yet)
             count_p_decryption_ok++;
-            FECDecoder::resetNewSession(sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS,
-                                        sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS +
-                                        sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS);
+            IS_FEC_ENABLED=sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS!=0;
+            if(IS_FEC_ENABLED){
+                FECDecoder::resetNewSession(sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS,
+                                            sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS +
+                                            sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS);
+            }
         } else {
             count_p_decryption_ok++;
         }

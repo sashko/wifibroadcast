@@ -19,6 +19,7 @@
 
 #include "Encryption.hpp"
 #include "FEC.hpp"
+#include "FECDisabled.hpp"
 #include "HelperSources/Helper.hpp"
 #include "RawTransmitter.hpp"
 #include "HelperSources/TimeHelper.hpp"
@@ -38,7 +39,8 @@
 // WBTransmitter uses an UDP port as input for the data stream
 // Each input UDP port has to be assigned with a Unique ID to differentiate between streams on the RX
 // It does all the FEC encoding & encryption for this stream, then uses PcapTransmitter to inject the generated packets
-class WBTransmitter: public FECEncoder{
+// FEC can be either enabled or disabled.
+class WBTransmitter: private FECEncoder,FECDisabledEncoder{
 public:
     WBTransmitter(RadiotapHeader radiotapHeader, int k, int m, const std::string &keypair, uint8_t radio_port,
                   int udp_port, const std::string &wlan,std::chrono::milliseconds flushInterval);
@@ -76,6 +78,7 @@ private:
     const std::chrono::milliseconds FLUSH_INTERVAL;
     Chronometer pcapInjectionTime{"PcapInjectionTime"};
     WBSessionKeyPacket sessionKeyPacket;
+    const bool IS_FEC_ENABLED;
 public:
     // run as long as nothing goes completely wrong
     void loop();

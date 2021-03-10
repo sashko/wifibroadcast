@@ -44,7 +44,8 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, int k, int n, const 
         RADIO_PORT(radio_port),
         mEncryptor(keypair),
         mRadiotapHeader(radiotapHeader),
-        FLUSH_INTERVAL(flushInterval){
+        FLUSH_INTERVAL(flushInterval),
+        IS_FEC_ENABLED(k!=0){
     if(FLUSH_INTERVAL>LOG_INTERVAL){
         std::cerr<<"Please use a flush interval smaller than the log interval\n";
     }
@@ -52,7 +53,8 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, int k, int n, const 
         std::cerr<<"Please do not use a flush interval of 0 (would hog the cpu)\n";
     }
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-    outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    FECEncoder::outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    FECDisabledEncoder::outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     mInputSocket=SocketHelper::openUdpSocketForRx(udp_port);
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", udp_port,radio_port,wlan.c_str(),(int)flushInterval.count());
     // Don't forget to write K,N into the session key packet. K,N Doesn't change on the tx
@@ -100,11 +102,15 @@ void WBTransmitter::sendSessionKey() {
 void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
     //std::cout << "WBTransmitter::send_packet\n";
     // this calls a callback internally
-    FECEncoder::encodePacket(buf,size);
-    if(FECEncoder::resetOnOverflow()){
-        // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
-        mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-        sendSessionKey();
+    if(IS_FEC_ENABLED){
+        FECEncoder::encodePacket(buf,size);
+        if(FECEncoder::resetOnOverflow()){
+            // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
+            mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
+            sendSessionKey();
+        }
+    }else{
+        FECDisabledEncoder::encodePacket(buf,size);
     }
 }
 
