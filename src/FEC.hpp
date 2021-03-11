@@ -398,8 +398,6 @@ public:
     typedef std::function<void(const uint8_t * payload,std::size_t payloadSize)> SEND_DECODED_PACKET;
     // WARNING: Don't forget to register this callback !
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;
-private:
-    const FEC fec;
 public:
     // FEC K,N is fixed per session
     void resetNewSession() {
@@ -427,6 +425,7 @@ public:
         return true;
     }
 private:
+    const FEC fec;
     uint64_t seq = 0;
     /**
      * For this Block,
