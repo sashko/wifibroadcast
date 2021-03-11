@@ -143,7 +143,6 @@ public:
             return;
         }
         // once enough data has been buffered, create all the secondary fragments
-        //fec_encode(currMaxPacketSize, (const unsigned char**)blockBuffer.data(), fec.N_PRIMARY_FRAGMENTS, (unsigned char**)&blockBuffer[fec.FEC_K], fec.N_SECONDARY_FRAGMENTS);
         fecEncode(currMaxPacketSize,blockBuffer,fec.N_PRIMARY_FRAGMENTS,fec.N_SECONDARY_FRAGMENTS);
 
         // and send all the secondary fragments one after another
