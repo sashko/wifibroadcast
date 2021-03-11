@@ -296,10 +296,8 @@ public:
         // also do not reconstruct if reconstruction is not needed
         assert(nAvailablePrimaryFragments<fec.FEC_K && nAvailableSecondaryFragments>0);
         // now bring it into a format that the c-style fec implementation understands
-        std::vector<uint8_t*> primaryFragmentsData;
         std::vector<unsigned int> indicesMissingPrimaryFragments;
         for(int i=0;i<fec.FEC_K;i++){
-            primaryFragmentsData.push_back(fragments[i].data());
             // if primary fragment is not available,add its index to the list of missing primary fragments
             if(fragment_map[i]!=AVAILABLE){
                 indicesMissingPrimaryFragments.push_back(i);
@@ -307,18 +305,17 @@ public:
         }
         // each FEC packet has the size of max(size of primary fragments)
         std::size_t maxPacketSizeOfThisBlock=0;
-        std::vector<uint8_t*> secondaryFragmentsData;
         std::vector<unsigned int> indicesAvailableSecondaryFragments;
         for(int i=0;i<fec.N_SECONDARY_FRAGMENTS;i++){
             const int idx=fec.FEC_K+i;
-            secondaryFragmentsData.push_back(fragments[idx].data());
             // if secondary fragment is available,add its index to the list of secondary packets that will be used for reconstruction
             if(fragment_map[idx]==AVAILABLE){
                 indicesAvailableSecondaryFragments.push_back(i);
                 maxPacketSizeOfThisBlock=originalSizeOfFragments.at(idx);
             }
         }
-        fec_decode(maxPacketSizeOfThisBlock, primaryFragmentsData.data(), fec.FEC_K, secondaryFragmentsData.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
+        //fec_decode(maxPacketSizeOfThisBlock, primaryFragmentsData.data(), fec.FEC_K, secondaryFragmentsData.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
+        fecDecode(maxPacketSizeOfThisBlock,fragments,fec.N_PRIMARY_FRAGMENTS,indicesMissingPrimaryFragments,indicesAvailableSecondaryFragments);
         // after the decode step,all previously missing primary fragments have become available - mark them as such
         for(const auto idx:indicesMissingPrimaryFragments){
             fragment_map[idx]=AVAILABLE;
