@@ -55,9 +55,7 @@ struct FECNonce{
 }__attribute__ ((packed));
 static_assert(sizeof(FECNonce)==sizeof(uint64_t));
 static FECNonce fecNonceFrom(const uint64_t nonce){
-    FECNonce ret{};
-    memcpy(&ret,&nonce,sizeof(uint64_t));
-    return ret;
+    return *reinterpret_cast<const FECNonce*>(&nonce);
 }
 
 
