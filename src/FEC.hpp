@@ -27,6 +27,46 @@
 // A secondary fragment is a data correction (FEC) packet
 // K primary and N-K secondary fragments together form a FEC block
 
+// nonce: 64 bit value, consisting of
+// 32 bit block idx
+// 16 bit fragment idx
+// 16 bit "extra data": 1 bit flag and 15 bit number
+// First bit 0: This is a primary fragment. If it is the last primary fragment for this block, number=n of all primary fragments in this block, else n=0
+// First bit 1: This is a secondary fragment. Then number== n of all primary fragments in this block
+/*struct FECNonce{
+    uint32_t blockIdx;
+    uint16_t fragmentIdx;
+    uint8_t flag:1;
+    uint16_t number:15;
+    explicit operator uint64_t()const {
+        uint64_t ret;
+        memcpy(&ret,this,sizeof(uint64_t));
+        return ret;
+        //return *reinterpret_cast<const uint64_t*>(this);
+    }
+}__attribute__ ((packed));
+static_assert(sizeof(FECNonce)==sizeof(uint64_t));*/
+struct FECNonce{
+    uint64_t blockIdx:54;
+    uint8_t fragmentIdx;
+    /*explicit operator uint64_t()const {
+        uint64_t ret;
+        memcpy(&ret,this,sizeof(uint64_t));
+        return ret;
+    }*/
+}__attribute__ ((packed));
+static_assert(sizeof(FECNonce)==sizeof(uint64_t));
+static uint64_t fecNonceTo(const FECNonce& fecNonce){
+    uint64_t ret;
+    memcpy(&ret,&fecNonce,sizeof(uint64_t));
+    return ret;
+}
+static FECNonce fecNonceFrom(const uint64_t nonce){
+    FECNonce ret{};
+    memcpy(&ret,&nonce,sizeof(uint64_t));
+    return ret;
+}
+
 
 // this header is written before the data of each primary FEC fragment
 // ONLY for primary FEC fragments though !
@@ -55,20 +95,21 @@ class FEC{
 public:
     explicit FEC(int k, int n) : FEC_K(k), FEC_N(n){
         assert(n>=k);
-        assert(n!=0);
-        assert(k!=0);
+        assert(n>0);
+        assert(k>0);
     }
 public:
-    const int FEC_K;  // RS number of primary fragments in block default 8
-    const int FEC_N;  // RS total number of fragments in block default 12
-    const int N_PRIMARY_FRAGMENTS=FEC_K;
-    const int N_SECONDARY_FRAGMENTS=FEC_N-FEC_K;
+    const unsigned int FEC_K;  // RS number of primary fragments in block default 8
+    const unsigned int FEC_N;  // RS total number of fragments in block default 12
+    const unsigned int N_PRIMARY_FRAGMENTS=FEC_K;
+    const unsigned int N_SECONDARY_FRAGMENTS=FEC_N-FEC_K;
     // Helper functions
     // nonce:  56bit block_idx + 8bit fragment_idx
-    static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
-    static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
+    //static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
+    //static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
+    static constexpr uint64_t MAX_BLOCK_IDX=std::numeric_limits<uint32_t>::max();
     // conversion from / to nonce
-    static uint64_t calculateNonce(const uint64_t blockIdx, const uint8_t fragmentIdx){
+    /*static uint64_t calculateNonce(const uint64_t blockIdx, const uint8_t fragmentIdx){
         assert(blockIdx <= MAX_BLOCK_IDX); // should never happen
         return htobe64(((blockIdx & BLOCK_IDX_MASK) << 8) + fragmentIdx);
     }
@@ -77,8 +118,9 @@ public:
     }
     static uint8_t calculateFragmentIdx(const uint64_t nonce){
         return (uint8_t) (be64toh(nonce) & 0xff);
-    }
+    }*/
 };
+
 
 // 1510-(13+24+9+16+2)
 //A: Any UDP with packet size <= 1466. For example x264 inside RTP or Mavlink.
@@ -108,8 +150,8 @@ public:
     // K, N is fixed on the encoder side
     const FEC fec;
 private:
-    uint64_t currBlockIdx = 0; //block_idx << 8 + fragment_idx = nonce (64bit)
-    uint8_t currFragmentIdx = 0;
+    uint32_t currBlockIdx = 0; //block_idx << 8 + fragment_idx = nonce (64bit)
+    uint16_t currFragmentIdx = 0;
     size_t currMaxPacketSize = 0;
     // Pre-allocated to hold all primary and secondary fragments
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
@@ -183,9 +225,10 @@ private:
     // construct WB data packet, from either primary or secondary fragment
     // then forward via the callback
     void sendBlockFragment(const std::size_t packet_size) const {
-        const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
+        //const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
+        const FECNonce nonce{currBlockIdx,(uint8_t)currFragmentIdx};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
-        outputDataCallback(nonce,dataP,packet_size);
+        outputDataCallback(fecNonceTo(nonce),dataP,packet_size);
     }
 };
 
@@ -377,20 +420,19 @@ public:
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
     bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t>& decrypted){
         // normal FEC processing
-        const uint64_t block_idx=FEC::calculateBlockIdx(nonce);
-        const uint8_t fragment_idx=FEC::calculateFragmentIdx(nonce);
+        const FECNonce fecNonce=fecNonceFrom(nonce);
 
         // Should never happen due to generating new session key on tx side
-        if (block_idx > FEC::MAX_BLOCK_IDX) {
+        if (fecNonce.blockIdx > FEC::MAX_BLOCK_IDX) {
             std::cerr<<"block_idx overflow\n";
             return false;
         }
         // fragment index must be in the range [0,...,FEC_N[
-        if (fragment_idx >= fec.FEC_N) {
-            std::cerr<<"invalid fragment_idx:"<<fragment_idx<<"\n";
+        if (fecNonce.fragmentIdx >= fec.FEC_N) {
+            std::cerr<<"invalid fragment_idx:"<<fecNonce.fragmentIdx<<"\n";
             return false;
         }
-        processFECBlockWitRxQueue(block_idx, fragment_idx, decrypted);
+        processFECBlockWitRxQueue(fecNonce, decrypted);
         return true;
     }
 private:
@@ -509,17 +551,17 @@ private:
     }
 
 
-    void processFECBlockWitRxQueue(const uint64_t block_idx, const uint8_t fragment_idx, const std::vector<uint8_t>& decrypted){
-        auto blockP= rxRingFindCreateBlockByIdx(block_idx);
+    void processFECBlockWitRxQueue(const FECNonce& fecNonce, const std::vector<uint8_t>& decrypted){
+        auto blockP= rxRingFindCreateBlockByIdx(fecNonce.blockIdx);
         //ignore already processed blocks
         if (blockP==nullptr) return;
         // cannot be nullptr
         RxBlock& block = *blockP;
         // ignore already processed fragments
-        if(block.hasFragment(fragment_idx)){
+        if(block.hasFragment(fecNonce.fragmentIdx)){
             return;
         }
-        block.addFragment(fragment_idx, decrypted.data(), decrypted.size());
+        block.addFragment(fecNonce.fragmentIdx, decrypted.data(), decrypted.size());
         if (block == *rx_queue.front()) {
             //std::cout<<"In front\n";
             // we are in the front of the queue (e.g. at the oldest block)
