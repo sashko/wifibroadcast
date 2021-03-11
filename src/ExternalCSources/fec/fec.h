@@ -64,6 +64,7 @@ void fecEncode(unsigned int blockSize, const std::vector<const uint8_t*>& primar
 template<std::size_t S>
 void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
     assert(blockBuffer.size()>=nPrimaryFragments+nSecondaryFragments);
+    assert(blockSize<=S);
     std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
     std::vector<uint8_t*> secondaryFragments(nSecondaryFragments);
     for(int i=0;i<nPrimaryFragments;i++){
@@ -75,7 +76,27 @@ void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockB
     fec_encode(blockSize, (const unsigned char**)primaryFragments.data(),primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
 }
 
-
+template<std::size_t S>
+void fecDecode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,
+               const std::vector<unsigned int>& indicesMissingPrimaryFragments,const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
+    // first validate input.
+    assert(blockSize<=S);
+    assert(indicesMissingPrimaryFragments.size()>=indicesAvailableSecondaryFragments.size());
+    // I treat calling fecDecode() with more primary fragments than needed for the reconstruction step as an error here
+    // (because it would create unneeded latency) though it would work just fine
+    assert(indicesMissingPrimaryFragments.size()==indicesAvailableSecondaryFragments.size());
+    // n of all theoretically possible locations for secondary fragments (could be optimized)
+    const auto nTheoreticalSecondaryFragments=blockBuffer.size()-nPrimaryFragments;
+    std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
+    std::vector<uint8_t*> secondaryFragments(nTheoreticalSecondaryFragments);
+    for(int i=0;i<nPrimaryFragments;i++){
+        primaryFragments[i]=blockBuffer[i].data();
+    }
+    for(int i=0;i<nTheoreticalSecondaryFragments;i++){
+        secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
+    }
+    fec_decode(blockSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
+}
 
 /**
  * @param blockSize Size of each FEC block,
