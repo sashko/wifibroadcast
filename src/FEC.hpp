@@ -49,18 +49,11 @@ static_assert(sizeof(FECNonce)==sizeof(uint64_t));*/
 struct FECNonce{
     uint64_t blockIdx:54;
     uint8_t fragmentIdx;
-    /*explicit operator uint64_t()const {
-        uint64_t ret;
-        memcpy(&ret,this,sizeof(uint64_t));
-        return ret;
-    }*/
+    explicit operator uint64_t()const {
+        return *reinterpret_cast<const uint64_t*>(this);
+    }
 }__attribute__ ((packed));
 static_assert(sizeof(FECNonce)==sizeof(uint64_t));
-static uint64_t fecNonceTo(const FECNonce& fecNonce){
-    uint64_t ret;
-    memcpy(&ret,&fecNonce,sizeof(uint64_t));
-    return ret;
-}
 static FECNonce fecNonceFrom(const uint64_t nonce){
     FECNonce ret{};
     memcpy(&ret,&nonce,sizeof(uint64_t));
@@ -228,7 +221,7 @@ private:
         //const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
         const FECNonce nonce{currBlockIdx,(uint8_t)currFragmentIdx};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
-        outputDataCallback(fecNonceTo(nonce),dataP,packet_size);
+        outputDataCallback((uint64_t)nonce,dataP,packet_size);
     }
 };
 
