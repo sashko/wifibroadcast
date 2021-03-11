@@ -99,17 +99,6 @@ public:
     //static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
     //static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
     static constexpr uint64_t MAX_BLOCK_IDX=std::numeric_limits<uint32_t>::max();
-    // conversion from / to nonce
-    /*static uint64_t calculateNonce(const uint64_t blockIdx, const uint8_t fragmentIdx){
-        assert(blockIdx <= MAX_BLOCK_IDX); // should never happen
-        return htobe64(((blockIdx & BLOCK_IDX_MASK) << 8) + fragmentIdx);
-    }
-    static uint64_t calculateBlockIdx(const uint64_t nonce){
-        return be64toh(nonce) >> 8;
-    }
-    static uint8_t calculateFragmentIdx(const uint64_t nonce){
-        return (uint8_t) (be64toh(nonce) & 0xff);
-    }*/
 };
 
 
