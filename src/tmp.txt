@@ -199,3 +199,10 @@ struct extraData{
 };
 
 
+static uint64_t calculateNonce(const uint32_t blockIdx,const uint16_t fragmentIdx,const uint16_t extradata){
+        uint64_t ret;
+        memcpy(&((uint8_t*)&ret)[0],&blockIdx,sizeof(blockIdx));
+        memcpy(&((uint8_t*)&ret)[sizeof(blockIdx)],&fragmentIdx,sizeof(fragmentIdx));
+        memcpy(&((uint8_t*)&ret)[sizeof(blockIdx)+sizeof(fragmentIdx)],&extradata,sizeof(extradata));
+        return ret;
+    }

@@ -19,6 +19,7 @@
 
 // FEC Disabled is an optional user input (K==N==0). In this case, These 2 classes are used.
 
+// usage of nonce: Simple, uint64_t number increasing with each packet
 class FECDisabledEncoder{
 public:
     typedef std::function<void(const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
