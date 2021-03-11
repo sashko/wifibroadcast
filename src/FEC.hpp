@@ -108,6 +108,7 @@ public:
         for (int i = 0; i < fec.FEC_N; i++) {
             fragments[i] = new uint8_t[FEC_MAX_PACKET_SIZE];
         }
+        blockBuffer.resize(std::numeric_limits<uint8_t>::max());
     }
     ~FECEncoder() {
         for (int i = 0; i < fec.FEC_N; i++) {
@@ -122,7 +123,7 @@ private:
     size_t currMaxPacketSize = 0;
     std::vector<uint8_t*> fragments;
     // Pre-allocated to hold all primary and secondary fragments
-    //std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
+    std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
 public:
     void encodePacket(const uint8_t *buf,const size_t size) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
@@ -139,7 +140,7 @@ public:
         memset(fragments[currFragmentIdx] + writtenDataSize, '\0', FEC_MAX_PACKET_SIZE - writtenDataSize);
 
         // send primary fragments immediately before calculating the FECs
-        send_block_fragment(sizeof(dataHeader) + size);
+        sendBlockFragment(sizeof(dataHeader) + size);
         // the packet size for FEC encoding is determined by calculating the max of all primary fragments in this block.
         // Since the rest of the bytes are zeroed out we can run FEC with dynamic packet size.
         // As long as the deviation in packet size of primary fragments isn't too high the loss in raw bandwidth is negligible
@@ -153,17 +154,11 @@ public:
             return;
         }
         // once enough data has been buffered, create all the secondary fragments
-        std::vector<uint8_t*> primaryFragmentsList(fec.N_PRIMARY_FRAGMENTS);
-        for(int i=0;i<fec.N_PRIMARY_FRAGMENTS;i++){
-            primaryFragmentsList[i]=(fragments[i]);
-        }
-        //fecEncode((const uint8_t **) block, block + FEC_K, max_packet_size);
         fec_encode(currMaxPacketSize, (const unsigned char**)fragments.data(), fec.N_PRIMARY_FRAGMENTS, (unsigned char**)&fragments[fec.FEC_K], fec.N_SECONDARY_FRAGMENTS);
-        //fecEncode(max_packet_size,fragments,N_PRIMARY_FRAGMENTS,N_SECONDARY_FRAGMENTS);
 
         // and send all the secondary fragments one after another
         while (currFragmentIdx < fec.FEC_N) {
-            send_block_fragment(currMaxPacketSize);
+            sendBlockFragment(currMaxPacketSize);
             currFragmentIdx += 1;
         }
         currBlockIdx += 1;
@@ -198,7 +193,7 @@ public:
 private:
     // construct WB data packet, from either primary or secondary fragment
     // then forward via the callback
-    void send_block_fragment(const std::size_t packet_size) const {
+    void sendBlockFragment(const std::size_t packet_size) const {
         const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
         const uint8_t *dataP = fragments[currFragmentIdx];
         outputDataCallback(nonce,dataP,packet_size);
@@ -384,8 +379,6 @@ public:
     // WARNING: Don't forget to register this callback !
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;
 private:
-    //K,N can change on the receiver side !
-    //std::unique_ptr<FEC> fec=nullptr;
     const FEC fec;
 public:
     // FEC K,N is fixed per session

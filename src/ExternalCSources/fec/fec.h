@@ -62,9 +62,20 @@ void fecEncode(unsigned int blockSize, const std::vector<const uint8_t*>& primar
 }
 
 template<std::size_t S>
-void fecEncode(unsigned int blockSize,const std::vector<std::array<uint8_t,S>>& primaryFragments,std::vector<std::array<uint8_t,S>>& secondaryFragments){
-
+void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
+    assert(blockBuffer.size()>=nPrimaryFragments+nSecondaryFragments);
+    std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
+    std::vector<uint8_t*> secondaryFragments(nSecondaryFragments);
+    for(int i=0;i<nPrimaryFragments;i++){
+        primaryFragments[i]=blockBuffer[i].data();
+    }
+    for(int i=0;i<nSecondaryFragments;i++){
+        secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
+    }
+    fec_encode(blockSize, (const unsigned char**)primaryFragments.data(),primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
 }
+
+
 
 /**
  * @param blockSize Size of each FEC block,
