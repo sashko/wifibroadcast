@@ -174,6 +174,28 @@ void fecEncode(unsigned int blockSize, const std::vector<const uint8_t*>& primar
 
 
 
+struct X1{
+    uint8_t isPrimaryF:1;
+    uint16_t packetSize:15;
+}__attribute__ ((packed));
+static_assert(sizeof(X1) == 2, "ALWAYS_TRUE");
 
+struct X2{
+    uint8_t isPrimaryF:1;
+    uint16_t nProtectedPrimaryFragments:15;
+};
+static_assert(sizeof(X2) == 2, "ALWAYS_TRUE");
+
+// With each FEC secondary packet comes the information how many primary fragments it protects.
+// This number is the same for each secondary fragment in a block, but since we don't know which secondary fragment we might loose beforehand
+// It has to be duplicated with each secondary fragment.
+
+
+struct extraData{
+    uint8_t isSecondaryFragment:1;
+    // if this is a primary fragment (first bit not set): primary fragment index
+    // if this is a secondary fragment (first bit set): secondary fragment index ( ? bits + n of protected primary fragments)
+    uint32_t fragmentIdx : 31;
+};
 
 

@@ -119,7 +119,10 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
 }
 
 void WBTransmitter::loop() {
-    std::array<uint8_t,FEC_MAX_PAYLOAD_SIZE> buf{};
+    constexpr auto MAX_UDP_PAYLOAD_SIZE=65507;
+    // If we'd use a smaller buffer, in case the user doesn't respect the max packet size, the OS will silently drop all bytes exceeding FEC_MAX_PAYLOAD_BYTES.
+    // This way we can throw an error in case the above happens.
+    std::array<uint8_t,MAX_UDP_PAYLOAD_SIZE> buf{};
     std::chrono::steady_clock::time_point session_key_announce_ts{};
     std::chrono::steady_clock::time_point log_ts{};
     // send the key a couple of times on startup to increase the likeliness it is received
@@ -147,13 +150,16 @@ void WBTransmitter::loop() {
         //}
 
         // we set the timeout earlier when creating the socket
-        const ssize_t message_length = recvfrom(mInputSocket, buf.data(), FEC_MAX_PAYLOAD_SIZE, 0, nullptr, nullptr);
+        const ssize_t message_length = recvfrom(mInputSocket, buf.data(),buf.size(), 0, nullptr, nullptr);
         if(std::chrono::steady_clock::now()>=log_ts){
             const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
             std::cout<<runTimeMs<<"\tTX "<<nPacketsFromUdpPort<<":"<<nInjectedPackets<<"\n";
             log_ts= std::chrono::steady_clock::now() + WBTransmitter::LOG_INTERVAL;
         }
         if(message_length>0){
+            if(message_length>FEC_MAX_PAYLOAD_SIZE){
+                throw std::runtime_error(StringFormat::convert("Error: This link doesn't support payload exceeding %d", FEC_MAX_PAYLOAD_SIZE));
+            }
             nPacketsFromUdpPort++;
             const auto cur_ts=std::chrono::steady_clock::now();
             // send session key in SESSION_KEY_ANNOUNCE_DELTA intervals

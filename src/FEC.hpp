@@ -27,36 +27,27 @@
 // A secondary fragment is a data correction (FEC) packet
 // K primary and N-K secondary fragments together form a FEC block
 
+
 // this header is written before the data of each primary FEC fragment
-// ONLY for primary FEC fragments though ! (up to n bytes workaround)
+// ONLY for primary FEC fragments though !
+// (up to n bytes workaround,in conjunction with zeroing out bytes, but never transmitting the zeroed out bytes)
 class FECPrimaryFragmentHeader {
 private:
     // private member to make sure it is always used properly
     uint16_t packet_size;
-    //uint16_t packet_size : 15; // big endian | 15 bits packet size
-    //bool isSecondaryFragment: 1 ;          //|  1 bit flag, set if this is a secondary (FEC) packet
 public:
     explicit FECPrimaryFragmentHeader(const std::size_t packetSize1){
-        //std::cout<<"packetS"<<packetSize1<<"\n";
-        //assert(packetSize1<=pow(2,15));
+        assert(packetSize1<=std::numeric_limits<uint16_t>::max());
         // convert to big endian if needed
         packet_size=htobe16(packetSize1);
-        //packet_size=packetSize1;
     }
     // convert from big endian if needed
     std::size_t getPrimaryFragmentSize()const{
         return be16toh(packet_size);
-        //return (std::size_t) packet_size;
     }
 }  __attribute__ ((packed));
 static_assert(sizeof(FECPrimaryFragmentHeader) == 2, "ALWAYS_TRUE");
 
-struct extraData{
-    uint8_t isSecondaryFragment:1;
-    // if this is a primary fragment (first bit not set): primary fragment index
-    // if this is a secondary fragment (first bit set): secondary fragment index ( ? bits + n of protected primary fragments)
-    uint32_t fragmentIdx : 31;
-};
 
 // c++ wrapper for the FEC library
 // If K and N were known at compile time we could make this much cleaner !
