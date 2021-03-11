@@ -22,8 +22,8 @@ MY_RX=$TAOBAO
 WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
 #WFB_FOLDER="/home/pi/Desktop/wifibroadcast"
 
-FEC_K=1
-FEC_N=2
+FEC_K=2
+FEC_N=4
 
 MY_WIFI_CHANNEL=149 #5ghz channel
 #MY_WIFI_CHANNEL=13 #2.4ghz channel
