@@ -51,7 +51,12 @@ void fec_license(void);
 #include <vector>
 #include <array>
 
-
+/**
+ * @param blockSize size of each data block to use for the FEC encoding step. FEC only works on blocks the same size
+ * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
+ * During the FEC step, @param nPrimaryFragments fragments are used to calculate nSecondaryFragments FEC blocks.
+ * After the FEC step,beginning at idx @param nPrimaryFragments ,@param nSecondaryFragments are stored at the following indices, each of size @param blockSize
+ */
 template<std::size_t S>
 void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
     assert(blockBuffer.size()>=nPrimaryFragments+nSecondaryFragments);
@@ -67,6 +72,12 @@ void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockB
     fec_encode(blockSize, (const unsigned char**)primaryFragments.data(),primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
 }
 
+/**
+ * @param blockSize size of each data block to use for the FEC encoding step. FEC only works on blocks the same size
+ * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
+ * During the FEC step, all missing primary Fragments (indices from @param indicesMissingPrimaryFragments) are reconstructed from the FEC packets,
+ * using indices from @param indicesAvailableSecondaryFragments
+ */
 template<std::size_t S>
 void fecDecode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,
                const std::vector<unsigned int>& indicesMissingPrimaryFragments,const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
@@ -88,14 +99,6 @@ void fecDecode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockB
     }
     fec_decode(blockSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
 }
-
-/**
- * @param blockSize Size of each FEC block,
- * @param primaryFragments list of pointers to raw data chunks (read and write). Mark missing primary fragments with nullptr.
- * @param secondaryFragments list of pointers to raw data chunks (read only). Mark missing secondary fragments with nullptr.
- */
-//void fecDecode(unsigned int blockSize,const std::vector<uint8_t*>& primaryFragments,const std::vector<uint8_t*>& secondaryFragments){
-//}
 
 #endif
 
