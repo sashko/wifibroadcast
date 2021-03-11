@@ -47,7 +47,7 @@ static_assert(sizeof(FECNonce)==sizeof(uint64_t));
 static FECNonce fecNonceFrom(const uint64_t nonce){
     return *reinterpret_cast<const FECNonce*>(&nonce);
 }
-
+static constexpr uint64_t MAX_BLOCK_IDX=std::numeric_limits<uint32_t>::max();
 
 // this header is written before the data of each primary FEC fragment
 // ONLY for primary FEC fragments though !
@@ -70,8 +70,7 @@ public:
 static_assert(sizeof(FECPrimaryFragmentHeader) == 2, "ALWAYS_TRUE");
 
 
-// c++ wrapper for the FEC library
-// If K and N were known at compile time we could make this much cleaner !
+// Validates FEC parameters,also converts from K:N to N p.p and N s.p
 class FEC{
 public:
     explicit FEC(int k, int n) : FEC_K(k), FEC_N(n){
@@ -84,11 +83,6 @@ public:
     const unsigned int FEC_N;  // RS total number of fragments in block default 12
     const unsigned int N_PRIMARY_FRAGMENTS=FEC_K;
     const unsigned int N_SECONDARY_FRAGMENTS=FEC_N-FEC_K;
-    // Helper functions
-    // nonce:  56bit block_idx + 8bit fragment_idx
-    //static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
-    //static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
-    static constexpr uint64_t MAX_BLOCK_IDX=std::numeric_limits<uint32_t>::max();
 };
 
 
@@ -170,7 +164,7 @@ public:
     // returns true if the block_idx has reached its maximum
     // You want to send a new session key in this case
     bool resetOnOverflow() {
-        if (currBlockIdx > FEC::MAX_BLOCK_IDX) {
+        if (currBlockIdx > MAX_BLOCK_IDX) {
             currBlockIdx = 0;
             currFragmentIdx=0;
             return true;

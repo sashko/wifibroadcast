@@ -222,3 +222,8 @@ static uint64_t calculateNonce(const uint32_t blockIdx,const uint16_t fragmentId
     static uint8_t calculateFragmentIdx(const uint64_t nonce){
         return (uint8_t) (be64toh(nonce) & 0xff);
     }*/
+
+     // Helper functions
+        // nonce:  56bit block_idx + 8bit fragment_idx
+        //static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
+        //static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
