@@ -51,15 +51,6 @@ void fec_license(void);
 #include <vector>
 #include <array>
 
-/**
- * @param blockSize Size of each FEC block. Each block must have the same size for FEC.
- * @param primaryFragments list of pointers to raw data chunks (read-only), has to be pre-allocated.
- * @param secondaryFragments list of pointers to raw data chunks (write-only), has to be pre-allocated.
- * As many fec_blocks pointers as supplied here, this many fec secondary packets will be generated
- */
-void fecEncode(unsigned int blockSize, const std::vector<const uint8_t*>& primaryFragments,const std::vector<uint8_t*>& secondaryFragments){
-    fec_encode(blockSize, (const unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
-}
 
 template<std::size_t S>
 void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
