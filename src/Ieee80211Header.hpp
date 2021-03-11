@@ -22,6 +22,7 @@
 // info https://witestlab.poly.edu/blog/802-11-wireless-lan-2/
 // In the way this is declared it is an IEE80211 data frame
 // https://en.wikipedia.org/wiki/802.11_Frame_Types
+//TODO maybe use https://elixir.bootlin.com/linux/latest/source/include/linux/ieee80211.h
 class Ieee80211Header{
 public:
     static constexpr auto SIZE_BYTES=24;

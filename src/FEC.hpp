@@ -51,6 +51,13 @@ public:
 }  __attribute__ ((packed));
 static_assert(sizeof(FECPrimaryFragmentHeader) == 2, "ALWAYS_TRUE");
 
+struct extraData{
+    uint8_t isSecondaryFragment:1;
+    // if this is a primary fragment (first bit not set): primary fragment index
+    // if this is a secondary fragment (first bit set): secondary fragment index ( ? bits + n of protected primary fragments)
+    uint32_t fragmentIdx : 31;
+};
+
 // c++ wrapper for the FEC library
 // If K and N were known at compile time we could make this much cleaner !
 class FEC{
