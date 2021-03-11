@@ -27,28 +27,18 @@
 // A secondary fragment is a data correction (FEC) packet
 // K primary and N-K secondary fragments together form a FEC block
 
+static_assert(__BYTE_ORDER == __LITTLE_ENDIAN,"This code is written for little endian only !");
 // nonce: 64 bit value, consisting of
 // 32 bit block idx
 // 16 bit fragment idx
 // 16 bit "extra data": 1 bit flag and 15 bit number
-// First bit 0: This is a primary fragment. If it is the last primary fragment for this block, number=n of all primary fragments in this block, else n=0
-// First bit 1: This is a secondary fragment. Then number== n of all primary fragments in this block
-/*struct FECNonce{
+// flag==0: This is a primary fragment. If it is the last primary fragment for this block, number=n of all primary fragments in this block, else number=0
+// flag==1: This is a secondary fragment. Then number== n of all primary fragments in this block
+struct FECNonce{
     uint32_t blockIdx;
     uint16_t fragmentIdx;
     uint8_t flag:1;
     uint16_t number:15;
-    explicit operator uint64_t()const {
-        uint64_t ret;
-        memcpy(&ret,this,sizeof(uint64_t));
-        return ret;
-        //return *reinterpret_cast<const uint64_t*>(this);
-    }
-}__attribute__ ((packed));
-static_assert(sizeof(FECNonce)==sizeof(uint64_t));*/
-struct FECNonce{
-    uint64_t blockIdx:54;
-    uint8_t fragmentIdx;
     explicit operator uint64_t()const {
         return *reinterpret_cast<const uint64_t*>(this);
     }
@@ -206,7 +196,9 @@ private:
     // then forward via the callback
     void sendBlockFragment(const std::size_t packet_size) const {
         //const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
-        const FECNonce nonce{currBlockIdx,(uint8_t)currFragmentIdx};
+        const bool isSecondaryFragment =currFragmentIdx>fec.N_PRIMARY_FRAGMENTS;
+        const uint16_t number=currFragmentIdx==fec.N_PRIMARY_FRAGMENTS ? fec.N_PRIMARY_FRAGMENTS : 0;
+        const FECNonce nonce{currBlockIdx,currFragmentIdx,isSecondaryFragment,number};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
         outputDataCallback((uint64_t)nonce,dataP,packet_size);
     }
