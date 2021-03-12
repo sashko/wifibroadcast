@@ -221,12 +221,9 @@ private:
 class RxBlock{
 public:
     explicit RxBlock(const uint64_t blockIdx1):
-            blockIdx(blockIdx1),  fragment_map(MAX_N_FRAGMENTS_PER_BLOCK, FragmentStatus::UNAVAILABLE), blockBuffer(MAX_N_FRAGMENTS_PER_BLOCK){
-        nAlreadyForwardedPrimaryFragments = 0;
-        nAvailablePrimaryFragments=0;
-        nAvailableSecondaryFragments=0;
-        // mark every fragment as not yet received
-        std::fill(fragment_map.begin(),fragment_map.end(),FragmentStatus::UNAVAILABLE);
+            blockIdx(blockIdx1),
+            fragment_map(MAX_N_FRAGMENTS_PER_BLOCK, FragmentStatus::UNAVAILABLE), //after creation of the RxBlock every f. is marked as unavailable
+            blockBuffer(MAX_N_FRAGMENTS_PER_BLOCK){
         creationTime=std::chrono::steady_clock::now();
     }
     // No copy constructor for safety
@@ -375,8 +372,6 @@ public:
         return creationTime;
     }
 private:
-    //reference to the FEC decoder (needed for k,n). Doesn't change
-    //const FEC& fec;
     // the block idx marks which block this element refers to
     const uint64_t blockIdx=0;
     // n of primary fragments that are already sent out
