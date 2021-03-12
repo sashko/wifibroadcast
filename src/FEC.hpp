@@ -25,7 +25,9 @@
 // I use (and highly recommend this to anyone else) the following notation:
 // A primary fragment is a data packet
 // A secondary fragment is a data correction (FEC) packet
-// K primary and N-K secondary fragments together form a FEC block
+// K primary and N-K secondary fragments together form a FEC block,
+// On the rx though,for decoding, you don't need to know the n of secondary fragments
+// created on the encoder - since it doesn't matter which secondary fragments you get,you either get "enough" for FEC step or "not enough" for FEC step
 
 static_assert(__BYTE_ORDER == __LITTLE_ENDIAN,"This code is written for little endian only !");
 // nonce: 64 bit value, consisting of
@@ -91,7 +93,8 @@ public:
 static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
 static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(FECPrimaryFragmentHeader);
 static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
-// max 255 primary and secondary fragments together
+// max 255 primary and secondary fragments together for now. Theoretically, this implementation has enough bytes in the header for
+// up to 15 bit fragment indices, 2^15=32768
 static constexpr const auto MAX_N_FRAGMENTS_PER_BLOCK=255;
 
 // Takes a continuous stream of packets and
@@ -251,7 +254,9 @@ public:
     }
     // returns true if enough FEC secondary fragments are available to replace all missing primary fragments
     bool allPrimaryFragmentsCanBeRecovered()const{
+        // return false if k is not known for this block yet
         if(fec_k==-1)return false;
+        // ready for FEC step if we have as many secondary fragments as we are missing on primary fragments
         if(nAvailablePrimaryFragments+nAvailableSecondaryFragments>=fec_k)return true;
         return false;
     }
@@ -392,7 +397,8 @@ private:
     int nAvailablePrimaryFragments=0;
     int nAvailableSecondaryFragments=0;
     std::chrono::steady_clock::time_point creationTime;
-    //
+    // we don't know how many primary fragments this block contains until we either receive the last primary fragment for this block
+    // or receive any secondary fragment.
     int fec_k=-1;
 };
 
