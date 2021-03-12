@@ -374,11 +374,10 @@ public:
 private:
     // the block idx marks which block this element refers to
     const uint64_t blockIdx=0;
-    // n of primary fragments that are already sent out
+    // n of primary fragments that are already pulled out
     int nAlreadyForwardedPrimaryFragments=0;
     // for each fragment (via fragment_idx) store if it has been received yet
     enum FragmentStatus{UNAVAILABLE=0,AVAILABLE=1};
-    // size of all these vectors is always FEC_N
     std::vector<FragmentStatus> fragment_map;
     // holds all the data for all received fragments (if fragment_map says UNAVALIABLE at this position, content is undefined)
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
