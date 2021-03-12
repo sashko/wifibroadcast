@@ -287,13 +287,14 @@ public:
             }
         }else{
             nAvailableSecondaryFragments++;
-            // when we receive any secondary fragment we also know k for this block
+            // when we receive any secondary fragment we now know k for this block
             if(fec_k==-1){
                 fec_k=fecNonce.number;
                 //std::cout<<"K is known now(S)"<<fec_k<<"\n";
             }else{
                 assert(fec_k==fecNonce.number);
             }
+            // and we also know the packet size used for the FEC step
             if(sizeOfSecondaryFragments==-1){
                 sizeOfSecondaryFragments=dataLen;
             }else{
@@ -301,11 +302,6 @@ public:
             }
         }
         //std::cout<<"D:"<<fecNonce.blockIdx<<" "<<fecNonce.fragmentIdx<<" "<<(int)fecNonce.flag<<" "<<(int)fecNonce.number<<"\n";
-        //if(fecNonce.fragmentIdx<fec.FEC_K){
-        //    nAvailablePrimaryFragments++;
-        //}else{
-        //    nAvailableSecondaryFragments++;
-        //}
     }
     // returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed). Once an index is returned here, it won't be returned again
     // (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
@@ -375,9 +371,6 @@ public:
     uint64_t getBlockIdx()const{
         return blockIdx;
     }
-    //uint64_t calculateSequenceNumber(uint8_t fragmentIdx)const{
-    //    return fragmentIdx + blockIdx * fec.FEC_K;
-    //}
     std::chrono::steady_clock::time_point getCreationTime()const{
         return creationTime;
     }
@@ -394,14 +387,14 @@ private:
     std::vector<FragmentStatus> fragment_map;
     // holds all the data for all received fragments (if fragment_map says UNAVALIABLE at this position, content is undefined)
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
-    // for the fec step, we need the size of the fec secondary fragments, which should be equal for all secondary fragments
-    int sizeOfSecondaryFragments=-1;
     int nAvailablePrimaryFragments=0;
     int nAvailableSecondaryFragments=0;
     std::chrono::steady_clock::time_point creationTime;
     // we don't know how many primary fragments this block contains until we either receive the last primary fragment for this block
     // or receive any secondary fragment.
     int fec_k=-1;
+    // for the fec step, we need the size of the fec secondary fragments, which should be equal for all secondary fragments
+    int sizeOfSecondaryFragments=-1;
 };
 
 
