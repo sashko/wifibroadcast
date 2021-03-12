@@ -91,6 +91,8 @@ public:
 static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
 static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(FECPrimaryFragmentHeader);
 static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
+// max 255 primary and secondary fragments together
+static constexpr const auto MAX_N_FRAGMENTS_PER_BLOCK=255;
 
 // Takes a continuous stream of packets and
 // encodes them via FEC such that they can be decoded by FECDecoder
@@ -215,8 +217,8 @@ private:
 // or if it is ready for the FEC reconstruction step.
 class RxBlock{
 public:
-    explicit RxBlock(const FEC& fec, const uint64_t blockIdx1):
-            blockIdx(blockIdx1),  fragment_map(fec.FEC_N, FragmentStatus::UNAVAILABLE), blockBuffer(fec.FEC_N), originalSizeOfFragments(fec.FEC_N){
+    explicit RxBlock(const uint64_t blockIdx1):
+            blockIdx(blockIdx1),  fragment_map(MAX_N_FRAGMENTS_PER_BLOCK, FragmentStatus::UNAVAILABLE), blockBuffer(MAX_N_FRAGMENTS_PER_BLOCK), originalSizeOfFragments(MAX_N_FRAGMENTS_PER_BLOCK){
         nAlreadyForwardedPrimaryFragments = 0;
         nAvailablePrimaryFragments=0;
         nAvailableSecondaryFragments=0;
@@ -502,7 +504,7 @@ private:
         }
         // we can return early if this operation doesn't exceed the size limit
         if(rx_queue.size() < RX_QUEUE_MAX_SIZE){
-            rx_queue.push_back(std::make_unique<RxBlock>(fec, blockIdx));
+            rx_queue.push_back(std::make_unique<RxBlock>(blockIdx));
             return;
         }
         //Ring overflow. This means that there are more unfinished blocks than ring size
@@ -519,7 +521,7 @@ private:
         rx_queue.pop_front();
 
         // now we are guaranteed to have space for one new block
-        rx_queue.push_back(std::make_unique<RxBlock>(fec, blockIdx));
+        rx_queue.push_back(std::make_unique<RxBlock>(blockIdx));
     }
 
     // If block is already known and not in the queue anymore return nullptr
