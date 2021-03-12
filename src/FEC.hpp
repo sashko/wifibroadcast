@@ -195,7 +195,6 @@ private:
     // construct WB data packet, from either primary or secondary fragment
     // then forward via the callback
     void sendBlockFragment(const std::size_t packet_size) const {
-        //const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
         // remember we start counting from 0 not 1
         const bool isSecondaryFragment =currFragmentIdx>=fec.N_PRIMARY_FRAGMENTS;
         uint16_t number;
