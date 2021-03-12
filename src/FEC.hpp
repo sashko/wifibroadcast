@@ -54,12 +54,12 @@ static constexpr uint64_t MAX_BLOCK_IDX=std::numeric_limits<uint32_t>::max();
 // this header is written before the data of each primary FEC fragment
 // ONLY for primary FEC fragments though !
 // (up to n bytes workaround,in conjunction with zeroing out bytes, but never transmitting the zeroed out bytes)
-class FECPrimaryFragmentHeader {
+class FECPayloadHdr {
 private:
     // private member to make sure it is always used properly
     uint16_t packet_size;
 public:
-    explicit FECPrimaryFragmentHeader(const std::size_t packetSize1){
+    explicit FECPayloadHdr(const std::size_t packetSize1){
         assert(packetSize1<=std::numeric_limits<uint16_t>::max());
         // convert to big endian if needed
         packet_size=htobe16(packetSize1);
@@ -69,7 +69,7 @@ public:
         return be16toh(packet_size);
     }
 }  __attribute__ ((packed));
-static_assert(sizeof(FECPrimaryFragmentHeader) == 2, "ALWAYS_TRUE");
+static_assert(sizeof(FECPayloadHdr) == 2, "ALWAYS_TRUE");
 
 
 // Validates FEC parameters,also converts from K:N to N p.p and N s.p
@@ -91,7 +91,7 @@ public:
 // 1510-(13+24+9+16+2)
 //A: Any UDP with packet size <= 1466. For example x264 inside RTP or Mavlink.
 static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
-static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(FECPrimaryFragmentHeader);
+static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(FECPayloadHdr);
 static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
 // max 255 primary and secondary fragments together for now. Theoretically, this implementation has enough bytes in the header for
 // up to 15 bit fragment indices, 2^15=32768
@@ -129,7 +129,7 @@ public:
     void encodePacket(const uint8_t *buf,const size_t size) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
 
-        FECPrimaryFragmentHeader dataHeader(size);
+        FECPayloadHdr dataHeader(size);
         // write the size of the data part into each primary fragment.
         // This is needed for the 'up to n bytes' workaround
         memcpy(blockBuffer[currFragmentIdx].data(), &dataHeader, sizeof(dataHeader));
@@ -137,7 +137,7 @@ public:
         memcpy(blockBuffer[currFragmentIdx].data() + sizeof(dataHeader), buf, size);
         // zero out the remaining bytes such that FEC always sees zeroes
         // same is done on the rx. These zero bytes are never transmitted via wifi
-        const auto writtenDataSize= sizeof(FECPrimaryFragmentHeader) + size;
+        const auto writtenDataSize= sizeof(FECPayloadHdr) + size;
         memset(blockBuffer[currFragmentIdx].data() + writtenDataSize, '\0', FEC_MAX_PACKET_SIZE - writtenDataSize);
 
         // send primary fragments immediately before calculating the FECs
@@ -221,7 +221,7 @@ private:
 class RxBlock{
 public:
     explicit RxBlock(const uint64_t blockIdx1):
-            blockIdx(blockIdx1),  fragment_map(MAX_N_FRAGMENTS_PER_BLOCK, FragmentStatus::UNAVAILABLE), blockBuffer(MAX_N_FRAGMENTS_PER_BLOCK), originalSizeOfFragments(MAX_N_FRAGMENTS_PER_BLOCK){
+            blockIdx(blockIdx1),  fragment_map(MAX_N_FRAGMENTS_PER_BLOCK, FragmentStatus::UNAVAILABLE), blockBuffer(MAX_N_FRAGMENTS_PER_BLOCK){
         nAlreadyForwardedPrimaryFragments = 0;
         nAvailablePrimaryFragments=0;
         nAvailableSecondaryFragments=0;
@@ -278,7 +278,6 @@ public:
         // mark it as available
         fragment_map[fecNonce.fragmentIdx] = RxBlock::AVAILABLE;
         // store the size of the received fragment for later use in the fec step
-        originalSizeOfFragments[fecNonce.fragmentIdx]=dataLen;
         if(fecNonce.flag==0){
             nAvailablePrimaryFragments++;
             // when we receive the last primary fragment for this block we know the "K" parameter
@@ -294,6 +293,11 @@ public:
                 //std::cout<<"K is known now(S)"<<fec_k<<"\n";
             }else{
                 assert(fec_k==fecNonce.number);
+            }
+            if(sizeOfSecondaryFragments==-1){
+                sizeOfSecondaryFragments=dataLen;
+            }else{
+                assert(sizeOfSecondaryFragments==dataLen);
             }
         }
         //std::cout<<"D:"<<fecNonce.blockIdx<<" "<<fecNonce.fragmentIdx<<" "<<(int)fecNonce.flag<<" "<<(int)fecNonce.number<<"\n";
@@ -341,6 +345,7 @@ public:
         // also do not reconstruct if reconstruction is not needed
         assert(nAvailablePrimaryFragments<fec_k);
         assert(nAvailableSecondaryFragments>0);
+        assert(sizeOfSecondaryFragments!=-1);
         // now bring it into a format that the c-style fec implementation understands
         std::vector<unsigned int> indicesMissingPrimaryFragments;
         for(int i=0;i<fec_k;i++){
@@ -349,19 +354,15 @@ public:
                 indicesMissingPrimaryFragments.push_back(i);
             }
         }
-        // each FEC packet has the size of max(size of primary fragments)
-        std::size_t maxPacketSizeOfThisBlock=0;
         std::vector<unsigned int> indicesAvailableSecondaryFragments;
         for(int i=0;i<nAvailableSecondaryFragments;i++){
             const auto idx=fec_k+i;
             // if secondary fragment is available,add its index to the list of secondary packets that will be used for reconstruction
             if(fragment_map[idx]==AVAILABLE){
                 indicesAvailableSecondaryFragments.push_back(i);
-                maxPacketSizeOfThisBlock=originalSizeOfFragments.at(idx);
             }
         }
-        //fec_decode(maxPacketSizeOfThisBlock, primaryFragmentsData.data(), fec.FEC_K, secondaryFragmentsData.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
-        fecDecode(maxPacketSizeOfThisBlock, blockBuffer, fec_k, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
+        fecDecode(sizeOfSecondaryFragments, blockBuffer, fec_k, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
         // after the decode step,all previously missing primary fragments have become available - mark them as such
         for(const auto idx:indicesMissingPrimaryFragments){
             fragment_map[idx]=AVAILABLE;
@@ -392,8 +393,8 @@ private:
     std::vector<FragmentStatus> fragment_map;
     // holds all the data for all received fragments (if fragment_map says UNAVALIABLE at this position, content is undefined)
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
-    // holds the original size for all received fragments
-    std::vector<std::size_t> originalSizeOfFragments;
+    // for the fec step, we need the size of the fec secondary fragments, which should be equal for all secondary fragments
+    int sizeOfSecondaryFragments=-1;
     int nAvailablePrimaryFragments=0;
     int nAvailableSecondaryFragments=0;
     std::chrono::steady_clock::time_point creationTime;
@@ -465,9 +466,9 @@ private:
         //std::cout<<"forwardPrimaryFragment("<<(int)block.getBlockIdx()<<","<<(int)fragmentIdx<<")\n";
         assert(block.hasFragment(fragmentIdx));
         const uint8_t* primaryFragment= block.getDataPrimaryFragment(fragmentIdx);
-        const FECPrimaryFragmentHeader *packet_hdr = (FECPrimaryFragmentHeader*) primaryFragment;
+        const FECPayloadHdr *packet_hdr = (FECPayloadHdr*) primaryFragment;
 
-        const uint8_t *payload = primaryFragment + sizeof(FECPrimaryFragmentHeader);
+        const uint8_t *payload = primaryFragment + sizeof(FECPayloadHdr);
         const uint16_t packet_size = packet_hdr->getPrimaryFragmentSize();
         //const uint64_t packet_seq = block.calculateSequenceNumber(fragmentIdx);
 

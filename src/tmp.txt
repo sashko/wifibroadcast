@@ -227,3 +227,5 @@ static uint64_t calculateNonce(const uint32_t blockIdx,const uint16_t fragmentId
         // nonce:  56bit block_idx + 8bit fragment_idx
         //static constexpr auto BLOCK_IDX_MASK=((1LLU << 56) - 1);
         //static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
+
+        //fec_decode(maxPacketSizeOfThisBlock, primaryFragmentsData.data(), fec.FEC_K, secondaryFragmentsData.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
