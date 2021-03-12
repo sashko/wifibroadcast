@@ -312,6 +312,7 @@ public:
     // @param breakOnFirstGap : if true (default), stop on the first gap (missing packet). Else, keep going, skipping packets with gaps. Use this parameter if
     // you need to forward everything left on a block before getting rid of it.
     std::vector<uint8_t> pullAvailablePrimaryFragments(const bool breakOnFirstGap= true){
+        // note: when pulling the available fragments, we do not need to know how many primary fragments this block actually contains
         std::vector<uint8_t> ret;
         for(int i=nAlreadyForwardedPrimaryFragments; i < nAvailablePrimaryFragments; i++){
             if(!hasFragment(i)){
