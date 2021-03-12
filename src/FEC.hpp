@@ -206,7 +206,7 @@ private:
 class RxBlock{
 public:
     explicit RxBlock(const FEC& fec, const uint64_t blockIdx1):
-    blockIdx(blockIdx1),fec(fec), fragment_map(fec.FEC_N, FragmentStatus::UNAVAILABLE), fragments(fec.FEC_N), originalSizeOfFragments(fec.FEC_N){
+            blockIdx(blockIdx1), fec(fec), fragment_map(fec.FEC_N, FragmentStatus::UNAVAILABLE), blockBuffer(fec.FEC_N), originalSizeOfFragments(fec.FEC_N){
         nAlreadyForwardedPrimaryFragments = 0;
         nAvailablePrimaryFragments=0;
         nAvailableSecondaryFragments=0;
@@ -251,9 +251,9 @@ public:
     void addFragment(const uint8_t fragment_idx, const uint8_t* data,const std::size_t dataLen){
         assert(fragment_map[fragment_idx]==UNAVAILABLE);
         // write the data (doesn't matter if FEC data or correction packet)
-        memcpy(fragments[fragment_idx].data(),data,dataLen);
+        memcpy(blockBuffer[fragment_idx].data(), data, dataLen);
         // set the rest to zero such that FEC works
-        memset(fragments[fragment_idx].data()+dataLen, '\0', FEC_MAX_PACKET_SIZE - dataLen);
+        memset(blockBuffer[fragment_idx].data() + dataLen, '\0', FEC_MAX_PACKET_SIZE - dataLen);
         // mark it as available
         fragment_map[fragment_idx] = RxBlock::AVAILABLE;
         // store the size of the received fragment for later use in the fec step
@@ -287,7 +287,7 @@ public:
     const uint8_t* getDataPrimaryFragment(const uint8_t fragmentIdx){
         assert(fragmentIdx<fec.FEC_K);
         assert(fragment_map[fragmentIdx]==AVAILABLE);
-        return fragments[fragmentIdx].data();
+        return blockBuffer[fragmentIdx].data();
     }
     int getNAvailableFragments()const{
         return nAvailablePrimaryFragments+nAvailableSecondaryFragments;
@@ -321,7 +321,7 @@ public:
             }
         }
         //fec_decode(maxPacketSizeOfThisBlock, primaryFragmentsData.data(), fec.FEC_K, secondaryFragmentsData.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
-        fecDecode(maxPacketSizeOfThisBlock,fragments,fec.N_PRIMARY_FRAGMENTS,indicesMissingPrimaryFragments,indicesAvailableSecondaryFragments);
+        fecDecode(maxPacketSizeOfThisBlock, blockBuffer, fec.N_PRIMARY_FRAGMENTS, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
         // after the decode step,all previously missing primary fragments have become available - mark them as such
         for(const auto idx:indicesMissingPrimaryFragments){
             fragment_map[idx]=AVAILABLE;
@@ -332,9 +332,9 @@ public:
     uint64_t getBlockIdx()const{
         return blockIdx;
     }
-    uint64_t calculateSequenceNumber(uint8_t fragmentIdx)const{
-        return fragmentIdx + blockIdx * fec.FEC_K;
-    }
+    //uint64_t calculateSequenceNumber(uint8_t fragmentIdx)const{
+    //    return fragmentIdx + blockIdx * fec.FEC_K;
+    //}
     std::chrono::steady_clock::time_point getCreationTime()const{
         return creationTime;
     }
@@ -350,7 +350,7 @@ private:
     // size of all these vectors is always FEC_N
     std::vector<FragmentStatus> fragment_map;
     // holds all the data for all received fragments (if fragment_map says UNAVALIABLE at this position, content is undefined)
-    std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> fragments;
+    std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
     // holds the original size for all received fragments
     std::vector<std::size_t> originalSizeOfFragments;
     int nAvailablePrimaryFragments=0;
@@ -387,7 +387,7 @@ public:
         const FECNonce fecNonce=fecNonceFrom(nonce);
 
         // Should never happen due to generating new session key on tx side
-        if (fecNonce.blockIdx > FEC::MAX_BLOCK_IDX) {
+        if (fecNonce.blockIdx > MAX_BLOCK_IDX) {
             std::cerr<<"block_idx overflow\n";
             return false;
         }
@@ -425,14 +425,14 @@ private:
 
         const uint8_t *payload = primaryFragment + sizeof(FECPrimaryFragmentHeader);
         const uint16_t packet_size = packet_hdr->getPrimaryFragmentSize();
-        const uint64_t packet_seq = block.calculateSequenceNumber(fragmentIdx);
+        //const uint64_t packet_seq = block.calculateSequenceNumber(fragmentIdx);
 
-        if (packet_seq > seq + 1) {
-            const auto packetsLost=(packet_seq - seq - 1);
+        //if (packet_seq > seq + 1) {
+        //    const auto packetsLost=(packet_seq - seq - 1);
             //std::cerr<<packetsLost<<"packets lost\n";
-            count_p_lost += packetsLost;
-        }
-        seq = packet_seq;
+        //    count_p_lost += packetsLost;
+        //}
+        //seq = packet_seq;
         //std::cout<<block.getNAvailableFragments()<<" "<<block.nAvailablePrimaryFragments<<" "<<block.nAvailableSecondaryFragments<<"\n";
         //std::cout<<fec.N_PRIMARY_FRAGMENTS<<" "<<fec.N_SECONDARY_FRAGMENTS<<"\n";
 
