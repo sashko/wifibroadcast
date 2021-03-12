@@ -110,6 +110,7 @@ public:
         fec_init();
         blockBuffer.resize(fec.FEC_N);
         //blockBuffer.resize(std::numeric_limits<uint8_t>::max());
+        std::cout<<"NP"<<fec.N_PRIMARY_FRAGMENTS<<" NS"<<fec.N_SECONDARY_FRAGMENTS<<"\n";
     }
     // K, N is fixed on the encoder side
     const FEC fec;
@@ -190,8 +191,17 @@ private:
     // then forward via the callback
     void sendBlockFragment(const std::size_t packet_size) const {
         //const auto nonce=FEC::calculateNonce(currBlockIdx, currFragmentIdx);
-        const bool isSecondaryFragment =currFragmentIdx>fec.N_PRIMARY_FRAGMENTS;
-        const uint16_t number=currFragmentIdx==fec.N_PRIMARY_FRAGMENTS ? fec.N_PRIMARY_FRAGMENTS : 0;
+        // remember we start counting from 0 not 1
+        const bool isSecondaryFragment =currFragmentIdx>=fec.N_PRIMARY_FRAGMENTS;
+        uint16_t number;
+        if(!isSecondaryFragment){
+            // primary fragment
+            // if last primary fragment number=N_PRIMARY_FRAGMENTS, else 0
+            number=currFragmentIdx+1==fec.N_PRIMARY_FRAGMENTS ? fec.N_PRIMARY_FRAGMENTS : 0;
+        }else{
+            number=fec.N_PRIMARY_FRAGMENTS;
+        }
+        //const uint16_t number=currFragmentIdx+1==fec.N_PRIMARY_FRAGMENTS ? fec.N_PRIMARY_FRAGMENTS : 0;
         const FECNonce nonce{currBlockIdx,currFragmentIdx,isSecondaryFragment,number};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
         outputDataCallback((uint64_t)nonce,dataP,packet_size);
@@ -206,7 +216,7 @@ private:
 class RxBlock{
 public:
     explicit RxBlock(const FEC& fec, const uint64_t blockIdx1):
-            blockIdx(blockIdx1), fec(fec), fragment_map(fec.FEC_N, FragmentStatus::UNAVAILABLE), blockBuffer(fec.FEC_N), originalSizeOfFragments(fec.FEC_N){
+            blockIdx(blockIdx1),  fragment_map(fec.FEC_N, FragmentStatus::UNAVAILABLE), blockBuffer(fec.FEC_N), originalSizeOfFragments(fec.FEC_N){
         nAlreadyForwardedPrimaryFragments = 0;
         nAvailablePrimaryFragments=0;
         nAvailableSecondaryFragments=0;
@@ -232,37 +242,59 @@ public:
     }
     // returns true if we are "done with this block" aka all data has been already forwarded
     bool allPrimaryFragmentsHaveBeenForwarded()const{
+        if(fec_k==-1)return false;
         // never send out secondary fragments !
-        assert(nAlreadyForwardedPrimaryFragments <= fec.FEC_K);
-        return nAlreadyForwardedPrimaryFragments == fec.FEC_K;
+        assert(nAlreadyForwardedPrimaryFragments <= fec_k);
+        return nAlreadyForwardedPrimaryFragments == fec_k;
     }
     // returns true if enough FEC secondary fragments are available to replace all missing primary fragments
     bool allPrimaryFragmentsCanBeRecovered()const{
-        if(nAvailablePrimaryFragments+nAvailableSecondaryFragments>=fec.FEC_K)return true;
+        if(fec_k==-1)return false;
+        if(nAvailablePrimaryFragments+nAvailableSecondaryFragments>=fec_k)return true;
         return false;
     }
     // returns true if suddenly all primary fragments have become available
     bool allPrimaryFragmentsAreAvailable()const{
-        return nAvailablePrimaryFragments==fec.FEC_K;
+        if(fec_k==-1)return false;
+        return nAvailablePrimaryFragments==fec_k;
     }
     // copy the fragment data and mark it as available
     // you should check if it is already available with hasFragment() to avoid storing a fragment multiple times
     // when using multiple RX cards
-    void addFragment(const uint8_t fragment_idx, const uint8_t* data,const std::size_t dataLen){
-        assert(fragment_map[fragment_idx]==UNAVAILABLE);
+    void addFragment(const FECNonce fecNonce, const uint8_t* data,const std::size_t dataLen){
+        assert(fecNonce.blockIdx==blockIdx);
+        assert(fragment_map[fecNonce.fragmentIdx]==UNAVAILABLE);
         // write the data (doesn't matter if FEC data or correction packet)
-        memcpy(blockBuffer[fragment_idx].data(), data, dataLen);
+        memcpy(blockBuffer[fecNonce.fragmentIdx].data(), data, dataLen);
         // set the rest to zero such that FEC works
-        memset(blockBuffer[fragment_idx].data() + dataLen, '\0', FEC_MAX_PACKET_SIZE - dataLen);
+        memset(blockBuffer[fecNonce.fragmentIdx].data() + dataLen, '\0', FEC_MAX_PACKET_SIZE - dataLen);
         // mark it as available
-        fragment_map[fragment_idx] = RxBlock::AVAILABLE;
+        fragment_map[fecNonce.fragmentIdx] = RxBlock::AVAILABLE;
         // store the size of the received fragment for later use in the fec step
-        originalSizeOfFragments[fragment_idx]=dataLen;
-        if(fragment_idx<fec.FEC_K){
+        originalSizeOfFragments[fecNonce.fragmentIdx]=dataLen;
+        if(fecNonce.flag==0){
             nAvailablePrimaryFragments++;
+            // when we receive the last primary fragment for this block we know the "K" parameter
+            if(fecNonce.number!=0 ){
+                fec_k=fecNonce.number;
+                //std::cout<<"K is known now(P)"<<fec_k<<"\n";
+            }
         }else{
             nAvailableSecondaryFragments++;
+            // when we receive any secondary fragment we also know k for this block
+            if(fec_k==-1){
+                fec_k=fecNonce.number;
+                //std::cout<<"K is known now(S)"<<fec_k<<"\n";
+            }else{
+                assert(fec_k==fecNonce.number);
+            }
         }
+        //std::cout<<"D:"<<fecNonce.blockIdx<<" "<<fecNonce.fragmentIdx<<" "<<(int)fecNonce.flag<<" "<<(int)fecNonce.number<<"\n";
+        //if(fecNonce.fragmentIdx<fec.FEC_K){
+        //    nAvailablePrimaryFragments++;
+        //}else{
+        //    nAvailableSecondaryFragments++;
+        //}
     }
     // returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed). Once an index is returned here, it won't be returned again
     // (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
@@ -270,7 +302,7 @@ public:
     // you need to forward everything left on a block before getting rid of it.
     std::vector<uint8_t> pullAvailablePrimaryFragments(const bool breakOnFirstGap= true){
         std::vector<uint8_t> ret;
-        for(int i=nAlreadyForwardedPrimaryFragments; i < fec.FEC_K; i++){
+        for(int i=nAlreadyForwardedPrimaryFragments; i < nAvailablePrimaryFragments; i++){
             if(!hasFragment(i)){
                 if(breakOnFirstGap){
                     break;
@@ -285,7 +317,6 @@ public:
         return ret;
     }
     const uint8_t* getDataPrimaryFragment(const uint8_t fragmentIdx){
-        assert(fragmentIdx<fec.FEC_K);
         assert(fragment_map[fragmentIdx]==AVAILABLE);
         return blockBuffer[fragmentIdx].data();
     }
@@ -298,12 +329,14 @@ public:
     int reconstructAllMissingData(){
         //std::cout<<"reconstructAllMissingData"<<nAvailablePrimaryFragments<<" "<<nAvailableSecondaryFragments<<" "<<fec.FEC_K<<"\n";
         // NOTE: FEC does only work if nPrimaryFragments+nSecondaryFragments>=FEC_K
-        assert(nAvailablePrimaryFragments+nAvailableSecondaryFragments>=fec.FEC_K);
+        assert(fec_k!=-1);
+        assert(nAvailablePrimaryFragments+nAvailableSecondaryFragments>=fec_k);
         // also do not reconstruct if reconstruction is not needed
-        assert(nAvailablePrimaryFragments<fec.FEC_K && nAvailableSecondaryFragments>0);
+        assert(nAvailablePrimaryFragments<fec_k);
+        assert(nAvailableSecondaryFragments>0);
         // now bring it into a format that the c-style fec implementation understands
         std::vector<unsigned int> indicesMissingPrimaryFragments;
-        for(int i=0;i<fec.FEC_K;i++){
+        for(int i=0;i<fec_k;i++){
             // if primary fragment is not available,add its index to the list of missing primary fragments
             if(fragment_map[i]!=AVAILABLE){
                 indicesMissingPrimaryFragments.push_back(i);
@@ -312,8 +345,8 @@ public:
         // each FEC packet has the size of max(size of primary fragments)
         std::size_t maxPacketSizeOfThisBlock=0;
         std::vector<unsigned int> indicesAvailableSecondaryFragments;
-        for(int i=0;i<fec.N_SECONDARY_FRAGMENTS;i++){
-            const int idx=fec.FEC_K+i;
+        for(int i=0;i<nAvailableSecondaryFragments;i++){
+            const auto idx=fec_k+i;
             // if secondary fragment is available,add its index to the list of secondary packets that will be used for reconstruction
             if(fragment_map[idx]==AVAILABLE){
                 indicesAvailableSecondaryFragments.push_back(i);
@@ -321,11 +354,12 @@ public:
             }
         }
         //fec_decode(maxPacketSizeOfThisBlock, primaryFragmentsData.data(), fec.FEC_K, secondaryFragmentsData.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
-        fecDecode(maxPacketSizeOfThisBlock, blockBuffer, fec.N_PRIMARY_FRAGMENTS, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
+        fecDecode(maxPacketSizeOfThisBlock, blockBuffer, fec_k, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
         // after the decode step,all previously missing primary fragments have become available - mark them as such
         for(const auto idx:indicesMissingPrimaryFragments){
             fragment_map[idx]=AVAILABLE;
         }
+        nAvailablePrimaryFragments+=indicesMissingPrimaryFragments.size();
         // n of reconstructed packets
         return indicesMissingPrimaryFragments.size();
     }
@@ -340,7 +374,7 @@ public:
     }
 private:
     //reference to the FEC decoder (needed for k,n). Doesn't change
-    const FEC& fec;
+    //const FEC& fec;
     // the block idx marks which block this element refers to
     const uint64_t blockIdx=0;
     // n of primary fragments that are already sent out
@@ -356,6 +390,8 @@ private:
     int nAvailablePrimaryFragments=0;
     int nAvailableSecondaryFragments=0;
     std::chrono::steady_clock::time_point creationTime;
+    //
+    int fec_k=-1;
 };
 
 
@@ -526,7 +562,7 @@ private:
         if(block.hasFragment(fecNonce.fragmentIdx)){
             return;
         }
-        block.addFragment(fecNonce.fragmentIdx, decrypted.data(), decrypted.size());
+        block.addFragment(fecNonce, decrypted.data(), decrypted.size());
         if (block == *rx_queue.front()) {
             //std::cout<<"In front\n";
             // we are in the front of the queue (e.g. at the oldest block)
