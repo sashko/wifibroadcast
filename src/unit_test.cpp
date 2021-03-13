@@ -58,6 +58,30 @@ namespace TestFEC{
             assert(GenericHelper::compareVectors(in,out)==true);
         }
     }
+    static void testWithoutPacketLossDynamicBlockSize(){
+        std::cout<<"Test without packet loss dynamic block size\n";
+        constexpr auto N_BLOCKS=1000;
+        const auto testIn=GenericHelper::createRandomDataBuffers(N_BLOCKS, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
+        std::vector<std::vector<uint8_t>> testOut;
+        FECEncoder encoder(50);
+        FECDecoder decoder;
+        const auto cb1=[&decoder](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
+            decoder.validateAndProcessPacket(nonce, std::vector<uint8_t>(payload,payload +payloadSize));
+        };
+        const auto cb2=[&testOut](const uint8_t * payload,std::size_t payloadSize)mutable{
+            testOut.emplace_back(payload,payload+payloadSize);
+        };
+        encoder.outputDataCallback=cb1;
+        decoder.mSendDecodedPayloadCallback=cb2;
+        for(std::size_t i=0;i<testIn.size();i++){
+            //std::cout<<"Step\n";
+            const bool endBlock=(rand() % 10)==0;
+            const auto& in=testIn[i];
+            encoder.encodePacket(in.data(),in.size(),endBlock);
+            const auto& out=testOut[i];
+            assert(GenericHelper::compareVectors(in,out)==true);
+        }
+    }
 
     static void testRxQueue(const int k, const int n){
         std::cout<<"Test rx queue. K:"<<k<<" N:"<<n<<"\n";
@@ -248,6 +272,7 @@ int main(int argc, char *argv[]){
                 TestFEC::testWithPacketLossButEverythingIsRecoverable(k, n, N_PACKETS, dropMode);
             }
         }
+        TestFEC::testWithoutPacketLossDynamicBlockSize();
         //
         std::cout<<"Testing Encryption\n";
         TestEncryption::test();
