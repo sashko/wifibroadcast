@@ -67,9 +67,8 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
     }
     mInputSocket=SocketHelper::openUdpSocketForRx(options.udp_port);
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", options.udp_port,options.radio_port,options.wlan.c_str(),-1);
-    // Don't forget to write K,N into the session key packet. K,N Doesn't change on the tx
-    //sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS=k;
-    //sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS=n-k;
+    // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
+    sessionKeyPacket.IS_FEC_ENABLED=IS_FEC_ENABLED;
 }
 
 WBTransmitter::~WBTransmitter() {
