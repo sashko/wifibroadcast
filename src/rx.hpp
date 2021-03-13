@@ -50,12 +50,9 @@ struct Options{
 // and forwards it via UDP.
 class WBReceiver{
 public:
-    WBReceiver(Options options1);
-
+    explicit WBReceiver(Options options1);
     ~WBReceiver();
-
-    void
-    processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
+    void processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
     // dump statistics
     void dump_stats();
     // flush pipeline

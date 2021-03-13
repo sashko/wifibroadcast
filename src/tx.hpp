@@ -38,11 +38,11 @@
 #include <variant>
 
 struct FECFixed{
-    uint8_t k,n;
+    uint8_t k=8,n=12;
 };
 struct FECVariable{
-    std::string videoType;
-    int percentage;
+    std::string videoType="h264";
+    int percentage=50;
 };
 struct Options{
     // the radio port is what is used as an index to multiplex multiple streams (telemetry,video,...)
