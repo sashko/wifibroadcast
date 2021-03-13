@@ -286,7 +286,7 @@ int main(int argc, char *const *argv) {
             exit(1);
         }
         options.IS_FEC_ENABLED=true;
-        options.fec={k,n};
+        //options.fec={k,n};
     }
 
     // option one : K=N=0 == fec disabled

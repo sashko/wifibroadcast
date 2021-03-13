@@ -166,13 +166,14 @@ public:
         if(!lastPrimaryFragment){
             return;
         }
+        //std::cout<<"Doing FEC step on block size"<<currNPrimaryFragments<<"\n";
         // prepare for the fec step
         int nSecondaryFragments;
         if(!BLOCK_SIZE_DYNAMIC){
             nSecondaryFragments=FEC_N_FIXED-FEC_K_FIXED;
         }else{
             nSecondaryFragments=currNPrimaryFragments*PERCENTAGE / 100;
-            std::cout<<"Using nSecondaryFragments="<<nSecondaryFragments<<"\n";
+            //std::cout<<"Using nSecondaryFragments="<<nSecondaryFragments<<"\n";
         }
         // once enough data has been buffered, create all the secondary fragments
         fecEncode(currMaxPacketSize,blockBuffer,currNPrimaryFragments,nSecondaryFragments);
@@ -382,9 +383,6 @@ public:
     uint64_t getBlockIdx()const{
         return blockIdx;
     }
-    std::chrono::steady_clock::time_point getCreationTime()const{
-        return creationTime;
-    }
 private:
     // the block idx marks which block this element refers to
     const uint64_t blockIdx=0;
@@ -421,12 +419,6 @@ public:
     // WARNING: Don't forget to register this callback !
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;
 public:
-    // FEC K,N is fixed per session
-    void resetNewSession() {
-        // rx ring part. Remove anything still in the queue
-        rx_queue.clear();
-        last_known_block = (uint64_t) -1;
-    }
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
     bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t>& decrypted){
         // normal FEC processing
@@ -460,24 +452,14 @@ private:
     /**
      * Forward the primary (data) fragment at index fragmentIdx via the output callback
      */
-    void forwardPrimaryFragment(RxBlock& block, const uint8_t fragmentIdx){
+    void forwardPrimaryFragment(RxBlock& block, const uint8_t fragmentIdx)const{
         //std::cout<<"forwardPrimaryFragment("<<(int)block.getBlockIdx()<<","<<(int)fragmentIdx<<")\n";
         assert(block.hasFragment(fragmentIdx));
         const uint8_t* primaryFragment= block.getDataPrimaryFragment(fragmentIdx);
-        const FECPayloadHdr *packet_hdr = (FECPayloadHdr*) primaryFragment;
+        const FECPayloadHdr &packet_hdr = *(FECPayloadHdr*) primaryFragment;
 
         const uint8_t *payload = primaryFragment + sizeof(FECPayloadHdr);
-        const uint16_t packet_size = packet_hdr->getPrimaryFragmentSize();
-        //const uint64_t packet_seq = block.calculateSequenceNumber(fragmentIdx);
-
-        //if (packet_seq > seq + 1) {
-        //    const auto packetsLost=(packet_seq - seq - 1);
-            //std::cerr<<packetsLost<<"packets lost\n";
-        //    count_p_lost += packetsLost;
-        //}
-        //seq = packet_seq;
-        //std::cout<<block.getNAvailableFragments()<<" "<<block.nAvailablePrimaryFragments<<" "<<block.nAvailableSecondaryFragments<<"\n";
-        //std::cout<<fec.N_PRIMARY_FRAGMENTS<<" "<<fec.N_SECONDARY_FRAGMENTS<<"\n";
+        const uint16_t packet_size = packet_hdr.getPrimaryFragmentSize();
 
         if (packet_size > FEC_MAX_PAYLOAD_SIZE) {
             // this should never happen !

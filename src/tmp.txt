@@ -256,3 +256,14 @@ static uint64_t calculateNonce(const uint32_t blockIdx,const uint16_t fragmentId
                 currBlockIdx += 1;
                 currFragmentIdx = 0;
                 currMaxPacketSize = 0;
+
+//const uint64_t packet_seq = block.calculateSequenceNumber(fragmentIdx);
+
+        //if (packet_seq > seq + 1) {
+        //    const auto packetsLost=(packet_seq - seq - 1);
+            //std::cerr<<packetsLost<<"packets lost\n";
+        //    count_p_lost += packetsLost;
+        //}
+        //seq = packet_seq;
+        //std::cout<<block.getNAvailableFragments()<<" "<<block.nAvailablePrimaryFragments<<" "<<block.nAvailableSecondaryFragments<<"\n";
+        //std::cout<<fec.N_PRIMARY_FRAGMENTS<<" "<<fec.N_SECONDARY_FRAGMENTS<<"\n";
