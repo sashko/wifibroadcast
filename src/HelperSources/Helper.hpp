@@ -260,6 +260,45 @@ namespace SocketHelper{
     }
 }
 
+namespace RTPLockup{
+    static constexpr auto RTP_HEADER_SIZE=12;
+    namespace H264{
+        struct nalu_header_t {
+            uint8_t type:   5;
+            uint8_t nri:    2;
+            uint8_t f:      1;
+        } __attribute__ ((packed));
+        typedef struct fu_header_t {
+            uint8_t type:   5;
+            uint8_t r:      1;
+            uint8_t e:      1;
+            uint8_t s:      1;
+        } __attribute__ ((packed));
+    }
+    // Use if input is rtp h264 stream
+    // returns true if the FEC encoder shall end the block with this packet
+    static bool h264_end_block(const uint8_t* payload, const std::size_t payloadSize){
+        if(payloadSize<RTP_HEADER_SIZE+sizeof(H264::nalu_header_t)){
+            std::cerr<<"Got packet that cannot be rtp h264\n";
+            return false;
+        }
+        const H264::nalu_header_t& naluHeader=*(H264::nalu_header_t*)(&payload[RTP_HEADER_SIZE]);
+        if (naluHeader.type == 28) {// fragmented nalu
+            std::cout<<"Got fragmented NALU\n";
+            const H264::fu_header_t& fuHeader=*(H264::fu_header_t*)&payload[RTP_HEADER_SIZE+sizeof(H264::nalu_header_t)];
+            if(fuHeader.e){
+                // end of fu-a
+                return true;
+            }
+        } else if(naluHeader.type>0 && naluHeader.type<24){//full nalu
+            std::cout<<"Got full NALU\n";
+            return true;
+        }else{
+            std::cerr<<"Unknown rtp h264 packet\n";
+            return false;
+        }
+    }
+}
 /*#include <linux/wireless.h>
 #include <ifaddrs.h>
 #include <linux/nl80211.h>
