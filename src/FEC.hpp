@@ -112,6 +112,11 @@ public:
     OUTPUT_DATA_CALLBACK outputDataCallback;
     // This constructor is for fixed packet size
     FECEncoder(int k, int n):BLOCK_SIZE_DYNAMIC(false),FEC_K_FIXED(k),FEC_N_FIXED(n){
+        assert(n>=k);
+        assert(n>0);
+        assert(k>0);
+        assert(k<=MAX_N_P_FRAGMENTS_PER_BLOCK);
+        assert(n<=MAX_N_S_FRAGMENTS_PER_BLOCK);
         fec_init();
         blockBuffer.resize(n);
         //std::cout<<"NP"<<fec.N_PRIMARY_FRAGMENTS<<" NS"<<fec.N_SECONDARY_FRAGMENTS<<"\n";
@@ -119,12 +124,11 @@ public:
     // And this constructor is for dynamic block size, which means the FEC step is applied after either we run out
     // of possible fragment indices or call encodePacket(...,endBlock=true)
     FECEncoder(int percentage):BLOCK_SIZE_DYNAMIC(true),PERCENTAGE(percentage){
+        assert(percentage<=100);
         fec_init();
         blockBuffer.resize(MAX_TOTAL_FRAGMENTS_PER_BLOCK);
     }
     FECEncoder(const FECEncoder& other)=delete;
-    //FEC fec;
-    //std::unique_ptr<FEC> fec;
 private:
     uint32_t currBlockIdx = 0; //block_idx << 8 + fragment_idx = nonce (64bit)
     uint16_t currFragmentIdx = 0;
@@ -163,7 +167,7 @@ public:
             if(endBlock)lastPrimaryFragment= true;
             // or we ran out of indices
             if(currNPrimaryFragments==MAX_N_P_FRAGMENTS_PER_BLOCK){
-                std::cerr<<"Creating fec data due to overflow"<<currFragmentIdx;
+                std::cerr<<"Creating fec data due to overflow"<<currFragmentIdx<<"\n";
                 lastPrimaryFragment=true;
             }
         }
