@@ -38,7 +38,7 @@ namespace TestFEC{
     static void testWithoutPacketLoss(const int k, const int n, const std::vector<std::vector<uint8_t>>& testIn){
         std::cout<<"Test without packet loss. K:"<<k<<" N:"<<n<<" N_PACKETS:"<<testIn.size()<<"\n";
         FECEncoder encoder(k,n);
-        FECDecoder decoder(k,n);
+        FECDecoder decoder;
         std::vector<std::vector<uint8_t>> testOut;
 
         const auto cb1=[&decoder](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
@@ -64,7 +64,7 @@ namespace TestFEC{
         constexpr auto QUEUE_SIZE=FECDecoder::RX_QUEUE_MAX_SIZE;
         const auto testIn=GenericHelper::createRandomDataBuffers(QUEUE_SIZE*k, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
         FECEncoder encoder(k,n);
-        FECDecoder decoder(k,n);
+        FECDecoder decoder;
         // begin test
         std::vector<std::pair<uint64_t,std::vector<uint8_t>>> fecPackets;
         const auto cb1=[&fecPackets](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
@@ -123,7 +123,7 @@ namespace TestFEC{
         if(DROP_MODE==2)assert((n-k)>=2);
         std::cout << "Test (with packet loss) K:" << k << " N:" << n << " N_PACKETS:" << testIn.size() <<" DROP_MODE:"<<DROP_MODE<< "\n";
         FECEncoder encoder(k, n);
-        FECDecoder decoder(k, n);
+        FECDecoder decoder;
         std::vector <std::vector<uint8_t>> testOut;
         const auto cb1 = [&decoder,n,k,DROP_MODE,SEND_DUPLICATES](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
             const FECNonce fecNonce=fecNonceFrom(nonce);

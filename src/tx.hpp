@@ -35,6 +35,30 @@
 #include <cstring>
 #include <stdexcept>
 #include <iostream>
+#include <variant>
+
+struct FECFixed{
+    uint8_t k,n;
+};
+struct FECVariable{
+    std::string videoType;
+    int percentage;
+};
+struct Options{
+    // the radio port is what is used as an index to multiplex multiple streams (telemetry,video,...)
+    // into the one wfb stream
+    uint8_t radio_port = 1;
+    // input UDP port
+    int udp_port = 5600;
+    // file for encryptor
+    std::string keypair="drone.key";
+    // wlan interface to send packets with
+    std::string wlan;
+    // fec can be completely disabled
+    bool IS_FEC_ENABLED=true;
+    // or either fixed or variable
+    std::variant<FECFixed,FECVariable> fec;
+};
 
 // WBTransmitter uses an UDP port as input for the data stream
 // Each input UDP port has to be assigned with a Unique ID to differentiate between streams on the RX
@@ -42,10 +66,10 @@
 // FEC can be either enabled or disabled.
 class WBTransmitter {
 public:
-    WBTransmitter(RadiotapHeader radiotapHeader, int k, int m, const std::string &keypair, uint8_t radio_port,
-                  int udp_port, const std::string &wlan,std::chrono::milliseconds flushInterval);
+    WBTransmitter(RadiotapHeader radiotapHeader, Options options);
     ~WBTransmitter();
 private:
+    const Options options;
     // process the input data stream
     void processInputPacket(const uint8_t *buf, size_t size);
     // send the current session key via WIFI (located in mEncryptor)
@@ -57,9 +81,6 @@ private:
     // this one is used for injecting packets
     PcapTransmitter mPcapTransmitter;
     //RawSocketTransmitter mPcapTransmitter;
-    // the radio port is what is used as an index to multiplex multiple streams (telemetry,video,...)
-    // into the one wfb stream
-    const uint8_t RADIO_PORT;
     // the rx socket is set by opening the right UDP port
     int mInputSocket;
     // Used to encrypt the packets

@@ -37,14 +37,13 @@
 #include <thread>
 
 
-WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const int k,const int n, const std::string &keypair, uint8_t radio_port, int udp_port,
-                             const std::string &wlan,const std::chrono::milliseconds flushInterval) :
-        mPcapTransmitter(wlan),
-        RADIO_PORT(radio_port),
-        mEncryptor(keypair),
+WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
+        options(std::move(options1)),
+        mPcapTransmitter(options.wlan),
+        mEncryptor(options.keypair),
         mRadiotapHeader(radiotapHeader),
-        FLUSH_INTERVAL(flushInterval),
-        IS_FEC_ENABLED(k!=0){
+        FLUSH_INTERVAL(std::chrono::milliseconds (-1)),
+        IS_FEC_ENABLED(options.IS_FEC_ENABLED){
     if(FLUSH_INTERVAL>LOG_INTERVAL){
         std::cerr<<"Please use a flush interval smaller than the log interval\n";
     }
@@ -53,17 +52,24 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const int k,const int
     }
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
     if(IS_FEC_ENABLED){
-        mFecEncoder=std::make_unique<FECEncoder>(k,n);
-        mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        if(options.fec.index()==0){
+            const FECFixed fecFixed=std::get<FECFixed>(options.fec);
+            mFecEncoder=std::make_unique<FECEncoder>(fecFixed.k,fecFixed.n);
+            mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        }else{
+            const FECVariable fecVariable=std::get<FECVariable>(options.fec);
+            mFecEncoder=std::make_unique<FECEncoder>(fecVariable.percentage);
+            mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        }
     }else{
         mFecDisabledEncoder=std::make_unique<FECDisabledEncoder>();
         mFecDisabledEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     }
-    mInputSocket=SocketHelper::openUdpSocketForRx(udp_port);
-    fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", udp_port,radio_port,wlan.c_str(),(int)flushInterval.count());
+    mInputSocket=SocketHelper::openUdpSocketForRx(options.udp_port);
+    fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", options.udp_port,options.radio_port,options.wlan.c_str(),-1);
     // Don't forget to write K,N into the session key packet. K,N Doesn't change on the tx
-    sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS=k;
-    sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS=n-k;
+    //sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS=k;
+    //sessionKeyPacket.FEC_N_SECONDARY_FRAGMENTS=n-k;
 }
 
 WBTransmitter::~WBTransmitter() {
@@ -73,7 +79,7 @@ WBTransmitter::~WBTransmitter() {
 
 void WBTransmitter::sendPacket(const AbstractWBPacket& abstractWbPacket) {
     //std::cout << "WBTransmitter::sendPacket\n";
-    mIeee80211Header.writeParams(RADIO_PORT, ieee80211_seq);
+    mIeee80211Header.writeParams(options.radio_port, ieee80211_seq);
     ieee80211_seq += 16;
     const auto injectionTime=mPcapTransmitter.injectPacket(mRadiotapHeader,mIeee80211Header,abstractWbPacket);
     nInjectedPackets++;
@@ -194,21 +200,21 @@ void WBTransmitter::loop() {
 
 int main(int argc, char *const *argv) {
     int opt;
-    uint8_t k = 8, n = 12, radio_port = 1;
-    int udp_port = 5600;
+    uint8_t k,n;
+    Options options{};
     // use -1 for no flush interval
     std::chrono::milliseconds flushInterval=std::chrono::milliseconds(-1);
+    std::string videoType;
 
     RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, 1};
 
-    std::string keypair = "drone.key";
 
     std::cout << "MAX_PAYLOAD_SIZE:" << FEC_MAX_PAYLOAD_SIZE << "\n";
 
-    while ((opt = getopt(argc, argv, "K:k:n:u:r:p:B:G:S:L:M:f:")) != -1) {
+    while ((opt = getopt(argc, argv, "K:k:n:u:r:p:B:G:S:L:M:f:V:")) != -1) {
         switch (opt) {
             case 'K':
-                keypair = optarg;
+                options.keypair = optarg;
                 break;
             case 'k':
                 k = atoi(optarg);
@@ -217,10 +223,10 @@ int main(int argc, char *const *argv) {
                 n = atoi(optarg);
                 break;
             case 'u':
-                udp_port = atoi(optarg);
+                options.udp_port = atoi(optarg);
                 break;
             case 'p':
-                radio_port = atoi(optarg);
+                options.radio_port = atoi(optarg);
                 break;
             case 'B':
                 wifiParams.bandwidth = atoi(optarg);
@@ -240,6 +246,9 @@ int main(int argc, char *const *argv) {
             case 'f':
                 flushInterval=std::chrono::milliseconds(atoi(optarg));
                 break;
+            case 'V':
+                videoType=std::string(optarg);
+                break;
             default: /* '?' */
             show_usage:
                 fprintf(stderr,
@@ -247,7 +256,7 @@ int main(int argc, char *const *argv) {
                         argv[0]);
                 fprintf(stderr,
                         "Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d flushInterval=%d\n",
-                        keypair.c_str(), k, n, udp_port, radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index,
+                        options.keypair.c_str(), k, n, options.udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index,
                         (int)std::chrono::duration_cast<std::chrono::milliseconds>(flushInterval).count());
                 fprintf(stderr, "Radio MTU: %lu\n", (unsigned long) FEC_MAX_PAYLOAD_SIZE);
                 fprintf(stderr, "WFB version "
@@ -259,7 +268,12 @@ int main(int argc, char *const *argv) {
     if (optind >= argc) {
         goto show_usage;
     }
-    const auto wlan=argv[optind];
+    options.wlan=argv[optind];
+
+    if(!videoType.empty()){
+        //running variable FEC
+    }
+
     RadiotapHeader radiotapHeader{wifiParams};
 
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&radiotapHeader,sizeof(RadiotapHeader));
@@ -287,7 +301,7 @@ int main(int argc, char *const *argv) {
 
     try {
         std::shared_ptr<WBTransmitter> t = std::make_shared<WBTransmitter>(
-                radiotapHeader, k, n, keypair, radio_port,udp_port, wlan,flushInterval);
+                radiotapHeader,options);
         t->loop();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());

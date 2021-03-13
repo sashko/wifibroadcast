@@ -412,8 +412,8 @@ private:
 // Most importantly, it also handles re-ordering of packets and packet duplicates due to multiple rx cards
 class FECDecoder{
 public:
-    // If K,N is known at construction time
-    FECDecoder(int k, int n):fec(k,n){
+    // Does not need to know k,n or if tx does variable block length or not
+    FECDecoder(){
         fec_init();
     }
     ~FECDecoder() = default;
@@ -423,7 +423,6 @@ public:
 public:
     // FEC K,N is fixed per session
     void resetNewSession() {
-        seq = 0;
         // rx ring part. Remove anything still in the queue
         rx_queue.clear();
         last_known_block = (uint64_t) -1;
@@ -438,8 +437,7 @@ public:
             std::cerr<<"block_idx overflow\n";
             return false;
         }
-        // fragment index must be in the range [0,...,FEC_N[
-        if (fecNonce.fragmentIdx >= fec.FEC_N) {
+        if(fecNonce.fragmentIdx>=MAX_TOTAL_FRAGMENTS_PER_BLOCK){
             std::cerr<<"invalid fragment_idx:"<<fecNonce.fragmentIdx<<"\n";
             return false;
         }
@@ -447,8 +445,6 @@ public:
         return true;
     }
 private:
-    const FEC fec;
-    uint64_t seq = 0;
     /**
      * For this Block,
      * starting at the primary fragment we stopped on last time,
