@@ -229,3 +229,30 @@ static uint64_t calculateNonce(const uint32_t blockIdx,const uint16_t fragmentId
         //static constexpr uint64_t MAX_BLOCK_IDX=((1LLU << 55) - 1);
 
         //fec_decode(maxPacketSizeOfThisBlock, primaryFragmentsData.data(), fec.FEC_K, secondaryFragmentsData.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
+
+
+        // send primary fragments immediately before calculating the FECs
+                sendBlockFragment(sizeof(dataHeader) + size);
+                // the packet size for FEC encoding is determined by calculating the max of all primary fragments in this block.
+                // Since the rest of the bytes are zeroed out we can run FEC with dynamic packet size.
+                // As long as the deviation in packet size of primary fragments isn't too high the loss in raw bandwidth is negligible
+                // Note,the loss in raw bandwidth comes from the size of the FEC secondary packets, which always has to be the max of all primary fragments
+                // Not from the primary fragments, they are transmitted without the "zeroed out" part
+                currMaxPacketSize = std::max(currMaxPacketSize, sizeof(dataHeader) + size);
+                currFragmentIdx += 1;
+
+                //std::cout<<"Fragment index is "<<(int)fragment_idx<<"FEC_K"<<(int)FEC_K<<"\n";
+                if (currFragmentIdx < fec.FEC_K) {
+                    return;
+                }
+                // once enough data has been buffered, create all the secondary fragments
+                fecEncode(currMaxPacketSize,blockBuffer,fec.N_PRIMARY_FRAGMENTS,fec.N_SECONDARY_FRAGMENTS);
+
+                // and send all the secondary fragments one after another
+                while (currFragmentIdx < fec.FEC_N) {
+                    sendBlockFragment(currMaxPacketSize);
+                    currFragmentIdx += 1;
+                }
+                currBlockIdx += 1;
+                currFragmentIdx = 0;
+                currMaxPacketSize = 0;

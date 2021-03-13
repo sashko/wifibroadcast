@@ -95,7 +95,9 @@ static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(
 static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
 // max 255 primary and secondary fragments together for now. Theoretically, this implementation has enough bytes in the header for
 // up to 15 bit fragment indices, 2^15=32768
-static constexpr const auto MAX_N_FRAGMENTS_PER_BLOCK=255;
+static constexpr const auto MAX_N_P_FRAGMENTS_PER_BLOCK=255;
+static constexpr const auto MAX_N_S_FRAGMENTS_PER_BLOCK=255;
+static constexpr const auto MAX_TOTAL_FRAGMENTS_PER_BLOCK=MAX_N_P_FRAGMENTS_PER_BLOCK+MAX_N_S_FRAGMENTS_PER_BLOCK;
 
 // Takes a continuous stream of packets and
 // encodes them via FEC such that they can be decoded by FECDecoder
@@ -108,26 +110,37 @@ class FECEncoder{
 public:
     typedef std::function<void(const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
     OUTPUT_DATA_CALLBACK outputDataCallback;
-    // TODO: So we have to be carefully here:
-    // 1) If k,n is given: fixed packet size
-    // 2) If k,n is not given, but we do variable k,(n) -> what to do ?
-    explicit FECEncoder(int k, int n) : fec(k,n){
+    // This constructor is for fixed packet size
+    FECEncoder(int k, int n):BLOCK_SIZE_DYNAMIC(false),FEC_K_FIXED(k),FEC_N_FIXED(n){
         fec_init();
-        blockBuffer.resize(fec.FEC_N);
-        //blockBuffer.resize(std::numeric_limits<uint8_t>::max());
-        std::cout<<"NP"<<fec.N_PRIMARY_FRAGMENTS<<" NS"<<fec.N_SECONDARY_FRAGMENTS<<"\n";
+        blockBuffer.resize(n);
+        //std::cout<<"NP"<<fec.N_PRIMARY_FRAGMENTS<<" NS"<<fec.N_SECONDARY_FRAGMENTS<<"\n";
     }
-    // K, N is fixed on the encoder side
-    const FEC fec;
+    // And this constructor is for dynamic block size, which means the FEC step is applied after either we run out
+    // of possible fragment indices or call encodePacket(...,endBlock=true)
+    FECEncoder(int percentage):BLOCK_SIZE_DYNAMIC(true),PERCENTAGE(percentage){
+        fec_init();
+        blockBuffer.resize(MAX_TOTAL_FRAGMENTS_PER_BLOCK);
+    }
+    FECEncoder(const FECEncoder& other)=delete;
+    //FEC fec;
+    //std::unique_ptr<FEC> fec;
 private:
     uint32_t currBlockIdx = 0; //block_idx << 8 + fragment_idx = nonce (64bit)
     uint16_t currFragmentIdx = 0;
     size_t currMaxPacketSize = 0;
     // Pre-allocated to hold all primary and secondary fragments
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
+    const bool BLOCK_SIZE_DYNAMIC;
+    // used if block size is fixed
+    const int FEC_K_FIXED=0;
+    const int FEC_N_FIXED=0;
+    // used if block size is dynamic
+    const int PERCENTAGE=0;
 public:
-    void encodePacket(const uint8_t *buf,const size_t size) {
+    void encodePacket(const uint8_t *buf,const size_t size,const bool endBlock=false) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
+        if(endBlock)assert(BLOCK_SIZE_DYNAMIC==true);
 
         FECPayloadHdr dataHeader(size);
         // write the size of the data part into each primary fragment.
@@ -140,8 +153,21 @@ public:
         const auto writtenDataSize= sizeof(FECPayloadHdr) + size;
         memset(blockBuffer[currFragmentIdx].data() + writtenDataSize, '\0', FEC_MAX_PACKET_SIZE - writtenDataSize);
 
-        // send primary fragments immediately before calculating the FECs
-        sendBlockFragment(sizeof(dataHeader) + size);
+        // check if we need to end the block right now (aka do FEC step on tx)
+        const int currNPrimaryFragments=currFragmentIdx+1;
+        bool lastPrimaryFragment=false;
+        if(!BLOCK_SIZE_DYNAMIC){
+            if(currNPrimaryFragments==FEC_K_FIXED)lastPrimaryFragment=true;
+        }else{
+            // either requested by the user
+            if(endBlock)lastPrimaryFragment= true;
+            // or we ran out of indices
+            if(currNPrimaryFragments==MAX_N_P_FRAGMENTS_PER_BLOCK){
+                std::cerr<<"Creating fec data due to overflow"<<currFragmentIdx;
+                lastPrimaryFragment=true;
+            }
+        }
+        sendPrimaryFragment(sizeof(dataHeader) + size,lastPrimaryFragment);
         // the packet size for FEC encoding is determined by calculating the max of all primary fragments in this block.
         // Since the rest of the bytes are zeroed out we can run FEC with dynamic packet size.
         // As long as the deviation in packet size of primary fragments isn't too high the loss in raw bandwidth is negligible
@@ -149,19 +175,26 @@ public:
         // Not from the primary fragments, they are transmitted without the "zeroed out" part
         currMaxPacketSize = std::max(currMaxPacketSize, sizeof(dataHeader) + size);
         currFragmentIdx += 1;
-
-        //std::cout<<"Fragment index is "<<(int)fragment_idx<<"FEC_K"<<(int)FEC_K<<"\n";
-        if (currFragmentIdx < fec.FEC_K) {
+        // if this is not the last primary fragment, wo don't need to do anything else
+        if(!lastPrimaryFragment){
             return;
         }
+        // prepare for the fec step
+        int nSecondaryFragments;
+        if(!BLOCK_SIZE_DYNAMIC){
+            nSecondaryFragments=FEC_N_FIXED-FEC_K_FIXED;
+        }else{
+            nSecondaryFragments=currNPrimaryFragments*PERCENTAGE / 100;
+            std::cout<<"Using nSecondaryFragments="<<nSecondaryFragments<<"\n";
+        }
         // once enough data has been buffered, create all the secondary fragments
-        fecEncode(currMaxPacketSize,blockBuffer,fec.N_PRIMARY_FRAGMENTS,fec.N_SECONDARY_FRAGMENTS);
-
-        // and send all the secondary fragments one after another
-        while (currFragmentIdx < fec.FEC_N) {
-            sendBlockFragment(currMaxPacketSize);
+        fecEncode(currMaxPacketSize,blockBuffer,currNPrimaryFragments,nSecondaryFragments);
+        // and send them all out
+        while (currFragmentIdx<currNPrimaryFragments + nSecondaryFragments){
+            sendSecondaryFragment(currMaxPacketSize,currNPrimaryFragments);
             currFragmentIdx += 1;
         }
+
         currBlockIdx += 1;
         currFragmentIdx = 0;
         currMaxPacketSize = 0;
@@ -194,7 +227,7 @@ public:
 private:
     // construct WB data packet, from either primary or secondary fragment
     // then forward via the callback
-    void sendBlockFragment(const std::size_t packet_size) const {
+    /*void sendBlockFragment(const std::size_t packet_size) const {
         // remember we start counting from 0 not 1
         const bool isSecondaryFragment =currFragmentIdx>=fec.N_PRIMARY_FRAGMENTS;
         uint16_t number;
@@ -209,6 +242,17 @@ private:
         const FECNonce nonce{currBlockIdx,currFragmentIdx,isSecondaryFragment,number};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
         outputDataCallback((uint64_t)nonce,dataP,packet_size);
+    }*/
+    void sendPrimaryFragment(const std::size_t packet_size,const bool isLastPrimaryFragment){
+        // remember we start counting from 0 not 1
+        const FECNonce nonce{currBlockIdx,currFragmentIdx,false,(uint16_t)(isLastPrimaryFragment ? (currFragmentIdx+1) : 0)};
+        const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
+        outputDataCallback((uint64_t)nonce,dataP,packet_size);
+    }
+    void sendSecondaryFragment(const std::size_t packet_size,const int nPrimaryFragments){
+        const FECNonce nonce{currBlockIdx,currFragmentIdx,true,(uint16_t)nPrimaryFragments};
+        const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
+        outputDataCallback((uint64_t)nonce,dataP,packet_size);
     }
 };
 
@@ -221,8 +265,8 @@ class RxBlock{
 public:
     explicit RxBlock(const uint64_t blockIdx1):
             blockIdx(blockIdx1),
-            fragment_map(MAX_N_FRAGMENTS_PER_BLOCK, FragmentStatus::UNAVAILABLE), //after creation of the RxBlock every f. is marked as unavailable
-            blockBuffer(MAX_N_FRAGMENTS_PER_BLOCK){
+            fragment_map(MAX_TOTAL_FRAGMENTS_PER_BLOCK, FragmentStatus::UNAVAILABLE), //after creation of the RxBlock every f. is marked as unavailable
+            blockBuffer(MAX_TOTAL_FRAGMENTS_PER_BLOCK){
         creationTime=std::chrono::steady_clock::now();
     }
     // No copy constructor for safety
