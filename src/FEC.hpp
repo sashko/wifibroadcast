@@ -212,30 +212,14 @@ public:
         return currFragmentIdx == 0;
     }
 private:
-    // construct WB data packet, from either primary or secondary fragment
-    // then forward via the callback
-    /*void sendBlockFragment(const std::size_t packet_size) const {
-        // remember we start counting from 0 not 1
-        const bool isSecondaryFragment =currFragmentIdx>=fec.N_PRIMARY_FRAGMENTS;
-        uint16_t number;
-        if(!isSecondaryFragment){
-            // primary fragment
-            // if last primary fragment number=N_PRIMARY_FRAGMENTS, else 0
-            number=currFragmentIdx+1==fec.N_PRIMARY_FRAGMENTS ? fec.N_PRIMARY_FRAGMENTS : 0;
-        }else{
-            number=fec.N_PRIMARY_FRAGMENTS;
-        }
-        //const uint16_t number=currFragmentIdx+1==fec.N_PRIMARY_FRAGMENTS ? fec.N_PRIMARY_FRAGMENTS : 0;
-        const FECNonce nonce{currBlockIdx,currFragmentIdx,isSecondaryFragment,number};
-        const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
-        outputDataCallback((uint64_t)nonce,dataP,packet_size);
-    }*/
+    // calculate proper nonce (such that the rx can decode it properly), then forward via callback
     void sendPrimaryFragment(const std::size_t packet_size,const bool isLastPrimaryFragment){
         // remember we start counting from 0 not 1
         const FECNonce nonce{currBlockIdx,currFragmentIdx,false,(uint16_t)(isLastPrimaryFragment ? (currFragmentIdx+1) : 0)};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
         outputDataCallback((uint64_t)nonce,dataP,packet_size);
     }
+    // calculate proper nonce (such that the rx can decode it properly), then forward via callback
     void sendSecondaryFragment(const std::size_t packet_size,const int nPrimaryFragments){
         const FECNonce nonce{currBlockIdx,currFragmentIdx,true,(uint16_t)nPrimaryFragments};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
