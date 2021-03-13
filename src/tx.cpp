@@ -199,14 +199,14 @@ void WBTransmitter::loop() {
 
 int main(int argc, char *const *argv) {
     int opt;
-    uint8_t k,n;
     Options options{};
     // use -1 for no flush interval
     std::chrono::milliseconds flushInterval=std::chrono::milliseconds(-1);
+    uint8_t k=8,n=12;
     std::string videoType;
+    bool userSetKorN=false;
 
     RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, 1};
-
 
     std::cout << "MAX_PAYLOAD_SIZE:" << FEC_MAX_PAYLOAD_SIZE << "\n";
 
@@ -217,9 +217,11 @@ int main(int argc, char *const *argv) {
                 break;
             case 'k':
                 k = atoi(optarg);
+                userSetKorN=true;
                 break;
             case 'n':
                 n = atoi(optarg);
+                userSetKorN=true;
                 break;
             case 'u':
                 options.udp_port = atoi(optarg);
@@ -268,6 +270,26 @@ int main(int argc, char *const *argv) {
         goto show_usage;
     }
     options.wlan=argv[optind];
+
+    if(videoType.empty()){
+        // either FEC disabled or FEC fixed
+        if(k==0){
+            assert(n==0);
+            options.IS_FEC_ENABLED= false;
+        }
+    }
+
+    // check if variable is wanted
+    if(!videoType.empty()){
+        if(userSetKorN){
+            std::cerr<<"Do not use k,n with variable fec size\n";
+            exit(1);
+        }
+        options.IS_FEC_ENABLED=true;
+        options.fec={k,n};
+    }
+
+    // option one : K=N=0 == fec disabled
 
     if(!videoType.empty()){
         //running variable FEC

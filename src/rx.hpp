@@ -40,8 +40,8 @@ static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD=4;
 //
 
 struct Options{
-    uint8_t radio_port;
-    int client_udp_port;
+    uint8_t radio_port=0;
+    int client_udp_port=5600;
     std::string client_addr="127.0.0.1";// default to localhost
     std::string keypair="gs.key"; //default filename
 };

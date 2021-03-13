@@ -38,7 +38,7 @@
 #include <variant>
 
 struct FECFixed{
-    uint8_t k=8,n=12;
+    uint8_t k=-1,n=-1;
 };
 struct FECVariable{
     std::string videoType="h264";
