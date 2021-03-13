@@ -39,11 +39,18 @@
 static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD=4;
 //
 
+struct Options{
+    uint8_t radio_port;
+    int client_udp_port;
+    std::string client_addr="127.0.0.1";// default to localhost
+    std::string keypair="gs.key"; //default filename
+};
+
 // This class processes the received wifi data (decryption and FEC)
 // and forwards it via UDP.
 class WBReceiver{
 public:
-    WBReceiver(const std::string &client_addr, int client_udp_port, uint8_t radio_port, const std::string &keypair);
+    WBReceiver(Options options1);
 
     ~WBReceiver();
 
@@ -53,6 +60,7 @@ public:
     void dump_stats();
     // flush pipeline
     void flushFecPipeline();
+    const Options options;
     // the port data is forwarded to
     const int CLIENT_UDP_PORT;
     // do not pass data from the receiver to the Aggregator where radio port doesn't match

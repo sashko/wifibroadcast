@@ -32,11 +32,12 @@
 #include <sstream>
 
 
-WBReceiver::WBReceiver(const std::string &client_addr, int client_udp_port, uint8_t radio_port, const std::string &keypair) :
-CLIENT_UDP_PORT(client_udp_port),
-RADIO_PORT(radio_port),
-mDecryptor(keypair){
-    sockfd = SocketHelper::open_udp_socket_for_tx(client_addr,client_udp_port);
+WBReceiver::WBReceiver(Options options1) :
+options(options1),
+CLIENT_UDP_PORT(options.client_udp_port),
+RADIO_PORT(options.radio_port),
+mDecryptor(options.keypair){
+    sockfd = SocketHelper::open_udp_socket_for_tx(options.client_addr,options.client_udp_port);
 }
 
 WBReceiver::~WBReceiver() {
@@ -173,7 +174,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         if (mDecryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)) {
             // We got a new session key (aka a session key that has not been received yet)
             count_p_decryption_ok++;
-            IS_FEC_ENABLED=sessionKeyPacket.FEC_N_PRIMARY_FRAGMENTS!=0;
+            IS_FEC_ENABLED=sessionKeyPacket.IS_FEC_ENABLED;
             if(IS_FEC_ENABLED){
                 mFECDDecoder=std::make_unique<FECDecoder>();
                 mFECDDecoder->mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
@@ -212,28 +213,24 @@ void WBReceiver::flushFecPipeline() {
 
 int main(int argc, char *const *argv) {
     int opt;
-    uint8_t radio_port = 1;
+    Options options{};
     std::chrono::milliseconds log_interval{1000};
     // use -1 for no flush interval
     std::chrono::milliseconds flush_interval{-1};
-    int client_udp_port = 5600;
-    // default to localhost
-    std::string client_addr = "127.0.0.1";
-    std::string keypair = "gs.key";
 
     while ((opt = getopt(argc, argv, "K:k:n:c:u:p:l:f:")) != -1) {
         switch (opt) {
             case 'K':
-                keypair = optarg;
+                options.keypair = optarg;
                 break;
             case 'c':
-                client_addr = std::string(optarg);
+                options.client_addr = std::string(optarg);
                 break;
             case 'u':
-                client_udp_port = atoi(optarg);
+                options.client_udp_port = atoi(optarg);
                 break;
             case 'p':
-                radio_port = atoi(optarg);
+                options.radio_port = atoi(optarg);
                 break;
             case 'l':
                 log_interval = std::chrono::milliseconds(atoi(optarg));
@@ -247,7 +244,7 @@ int main(int argc, char *const *argv) {
                         "Local receiver: %s [-K rx_key] [-c client_addr] [-u client_port] [-p radio_port] [-l log_interval(ms)] [-f flush_interval(ms)] interface1 [interface2] ...\n",
                         argv[0]);
                 fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d, log_interval=%d flush_interval=%d\n",
-                        keypair.c_str(),client_addr.c_str(), client_udp_port, radio_port,
+                        options.keypair.c_str(),options.client_addr.c_str(), options.client_udp_port, options.radio_port,
                         (int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count(),(int)std::chrono::duration_cast<std::chrono::milliseconds>(flush_interval).count());
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
@@ -267,8 +264,8 @@ int main(int argc, char *const *argv) {
         rxInterfaces.emplace_back(argv[optind + i]);
     }
     try {
-        std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(client_addr, client_udp_port, radio_port, keypair);
-        MultiRxPcapReceiver receiver(rxInterfaces,radio_port,log_interval,flush_interval,
+        std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(options);
+        MultiRxPcapReceiver receiver(rxInterfaces,options.radio_port,log_interval,flush_interval,
                                      std::bind(&WBReceiver::processPacket, agg.get(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
                                      std::bind(&WBReceiver::dump_stats, agg.get()),
                                      std::bind(&WBReceiver::flushFecPipeline, agg.get()));
