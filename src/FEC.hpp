@@ -71,23 +71,6 @@ public:
 }  __attribute__ ((packed));
 static_assert(sizeof(FECPayloadHdr) == 2, "ALWAYS_TRUE");
 
-
-// Validates FEC parameters,also converts from K:N to N p.p and N s.p
-class FEC{
-public:
-    explicit FEC(int k, int n) : FEC_K(k), FEC_N(n){
-        assert(n>=k);
-        assert(n>0);
-        assert(k>0);
-    }
-public:
-    const unsigned int FEC_K;  // RS number of primary fragments in block default 8
-    const unsigned int FEC_N;  // RS total number of fragments in block default 12
-    const unsigned int N_PRIMARY_FRAGMENTS=FEC_K;
-    const unsigned int N_SECONDARY_FRAGMENTS=FEC_N-FEC_K;
-};
-
-
 // 1510-(13+24+9+16+2)
 //A: Any UDP with packet size <= 1466. For example x264 inside RTP or Mavlink.
 static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
