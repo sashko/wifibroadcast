@@ -99,7 +99,7 @@ public:
         assert(n>0);
         assert(k>0);
         assert(k<=MAX_N_P_FRAGMENTS_PER_BLOCK);
-        assert(n<=MAX_N_S_FRAGMENTS_PER_BLOCK);
+        assert(n<=MAX_N_P_FRAGMENTS_PER_BLOCK+MAX_N_S_FRAGMENTS_PER_BLOCK);
         fec_init();
         blockBuffer.resize(n);
         //std::cout<<"NP"<<fec.N_PRIMARY_FRAGMENTS<<" NS"<<fec.N_SECONDARY_FRAGMENTS<<"\n";
@@ -146,9 +146,9 @@ public:
         if(!BLOCK_SIZE_DYNAMIC){
             if(currNPrimaryFragments==FEC_K_FIXED)lastPrimaryFragment=true;
         }else{
-            // either requested by the user
+            // either requested by the caller
             if(endBlock)lastPrimaryFragment= true;
-            // or we ran out of indices
+            // or the encoder ran out of indices
             if(currNPrimaryFragments==MAX_N_P_FRAGMENTS_PER_BLOCK){
                 std::cerr<<"Creating fec data due to overflow"<<currFragmentIdx<<"\n";
                 lastPrimaryFragment=true;
