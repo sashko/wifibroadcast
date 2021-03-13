@@ -56,7 +56,7 @@ public:
             fecDisabledMapOfReceivedSeqNr.clear();
             mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
             fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
-            firstEverPacket=true;
+            firstEverPacket= false;
         }
         // check if packet is already known (inside the map)
         const auto search = fecDisabledMapOfReceivedSeqNr.find(packetSeq);
