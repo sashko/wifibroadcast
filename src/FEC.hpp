@@ -89,7 +89,7 @@ static constexpr const uint16_t MAX_TOTAL_FRAGMENTS_PER_BLOCK=MAX_N_P_FRAGMENTS_
 // a) makes sure to send out data packets immediately
 // b) Handles packets of size up to N instead of packets of exact size N
 // Due to b) the packet size has to be written into the first two bytes of each data packet. See https://github.com/svpcom/wifibroadcast/issues/67
-// c) allows ending a block at any time when using dynamic block size (Note: dynamic packet size and dynamic block size are 2 different terms)
+// c) allows ending a block at any time when putting in a new primary fragment
 class FECEncoder{
 public:
     typedef std::function<void(const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
@@ -118,6 +118,9 @@ private:
     const int mKMax;
     const int mPercentage;
 public:
+    // encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback
+    // if @param endBlock=true, the FEC step is applied immediately
+    // else, the FEC step is only applied if reaching mKMax
     void encodePacket(const uint8_t *buf,const size_t size,const bool endBlock=false) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
 
@@ -152,7 +155,7 @@ public:
         //std::cout<<"Doing FEC step on block size"<<currNPrimaryFragments<<"\n";
         // prepare for the fec step
         const int nSecondaryFragments=currNPrimaryFragments*mPercentage/100;
-        std::cout<<"Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
+        //std::cout<<"Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
 
         // once enough data has been buffered, create all the secondary fragments
         fecEncode(currMaxPacketSize,blockBuffer,currNPrimaryFragments,nSecondaryFragments);
@@ -258,6 +261,7 @@ public:
     void addFragment(const FECNonce fecNonce, const uint8_t* data,const std::size_t dataLen){
         assert(fecNonce.blockIdx==blockIdx);
         assert(fragment_map[fecNonce.fragmentIdx]==UNAVAILABLE);
+        assert(fecNonce.blockIdx<=MAX_TOTAL_FRAGMENTS_PER_BLOCK);
         // write the data (doesn't matter if FEC data or correction packet)
         memcpy(blockBuffer[fecNonce.fragmentIdx].data(), data, dataLen);
         // set the rest to zero such that FEC works
