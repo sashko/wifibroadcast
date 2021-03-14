@@ -268,7 +268,6 @@ public:
         memset(blockBuffer[fecNonce.fragmentIdx].data() + dataLen, '\0', FEC_MAX_PACKET_SIZE - dataLen);
         // mark it as available
         fragment_map[fecNonce.fragmentIdx] = RxBlock::AVAILABLE;
-        // store the size of the received fragment for later use in the fec step
         if(fecNonce.flag==0){
             nAvailablePrimaryFragments++;
             // when we receive the last primary fragment for this block we know the "K" parameter
