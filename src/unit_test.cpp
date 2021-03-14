@@ -143,16 +143,16 @@ namespace TestFEC{
 
     // test with packet loss
     // but only drop as much as everything must be still recoverable
-    static void testWithPacketLossButEverythingIsRecoverable(const int k,const int percentage, const std::vector<std::vector<uint8_t>>& testIn,const int DROP_MODE,const bool SEND_DUPLICATES=false) {
+    static void testWithPacketLossButEverythingIsRecoverable(const int k,const unsigned int percentage, const std::vector<std::vector<uint8_t>>& testIn,const int DROP_MODE,const bool SEND_DUPLICATES=false) {
         assert(testIn.size() % k==0);
         const auto n=FECEncoder::calculateN(k,percentage);
         // drop mode 2 is impossible if (n-k)<2
         if(DROP_MODE==2){
-            assert((k*percentage/100)>=2);
-            //assert((n-k)>=2);
+            //assert((k*percentage/100)>=2);
+            assert((n-k)>=2);
         }
         std::cout << "Test (with packet loss) K:" << k << " P:" << percentage << " N_PACKETS:" << testIn.size() <<" DROP_MODE:"<<DROP_MODE<< "\n";
-        FECEncoder encoder(k, n);
+        FECEncoder encoder(k,percentage);
         FECDecoder decoder;
         std::vector <std::vector<uint8_t>> testOut;
         const auto cb1 = [&decoder,n,k,DROP_MODE,SEND_DUPLICATES](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
@@ -259,13 +259,14 @@ int main(int argc, char *argv[]){
         // only test with FEC enabled
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
                 {1,200},
-                /*{3,5},{3,6},{6,8},{6,9},
-                {2,4},{4,8},
-                {6,12},{8,16},{12,24},
-                {4,6},{12,14},
-                {40,60},
-                {100,150},
-                {120,240}*/
+                {2,100},{2,200},
+                {4,100},{4,200},
+                {6,50},{6,100},{6,200},
+                {8,50},{8,100},{8,200},
+                {10,30},{10,50},{10,100},
+                {40,30},{40,50},{40,100},
+                {100,30},{100,40},{100,50},{100,60},
+                {120,50}
         };
         for(const auto& fecParam:fecParams){
             const auto k=fecParam.first;
