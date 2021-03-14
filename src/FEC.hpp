@@ -79,8 +79,8 @@ static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
 // max 255 primary and secondary fragments together for now. Theoretically, this implementation has enough bytes in the header for
 // up to 15 bit fragment indices, 2^15=32768
 // Note: currently limited by the fec c implementation
-static constexpr const uint16_t MAX_N_P_FRAGMENTS_PER_BLOCK=255;
-static constexpr const uint16_t MAX_N_S_FRAGMENTS_PER_BLOCK=255;
+static constexpr const uint16_t MAX_N_P_FRAGMENTS_PER_BLOCK=128;
+static constexpr const uint16_t MAX_N_S_FRAGMENTS_PER_BLOCK=128;
 static constexpr const uint16_t MAX_TOTAL_FRAGMENTS_PER_BLOCK=MAX_N_P_FRAGMENTS_PER_BLOCK+MAX_N_S_FRAGMENTS_PER_BLOCK;
 
 // Takes a continuous stream of packets and
