@@ -134,26 +134,9 @@ public:
 
         // check if we need to end the block right now (aka do FEC step on tx)
         const int currNPrimaryFragments=currFragmentIdx+1;
-        bool lastPrimaryFragment=false;
-        // end block if we either reached mKMax
-        if(currNPrimaryFragments==mKMax){
-            lastPrimaryFragment=true;
-        }
-        // or the caller requested it
-        if(endBlock){
-            lastPrimaryFragment=true;
-        }
-        /*if(!BLOCK_SIZE_DYNAMIC){
-            if(currNPrimaryFragments==FEC_K_FIXED)lastPrimaryFragment=true;
-        }else{
-            // either requested by the caller
-            if(endBlock)lastPrimaryFragment= true;
-            // or the encoder ran out of indices
-            if(currNPrimaryFragments==MAX_N_P_FRAGMENTS_PER_BLOCK){
-                std::cerr<<"Creating fec data due to overflow"<<currFragmentIdx<<"\n";
-                lastPrimaryFragment=true;
-            }
-        }*/
+        // end block if we either reached mKMax or the caller requested it
+        const bool lastPrimaryFragment=(currNPrimaryFragments==mKMax) || endBlock;
+
         sendPrimaryFragment(sizeof(dataHeader) + size,lastPrimaryFragment);
         // the packet size for FEC encoding is determined by calculating the max of all primary fragments in this block.
         // Since the rest of the bytes are zeroed out we can run FEC with dynamic packet size.
