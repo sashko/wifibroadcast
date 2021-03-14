@@ -213,10 +213,13 @@ private:
 // or if it is ready for the FEC reconstruction step.
 class RxBlock{
 public:
-    explicit RxBlock(const uint64_t blockIdx1):
+    // @param maxNFragmentsPerBlock max number of primary and secondary fragments for this block.
+    // you could just use MAX_TOTAL_FRAGMENTS_PER_BLOCK for that, but if your tx then uses (4:8) for example, you'd
+    // allocate much more memory every time for a new RX block than needed.
+    explicit RxBlock(const unsigned int maxNFragmentsPerBlock,const uint64_t blockIdx1):
             blockIdx(blockIdx1),
-            fragment_map(MAX_TOTAL_FRAGMENTS_PER_BLOCK, FragmentStatus::UNAVAILABLE), //after creation of the RxBlock every f. is marked as unavailable
-            blockBuffer(MAX_TOTAL_FRAGMENTS_PER_BLOCK){
+            fragment_map(maxNFragmentsPerBlock, FragmentStatus::UNAVAILABLE), //after creation of the RxBlock every f. is marked as unavailable
+            blockBuffer(maxNFragmentsPerBlock){
         creationTime=std::chrono::steady_clock::now();
     }
     // No copy constructor for safety
@@ -261,7 +264,8 @@ public:
     void addFragment(const FECNonce fecNonce, const uint8_t* data,const std::size_t dataLen){
         assert(fecNonce.blockIdx==blockIdx);
         assert(fragment_map[fecNonce.fragmentIdx]==UNAVAILABLE);
-        assert(fecNonce.blockIdx<=MAX_TOTAL_FRAGMENTS_PER_BLOCK);
+        assert(fecNonce.blockIdx<=MAX_BLOCK_IDX);
+        assert(fecNonce.fragmentIdx<blockBuffer.size());
         // write the data (doesn't matter if FEC data or correction packet)
         memcpy(blockBuffer[fecNonce.fragmentIdx].data(), data, dataLen);
         // set the rest to zero such that FEC works
@@ -389,7 +393,7 @@ private:
 class FECDecoder{
 public:
     // Does not need to know k,n or if tx does variable block length or not
-    FECDecoder(){
+    FECDecoder(const unsigned int maxNFragmentsPerBlock=MAX_TOTAL_FRAGMENTS_PER_BLOCK):maxNFragmentsPerBlock(maxNFragmentsPerBlock){
         fec_init();
     }
     ~FECDecoder() = default;
@@ -398,6 +402,7 @@ public:
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;
     // A value too high doesn't really give much benefit and increases memory usage
     static constexpr auto RX_QUEUE_MAX_SIZE = 20;
+    const unsigned int maxNFragmentsPerBlock;
 public:
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
     bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t>& decrypted){
@@ -409,7 +414,7 @@ public:
             std::cerr<<"block_idx overflow\n";
             return false;
         }
-        if(fecNonce.fragmentIdx>=MAX_TOTAL_FRAGMENTS_PER_BLOCK){
+        if(fecNonce.fragmentIdx>maxNFragmentsPerBlock){
             std::cerr<<"invalid fragment_idx:"<<fecNonce.fragmentIdx<<"\n";
             return false;
         }
@@ -467,7 +472,7 @@ private:
         }
         // we can return early if this operation doesn't exceed the size limit
         if(rx_queue.size() < RX_QUEUE_MAX_SIZE){
-            rx_queue.push_back(std::make_unique<RxBlock>(blockIdx));
+            rx_queue.push_back(std::make_unique<RxBlock>(maxNFragmentsPerBlock,blockIdx));
             return;
         }
         //Ring overflow. This means that there are more unfinished blocks than ring size
@@ -484,7 +489,7 @@ private:
         rx_queue.pop_front();
 
         // now we are guaranteed to have space for one new block
-        rx_queue.push_back(std::make_unique<RxBlock>(blockIdx));
+        rx_queue.push_back(std::make_unique<RxBlock>(maxNFragmentsPerBlock,blockIdx));
     }
 
     // If block is already known and not in the queue anymore return nullptr
