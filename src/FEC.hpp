@@ -99,14 +99,14 @@ public:
     // Else, if you want to use the encoder for variable k, just use K_MAX=MAX_N_P_FRAGMENTS_PER_BLOCK and call
     // encodePacket(...,true) as needed.
     explicit FECEncoder(unsigned int K_MAX,unsigned int percentage):mKMax(K_MAX),mPercentage(percentage){
-        const unsigned int maxNSecondaryFragments= K_MAX * percentage / 100;
         std::cout<<"FEC with k max:"<<mKMax<<" and percentage:"<<percentage<<"\n";
-        std::cout << "For a block size of k max this is (" << mKMax << ":" << (mKMax + maxNSecondaryFragments) << ") in old (K:N) terms.\n";
+        const auto tmp_n=calculateN(K_MAX,percentage);
+        std::cout << "For a block size of k max this is (" << mKMax << ":" << tmp_n << ") in old (K:N) terms.\n";
         assert(K_MAX>0);
         assert(K_MAX<=MAX_N_P_FRAGMENTS_PER_BLOCK);
-        assert(maxNSecondaryFragments <= MAX_N_S_FRAGMENTS_PER_BLOCK);
+        assert(tmp_n <= MAX_TOTAL_FRAGMENTS_PER_BLOCK);
         fec_init();
-        blockBuffer.resize(K_MAX + maxNSecondaryFragments);
+        blockBuffer.resize(tmp_n);
     }
     FECEncoder(const FECEncoder& other)=delete;
 private:
@@ -392,7 +392,9 @@ private:
 // Most importantly, it also handles re-ordering of packets and packet duplicates due to multiple rx cards
 class FECDecoder{
 public:
-    // Does not need to know k,n or if tx does variable block length or not
+    // Does not need to know k,n or if tx does variable block length or not.
+    // If the tx doesn't use the full range of fragment indices (aka K is fixed) use
+    // @param maxNFragmentsPerBlock for a more efficient memory usage
     FECDecoder(const unsigned int maxNFragmentsPerBlock=MAX_TOTAL_FRAGMENTS_PER_BLOCK):maxNFragmentsPerBlock(maxNFragmentsPerBlock){
         fec_init();
     }
