@@ -251,7 +251,6 @@ int main(int argc, char *argv[]){
         const int N_PACKETS=1200;
         TestFEC::testWithoutPacketLossFixedPacketSize(1,1, N_PACKETS);
         TestFEC::testWithoutPacketLossFixedPacketSize(1,2, N_PACKETS);
-        TestFEC::testWithoutPacketLossFixedPacketSize(200,300, N_PACKETS);
         // only test with FEC enabled
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
                 {1,3},
@@ -261,7 +260,7 @@ int main(int argc, char *argv[]){
                 {4,6},{12,14},
                 {40,60},
                 {100,150},
-                //{150,225}
+                {120,240}
         };
         for(const auto& fecParam:fecParams){
             const auto k=fecParam.first;
