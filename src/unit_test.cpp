@@ -35,9 +35,9 @@
 
 namespace TestFEC{
     // test the FECEncoder / FECDecoder tuple
-    static void testWithoutPacketLoss(const int k, const int n, const std::vector<std::vector<uint8_t>>& testIn){
-        std::cout<<"Test without packet loss. K:"<<k<<" N:"<<n<<" N_PACKETS:"<<testIn.size()<<"\n";
-        FECEncoder encoder(k,n);
+    static void testWithoutPacketLoss(const int k, const int percentage, const std::vector<std::vector<uint8_t>>& testIn){
+        std::cout<<"Test without packet loss. K:"<<k<<" P:"<<percentage<<" N_PACKETS:"<<testIn.size()<<"\n";
+        FECEncoder encoder(k,percentage);
         FECDecoder decoder;
         std::vector<std::vector<uint8_t>> testOut;
 
@@ -64,7 +64,7 @@ namespace TestFEC{
         constexpr auto N_BLOCKS=2000;
         const auto testIn=GenericHelper::createRandomDataBuffers(N_BLOCKS, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
         std::vector<std::vector<uint8_t>> testOut;
-        FECEncoder encoder(50);
+        FECEncoder encoder(MAX_N_P_FRAGMENTS_PER_BLOCK,50);
         FECDecoder decoder;
         const auto cb1=[&decoder](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
             decoder.validateAndProcessPacket(nonce, std::vector<uint8_t>(payload,payload +payloadSize));
@@ -84,11 +84,12 @@ namespace TestFEC{
         }
     }
 
-    static void testRxQueue(const int k, const int n){
-        std::cout<<"Test rx queue. K:"<<k<<" N:"<<n<<"\n";
+    static void testRxQueue(const int k, const int percentage){
+        std::cout<<"Test rx queue. K:"<<k<<" P:"<<percentage<<"\n";
+        const auto n=FECEncoder::calculateN(k,percentage);
         constexpr auto QUEUE_SIZE=FECDecoder::RX_QUEUE_MAX_SIZE;
         const auto testIn=GenericHelper::createRandomDataBuffers(QUEUE_SIZE*k, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
-        FECEncoder encoder(k,n);
+        FECEncoder encoder(k,percentage);
         FECDecoder decoder;
         // begin test
         std::vector<std::pair<uint64_t,std::vector<uint8_t>>> fecPackets;
@@ -128,25 +129,29 @@ namespace TestFEC{
 
     // No packet loss
     // Fixed packet size
-    static void testWithoutPacketLossFixedPacketSize(const int k, const int n, const std::size_t N_PACKETS){
+    static void testWithoutPacketLossFixedPacketSize(const int k,const int percentage, const std::size_t N_PACKETS){
         auto testIn=GenericHelper::createRandomDataBuffers(N_PACKETS, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
-        testWithoutPacketLoss(k, n, testIn);
+        testWithoutPacketLoss(k, percentage, testIn);
     }
 
     // No packet loss
     // Dynamic packet size (up to N bytes)
-    static void testWithoutPacketLossDynamicPacketSize(const int k, const int n, const std::size_t N_PACKETS){
+    static void testWithoutPacketLossDynamicPacketSize(const int k,const int percentage, const std::size_t N_PACKETS){
         auto testIn=GenericHelper::createRandomDataBuffers(N_PACKETS, 1, FEC_MAX_PAYLOAD_SIZE);
-        testWithoutPacketLoss(k, n, testIn);
+        testWithoutPacketLoss(k, percentage, testIn);
     }
 
     // test with packet loss
     // but only drop as much as everything must be still recoverable
-    static void testWithPacketLossButEverythingIsRecoverable(const int k, const int n, const std::vector<std::vector<uint8_t>>& testIn,const int DROP_MODE,const bool SEND_DUPLICATES=false) {
+    static void testWithPacketLossButEverythingIsRecoverable(const int k,const int percentage, const std::vector<std::vector<uint8_t>>& testIn,const int DROP_MODE,const bool SEND_DUPLICATES=false) {
         assert(testIn.size() % k==0);
+        const auto n=FECEncoder::calculateN(k,percentage);
         // drop mode 2 is impossible if (n-k)<2
-        if(DROP_MODE==2)assert((n-k)>=2);
-        std::cout << "Test (with packet loss) K:" << k << " N:" << n << " N_PACKETS:" << testIn.size() <<" DROP_MODE:"<<DROP_MODE<< "\n";
+        if(DROP_MODE==2){
+            assert((k*percentage/100)>=2);
+            //assert((n-k)>=2);
+        }
+        std::cout << "Test (with packet loss) K:" << k << " P:" << percentage << " N_PACKETS:" << testIn.size() <<" DROP_MODE:"<<DROP_MODE<< "\n";
         FECEncoder encoder(k, n);
         FECDecoder decoder;
         std::vector <std::vector<uint8_t>> testOut;
@@ -212,13 +217,13 @@ namespace TestFEC{
         }
     }
 
-    static void testWithPacketLossButEverythingIsRecoverable(const int k, const int n, const std::size_t N_PACKETS, const int DROP_MODE){
+    static void testWithPacketLossButEverythingIsRecoverable(const int k, const unsigned int percentage, const std::size_t N_PACKETS, const int DROP_MODE){
         std::vector<std::vector<uint8_t>> testIn;
         for(std::size_t i=0;i<N_PACKETS;i++){
             const auto size= (rand() % FEC_MAX_PAYLOAD_SIZE) + 1;
             testIn.push_back(GenericHelper::createRandomDataBuffer(size));
         }
-        testWithPacketLossButEverythingIsRecoverable(k, n, testIn,DROP_MODE, true);
+        testWithPacketLossButEverythingIsRecoverable(k, percentage, testIn,DROP_MODE, true);
     }
 }
 
@@ -249,27 +254,27 @@ int main(int argc, char *argv[]){
     try {
         std::cout<<"Testing FEC\n";
         const int N_PACKETS=1200;
-        TestFEC::testWithoutPacketLossFixedPacketSize(1,1, N_PACKETS);
-        TestFEC::testWithoutPacketLossFixedPacketSize(1,2, N_PACKETS);
+        TestFEC::testWithoutPacketLossFixedPacketSize(1,0, N_PACKETS);
+        TestFEC::testWithoutPacketLossFixedPacketSize(1,100, N_PACKETS);
         // only test with FEC enabled
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
-                {1,3},
-                {3,5},{3,6},{6,8},{6,9},
+                {1,200},
+                /*{3,5},{3,6},{6,8},{6,9},
                 {2,4},{4,8},
                 {6,12},{8,16},{12,24},
                 {4,6},{12,14},
                 {40,60},
                 {100,150},
-                {120,240}
+                {120,240}*/
         };
         for(const auto& fecParam:fecParams){
             const auto k=fecParam.first;
-            const auto n=fecParam.second;
-            TestFEC::testWithoutPacketLossFixedPacketSize(k, n, N_PACKETS);
-            TestFEC::testWithoutPacketLossDynamicPacketSize(k, n, N_PACKETS);
-            TestFEC::testRxQueue(k,n);
+            const auto p=fecParam.second;
+            TestFEC::testWithoutPacketLossFixedPacketSize(k, p, N_PACKETS);
+            TestFEC::testWithoutPacketLossDynamicPacketSize(k, p, N_PACKETS);
+            TestFEC::testRxQueue(k, p);
             for(int dropMode=0;dropMode<3;dropMode++){
-                TestFEC::testWithPacketLossButEverythingIsRecoverable(k, n, N_PACKETS, dropMode);
+                TestFEC::testWithPacketLossButEverythingIsRecoverable(k, p, N_PACKETS, dropMode);
             }
         }
         TestFEC::testWithoutPacketLossDynamicBlockSize();

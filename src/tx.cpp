@@ -43,7 +43,8 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         mEncryptor(options.keypair),
         mRadiotapHeader(radiotapHeader),
         FLUSH_INTERVAL(std::chrono::milliseconds (-1)),
-        IS_FEC_ENABLED(options.IS_FEC_ENABLED){
+        // FEC is disabled if k is integer and 0
+        IS_FEC_DISABLED(options.FEC_K.index() == 0 && std::get<int>(options.FEC_K) == 0){
     if(FLUSH_INTERVAL>LOG_INTERVAL){
         std::cerr<<"Please use a flush interval smaller than the log interval\n";
     }
@@ -51,24 +52,18 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         std::cerr<<"Please do not use a flush interval of 0 (would hog the cpu)\n";
     }
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-    if(IS_FEC_ENABLED){
-        if(options.fec.index()==0){
-            const FECFixed fecFixed=std::get<FECFixed>(options.fec);
-            mFecEncoder=std::make_unique<FECEncoder>(fecFixed.k,fecFixed.n);
-            mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        }else{
-            const FECVariable fecVariable=std::get<FECVariable>(options.fec);
-            mFecEncoder=std::make_unique<FECEncoder>(fecVariable.percentage);
-            mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        }
-    }else{
+    if(IS_FEC_DISABLED){
         mFecDisabledEncoder=std::make_unique<FECDisabledEncoder>();
         mFecDisabledEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    }else{
+        const int kMax=options.FEC_K.index()==0 ? std::get<int>(options.FEC_K) : MAX_N_P_FRAGMENTS_PER_BLOCK;
+        mFecEncoder=std::make_unique<FECEncoder>(kMax,options.FEC_PERCENTAGE);
+        mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     }
     mInputSocket=SocketHelper::openUdpSocketForRx(options.udp_port);
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", options.udp_port,options.radio_port,options.wlan.c_str(),-1);
     // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
-    sessionKeyPacket.IS_FEC_ENABLED=IS_FEC_ENABLED;
+    sessionKeyPacket.IS_FEC_ENABLED=!IS_FEC_DISABLED;
 }
 
 WBTransmitter::~WBTransmitter() {
@@ -111,15 +106,15 @@ void WBTransmitter::sendSessionKey() {
 void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
     //std::cout << "WBTransmitter::send_packet\n";
     // this calls a callback internally
-    if(IS_FEC_ENABLED){
+    if(IS_FEC_DISABLED){
+        mFecDisabledEncoder->encodePacket(buf,size);
+    }else{
         mFecEncoder->encodePacket(buf,size);
         if(mFecEncoder->resetOnOverflow()){
             // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
             mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
             sendSessionKey();
         }
-    }else{
-        mFecDisabledEncoder->encodePacket(buf,size);
     }
 }
 
@@ -202,31 +197,30 @@ int main(int argc, char *const *argv) {
     Options options{};
     // use -1 for no flush interval
     std::chrono::milliseconds flushInterval=std::chrono::milliseconds(-1);
-    int k=8,n=12;
-    std::string videoType;
-    bool userSetKorN=false;
 
     RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, 1};
 
     std::cout << "MAX_PAYLOAD_SIZE:" << FEC_MAX_PAYLOAD_SIZE << "\n";
 
-    while ((opt = getopt(argc, argv, "K:k:n:u:r:p:B:G:S:L:M:f:V:")) != -1) {
+    while ((opt = getopt(argc, argv, "K:k:n:u:r:p:B:G:S:L:M:")) != -1) {
         switch (opt) {
             case 'K':
                 options.keypair = optarg;
                 break;
             case 'k':
-                k = atoi(optarg);
-                userSetKorN=true;
+                if(std::string(optarg)==std::string("h264")){
+                    options.FEC_K="h264";
+                }else{
+                    options.FEC_K=(int)atoi(optarg);
+                }
                 break;
-            case 'n':
-                n = atoi(optarg);
-                userSetKorN=true;
+            case 'p':
+                options.FEC_PERCENTAGE=atoi(optarg);
                 break;
             case 'u':
                 options.udp_port = atoi(optarg);
                 break;
-            case 'p':
+            case 'r':
                 options.radio_port = atoi(optarg);
                 break;
             case 'B':
@@ -244,21 +238,14 @@ int main(int argc, char *const *argv) {
             case 'M':
                 wifiParams.mcs_index = atoi(optarg);
                 break;
-            case 'f':
-                flushInterval=std::chrono::milliseconds(atoi(optarg));
-                break;
-            case 'V':
-                videoType=std::string(optarg);
-                break;
             default: /* '?' */
             show_usage:
                 fprintf(stderr,
-                        "Usage: %s [-K tx_key] [-k RS_K] [-n RS_N] [-u udp_port] [-p radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] [-f flushInterval(ms)] interface \n",
+                        "Usage: %s [-K tx_key] [-k FEC_K] [-p FEC_PERCENTAGE] [-u udp_port] [-r radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] interface \n",
                         argv[0]);
                 fprintf(stderr,
-                        "Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d flushInterval=%d\n",
-                        options.keypair.c_str(), k, n, options.udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index,
-                        (int)std::chrono::duration_cast<std::chrono::milliseconds>(flushInterval).count());
+                        "Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d \n",
+                        options.keypair.c_str(),std::get<int>(options.FEC_K), options.FEC_PERCENTAGE, options.udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index);
                 fprintf(stderr, "Radio MTU: %lu\n", (unsigned long) FEC_MAX_PAYLOAD_SIZE);
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
@@ -271,32 +258,6 @@ int main(int argc, char *const *argv) {
     }
     options.wlan=argv[optind];
 
-    if(videoType.empty()){
-        std::cout<<"";
-        // either FEC disabled or FEC fixed
-        if(k==0){
-            assert(n==0);
-            options.IS_FEC_ENABLED= false;
-        }
-    }else{
-
-    }
-
-    // check if variable is wanted
-    if(!videoType.empty()){
-        if(userSetKorN){
-            std::cerr<<"Do not use k,n with variable fec size\n";
-            exit(1);
-        }
-        options.IS_FEC_ENABLED=true;
-        //options.fec={k,n};
-    }
-
-    // option one : K=N=0 == fec disabled
-
-    if(!videoType.empty()){
-        //running variable FEC
-    }
 
     RadiotapHeader radiotapHeader{wifiParams};
 
@@ -305,21 +266,24 @@ int main(int argc, char *const *argv) {
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader, sizeof(OldRadiotapHeaders::u8aRadiotapHeader));
     SchedulingHelper::setThreadParamsMaxRealtime();
 
-    // Validate the user input regarding K,N
-    if(k==0){
-        // Use K=0 and N=0 to have no FEC correction (advanced option for applications that want to do FEC or similar in the upper level)
-        if(n!=0){
-            std::cerr<<"Use K=0 only in combination with N=0.\n"
-                       "This is an advanced option that removes duplicates, but doesn't check for packet order.\n"
-                       "(UDP also allows duplicates but we want to get rid of duplicates as fast as possible to save memory bandwidth)\n."
-                       "Latency overhead is 0 in this mode.\n"
-                       "If you don't know what this means, use FEC_K==1 and FEC_N==1 for no duplicates and no packet re-ordering.\n";
-            exit(1);
+    if(options.FEC_K.index()==0){
+        // If the user selected -k as an integer number
+        const int k=std::get<int>(options.FEC_K);
+        if(k==0){
+            std::cout<<"FEC is disabled. -p won't do anything\n";
+        }else{
+            const int n=k+k*options.FEC_PERCENTAGE / 100;
+            if(n>MAX_TOTAL_FRAGMENTS_PER_BLOCK){
+                std::cout<<"Please select a smaller -p (FEC_PERCENTAGE) value\n";
+                exit(1);
+            }
+            std::cout<<"FEC is enabled and fixed. A block always consists of (K:N) fragments ("<<k<<":"<<n<<")\n";
         }
     }else{
-        if(n < k){
-            std::cerr<<"N must be bigger or equal to K\n";
-            exit(1);
+        // If the user selected -k h264 (as a string)
+        std::cout<<"FEC is enabled and variable, can only be used in conjunction with h264. FEC_PERCENTAGE(overhead):"<<options.FEC_PERCENTAGE<<"\n";
+        if(options.FEC_PERCENTAGE>100){
+            std::cout<<"Using more than 100% fec overhead (=2x the bandwidth) is not supported\n";
         }
     }
 

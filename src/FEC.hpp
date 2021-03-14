@@ -97,7 +97,7 @@ public:
     // How to use with fixed block size:
     // Just use m
     // This constructor is for fixed packet size
-    FECEncoder(int k, int n):BLOCK_SIZE_DYNAMIC(false),FEC_K_FIXED(k),FEC_N_FIXED(n){
+    /*FECEncoder(int k, int n):BLOCK_SIZE_DYNAMIC(false),FEC_K_FIXED(k),FEC_N_FIXED(n){
         assert(n>=k);
         assert(n>0);
         assert(k>0);
@@ -106,14 +106,29 @@ public:
         fec_init();
         blockBuffer.resize(n);
         std::cout<<"FEC fixed (K:N)=("<<k<<":"<<n<<")"<<"\n";
+    }*/
+    // If you want to use the encoder for a fixed k, just use k for K_MAX and never call
+    // encodePacket(...,true).
+    // Else, if you want to use the encoder for variable k, just use K_MAX=MAX_N_P_FRAGMENTS_PER_BLOCK and call
+    // encodePacket(...,true) as needed.
+    explicit FECEncoder(unsigned int K_MAX,unsigned int percentage):mKMax(K_MAX),mPercentage(percentage){
+        const unsigned int maxNSecondaryFragments= K_MAX * percentage / 100;
+        std::cout<<"FEC with k max:"<<mKMax<<" and percentage:"<<percentage<<"\n";
+        std::cout << "For a block size of k max this is (" << mKMax << ":" << (mKMax + maxNSecondaryFragments) << ") in old (K:N) terms.\n";
+        assert(K_MAX>0);
+        assert(K_MAX<=MAX_N_P_FRAGMENTS_PER_BLOCK);
+        assert(maxNSecondaryFragments <= MAX_N_S_FRAGMENTS_PER_BLOCK);
+        fec_init();
+        blockBuffer.resize(K_MAX + maxNSecondaryFragments);
     }
+
     // And this constructor is for dynamic block size, which means the FEC step is applied after either we run out
     // of possible fragment indices or call encodePacket(...,endBlock=true)
-    FECEncoder(int percentage):BLOCK_SIZE_DYNAMIC(true),PERCENTAGE(percentage){
+    /*FECEncoder(int percentage):BLOCK_SIZE_DYNAMIC(true),PERCENTAGE(percentage){
         assert(percentage<=100);
         fec_init();
         blockBuffer.resize(MAX_TOTAL_FRAGMENTS_PER_BLOCK);
-    }
+    }*/
     FECEncoder(const FECEncoder& other)=delete;
 private:
     uint32_t currBlockIdx = 0; //block_idx << 8 + fragment_idx = nonce (64bit)
@@ -121,17 +136,18 @@ private:
     size_t currMaxPacketSize = 0;
     // Pre-allocated to hold all primary and secondary fragments
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
-    const bool BLOCK_SIZE_DYNAMIC;
+    const int mKMax;
+    const int mPercentage;
+    //const bool BLOCK_SIZE_DYNAMIC;
     // used if block size is fixed
-    const int FEC_K_FIXED=0;
-    const int FEC_N_FIXED=0;
+    //const int FEC_K_FIXED=0;
+    //const int FEC_N_FIXED=0;
     // used if block size is dynamic
-    const int PERCENTAGE=0;
+    //const int PERCENTAGE=0;
     //const int maxNPrimaryFragments;
 public:
     void encodePacket(const uint8_t *buf,const size_t size,const bool endBlock=false) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
-        if(endBlock)assert(BLOCK_SIZE_DYNAMIC==true);
 
         FECPayloadHdr dataHeader(size);
         // write the size of the data part into each primary fragment.
@@ -147,7 +163,15 @@ public:
         // check if we need to end the block right now (aka do FEC step on tx)
         const int currNPrimaryFragments=currFragmentIdx+1;
         bool lastPrimaryFragment=false;
-        if(!BLOCK_SIZE_DYNAMIC){
+        // end block if we either reached mKMax
+        if(currNPrimaryFragments==mKMax){
+            lastPrimaryFragment=true;
+        }
+        // or the caller requested it
+        if(endBlock){
+            lastPrimaryFragment=true;
+        }
+        /*if(!BLOCK_SIZE_DYNAMIC){
             if(currNPrimaryFragments==FEC_K_FIXED)lastPrimaryFragment=true;
         }else{
             // either requested by the caller
@@ -157,7 +181,7 @@ public:
                 std::cerr<<"Creating fec data due to overflow"<<currFragmentIdx<<"\n";
                 lastPrimaryFragment=true;
             }
-        }
+        }*/
         sendPrimaryFragment(sizeof(dataHeader) + size,lastPrimaryFragment);
         // the packet size for FEC encoding is determined by calculating the max of all primary fragments in this block.
         // Since the rest of the bytes are zeroed out we can run FEC with dynamic packet size.
@@ -172,13 +196,9 @@ public:
         }
         //std::cout<<"Doing FEC step on block size"<<currNPrimaryFragments<<"\n";
         // prepare for the fec step
-        int nSecondaryFragments;
-        if(!BLOCK_SIZE_DYNAMIC){
-            nSecondaryFragments=FEC_N_FIXED-FEC_K_FIXED;
-        }else{
-            nSecondaryFragments=currNPrimaryFragments*PERCENTAGE / 100;
-            //std::cout<<"Using nSecondaryFragments="<<nSecondaryFragments<<"\n";
-        }
+        const int nSecondaryFragments=currNPrimaryFragments*mPercentage/100;
+        std::cout<<"Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
+
         // once enough data has been buffered, create all the secondary fragments
         fecEncode(currMaxPacketSize,blockBuffer,currNPrimaryFragments,nSecondaryFragments);
         // and send them all out
@@ -207,6 +227,10 @@ public:
     // also, in the beginning the pipeline is already flushed due to no data packets yet
     bool isAlreadyInFinishedState()const{
         return currFragmentIdx == 0;
+    }
+    // calculate n from k and percentage as used in FEC terms
+    static unsigned int calculateN(const unsigned int k,const unsigned int percentage){
+        return k+(k*percentage/100);
     }
 private:
     // calculate proper nonce (such that the rx can decode it properly), then forward via callback

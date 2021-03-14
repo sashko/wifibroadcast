@@ -267,3 +267,9 @@ static uint64_t calculateNonce(const uint32_t blockIdx,const uint16_t fragmentId
         //seq = packet_seq;
         //std::cout<<block.getNAvailableFragments()<<" "<<block.nAvailablePrimaryFragments<<" "<<block.nAvailableSecondaryFragments<<"\n";
         //std::cout<<fec.N_PRIMARY_FRAGMENTS<<" "<<fec.N_SECONDARY_FRAGMENTS<<"\n";
+
+std::cerr<<"Use K=0 only in combination with N=0.\n"
+                       "This is an advanced option that removes duplicates, but doesn't check for packet order.\n"
+                       "(UDP also allows duplicates but we want to get rid of duplicates as fast as possible to save memory bandwidth)\n."
+                       "Latency overhead is 0 in this mode.\n"
+                       "If you don't know what this means, use FEC_K==1 and FEC_N==1 for no duplicates and no packet re-ordering.\n";
