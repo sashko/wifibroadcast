@@ -88,7 +88,7 @@ static constexpr const auto MAX_TOTAL_FRAGMENTS_PER_BLOCK=MAX_N_P_FRAGMENTS_PER_
 // a) makes sure to send out data packets immediately
 // b) Handles packets of size up to N instead of packets of exact size N
 // Due to b) the packet size has to be written into the first two bytes of each data packet. See https://github.com/svpcom/wifibroadcast/issues/67
-// use FEC_K==0 to completely skip FEC for the lowest latency possible
+// c) allows ending a block at any time when using dynamic block size (Note: dynamic packet size and dynamic block size are 2 different terms)
 class FECEncoder{
 public:
     typedef std::function<void(const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
