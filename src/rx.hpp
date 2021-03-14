@@ -58,10 +58,6 @@ public:
     // flush pipeline
     void flushFecPipeline();
     const Options options;
-    // the port data is forwarded to
-    const int CLIENT_UDP_PORT;
-    // do not pass data from the receiver to the Aggregator where radio port doesn't match
-    const uint8_t RADIO_PORT;
 private:
     void sendPacketViaUDP(const uint8_t *packet,std::size_t packetSize) const{
         send(sockfd,packet,packetSize, MSG_DONTWAIT);
@@ -77,7 +73,7 @@ private:
     // encryption stats
     uint64_t count_p_decryption_err=0;
     uint64_t count_p_decryption_ok=0;
-    OpenHDStatisticsWriter openHdStatisticsWriter{RADIO_PORT};
+    OpenHDStatisticsWriter openHdStatisticsWriter{options.radio_port};
     //We know that once we get the first session key packet
     bool IS_FEC_ENABLED=false;
     // On the rx, either one of those two is active at the same time. NOTE: nullptr until the first session key packet

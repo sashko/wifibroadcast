@@ -34,8 +34,6 @@
 
 WBReceiver::WBReceiver(Options options1) :
 options(options1),
-CLIENT_UDP_PORT(options.client_udp_port),
-RADIO_PORT(options.radio_port),
 mDecryptor(options.keypair){
     sockfd = SocketHelper::open_udp_socket_for_tx(options.client_addr,options.client_udp_port);
 }
@@ -96,7 +94,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         count_p_bad++;
         return;
     }
-    if(parsedPacket->ieee80211Header->getRadioPort()!=RADIO_PORT) {
+    if(parsedPacket->ieee80211Header->getRadioPort()!=options.radio_port) {
         // If we have the proper filter on pcap only packets with the right radiotap port should pass through
         std::cerr<<"Got packet with wrong radio port "<<(int)parsedPacket->ieee80211Header->getRadioPort()<<"\n";
         //RadiotapHelper::debugRadiotapHeader(pkt,hdr.caplen);
