@@ -218,7 +218,7 @@ int main(int argc, char *const *argv) {
     // use -1 for no flush interval
     std::chrono::milliseconds flush_interval{-1};
 
-    while ((opt = getopt(argc, argv, "K:k:n:c:u:p:l:f:")) != -1) {
+    while ((opt = getopt(argc, argv, "K:k:n:c:u:r:l:f:")) != -1) {
         switch (opt) {
             case 'K':
                 options.keypair = optarg;
@@ -229,7 +229,7 @@ int main(int argc, char *const *argv) {
             case 'u':
                 options.client_udp_port = atoi(optarg);
                 break;
-            case 'p':
+            case 'r':
                 options.radio_port = atoi(optarg);
                 break;
             case 'l':
@@ -241,7 +241,7 @@ int main(int argc, char *const *argv) {
             default: /* '?' */
             show_usage:
                 fprintf(stderr,
-                        "Local receiver: %s [-K rx_key] [-c client_addr] [-u client_port] [-p radio_port] [-l log_interval(ms)] [-f flush_interval(ms)] interface1 [interface2] ...\n",
+                        "Local receiver: %s [-K rx_key] [-c client_addr] [-u client_port] [-r radio_port] [-l log_interval(ms)] [-f flush_interval(ms)] interface1 [interface2] ...\n",
                         argv[0]);
                 fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d, log_interval=%d flush_interval=%d\n",
                         options.keypair.c_str(),options.client_addr.c_str(), options.client_udp_port, options.radio_port,
