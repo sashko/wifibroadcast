@@ -44,7 +44,9 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         mRadiotapHeader(radiotapHeader),
         FLUSH_INTERVAL(std::chrono::milliseconds (-1)),
         // FEC is disabled if k is integer and 0
-        IS_FEC_DISABLED(options.FEC_K.index() == 0 && std::get<int>(options.FEC_K) == 0){
+        IS_FEC_DISABLED(options.FEC_K.index() == 0 && std::get<int>(options.FEC_K) == 0),
+        // FEC is variable if k is an string
+        IS_FEC_VARIABLE(options.FEC_K.index() == 1){
     if(FLUSH_INTERVAL>LOG_INTERVAL){
         std::cerr<<"Please use a flush interval smaller than the log interval\n";
     }
@@ -56,6 +58,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         mFecDisabledEncoder=std::make_unique<FECDisabledEncoder>();
         mFecDisabledEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     }else{
+        // variable if k is a string with video type
         const int kMax=options.FEC_K.index()==0 ? std::get<int>(options.FEC_K) : MAX_N_P_FRAGMENTS_PER_BLOCK;
         mFecEncoder=std::make_unique<FECEncoder>(kMax,options.FEC_PERCENTAGE);
         mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
@@ -64,6 +67,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", options.udp_port,options.radio_port,options.wlan.c_str(),-1);
     // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
     sessionKeyPacket.IS_FEC_ENABLED=!IS_FEC_DISABLED;
+    sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK=MAX_TOTAL_FRAGMENTS_PER_BLOCK;
 }
 
 WBTransmitter::~WBTransmitter() {

@@ -302,3 +302,9 @@ std::cerr<<"Use K=0 only in combination with N=0.\n"
         fec_init();
         blockBuffer.resize(MAX_TOTAL_FRAGMENTS_PER_BLOCK);
     }*/
+
+void forceForwardBlocksOlderThan(const std::chrono::nanoseconds& maxLatency){
+        // loop through all blocks in queue. If we find a block that is older than N ms
+        // "forward it" even though it is missing packets
+        // get the age in nanoseconds of the currently "oldest" block
+    }

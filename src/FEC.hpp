@@ -115,8 +115,8 @@ private:
     size_t currMaxPacketSize = 0;
     // Pre-allocated to hold all primary and secondary fragments
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
-    const int mKMax;
-    const int mPercentage;
+    const unsigned int mKMax;
+    const unsigned int mPercentage;
 public:
     // encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback
     // if @param endBlock=true, the FEC step is applied immediately
@@ -154,7 +154,7 @@ public:
         }
         //std::cout<<"Doing FEC step on block size"<<currNPrimaryFragments<<"\n";
         // prepare for the fec step
-        const int nSecondaryFragments=currNPrimaryFragments*mPercentage/100;
+        const auto nSecondaryFragments=currNPrimaryFragments*mPercentage/100;
         //std::cout<<"Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
 
         // once enough data has been buffered, create all the secondary fragments
@@ -593,11 +593,6 @@ public:
     // For example, if the RX doesn't receive anything for N ms any data that is going to arrive will not have a smaller or equal block index than the blocks that are currently in the queue
     void flushRxRing(){
        decreaseRxRingSize(0);
-    }
-    void forceForwardBlocksOlderThan(const std::chrono::nanoseconds& maxLatency){
-        // loop through all blocks in queue. If we find a block that is older than N ms
-        // "forward it" even though it is missing packets
-        // get the age in nanoseconds of the currently "oldest" block
     }
 public:
     uint64_t count_p_fec_recovered=0;
