@@ -94,19 +94,6 @@ class FECEncoder{
 public:
     typedef std::function<void(const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
     OUTPUT_DATA_CALLBACK outputDataCallback;
-    // How to use with fixed block size:
-    // Just use m
-    // This constructor is for fixed packet size
-    /*FECEncoder(int k, int n):BLOCK_SIZE_DYNAMIC(false),FEC_K_FIXED(k),FEC_N_FIXED(n){
-        assert(n>=k);
-        assert(n>0);
-        assert(k>0);
-        assert(k<=MAX_N_P_FRAGMENTS_PER_BLOCK);
-        assert(n<=MAX_N_P_FRAGMENTS_PER_BLOCK+MAX_N_S_FRAGMENTS_PER_BLOCK);
-        fec_init();
-        blockBuffer.resize(n);
-        std::cout<<"FEC fixed (K:N)=("<<k<<":"<<n<<")"<<"\n";
-    }*/
     // If you want to use the encoder for a fixed k, just use k for K_MAX and never call
     // encodePacket(...,true).
     // Else, if you want to use the encoder for variable k, just use K_MAX=MAX_N_P_FRAGMENTS_PER_BLOCK and call
@@ -121,30 +108,15 @@ public:
         fec_init();
         blockBuffer.resize(K_MAX + maxNSecondaryFragments);
     }
-
-    // And this constructor is for dynamic block size, which means the FEC step is applied after either we run out
-    // of possible fragment indices or call encodePacket(...,endBlock=true)
-    /*FECEncoder(int percentage):BLOCK_SIZE_DYNAMIC(true),PERCENTAGE(percentage){
-        assert(percentage<=100);
-        fec_init();
-        blockBuffer.resize(MAX_TOTAL_FRAGMENTS_PER_BLOCK);
-    }*/
     FECEncoder(const FECEncoder& other)=delete;
 private:
-    uint32_t currBlockIdx = 0; //block_idx << 8 + fragment_idx = nonce (64bit)
+    uint32_t currBlockIdx = 0;
     uint16_t currFragmentIdx = 0;
     size_t currMaxPacketSize = 0;
     // Pre-allocated to hold all primary and secondary fragments
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
     const int mKMax;
     const int mPercentage;
-    //const bool BLOCK_SIZE_DYNAMIC;
-    // used if block size is fixed
-    //const int FEC_K_FIXED=0;
-    //const int FEC_N_FIXED=0;
-    // used if block size is dynamic
-    //const int PERCENTAGE=0;
-    //const int maxNPrimaryFragments;
 public:
     void encodePacket(const uint8_t *buf,const size_t size,const bool endBlock=false) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);

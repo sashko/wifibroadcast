@@ -280,3 +280,25 @@ std::cerr<<"Use K=0 only in combination with N=0.\n"
                 {40,60},
                 {100,150},
                 {120,240}
+
+ // How to use with fixed block size:
+    // Just use m
+    // This constructor is for fixed packet size
+    /*FECEncoder(int k, int n):BLOCK_SIZE_DYNAMIC(false),FEC_K_FIXED(k),FEC_N_FIXED(n){
+        assert(n>=k);
+        assert(n>0);
+        assert(k>0);
+        assert(k<=MAX_N_P_FRAGMENTS_PER_BLOCK);
+        assert(n<=MAX_N_P_FRAGMENTS_PER_BLOCK+MAX_N_S_FRAGMENTS_PER_BLOCK);
+        fec_init();
+        blockBuffer.resize(n);
+        std::cout<<"FEC fixed (K:N)=("<<k<<":"<<n<<")"<<"\n";
+    }*/
+
+  // And this constructor is for dynamic block size, which means the FEC step is applied after either we run out
+    // of possible fragment indices or call encodePacket(...,endBlock=true)
+    /*FECEncoder(int percentage):BLOCK_SIZE_DYNAMIC(true),PERCENTAGE(percentage){
+        assert(percentage<=100);
+        fec_init();
+        blockBuffer.resize(MAX_TOTAL_FRAGMENTS_PER_BLOCK);
+    }*/
