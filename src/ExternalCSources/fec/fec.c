@@ -652,8 +652,8 @@ void fec_encode(unsigned int blockSize,
     unsigned int row, col;
 
     assert(fec_initialized);
-    assert(nrDataBlocks <= 128);
-    assert(nrFecBlocks <= 128);
+    //assert(nrDataBlocks <= 128);
+    //assert(nrFecBlocks <= 128);
 
     if(!nrDataBlocks)
         return;
