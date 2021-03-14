@@ -78,9 +78,10 @@ static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(
 static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
 // max 255 primary and secondary fragments together for now. Theoretically, this implementation has enough bytes in the header for
 // up to 15 bit fragment indices, 2^15=32768
-static constexpr const auto MAX_N_P_FRAGMENTS_PER_BLOCK=255;
-static constexpr const auto MAX_N_S_FRAGMENTS_PER_BLOCK=255;
-static constexpr const auto MAX_TOTAL_FRAGMENTS_PER_BLOCK=MAX_N_P_FRAGMENTS_PER_BLOCK+MAX_N_S_FRAGMENTS_PER_BLOCK;
+// Note: currently limited by the fec c implementation
+static constexpr const uint16_t MAX_N_P_FRAGMENTS_PER_BLOCK=255;
+static constexpr const uint16_t MAX_N_S_FRAGMENTS_PER_BLOCK=255;
+static constexpr const uint16_t MAX_TOTAL_FRAGMENTS_PER_BLOCK=MAX_N_P_FRAGMENTS_PER_BLOCK+MAX_N_S_FRAGMENTS_PER_BLOCK;
 
 // Takes a continuous stream of packets and
 // encodes them via FEC such that they can be decoded by FECDecoder
@@ -93,6 +94,8 @@ class FECEncoder{
 public:
     typedef std::function<void(const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
     OUTPUT_DATA_CALLBACK outputDataCallback;
+    // How to use with fixed block size:
+    // Just use m
     // This constructor is for fixed packet size
     FECEncoder(int k, int n):BLOCK_SIZE_DYNAMIC(false),FEC_K_FIXED(k),FEC_N_FIXED(n){
         assert(n>=k);
@@ -102,7 +105,7 @@ public:
         assert(n<=MAX_N_P_FRAGMENTS_PER_BLOCK+MAX_N_S_FRAGMENTS_PER_BLOCK);
         fec_init();
         blockBuffer.resize(n);
-        //std::cout<<"NP"<<fec.N_PRIMARY_FRAGMENTS<<" NS"<<fec.N_SECONDARY_FRAGMENTS<<"\n";
+        std::cout<<"FEC fixed (K:N)=("<<k<<":"<<n<<")"<<"\n";
     }
     // And this constructor is for dynamic block size, which means the FEC step is applied after either we run out
     // of possible fragment indices or call encodePacket(...,endBlock=true)
@@ -124,6 +127,7 @@ private:
     const int FEC_N_FIXED=0;
     // used if block size is dynamic
     const int PERCENTAGE=0;
+    //const int maxNPrimaryFragments;
 public:
     void encodePacket(const uint8_t *buf,const size_t size,const bool endBlock=false) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
@@ -198,14 +202,6 @@ public:
         }
         return false;
     }
-    // add as many "empty packets" as needed until the block is done
-    // if the block is already done,return immediately
-    void finishCurrentBlock(){
-        uint8_t emptyPacket[0];
-        while(currFragmentIdx != 0){
-            encodePacket(emptyPacket,0);
-        }
-    }
     // returns true if the last block was already fully processed.
     // in this case, you don't need to finish the current block until you put data in the next time
     // also, in the beginning the pipeline is already flushed due to no data packets yet
@@ -254,7 +250,7 @@ public:
     ~RxBlock()= default;
 public:
     // returns true if the fragment at position fragmentIdx has been already received
-    bool hasFragment(const uint8_t fragmentIdx)const{
+    bool hasFragment(const uint16_t fragmentIdx)const{
         return fragment_map[fragmentIdx]==AVAILABLE;
     }
     // returns true if we are "done with this block" aka all data has been already forwarded
@@ -319,9 +315,9 @@ public:
     // (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
     // @param breakOnFirstGap : if true (default), stop on the first gap (missing packet). Else, keep going, skipping packets with gaps. Use this parameter if
     // you need to forward everything left on a block before getting rid of it.
-    std::vector<uint8_t> pullAvailablePrimaryFragments(const bool breakOnFirstGap= true){
+    std::vector<uint16_t> pullAvailablePrimaryFragments(const bool breakOnFirstGap= true){
         // note: when pulling the available fragments, we do not need to know how many primary fragments this block actually contains
-        std::vector<uint8_t> ret;
+        std::vector<uint16_t> ret;
         for(int i=nAlreadyForwardedPrimaryFragments; i < nAvailablePrimaryFragments; i++){
             if(!hasFragment(i)){
                 if(breakOnFirstGap){
@@ -336,7 +332,7 @@ public:
         nAlreadyForwardedPrimaryFragments+=(int)ret.size();
         return ret;
     }
-    const uint8_t* getDataPrimaryFragment(const uint8_t fragmentIdx){
+    const uint8_t* getDataPrimaryFragment(const uint16_t fragmentIdx){
         assert(fragment_map[fragmentIdx]==AVAILABLE);
         return blockBuffer[fragmentIdx].data();
     }
@@ -454,14 +450,14 @@ private:
     /**
      * Forward the primary (data) fragment at index fragmentIdx via the output callback
      */
-    void forwardPrimaryFragment(RxBlock& block, const uint8_t fragmentIdx)const{
+    void forwardPrimaryFragment(RxBlock& block, const uint16_t fragmentIdx)const{
         //std::cout<<"forwardPrimaryFragment("<<(int)block.getBlockIdx()<<","<<(int)fragmentIdx<<")\n";
         assert(block.hasFragment(fragmentIdx));
         const uint8_t* primaryFragment= block.getDataPrimaryFragment(fragmentIdx);
         const FECPayloadHdr &packet_hdr = *(FECPayloadHdr*) primaryFragment;
 
         const uint8_t *payload = primaryFragment + sizeof(FECPayloadHdr);
-        const uint16_t packet_size = packet_hdr.getPrimaryFragmentSize();
+        const auto packet_size = packet_hdr.getPrimaryFragmentSize();
 
         if (packet_size > FEC_MAX_PAYLOAD_SIZE) {
             // this should never happen !

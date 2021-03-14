@@ -58,9 +58,10 @@ namespace TestFEC{
             assert(GenericHelper::compareVectors(in,out)==true);
         }
     }
+    // randomly end the block at some time
     static void testWithoutPacketLossDynamicBlockSize(){
         std::cout<<"Test without packet loss dynamic block size\n";
-        constexpr auto N_BLOCKS=1000;
+        constexpr auto N_BLOCKS=2000;
         const auto testIn=GenericHelper::createRandomDataBuffers(N_BLOCKS, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
         std::vector<std::vector<uint8_t>> testOut;
         FECEncoder encoder(50);
@@ -234,12 +235,8 @@ namespace TestEncryption{
         for(uint64_t nonce=0; nonce < 20; nonce++){
             const auto data=GenericHelper::createRandomDataBuffer(FEC_MAX_PAYLOAD_SIZE);
             const WBDataHeader wbDataHeader(nonce);
-
-            //const auto encrypted= encryptor.encryptWBDataPacket(wbDataPacket);
             const auto encrypted=encryptor.encryptPacket(wbDataHeader.nonce,data.data(),data.size(),wbDataHeader);
-
             const auto decrypted=decryptor.decryptPacket(wbDataHeader.nonce,encrypted.data(), encrypted.size(),wbDataHeader);
-
             assert(decrypted!=std::nullopt);
             assert(GenericHelper::compareVectors(data,*decrypted) == true);
         }
@@ -254,17 +251,21 @@ int main(int argc, char *argv[]){
         const int N_PACKETS=1200;
         TestFEC::testWithoutPacketLossFixedPacketSize(1,1, N_PACKETS);
         TestFEC::testWithoutPacketLossFixedPacketSize(1,2, N_PACKETS);
+        TestFEC::testWithoutPacketLossFixedPacketSize(200,300, N_PACKETS);
         // only test with FEC enabled
-        const std::vector<std::pair<uint8_t,uint8_t>> fecParams={
+        const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
                 {1,3},
                 {3,5},{3,6},{6,8},{6,9},
                 {2,4},{4,8},
                 {6,12},{8,16},{12,24},
-                {4,6},{12,14}
+                {4,6},{12,14},
+                {40,60},
+                {100,150},
+                //{150,225}
         };
         for(const auto& fecParam:fecParams){
-            const uint8_t k=fecParam.first;
-            const uint8_t n=fecParam.second;
+            const auto k=fecParam.first;
+            const auto n=fecParam.second;
             TestFEC::testWithoutPacketLossFixedPacketSize(k, n, N_PACKETS);
             TestFEC::testWithoutPacketLossDynamicPacketSize(k, n, N_PACKETS);
             TestFEC::testRxQueue(k,n);

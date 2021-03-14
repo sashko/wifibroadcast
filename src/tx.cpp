@@ -181,9 +181,9 @@ void WBTransmitter::loop() {
                     // smaller than 0 means no flush enabled
                     // else we didn't receive data for FLUSH_INTERVAL ms
                     // if nothing needs to be flushed, this call returns immediately
-                    if(mFecEncoder){
-                        mFecEncoder->finishCurrentBlock();
-                    }
+                    //if(mFecEncoder){
+                    //    mFecEncoder->finishCurrentBlock();
+                    //}
                 }
                 continue;
             }
@@ -202,7 +202,7 @@ int main(int argc, char *const *argv) {
     Options options{};
     // use -1 for no flush interval
     std::chrono::milliseconds flushInterval=std::chrono::milliseconds(-1);
-    uint8_t k=8,n=12;
+    int k=8,n=12;
     std::string videoType;
     bool userSetKorN=false;
 
@@ -272,11 +272,14 @@ int main(int argc, char *const *argv) {
     options.wlan=argv[optind];
 
     if(videoType.empty()){
+        std::cout<<"";
         // either FEC disabled or FEC fixed
         if(k==0){
             assert(n==0);
             options.IS_FEC_ENABLED= false;
         }
+    }else{
+
     }
 
     // check if variable is wanted
