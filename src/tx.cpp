@@ -109,7 +109,12 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
     if(IS_FEC_DISABLED){
         mFecDisabledEncoder->encodePacket(buf,size);
     }else{
-        mFecEncoder->encodePacket(buf,size);
+        if(options.FEC_K.index()==1){
+            const bool endBlock=RTPLockup::h264_end_block(buf,size);
+            mFecEncoder->encodePacket(buf,size,endBlock);
+        }else{
+            mFecEncoder->encodePacket(buf,size);
+        }
         if(mFecEncoder->resetOnOverflow()){
             // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
             mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
