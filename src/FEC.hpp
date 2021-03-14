@@ -418,6 +418,8 @@ public:
     typedef std::function<void(const uint8_t * payload,std::size_t payloadSize)> SEND_DECODED_PACKET;
     // WARNING: Don't forget to register this callback !
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;
+    // A value too high doesn't really give much benefit and increases memory usage
+    static constexpr auto RX_QUEUE_MAX_SIZE = 20;
 public:
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
     bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t>& decrypted){
@@ -471,10 +473,6 @@ private:
             }
         }
     }
-public:
-    // Here is everything you need when using the RX queue to account for packet re-ordering due to multiple wifi cards
-    static constexpr auto RX_QUEUE_MAX_SIZE = 20;
-private:
     // since we also need to search this data structure, a std::queue is not enough.
     // since we have an upper limit on the size of this dequeue, it is basically a searchable ring buffer
     std::deque<std::unique_ptr<RxBlock>> rx_queue;
