@@ -278,7 +278,7 @@ namespace RTPLockup{
     // Use if input is rtp h264 stream
     // returns true if the FEC encoder shall end the block with this packet
     static bool h264_end_block(const uint8_t* payload, const std::size_t payloadSize){
-        if(payloadSize<RTP_HEADER_SIZE+sizeof(H264::nalu_header_t)){
+        if(payloadSize<RTP_HEADER_SIZE+sizeof(H264::nalu_header_t)+sizeof(H264::fu_header_t)){
             std::cerr<<"Got packet that cannot be rtp h264\n";
             return false;
         }
