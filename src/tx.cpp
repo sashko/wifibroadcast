@@ -42,17 +42,10 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         mPcapTransmitter(options.wlan),
         mEncryptor(options.keypair),
         mRadiotapHeader(radiotapHeader),
-        FLUSH_INTERVAL(std::chrono::milliseconds (-1)),
         // FEC is disabled if k is integer and 0
         IS_FEC_DISABLED(options.fec_k.index() == 0 && std::get<int>(options.fec_k) == 0),
         // FEC is variable if k is an string
         IS_FEC_VARIABLE(options.fec_k.index() == 1){
-    if(FLUSH_INTERVAL>LOG_INTERVAL){
-        std::cerr<<"Please use a flush interval smaller than the log interval\n";
-    }
-    if(FLUSH_INTERVAL==std::chrono::milliseconds(0)){
-        std::cerr<<"Please do not use a flush interval of 0 (would hog the cpu)\n";
-    }
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
     if(IS_FEC_DISABLED){
         mFecDisabledEncoder=std::make_unique<FECDisabledEncoder>();
@@ -136,12 +129,7 @@ void WBTransmitter::loop() {
     std::chrono::steady_clock::time_point log_ts{};
     // send the key a couple of times on startup to increase the likeliness it is received
     bool firstTime=true;
-    // -1 would mean "flushing disabled"
-    if(FLUSH_INTERVAL>std::chrono::milliseconds(0)){
-        SocketHelper::setSocketReceiveTimeout(mInputSocket,FLUSH_INTERVAL);
-    }else{
-        SocketHelper::setSocketReceiveTimeout(mInputSocket,LOG_INTERVAL);
-    }
+    SocketHelper::setSocketReceiveTimeout(mInputSocket,LOG_INTERVAL);
     for(;;){
         // send the session key a couple of times on startup
         if(firstTime){
@@ -151,12 +139,6 @@ void WBTransmitter::loop() {
             }
             firstTime=false;
         }
-        // only use a small timeout when the pipeline might need a flush
-        //if(isAlreadyInFinishedState()){
-        //    SocketHelper::setSocketReceiveTimeout(mInputSocket,LOG_INTERVAL);
-        //}else{
-        //    SocketHelper::setSocketReceiveTimeout(mInputSocket,FLUSH_INTERVAL);
-        //}
 
         // we set the timeout earlier when creating the socket
         const ssize_t message_length = recvfrom(mInputSocket, buf.data(),buf.size(), 0, nullptr, nullptr);
@@ -181,14 +163,6 @@ void WBTransmitter::loop() {
         }else{
             if(errno==EAGAIN || errno==EWOULDBLOCK){
                 // timeout
-                if(FLUSH_INTERVAL.count()>0){
-                    // smaller than 0 means no flush enabled
-                    // else we didn't receive data for FLUSH_INTERVAL ms
-                    // if nothing needs to be flushed, this call returns immediately
-                    //if(mFecEncoder){
-                    //    mFecEncoder->finishCurrentBlock();
-                    //}
-                }
                 continue;
             }
             if (errno == EINTR){
