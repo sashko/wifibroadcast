@@ -241,7 +241,7 @@ int main(int argc, char *const *argv) {
                 fprintf(stderr,
                         "Local receiver: %s [-K rx_key] [-c client_addr] [-u udp_client_port] [-r radio_port] [-l log_interval(ms)] [-f flush_interval(ms)] interface1 [interface2] ...\n",
                         argv[0]);
-                fprintf(stderr, "Default: K='%s', connect=%s:%d, udp_client_port=%d, log_interval=%d flush_interval=%d\n",
+                fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d, log_interval=%d flush_interval=%d\n",
                         options.keypair.c_str(),options.client_addr.c_str(), options.client_udp_port, options.radio_port,
                         (int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count(),(int)std::chrono::duration_cast<std::chrono::milliseconds>(flush_interval).count());
                 fprintf(stderr, "WFB version "
