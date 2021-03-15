@@ -174,7 +174,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
             count_p_decryption_ok++;
             IS_FEC_ENABLED=sessionKeyPacket.IS_FEC_ENABLED;
             if(IS_FEC_ENABLED){
-                mFECDDecoder=std::make_unique<FECDecoder>(sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
+                mFECDDecoder=std::make_unique<FECDecoder>((unsigned int)sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
                 mFECDDecoder->mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
             }else{
                 mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
