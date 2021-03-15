@@ -213,10 +213,8 @@ int main(int argc, char *const *argv) {
     int opt;
     Options options{};
     std::chrono::milliseconds log_interval{1000};
-    // use -1 for no flush interval
-    std::chrono::milliseconds flush_interval{-1};
 
-    while ((opt = getopt(argc, argv, "K:k:n:c:u:r:l:f:")) != -1) {
+    while ((opt = getopt(argc, argv, "K:k:n:c:u:r:l:")) != -1) {
         switch (opt) {
             case 'K':
                 options.keypair = optarg;
@@ -233,17 +231,14 @@ int main(int argc, char *const *argv) {
             case 'l':
                 log_interval = std::chrono::milliseconds(atoi(optarg));
                 break;
-            case 'f':
-                flush_interval=std::chrono::milliseconds(atoi(optarg));
-                break;
             default: /* '?' */
             show_usage:
                 fprintf(stderr,
-                        "Local receiver: %s [-K rx_key] [-c client_addr] [-u udp_client_port] [-r radio_port] [-l log_interval(ms)] [-f flush_interval(ms)] interface1 [interface2] ...\n",
+                        "Local receiver: %s [-K rx_key] [-c client_addr] [-u udp_client_port] [-r radio_port] [-l log_interval(ms)] interface1 [interface2] ...\n",
                         argv[0]);
-                fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d, log_interval=%d flush_interval=%d\n",
+                fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d, log_interval=%d \n",
                         options.keypair.c_str(),options.client_addr.c_str(), options.client_udp_port, options.radio_port,
-                        (int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count(),(int)std::chrono::duration_cast<std::chrono::milliseconds>(flush_interval).count());
+                        (int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count());
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
                 "\n");
@@ -263,7 +258,7 @@ int main(int argc, char *const *argv) {
     }
     try {
         std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(options);
-        MultiRxPcapReceiver receiver(rxInterfaces,options.radio_port,log_interval,flush_interval,
+        MultiRxPcapReceiver receiver(rxInterfaces,options.radio_port,log_interval,std::chrono::milliseconds(-1),
                                      std::bind(&WBReceiver::processPacket, agg.get(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
                                      std::bind(&WBReceiver::dump_stats, agg.get()),
                                      std::bind(&WBReceiver::flushFecPipeline, agg.get()));
