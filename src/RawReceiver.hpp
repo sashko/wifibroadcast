@@ -268,7 +268,7 @@ public:
         memset(mReceiverFDs.data(), '\0', mReceiverFDs.size()*sizeof(pollfd));
         std::stringstream ss;
         ss<<"MultiRxPcapReceiver"<<" Assigned ID: "<<radio_port<<" Assigned WLAN(s):[";
-        for(const auto s:rxInterfaces){
+        for(const auto& s:rxInterfaces){
             ss<<s<<",";
         }
         ss<<"]";
