@@ -130,6 +130,7 @@ private:
 
 // Doesn't use pcap but somehow directly talks to the OS via socket
 // note that you still have to prefix data with the proper RadiotapHeader in this mode (just as if you were using pcap)
+// NOTE: I didn't measure any advantage for RawSocketTransmitter compared to PcapTransmitter, so I'd recommend using PcapTransmitter only
 class RawSocketTransmitter{
 public:
     explicit RawSocketTransmitter(const std::string &wlan) {
