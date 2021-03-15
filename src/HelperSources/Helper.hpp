@@ -284,21 +284,21 @@ namespace RTPLockup{
         }
         const H264::nalu_header_t& naluHeader=*(H264::nalu_header_t*)(&payload[RTP_HEADER_SIZE]);
         if (naluHeader.type == 28) {// fragmented nalu
-            std::cout<<"Got fragmented NALU\n";
+            //std::cout<<"Got fragmented NALU\n";
             const H264::fu_header_t& fuHeader=*(H264::fu_header_t*)&payload[RTP_HEADER_SIZE+sizeof(H264::nalu_header_t)];
             if(fuHeader.e){
-                std::cout<<"Got end of fragmented NALU\n";
+                //std::cout<<"Got end of fragmented NALU\n";
                 // end of fu-a
                 return true;
             }else{
-                std::cout<<"Got start or middle of fragmented NALU\n";
+                //std::cout<<"Got start or middle of fragmented NALU\n";
                 return false;
             }
         } else if(naluHeader.type>0 && naluHeader.type<24){//full nalu
-            std::cout<<"Got full NALU\n";
+            //std::cout<<"Got full NALU\n";
             return true;
         }else{
-            std::cerr<<"Unknown rtp h264 packet\n";
+            //std::cerr<<"Unknown rtp h264 packet\n";
             return false;
         }
     }
