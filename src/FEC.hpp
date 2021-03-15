@@ -265,6 +265,7 @@ public:
         assert(fecNonce.blockIdx==blockIdx);
         assert(fragment_map[fecNonce.fragmentIdx]==UNAVAILABLE);
         assert(fecNonce.blockIdx<=MAX_BLOCK_IDX);
+        std::cout<<"LOL "<<(int)fecNonce.fragmentIdx<<"\n";
         assert(fecNonce.fragmentIdx<blockBuffer.size());
         // write the data (doesn't matter if FEC data or correction packet)
         memcpy(blockBuffer[fecNonce.fragmentIdx].data(), data, dataLen);

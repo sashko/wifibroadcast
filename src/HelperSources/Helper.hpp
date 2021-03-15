@@ -287,6 +287,7 @@ namespace RTPLockup{
             std::cout<<"Got fragmented NALU\n";
             const H264::fu_header_t& fuHeader=*(H264::fu_header_t*)&payload[RTP_HEADER_SIZE+sizeof(H264::nalu_header_t)];
             if(fuHeader.e){
+                std::cout<<"Got end of fragmented NALU\n";
                 // end of fu-a
                 return true;
             }
