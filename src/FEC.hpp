@@ -395,9 +395,10 @@ public:
     // Does not need to know k,n or if tx does variable block length or not.
     // If the tx doesn't use the full range of fragment indices (aka K is fixed) use
     // @param maxNFragmentsPerBlock for a more efficient memory usage
-    FECDecoder(const unsigned int maxNFragmentsPerBlock=MAX_TOTAL_FRAGMENTS_PER_BLOCK):maxNFragmentsPerBlock(maxNFragmentsPerBlock){
+    explicit FECDecoder(const unsigned int maxNFragmentsPerBlock=MAX_TOTAL_FRAGMENTS_PER_BLOCK):maxNFragmentsPerBlock(maxNFragmentsPerBlock){
         fec_init();
     }
+    FECDecoder(const FECDecoder& other)=delete;
     ~FECDecoder() = default;
     typedef std::function<void(const uint8_t * payload,std::size_t payloadSize)> SEND_DECODED_PACKET;
     // WARNING: Don't forget to register this callback !
