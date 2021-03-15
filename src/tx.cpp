@@ -44,9 +44,9 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         mRadiotapHeader(radiotapHeader),
         FLUSH_INTERVAL(std::chrono::milliseconds (-1)),
         // FEC is disabled if k is integer and 0
-        IS_FEC_DISABLED(options.FEC_K.index() == 0 && std::get<int>(options.FEC_K) == 0),
+        IS_FEC_DISABLED(options.fec_k.index() == 0 && std::get<int>(options.fec_k) == 0),
         // FEC is variable if k is an string
-        IS_FEC_VARIABLE(options.FEC_K.index() == 1){
+        IS_FEC_VARIABLE(options.fec_k.index() == 1){
     if(FLUSH_INTERVAL>LOG_INTERVAL){
         std::cerr<<"Please use a flush interval smaller than the log interval\n";
     }
@@ -59,15 +59,15 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         mFecDisabledEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     }else{
         // variable if k is a string with video type
-        const int kMax=options.FEC_K.index()==0 ? std::get<int>(options.FEC_K) : MAX_N_P_FRAGMENTS_PER_BLOCK;
-        mFecEncoder=std::make_unique<FECEncoder>(kMax,options.FEC_PERCENTAGE);
+        const int kMax= options.fec_k.index() == 0 ? std::get<int>(options.fec_k) : MAX_N_P_FRAGMENTS_PER_BLOCK;
+        mFecEncoder=std::make_unique<FECEncoder>(kMax,options.fec_percentage);
         mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK=kMax+FECEncoder::calculateN(kMax,options.fec_percentage);
     }
     mInputSocket=SocketHelper::openUdpSocketForRx(options.udp_port);
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s FLUSH_INTERVAL(ms) %d\n", options.udp_port,options.radio_port,options.wlan.c_str(),-1);
     // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
     sessionKeyPacket.IS_FEC_ENABLED=!IS_FEC_DISABLED;
-    sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK=MAX_TOTAL_FRAGMENTS_PER_BLOCK;
 }
 
 WBTransmitter::~WBTransmitter() {
@@ -113,7 +113,7 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
     if(IS_FEC_DISABLED){
         mFecDisabledEncoder->encodePacket(buf,size);
     }else{
-        if(options.FEC_K.index()==1){
+        if(options.fec_k.index() == 1){
             const bool endBlock=RTPLockup::h264_end_block(buf,size);
             mFecEncoder->encodePacket(buf,size,endBlock);
         }else{
@@ -218,13 +218,13 @@ int main(int argc, char *const *argv) {
                 break;
             case 'k':
                 if(std::string(optarg)==std::string("h264")){
-                    options.FEC_K="h264";
+                    options.fec_k="h264";
                 }else{
-                    options.FEC_K=(int)atoi(optarg);
+                    options.fec_k=(int)atoi(optarg);
                 }
                 break;
             case 'p':
-                options.FEC_PERCENTAGE=atoi(optarg);
+                options.fec_percentage=atoi(optarg);
                 break;
             case 'u':
                 options.udp_port = atoi(optarg);
@@ -254,7 +254,7 @@ int main(int argc, char *const *argv) {
                         argv[0]);
                 fprintf(stderr,
                         "Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d \n",
-                        options.keypair.c_str(),std::get<int>(options.FEC_K), options.FEC_PERCENTAGE, options.udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index);
+                        options.keypair.c_str(), std::get<int>(options.fec_k), options.fec_percentage, options.udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index);
                 fprintf(stderr, "Radio MTU: %lu\n", (unsigned long) FEC_MAX_PAYLOAD_SIZE);
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
@@ -275,13 +275,13 @@ int main(int argc, char *const *argv) {
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader, sizeof(OldRadiotapHeaders::u8aRadiotapHeader));
     SchedulingHelper::setThreadParamsMaxRealtime();
 
-    if(options.FEC_K.index()==0){
+    if(options.fec_k.index() == 0){
         // If the user selected -k as an integer number
-        const int k=std::get<int>(options.FEC_K);
+        const int k=std::get<int>(options.fec_k);
         if(k==0){
             std::cout<<"FEC is disabled. -p won't do anything\n";
         }else{
-            const int n=k+k*options.FEC_PERCENTAGE / 100;
+            const int n=k+ k * options.fec_percentage / 100;
             if(n>MAX_TOTAL_FRAGMENTS_PER_BLOCK){
                 std::cout<<"Please select a smaller -p (FEC_PERCENTAGE) value\n";
                 exit(1);
@@ -290,8 +290,8 @@ int main(int argc, char *const *argv) {
         }
     }else{
         // If the user selected -k h264 (as a string)
-        std::cout<<"FEC is enabled and variable, can only be used in conjunction with h264. FEC_PERCENTAGE(overhead):"<<options.FEC_PERCENTAGE<<"\n";
-        if(options.FEC_PERCENTAGE>100){
+        std::cout << "FEC is enabled and variable, can only be used in conjunction with h264. FEC_PERCENTAGE(overhead):" << options.fec_percentage << "\n";
+        if(options.fec_percentage > 100){
             std::cout<<"Using more than 100% fec overhead (=2x the bandwidth) is not supported\n";
         }
     }

@@ -56,8 +56,8 @@ struct Options{
     std::string wlan;
     // or either fixed or variable
     //std::variant<FECFixed,FECVariable> fec;
-    std::variant<int,std::string> FEC_K=8;
-    int FEC_PERCENTAGE=50;
+    std::variant<int,std::string> fec_k=8;
+    int fec_percentage=50;
 };
 
 // WBTransmitter uses an UDP port as input for the data stream
