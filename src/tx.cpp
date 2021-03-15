@@ -260,7 +260,6 @@ int main(int argc, char *const *argv) {
     }
     options.wlan=argv[optind];
 
-
     RadiotapHeader radiotapHeader{wifiParams};
 
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&radiotapHeader,sizeof(RadiotapHeader));
