@@ -66,7 +66,7 @@ void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockB
     for(int i=0;i<nPrimaryFragments;i++){
         primaryFragments[i]=blockBuffer[i].data();
     }
-    for(int i=0;i<nSecondaryFragments;i++){
+    for(unsigned int i=0;i<nSecondaryFragments;i++){
         secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
     }
     fec_encode(blockSize, (const unsigned char**)primaryFragments.data(),primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
@@ -91,10 +91,10 @@ void fecDecode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockB
     const auto nTheoreticalSecondaryFragments=blockBuffer.size()-nPrimaryFragments;
     std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
     std::vector<uint8_t*> secondaryFragments(nTheoreticalSecondaryFragments);
-    for(int i=0;i<nPrimaryFragments;i++){
+    for(unsigned int i=0;i<nPrimaryFragments;i++){
         primaryFragments[i]=blockBuffer[i].data();
     }
-    for(int i=0;i<nTheoreticalSecondaryFragments;i++){
+    for(unsigned int i=0;i<nTheoreticalSecondaryFragments;i++){
         secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
     }
     fec_decode(blockSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());

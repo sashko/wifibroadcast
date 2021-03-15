@@ -42,12 +42,18 @@ struct FECNonce{
     uint8_t flag:1;
     uint16_t number:15;
     explicit operator uint64_t()const {
-        return *reinterpret_cast<const uint64_t*>(this);
+        //return *reinterpret_cast<const uint64_t*>(this);
+        uint64_t ret;
+        memcpy(&ret,this,sizeof(uint64_t));
+        return ret;
     }
 }__attribute__ ((packed));
 static_assert(sizeof(FECNonce)==sizeof(uint64_t));
 static FECNonce fecNonceFrom(const uint64_t nonce){
-    return *reinterpret_cast<const FECNonce*>(&nonce);
+    //return *reinterpret_cast<const FECNonce*>(&nonce);
+    FECNonce fecNonce;
+    memcpy(&fecNonce, &nonce, sizeof(FECNonce));
+    return fecNonce;
 }
 static constexpr uint64_t MAX_BLOCK_IDX=std::numeric_limits<uint32_t>::max();
 
