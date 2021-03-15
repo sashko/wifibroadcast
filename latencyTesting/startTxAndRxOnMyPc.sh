@@ -23,7 +23,7 @@ WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
 #WFB_FOLDER="/home/pi/Desktop/wifibroadcast"
 
 FEC_K=2
-FEC_PERCENTAGE=200
+FEC_PERCENTAGE=100
 
 MY_WIFI_CHANNEL=149 #5ghz channel
 #MY_WIFI_CHANNEL=13 #2.4ghz channel
@@ -54,7 +54,7 @@ sudo iwconfig $MY_RX channel $MY_WIFI_CHANNEL
 # $WFB_FOLDER/wfb_tx -k $FEC_K -n $FEC_N -u 6000 -p 60 -M 7 -K $WFB_FOLDER/drone.key $MY_TX
 xterm -hold -e $WFB_FOLDER/wfb_tx -k $FEC_K -p $FEC_PERCENTAGE -u 6000 -r 60 -M 5 -B 20 -K $WFB_FOLDER/drone.key  $MY_TX &
 
-$WFB_FOLDER/wfb_rx -c 127.0.0.1 -u 6100 -p 60 -K $WFB_FOLDER/gs.key $MY_RX
+$WFB_FOLDER/wfb_rx -c 127.0.0.1 -u 6100 -r 60 -K $WFB_FOLDER/gs.key $MY_RX
 
 #other usefull commands:
 #sudo iw dev
