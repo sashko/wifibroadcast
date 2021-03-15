@@ -298,8 +298,8 @@ namespace RTPLockup{
             //std::cout<<"Got full NALU\n";
             return true;
         }else{
-            //std::cerr<<"Unknown rtp h264 packet\n";
-            return false;
+            std::cerr<<"Unknown rtp h264 packet\n";
+            return true;
         }
     }
 }
