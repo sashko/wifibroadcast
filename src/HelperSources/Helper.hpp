@@ -74,7 +74,7 @@ namespace GenericHelper{
         return createRandomDataBuffer(sizeBytes);
     }
     // create n random data buffers with size [minSizeB,...,maxSizeB]
-    std::vector<std::vector<uint8_t>> createRandomDataBuffers(int nBuffers, const std::size_t minSizeB, const std::size_t maxSizeB){
+    std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t nBuffers, const std::size_t minSizeB, const std::size_t maxSizeB){
         assert(minSizeB >= 0);
         std::vector<std::vector<uint8_t>> buffers;
         for(std::size_t i=0;i<nBuffers;i++){
