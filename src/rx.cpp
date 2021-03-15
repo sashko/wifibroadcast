@@ -204,9 +204,9 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
 }
 
 void WBReceiver::flushFecPipeline() {
-    if(mFECDDecoder){
-        mFECDDecoder->flushRxRing();
-    }
+    //if(mFECDDecoder){
+    //    mFECDDecoder->flushRxRing();
+    //}
 }
 
 int main(int argc, char *const *argv) {
