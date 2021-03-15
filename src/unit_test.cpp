@@ -34,6 +34,16 @@
 // Simple unit testing for the lib that doesn't require wifi cards
 
 namespace TestFEC{
+    static void testNonce(){
+        const uint32_t blockIdx=0;
+        const uint16_t fragmentIdx=0;
+        const uint16_t number=1;
+        FECNonce fecNonce{blockIdx,fragmentIdx,false,number};
+        assert(fecNonce.blockIdx==blockIdx);
+        assert(fecNonce.fragmentIdx==fragmentIdx);
+        assert(fecNonce.flag==0);
+        assert(fecNonce.number==number);
+    }
     // test the FECEncoder / FECDecoder tuple
     static void testWithoutPacketLoss(const int k, const int percentage, const std::vector<std::vector<uint8_t>>& testIn){
         std::cout<<"Test without packet loss. K:"<<k<<" P:"<<percentage<<" N_PACKETS:"<<testIn.size()<<"\n";
@@ -254,6 +264,7 @@ int main(int argc, char *argv[]){
     try {
         std::cout<<"Testing FEC\n";
         const int N_PACKETS=1200;
+        TestFEC::testNonce();
         TestFEC::testWithoutPacketLossFixedPacketSize(1,0, N_PACKETS);
         TestFEC::testWithoutPacketLossFixedPacketSize(1,100, N_PACKETS);
         // only test with FEC enabled
