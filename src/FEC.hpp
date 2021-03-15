@@ -244,6 +244,7 @@ public:
 public:
     // returns true if the fragment at position fragmentIdx has been already received
     bool hasFragment(const uint16_t fragmentIdx)const{
+        assert(fragmentIdx<fragment_map.size());
         return fragment_map[fragmentIdx]==AVAILABLE;
     }
     // returns true if we are "done with this block" aka all data has been already forwarded
