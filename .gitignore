@@ -9,8 +9,8 @@ _trial_temp/
 wfb_rx
 wfb_tx
 unit_test
-gs.key
-drone.key
+#gs.key
+#drone.key
 wfb_keygen
 telemetry/conf/site.cfg
 telemetry/conf/local.cfg
