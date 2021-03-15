@@ -36,6 +36,16 @@
 #include <vector>
 #include <thread>
 
+static FEC_VARIABLE_INPUT_TYPE convert(const Options& options){
+    if(options.fec_k.index()==0)return FEC_VARIABLE_INPUT_TYPE::none;
+    const auto tmp=std::get<std::string>(options.fec_k);
+    if(tmp==std::string("h264")){
+        return FEC_VARIABLE_INPUT_TYPE::h264;
+    }else if(tmp==std::string("h265")){
+        return FEC_VARIABLE_INPUT_TYPE::h265;
+    }
+    assert(false);
+}
 
 WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         options(std::move(options1)),
@@ -45,7 +55,8 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
         // FEC is disabled if k is integer and 0
         IS_FEC_DISABLED(options.fec_k.index() == 0 && std::get<int>(options.fec_k) == 0),
         // FEC is variable if k is an string
-        IS_FEC_VARIABLE(options.fec_k.index() == 1){
+        IS_FEC_VARIABLE(options.fec_k.index() == 1),
+        fecVariableInputType(convert(options1)){
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
     if(IS_FEC_DISABLED){
         mFecDisabledEncoder=std::make_unique<FECDisabledEncoder>();
@@ -106,10 +117,17 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
     if(IS_FEC_DISABLED){
         mFecDisabledEncoder->encodePacket(buf,size);
     }else{
-        if(options.fec_k.index() == 1){
-            const bool endBlock=RTPLockup::h264_end_block(buf,size);
+        if(IS_FEC_VARIABLE){
+            // variable k
+            bool endBlock;
+            if(fecVariableInputType==FEC_VARIABLE_INPUT_TYPE::h264){
+                endBlock=RTPLockup::h264_end_block(buf,size);
+            }else{
+                endBlock=RTPLockup::h265_end_block(buf,size);
+            }
             mFecEncoder->encodePacket(buf,size,endBlock);
         }else{
+            // fixed k
             mFecEncoder->encodePacket(buf,size);
         }
         if(mFecEncoder->resetOnOverflow()){
@@ -191,8 +209,9 @@ int main(int argc, char *const *argv) {
                 options.keypair = optarg;
                 break;
             case 'k':
-                if(std::string(optarg)==std::string("h264")){
-                    options.fec_k="h264";
+                if(std::string(optarg)==std::string("h264")
+                || std::string(optarg)==std::string("h265")){
+                    options.fec_k=std::string(optarg);
                 }else{
                     options.fec_k=(int)atoi(optarg);
                 }

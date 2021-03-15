@@ -37,13 +37,6 @@
 #include <iostream>
 #include <variant>
 
-/*struct FECFixed{
-    uint8_t k=-1,n=-1;
-};
-struct FECVariable{
-    std::string videoType="h264";
-    int percentage=50;
-};*/
 struct Options{
     // the radio port is what is used as an index to multiplex multiple streams (telemetry,video,...)
     // into the one wfb stream
@@ -54,11 +47,11 @@ struct Options{
     std::string keypair="drone.key";
     // wlan interface to send packets with
     std::string wlan;
-    // or either fixed or variable
-    //std::variant<FECFixed,FECVariable> fec;
+    // either fixed or variable
     std::variant<int,std::string> fec_k=8;
     int fec_percentage=50;
 };
+enum FEC_VARIABLE_INPUT_TYPE{none,h264,h265};
 
 // WBTransmitter uses an UDP port as input for the data stream
 // Each input UDP port has to be assigned with a Unique ID to differentiate between streams on the RX
@@ -101,6 +94,7 @@ private:
     WBSessionKeyPacket sessionKeyPacket;
     const bool IS_FEC_DISABLED;
     const bool IS_FEC_VARIABLE;
+    const FEC_VARIABLE_INPUT_TYPE fecVariableInputType;
     // On the tx, either one of those two is active at the same time
     std::unique_ptr<FECEncoder> mFecEncoder=nullptr;
     std::unique_ptr<FECDisabledEncoder> mFecDisabledEncoder=nullptr;
