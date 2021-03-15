@@ -41,6 +41,8 @@ struct FECNonce{
     uint16_t fragmentIdx;
     uint8_t flag:1;
     uint16_t number:15;
+    // 15.3.21: Unfortunately,on ARM (rpi) you need to explicitly
+    // memcpy instead of reinterpret_cast FECNonce to uint64_t.
     explicit operator uint64_t()const {
         //return *reinterpret_cast<const uint64_t*>(this);
         uint64_t ret;
