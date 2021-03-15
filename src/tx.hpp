@@ -47,7 +47,7 @@ struct Options{
     std::string keypair="drone.key";
     // wlan interface to send packets with
     std::string wlan;
-    // either fixed or variable
+    // either fixed or variable. If int==fixed, if string==variable but hook needs to be added (currently only hooked h264 and h265)
     std::variant<int,std::string> fec_k=8;
     int fec_percentage=50;
 };
