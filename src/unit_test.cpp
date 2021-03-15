@@ -46,7 +46,7 @@ namespace TestFEC{
         assert(fecNonce2.flag==0);
         assert(fecNonce2.number==number);
     }
-    // test the FECEncoder / FECDecoder tuple
+    // test without packet loss, fixed block size
     static void testWithoutPacketLoss(const int k, const int percentage, const std::vector<std::vector<uint8_t>>& testIn){
         std::cout<<"Test without packet loss. K:"<<k<<" P:"<<percentage<<" N_PACKETS:"<<testIn.size()<<"\n";
         FECEncoder encoder(k,percentage);
@@ -70,6 +70,7 @@ namespace TestFEC{
             assert(GenericHelper::compareVectors(in,out)==true);
         }
     }
+    // test without packet loss, dynamic block size aka
     // randomly end the block at some time
     static void testWithoutPacketLossDynamicBlockSize(){
         std::cout<<"Test without packet loss dynamic block size\n";
@@ -95,7 +96,7 @@ namespace TestFEC{
             assert(GenericHelper::compareVectors(in,out)==true);
         }
     }
-
+    // Put packets in in such a order that the rx queue is tested
     static void testRxQueue(const int k, const int percentage){
         std::cout<<"Test rx queue. K:"<<k<<" P:"<<percentage<<"\n";
         const auto n=FECEncoder::calculateN(k,percentage);
@@ -267,8 +268,17 @@ int main(int argc, char *argv[]){
         std::cout<<"Testing FEC\n";
         const int N_PACKETS=1200;
         TestFEC::testNonce();
-        TestFEC::testWithoutPacketLossFixedPacketSize(1,0, N_PACKETS);
-        TestFEC::testWithoutPacketLossFixedPacketSize(1,100, N_PACKETS);
+        // With these fec params "testWithoutPacketLoss" is not possible
+        const std::vector<std::pair<unsigned int,unsigned int>> fecParams1={
+                {1,0},{1,100},
+                {2,0},{2,50},{2,100}
+        };
+        for(const auto& fecParam:fecParams1){
+            const auto k=fecParam.first;
+            const auto p=fecParam.second;
+            TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
+            TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
+        }
         // only test with FEC enabled
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
                 {1,200},
