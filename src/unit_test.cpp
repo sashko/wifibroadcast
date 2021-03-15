@@ -38,11 +38,13 @@ namespace TestFEC{
         const uint32_t blockIdx=0;
         const uint16_t fragmentIdx=0;
         const uint16_t number=1;
-        FECNonce fecNonce{blockIdx,fragmentIdx,false,number};
-        assert(fecNonce.blockIdx==blockIdx);
-        assert(fecNonce.fragmentIdx==fragmentIdx);
-        assert(fecNonce.flag==0);
-        assert(fecNonce.number==number);
+        const FECNonce fecNonce{blockIdx,fragmentIdx,false,number};
+        const auto nonce=(uint64_t)fecNonce;
+        const auto fecNonce2=fecNonceFrom(nonce);
+        assert(fecNonce2.blockIdx==blockIdx);
+        assert(fecNonce2.fragmentIdx==fragmentIdx);
+        assert(fecNonce2.flag==0);
+        assert(fecNonce2.number==number);
     }
     // test the FECEncoder / FECDecoder tuple
     static void testWithoutPacketLoss(const int k, const int percentage, const std::vector<std::vector<uint8_t>>& testIn){
