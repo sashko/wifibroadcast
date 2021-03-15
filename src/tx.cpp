@@ -283,9 +283,11 @@ int main(int argc, char *const *argv) {
         }
     }else{
         // If the user selected -k h264 (as a string)
-        std::cout << "FEC is enabled and variable, can only be used in conjunction with h264. FEC_PERCENTAGE(overhead):" << options.fec_percentage << "\n";
+        std::cout << "FEC is enabled and variable, can only be used in conjunction with h264/h265. FEC_PERCENTAGE(overhead):" << options.fec_percentage << "\n";
         if(options.fec_percentage > 100){
             std::cout<<"Using more than 100% fec overhead (=2x the bandwidth) is not supported\n";
+            //limit of the fec library, would need to go back to zfec
+            exit(1);
         }
     }
 
