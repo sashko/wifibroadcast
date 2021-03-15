@@ -168,7 +168,7 @@ namespace TestFEC{
         FECEncoder encoder(k,percentage);
         FECDecoder decoder;
         std::vector <std::vector<uint8_t>> testOut;
-        const auto cb1 = [&decoder,n,k,DROP_MODE,SEND_DUPLICATES](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
+        const auto cb1 = [&decoder,k,DROP_MODE,SEND_DUPLICATES](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
             const FECNonce fecNonce=fecNonceFrom(nonce);
             const auto blockIdx=fecNonce.blockIdx;
             const auto fragmentIdx=fecNonce.fragmentIdx;
