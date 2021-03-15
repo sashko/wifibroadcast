@@ -349,6 +349,10 @@ namespace RTPLockup{
             return true;
         }
     }
+    static bool mjpeg_end_block(const uint8_t* payload, const std::size_t payloadSize){
+        // TODO not yet supported
+        return false;
+    }
 }
 /*#include <linux/wireless.h>
 #include <ifaddrs.h>
