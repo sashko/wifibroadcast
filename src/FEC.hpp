@@ -197,7 +197,7 @@ private:
         const FECNonce nonce{currBlockIdx,currFragmentIdx,false,(uint16_t)(isLastPrimaryFragment ? (currFragmentIdx+1) : 0)};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
         outputDataCallback((uint64_t)nonce,dataP,packet_size);
-        std::cout<<"Lol1"<<nonce.fragmentIdx<<" \n";
+        //std::cout<<"Lol1"<<(int)nonce.fragmentIdx<<" \n";
     }
     // calculate proper nonce (such that the rx can decode it properly), then forward via callback
     void sendSecondaryFragment(const std::size_t packet_size,const int nPrimaryFragments){
@@ -266,7 +266,7 @@ public:
         assert(fecNonce.blockIdx==blockIdx);
         assert(fragment_map[fecNonce.fragmentIdx]==UNAVAILABLE);
         assert(fecNonce.blockIdx<=MAX_BLOCK_IDX);
-        std::cout<<"LOL "<<(int)fecNonce.fragmentIdx<<"\n";
+        //std::cout<<"LOL "<<(int)fecNonce.fragmentIdx<<"\n";
         assert(fecNonce.fragmentIdx<blockBuffer.size());
         // write the data (doesn't matter if FEC data or correction packet)
         memcpy(blockBuffer[fecNonce.fragmentIdx].data(), data, dataLen);
