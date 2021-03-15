@@ -290,6 +290,9 @@ namespace RTPLockup{
                 std::cout<<"Got end of fragmented NALU\n";
                 // end of fu-a
                 return true;
+            }else{
+                std::cout<<"Got start or middle of fragmented NALU\n";
+                return false;
             }
         } else if(naluHeader.type>0 && naluHeader.type<24){//full nalu
             std::cout<<"Got full NALU\n";
