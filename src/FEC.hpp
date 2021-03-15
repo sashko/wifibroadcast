@@ -196,8 +196,9 @@ private:
         // remember we start counting from 0 not 1
         const FECNonce nonce{currBlockIdx,currFragmentIdx,false,(uint16_t)(isLastPrimaryFragment ? (currFragmentIdx+1) : 0)};
         const uint8_t *dataP = blockBuffer[currFragmentIdx].data();
+        std::cout<<"Lol1:"<<(int)nonce.fragmentIdx<<" \n";
         outputDataCallback((uint64_t)nonce,dataP,packet_size);
-        //std::cout<<"Lol1"<<(int)nonce.fragmentIdx<<" \n";
+        std::cout<<"Lol1:"<<(int)nonce.fragmentIdx<<" \n";
     }
     // calculate proper nonce (such that the rx can decode it properly), then forward via callback
     void sendSecondaryFragment(const std::size_t packet_size,const int nPrimaryFragments){
@@ -262,11 +263,11 @@ public:
     // copy the fragment data and mark it as available
     // you should check if it is already available with hasFragment() to avoid storing a fragment multiple times
     // when using multiple RX cards
-    void addFragment(const FECNonce fecNonce, const uint8_t* data,const std::size_t dataLen){
+    void addFragment(const FECNonce& fecNonce, const uint8_t* data,const std::size_t dataLen){
         assert(fecNonce.blockIdx==blockIdx);
         assert(fragment_map[fecNonce.fragmentIdx]==UNAVAILABLE);
         assert(fecNonce.blockIdx<=MAX_BLOCK_IDX);
-        //std::cout<<"LOL "<<(int)fecNonce.fragmentIdx<<"\n";
+        std::cout<<"LOL2:"<<(int)fecNonce.fragmentIdx<<"\n";
         assert(fecNonce.fragmentIdx<blockBuffer.size());
         // write the data (doesn't matter if FEC data or correction packet)
         memcpy(blockBuffer[fecNonce.fragmentIdx].data(), data, dataLen);
