@@ -46,3 +46,13 @@ If you don't need to be exact,just assume that the overhead is -p percent.
 
 ## Where to set FEC_K or FEC_PERCENTAGE
 Only needs to be set on tx, rx configures itself automatically
+
+### Building wfb_tx and wfb_rx
+install libsodium-dev\
+install libpcap-dev\
+Then run make
+
+### Building / using the test program
+go into latencyTesting/SimpleTestProgram\
+Then run make\
+You can now start the tx on one card, the rx on another card and use the test program to measure throughput, latency and more
