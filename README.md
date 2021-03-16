@@ -1,33 +1,33 @@
-##Summary
+## Summary
 This code originated from https://github.com/svpcom/wifibroadcast \
 It was re-written in c++ with the intention to reduce latency, improve syntax, improve documentation 
 and modularize the FEC Enc/Dec and Encryption/Decryption part. (represented by FECEncoder/Decoder and Encryptor/Decryptor now).\
 By doing so I was able to reduce latency quite a lot (even though the fix was one line of code in the end) and
 write simple unit tests that don't require a wifi card.\
 I also added some new features, like 
-####1) variable block size:
+#### 1) variable block size:
 If you are transmitting h264,h265 or mjpeg video, automatically end a block with the end of each frame. This reduces latency and can increase resiliency against packet loss
-####2) disable FEC:
+#### 2) disable FEC:
 For telemetry or RC data, FEC doesn't really make sense. By disabling FEC you get the same properties as "true UDP".
-####3) simplified settings:
+#### 3) simplified settings:
 The tx and rx pipeline only have to match on the radio_port, the rest is done automatically
 
-##Notable parameter changes:
+## Notable parameter changes:
 -p is now the percentage of FEC packets (previosuly radio_port) and -r is now the radio_port   
 This means, for a fixed block length, you don't have to supply k:n anymore, but rather -k (number of data packets per block) and -p (fec percentage).
 The tx is going to print this input in "old" k:n terms for you.
    
-##Example pipelines
-###1) Transmitting rtp encapsulated h264/h265/mjpeg video:
-####./wfb_tx -k h264 -p 50    
+## Example pipelines
+### 1) Transmitting rtp encapsulated h264/h265/mjpeg video:
+#### ./wfb_tx -k h264 -p 50    
 This reads as follow: variable block length for rtp h264 video,with an overhead of
 FEC packets of 50% (if your input stream is 20MBit/s, the used bandwidth is going to be ~30MBit/s)
-###2) Fixed block length (for whatever reason):
-####./wfb_tx -k 8 -p 50 
+### 2) Fixed block length (for whatever reason):
+#### ./wfb_tx -k 8 -p 50 
 This reads as follow: fixed block length where each block contains 8 data packets and 8*50/100= 4 fec packets.   
 In "old k:n terms" this would be 8:12   
-###3) FEC disabled (udp-like) for telemetry (use only if your upper level deals with packet re-ordering, like mavlink):
-####./wfb_tx -k 0
+### 3) FEC disabled (udp-like) for telemetry (use only if your upper level deals with packet re-ordering, like mavlink):
+#### ./wfb_tx -k 0
    
 
 ## Information about using -k 0 or -k 1:
