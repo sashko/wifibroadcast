@@ -349,4 +349,14 @@ private:
 public:
 };
 
+// Assumption: At least per card there is no packet loss
+class LostPacketCount{
+public:
+    uint64_t count_p_received=0;
+    uint64_t count_p_lost=0;
+    void onPacketReceived(const Ieee80211Header& ieee80211Header){
+        std::cout<<(int)ieee80211Header.getSequenceNumber()<<"\n";
+    }
+};
+
 #endif //WIFIBROADCAST_RAWRECEIVER_H

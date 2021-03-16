@@ -608,9 +608,9 @@ public:
     uint64_t count_p_fec_recovered=0;
     uint64_t count_p_lost=0;
     //
-    uint64_t count_blocks_lost_full=0;
-    uint64_t count_blocks_lost_partial=0;
+    uint64_t count_blocks_lost=0;
     uint64_t count_blocks_recovered=0;
+    uint64_t count_blocks_total=0;
 };
 
 // quick math regarding sequence numbers:
