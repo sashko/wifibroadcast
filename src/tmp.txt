@@ -316,3 +316,4 @@ void forceForwardBlocksOlderThan(const std::chrono::nanoseconds& maxLatency){
              }
              idx++;
          }*/
+std::cout<<"block_idx"<<blockIdx<<" k:"<<fec_k<<" X1:"<<indicesAvailableSecondaryFragments.size()<<" X2:"<<nAvailableSecondaryFragments<<"\n";

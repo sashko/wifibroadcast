@@ -368,8 +368,7 @@ public:
                 indicesAvailableSecondaryFragments.push_back(i);
             }
         }
-        std::cout<<"block_idx"<<blockIdx<<" k:"<<fec_k<<" X1:"<<indicesAvailableSecondaryFragments.size()<<" X2:"<<nAvailableSecondaryFragments<<"\n";
-        assert(indicesMissingPrimaryFragments.size()==indicesAvailableSecondaryFragments.size());
+        assert(indicesAvailableSecondaryFragments.size()==nAvailableSecondaryFragments);
 
         fecDecode(sizeOfSecondaryFragments, blockBuffer, fec_k, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
         // after the decode step,all previously missing primary fragments have become available - mark them as such
