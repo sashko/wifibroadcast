@@ -241,7 +241,7 @@ int main(int argc, char *const *argv) {
                 wifiParams.mcs_index = atoi(optarg);
                 break;
             case 'n':
-                std::cout<<"-n is deprecated. Please read https://github.com/Consti10/wifibroadcast/blob/master/README.md \n";
+                std::cerr<<"-n is deprecated. Please read https://github.com/Consti10/wifibroadcast/blob/master/README.md \n";
                 exit(1);
             default: /* '?' */
             show_usage:
