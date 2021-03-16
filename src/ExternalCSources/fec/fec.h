@@ -52,15 +52,15 @@ void fec_license(void);
 #include <array>
 
 /**
- * @param blockSize size of each data block to use for the FEC encoding step. FEC only works on blocks the same size
+ * @param packetSize size of each data packet to use for the FEC encoding step. FEC only works on packets the same size
  * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
  * During the FEC step, @param nPrimaryFragments fragments are used to calculate nSecondaryFragments FEC blocks.
- * After the FEC step,beginning at idx @param nPrimaryFragments ,@param nSecondaryFragments are stored at the following indices, each of size @param blockSize
+ * After the FEC step,beginning at idx @param nPrimaryFragments ,@param nSecondaryFragments are stored at the following indices, each of size @param packetSize
  */
 template<std::size_t S>
-void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
+void fecEncode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
     assert(blockBuffer.size()>=nPrimaryFragments+nSecondaryFragments);
-    assert(blockSize<=S);
+    assert(packetSize<=S);
     std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
     std::vector<uint8_t*> secondaryFragments(nSecondaryFragments);
     for(int i=0;i<nPrimaryFragments;i++){
@@ -69,20 +69,20 @@ void fecEncode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockB
     for(unsigned int i=0;i<nSecondaryFragments;i++){
         secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
     }
-    fec_encode(blockSize, (const unsigned char**)primaryFragments.data(),primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
+    fec_encode(packetSize, (const unsigned char**)primaryFragments.data(),primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
 }
 
 /**
- * @param blockSize size of each data block to use for the FEC encoding step. FEC only works on blocks the same size
+ * @param packetSize size of each data packet to use for the FEC encoding step. FEC only works on packets the same size
  * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
  * During the FEC step, all missing primary Fragments (indices from @param indicesMissingPrimaryFragments) are reconstructed from the FEC packets,
  * using indices from @param indicesAvailableSecondaryFragments
  */
 template<std::size_t S>
-void fecDecode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,
+void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,
                const std::vector<unsigned int>& indicesMissingPrimaryFragments,const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
     // first validate input.
-    assert(blockSize<=S);
+    assert(packetSize<=S);
     assert(indicesMissingPrimaryFragments.size()>=indicesAvailableSecondaryFragments.size());
     // I treat calling fecDecode() with more primary fragments than needed for the reconstruction step as an error here
     // (because it would create unneeded latency) though it would work just fine
@@ -97,7 +97,7 @@ void fecDecode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockB
     for(unsigned int i=0;i<nTheoreticalSecondaryFragments;i++){
         secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
     }
-    fec_decode(blockSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
+    fec_decode(packetSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
 }
 
 #endif

@@ -57,6 +57,12 @@ namespace GenericHelper{
             data[i] = rand() % 255;
         }
     }
+    template<std::size_t size>
+    static void fillArrayWithRandomData(std::array<uint8_t,size>& data){
+        for(std::size_t i=0;i<size;i++){
+            data[i] = rand() % 255;
+        }
+    }
     // Create a buffer filled with random data of size sizeByes
     std::vector<uint8_t> createRandomDataBuffer(const ssize_t sizeBytes){
         std::vector<uint8_t> buf(sizeBytes);
