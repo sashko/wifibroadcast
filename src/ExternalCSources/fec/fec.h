@@ -86,7 +86,7 @@ void fecDecode(unsigned int blockSize,std::vector<std::array<uint8_t,S>>& blockB
     assert(indicesMissingPrimaryFragments.size()>=indicesAvailableSecondaryFragments.size());
     // I treat calling fecDecode() with more primary fragments than needed for the reconstruction step as an error here
     // (because it would create unneeded latency) though it would work just fine
-    assert(indicesMissingPrimaryFragments.size()==indicesAvailableSecondaryFragments.size());
+    //assert(indicesMissingPrimaryFragments.size()==indicesAvailableSecondaryFragments.size());
     // n of all theoretically possible locations for secondary fragments (could be optimized if the full range is not used)
     const auto nTheoreticalSecondaryFragments=blockBuffer.size()-nPrimaryFragments;
     std::vector<uint8_t*> primaryFragments(nPrimaryFragments);

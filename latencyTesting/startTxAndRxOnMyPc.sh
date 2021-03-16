@@ -22,7 +22,7 @@ MY_RX=$TAOBAO
 WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
 #WFB_FOLDER="/home/pi/Desktop/wifibroadcast"
 
-FEC_K="h264"
+FEC_K=8
 FEC_PERCENTAGE=50
 
 MY_WIFI_CHANNEL=149 #5ghz channel

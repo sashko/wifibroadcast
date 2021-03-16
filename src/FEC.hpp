@@ -346,6 +346,8 @@ public:
         assert(nAvailablePrimaryFragments<fec_k);
         assert(nAvailableSecondaryFragments>0);
         assert(sizeOfSecondaryFragments!=-1);
+        const int nMissingPrimaryFragments=fec_k-nAvailablePrimaryFragments;
+        assert(nMissingPrimaryFragments==nAvailableSecondaryFragments);
         // now bring it into a format that the c-style fec implementation understands
         std::vector<unsigned int> indicesMissingPrimaryFragments;
         for(int i=0;i<fec_k;i++){
