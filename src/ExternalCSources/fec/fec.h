@@ -51,8 +51,11 @@ void fec_license(void);
 #include <vector>
 #include <array>
 
+//Note: By using "blockBuffer" as input the fecEncode / fecDecode function(s) don't need to allocate any new memory.
+// The "blockBuffer" can be either at least as big as needed or bigger, implementation doesn't care
+
 /**
- * @param packetSize size of each data packet to use for the FEC encoding step. FEC only works on packets the same size
+ * @param packetSize size of each data packet (fragment) to use for the FEC encoding step. FEC only works on packets the same size
  * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
  * During the FEC step, @param nPrimaryFragments fragments are used to calculate nSecondaryFragments FEC blocks.
  * After the FEC step,beginning at idx @param nPrimaryFragments ,@param nSecondaryFragments are stored at the following indices, each of size @param packetSize
@@ -73,7 +76,7 @@ void fecEncode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
 }
 
 /**
- * @param packetSize size of each data packet to use for the FEC encoding step. FEC only works on packets the same size
+ * @param packetSize size of each data packet (fragment) to use for the FEC encoding step. FEC only works on packets the same size
  * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
  * During the FEC step, all missing primary Fragments (indices from @param indicesMissingPrimaryFragments) are reconstructed from the FEC packets,
  * using indices from @param indicesAvailableSecondaryFragments
