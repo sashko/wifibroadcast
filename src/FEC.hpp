@@ -229,6 +229,7 @@ public:
             fragment_map(maxNFragmentsPerBlock, FragmentStatus::UNAVAILABLE), //after creation of the RxBlock every f. is marked as unavailable
             blockBuffer(maxNFragmentsPerBlock){
         creationTime=std::chrono::steady_clock::now();
+        assert(fragment_map.size()==blockBuffer.size());
     }
     // No copy constructor for safety
     RxBlock(const RxBlock&)=delete;
@@ -273,7 +274,6 @@ public:
     void addFragment(const FECNonce& fecNonce, const uint8_t* data,const std::size_t dataLen){
         assert(fecNonce.blockIdx==blockIdx);
         assert(fragment_map[fecNonce.fragmentIdx]==UNAVAILABLE);
-        assert(fecNonce.blockIdx<=MAX_BLOCK_IDX);
         assert(fecNonce.fragmentIdx<blockBuffer.size());
         // write the data (doesn't matter if FEC data or correction packet)
         memcpy(blockBuffer[fecNonce.fragmentIdx].data(), data, dataLen);
@@ -301,10 +301,12 @@ public:
             if(sizeOfSecondaryFragments==-1){
                 sizeOfSecondaryFragments=dataLen;
             }else{
+                // where all the secondary fragments shall have the same size
                 assert(sizeOfSecondaryFragments==dataLen);
             }
         }
         //std::cout<<"D:"<<fecNonce.blockIdx<<" "<<fecNonce.fragmentIdx<<" "<<(int)fecNonce.flag<<" "<<(int)fecNonce.number<<"\n";
+        std::cout<<"block_idx"<<blockIdx<<"frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
     }
     // returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed). Once an index is returned here, it won't be returned again
     // (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
@@ -356,14 +358,19 @@ public:
                 indicesMissingPrimaryFragments.push_back(i);
             }
         }
+        assert(indicesMissingPrimaryFragments.size()==nMissingPrimaryFragments);
+        // find enough secondary fragments to recover all missing primary ones
         std::vector<unsigned int> indicesAvailableSecondaryFragments;
-        for(int i=0;i<nAvailableSecondaryFragments;i++){
+        for(int i=0;i<fragment_map.size()-fec_k;i++){
             const auto idx=fec_k+i;
             // if secondary fragment is available,add its index to the list of secondary packets that will be used for reconstruction
             if(fragment_map[idx]==AVAILABLE){
                 indicesAvailableSecondaryFragments.push_back(i);
             }
         }
+        std::cout<<"block_idx"<<blockIdx<<" k:"<<fec_k<<" X1:"<<indicesAvailableSecondaryFragments.size()<<" X2:"<<nAvailableSecondaryFragments<<"\n";
+        assert(indicesMissingPrimaryFragments.size()==indicesAvailableSecondaryFragments.size());
+
         fecDecode(sizeOfSecondaryFragments, blockBuffer, fec_k, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
         // after the decode step,all previously missing primary fragments have become available - mark them as such
         for(const auto idx:indicesMissingPrimaryFragments){
@@ -415,7 +422,7 @@ public:
     // WARNING: Don't forget to register this callback !
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;
     // A value too high doesn't really give much benefit and increases memory usage
-    static constexpr auto RX_QUEUE_MAX_SIZE = 20;
+    static constexpr auto RX_QUEUE_MAX_SIZE = 1;
     const unsigned int maxNFragmentsPerBlock;
 public:
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
@@ -428,7 +435,7 @@ public:
             std::cerr<<"block_idx overflow\n";
             return false;
         }
-        if(fecNonce.fragmentIdx>maxNFragmentsPerBlock){
+        if(fecNonce.fragmentIdx>=maxNFragmentsPerBlock){
             std::cerr<<"invalid fragment_idx:"<<fecNonce.fragmentIdx<<"\n";
             return false;
         }

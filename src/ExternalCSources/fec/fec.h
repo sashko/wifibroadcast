@@ -63,7 +63,7 @@ void fec_license(void);
 template<std::size_t S>
 void fecEncode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
     assert(packetSize<=S);
-    assert(nPrimaryFragments+nSecondaryFragments<blockBuffer.size());
+    assert(nPrimaryFragments+nSecondaryFragments<=blockBuffer.size());
     std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
     std::vector<uint8_t*> secondaryFragments(nSecondaryFragments);
     for(int i=0;i<nPrimaryFragments;i++){
@@ -89,14 +89,14 @@ void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
     assert(indicesMissingPrimaryFragments.size()>=indicesAvailableSecondaryFragments.size());
     // I treat calling fecDecode() with more primary fragments than needed for the reconstruction step as an error here
     // (because it would create unneeded latency) though it would work just fine
-    //assert(indicesMissingPrimaryFragments.size()==indicesAvailableSecondaryFragments.size());
-    // n of all theoretically possible locations for secondary fragments (could be optimized if the full range is not used)
-    const auto nTheoreticalSecondaryFragments=blockBuffer.size()-nPrimaryFragments;
+    assert(indicesMissingPrimaryFragments.size()==indicesAvailableSecondaryFragments.size());
     std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
-    std::vector<uint8_t*> secondaryFragments(nTheoreticalSecondaryFragments);
     for(unsigned int i=0;i<nPrimaryFragments;i++){
         primaryFragments[i]=blockBuffer[i].data();
     }
+    // n of all theoretically possible locations for secondary fragments (could be optimized if the full range is not used)
+    const auto nTheoreticalSecondaryFragments=blockBuffer.size()-nPrimaryFragments;
+    std::vector<uint8_t*> secondaryFragments(nTheoreticalSecondaryFragments);
     for(unsigned int i=0;i<nTheoreticalSecondaryFragments;i++){
         secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
     }

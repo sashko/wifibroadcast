@@ -308,3 +308,11 @@ void forceForwardBlocksOlderThan(const std::chrono::nanoseconds& maxLatency){
         // "forward it" even though it is missing packets
         // get the age in nanoseconds of the currently "oldest" block
     }
+
+ //int idx=fec_k;
+         /*while (indicesAvailableSecondaryFragments.size()<nMissingPrimaryFragments){
+             if(fragment_map[idx]==AVAILABLE){
+                 indicesAvailableSecondaryFragments.push_back(idx);
+             }
+             idx++;
+         }*/
