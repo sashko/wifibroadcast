@@ -19,15 +19,15 @@ The tx is going to print this input in "old" k:n terms for you.
    
 ## Example pipelines
 ### 1) Transmitting rtp encapsulated h264/h265/mjpeg video:
-**./wfb_tx -k h264 -p 50**  
+**./wfb_tx -k h264 -p 50**\
 This reads as follow: variable block length for rtp h264 video,with an overhead of
 FEC packets of 50% (if your input stream is 20MBit/s, the used bandwidth is going to be ~30MBit/s)
 ### 2) Fixed block length (for whatever reason):
-**./wfb_tx -k 8 -p 50**  
+**./wfb_tx -k 8 -p 50**\
 This reads as follow: fixed block length where each block contains 8 data packets and 8*50/100= 4 fec packets.   
 In "old k:n terms" this would be 8:12   
 ### 3) FEC disabled (udp-like) for telemetry (use only if your upper level deals with packet re-ordering, like mavlink):
-**./wfb_tx -k 0**  
+**./wfb_tx -k 0**\
    
 
 ## Information about using -k 0 or -k 1:
