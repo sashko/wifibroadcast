@@ -434,6 +434,10 @@ public:
         return true;
     }
 private:
+    // since we also need to search this data structure, a std::queue is not enough.
+    // since we have an upper limit on the size of this dequeue, it is basically a searchable ring buffer
+    std::deque<std::unique_ptr<RxBlock>> rx_queue;
+    uint64_t last_known_block = ((uint64_t) -1);  //id of last known block
     /**
      * For this Block,
      * starting at the primary fragment we stopped on last time,
@@ -445,6 +449,14 @@ private:
         for(auto index:indices){
             forwardPrimaryFragment(block, index);
         }
+    }
+    // also increase lost block count if block is not fully recovered
+    void rxQueuePopFront(){
+        assert(rx_queue.front()!= nullptr);
+        if(!rx_queue.front()->allPrimaryFragmentsHaveBeenForwarded()){
+            count_blocks_lost++;
+        }
+        rx_queue.pop_front();
     }
     /**
      * Forward the primary (data) fragment at index fragmentIdx via the output callback
@@ -468,10 +480,6 @@ private:
             }
         }
     }
-    // since we also need to search this data structure, a std::queue is not enough.
-    // since we have an upper limit on the size of this dequeue, it is basically a searchable ring buffer
-    std::deque<std::unique_ptr<RxBlock>> rx_queue;
-    uint64_t last_known_block = ((uint64_t) -1);  //id of last known block
 
     // create a new RxBlock for the specified block_idx and push it into the queue
     // NOTE: Checks first if this operation would increase the size of the queue over its max capacity
@@ -485,6 +493,7 @@ private:
         // we can return early if this operation doesn't exceed the size limit
         if(rx_queue.size() < RX_QUEUE_MAX_SIZE){
             rx_queue.push_back(std::make_unique<RxBlock>(maxNFragmentsPerBlock,blockIdx));
+            count_blocks_total++;
             return;
         }
         //Ring overflow. This means that there are more unfinished blocks than ring size
@@ -498,10 +507,11 @@ private:
         std::cerr<<"Forwarding block that is not yet fully finished "<<oldestBlock->getBlockIdx()<<" with n fragments"<<oldestBlock->getNAvailableFragments()<<"\n";
         forwardMissingPrimaryFragmentsIfAvailable(*oldestBlock,false);
         // and remove the block once done with it
-        rx_queue.pop_front();
+        rxQueuePopFront();
 
         // now we are guaranteed to have space for one new block
         rx_queue.push_back(std::make_unique<RxBlock>(maxNFragmentsPerBlock,blockIdx));
+        count_blocks_total++;
     }
 
     // If block is already known and not in the queue anymore return nullptr
@@ -553,15 +563,15 @@ private:
             // We are done with this block if either all fragments have been forwarded or it can be recovered
             if(block.allPrimaryFragmentsHaveBeenForwarded()){
                 // remove block when done with it
-                rx_queue.pop_front();
+                rxQueuePopFront();
                 return;
             }
             if(block.allPrimaryFragmentsCanBeRecovered()){
-                count_p_fec_recovered+=block.reconstructAllMissingData();
+                count_packets_recovered+=block.reconstructAllMissingData();
                 forwardMissingPrimaryFragmentsIfAvailable(block);
                 assert(block.allPrimaryFragmentsHaveBeenForwarded());
                 // remove block when done with it
-                rx_queue.pop_front();
+                rxQueuePopFront();
                 return;
             }
             return;
@@ -573,7 +583,7 @@ private:
                 // send all queued packets in all unfinished blocks before and remove them
                 while(block != *rx_queue.front()){
                     forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), false);
-                    rx_queue.pop_front();
+                    rxQueuePopFront();
                 }
                 // then process the block who is fully recoverable or has no gaps in the primary fragments
                 if(block.allPrimaryFragmentsAreAvailable()){
@@ -581,12 +591,12 @@ private:
                     assert(block.allPrimaryFragmentsHaveBeenForwarded());
                 }else{
                     // apply fec for this block
-                    count_p_fec_recovered+=block.reconstructAllMissingData();
+                    count_packets_recovered+=block.reconstructAllMissingData();
                     forwardMissingPrimaryFragmentsIfAvailable(block);
                     assert(block.allPrimaryFragmentsHaveBeenForwarded());
                 }
                 // remove block
-                rx_queue.pop_front();
+                rxQueuePopFront();
             }
         }
     }
@@ -595,7 +605,7 @@ public:
         std::cout << "Decreasing ring size from " << rx_queue.size() << "to " << newSize << "\n";
         while(rx_queue.size() >newSize){
             forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), false);
-            rx_queue.pop_front();
+            rxQueuePopFront();
         }
     }
     // By doing so you are telling the pipeline:
@@ -605,11 +615,10 @@ public:
        decreaseRxRingSize(0);
     }
 public:
-    uint64_t count_p_fec_recovered=0;
-    uint64_t count_p_lost=0;
-    //
+    // n of primary fragments that were reconstructed
+    uint64_t count_packets_recovered=0;
+    // a block is "lost" if it cannot be fully recovered (partial data for this block is still forwarded,though)
     uint64_t count_blocks_lost=0;
-    uint64_t count_blocks_recovered=0;
     uint64_t count_blocks_total=0;
 };
 
