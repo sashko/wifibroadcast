@@ -420,7 +420,7 @@ public:
     // WARNING: Don't forget to register this callback !
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;
     // A value too high doesn't really give much benefit and increases memory usage
-    static constexpr auto RX_QUEUE_MAX_SIZE = 1;
+    static constexpr auto RX_QUEUE_MAX_SIZE = 10;
     const unsigned int maxNFragmentsPerBlock;
 public:
     // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
