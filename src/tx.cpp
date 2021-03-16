@@ -203,7 +203,7 @@ int main(int argc, char *const *argv) {
 
     std::cout << "MAX_PAYLOAD_SIZE:" << FEC_MAX_PAYLOAD_SIZE << "\n";
 
-    while ((opt = getopt(argc, argv, "K:k:n:u:r:p:B:G:S:L:M:")) != -1) {
+    while ((opt = getopt(argc, argv, "K:k:p:u:r:B:G:S:L:M:n:")) != -1) {
         switch (opt) {
             case 'K':
                 options.keypair = optarg;

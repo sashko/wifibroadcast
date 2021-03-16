@@ -214,7 +214,7 @@ int main(int argc, char *const *argv) {
     Options options{};
     std::chrono::milliseconds log_interval{1000};
 
-    while ((opt = getopt(argc, argv, "K:k:n:c:u:r:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "K:c:u:r:l:n:k:")) != -1) {
         switch (opt) {
             case 'K':
                 options.keypair = optarg;
@@ -231,6 +231,7 @@ int main(int argc, char *const *argv) {
             case 'l':
                 log_interval = std::chrono::milliseconds(atoi(optarg));
                 break;
+            case 'k':
             case 'n':
                 std::cout<<"-n is deprecated. Please read https://github.com/Consti10/wifibroadcast/blob/master/README.md \n";
                 exit(1);
