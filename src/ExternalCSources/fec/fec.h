@@ -62,8 +62,8 @@ void fec_license(void);
  */
 template<std::size_t S>
 void fecEncode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
-    assert(blockBuffer.size()>=nPrimaryFragments+nSecondaryFragments);
     assert(packetSize<=S);
+    assert(nPrimaryFragments+nSecondaryFragments<blockBuffer.size());
     std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
     std::vector<uint8_t*> secondaryFragments(nSecondaryFragments);
     for(int i=0;i<nPrimaryFragments;i++){
