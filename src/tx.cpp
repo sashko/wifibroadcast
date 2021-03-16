@@ -38,7 +38,8 @@
 
 static FEC_VARIABLE_INPUT_TYPE convert(const Options& options){
     if(options.fec_k.index()==0)return FEC_VARIABLE_INPUT_TYPE::none;
-    const auto tmp=std::get<std::string>(options.fec_k);
+    const std::string tmp=std::get<std::string>(options.fec_k);
+    std::cout<<"Lol ("<<tmp<<")\n";
     if(tmp==std::string("h264")){
         return FEC_VARIABLE_INPUT_TYPE::h264;
     }else if(tmp==std::string("h265")){
@@ -47,8 +48,8 @@ static FEC_VARIABLE_INPUT_TYPE convert(const Options& options){
     assert(false);
 }
 
-WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, Options options1) :
-        options(std::move(options1)),
+WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const Options& options1) :
+        options(options1),
         mPcapTransmitter(options.wlan),
         mEncryptor(options.keypair),
         mRadiotapHeader(radiotapHeader),
@@ -211,9 +212,11 @@ int main(int argc, char *const *argv) {
             case 'k':
                 if(std::string(optarg)==std::string("h264")
                 || std::string(optarg)==std::string("h265")){
+                    std::cout<<"LolX"<<std::string(optarg)<<"\n";
                     options.fec_k=std::string(optarg);
                 }else{
                     options.fec_k=(int)atoi(optarg);
+                    std::cout<<"Ehm\n";
                 }
                 break;
             case 'p':
@@ -285,7 +288,7 @@ int main(int argc, char *const *argv) {
         }
     }else{
         // If the user selected -k h264 (as a string)
-        std::cout << "FEC is enabled and variable, can only be used in conjunction with h264/h265. FEC_PERCENTAGE(overhead):" << options.fec_percentage << "\n";
+        std::cout << "FEC is enabled and variable, can only be used in conjunction with h264/h265. FEC_PERCENTAGE(overhead):" << options.fec_percentage <<" type:"<<std::get<std::string>(options.fec_k)<<"\n";
         if(options.fec_percentage > 100){
             std::cout<<"Using more than 100% fec overhead (=2x the bandwidth) is not supported\n";
             //limit of the fec library, would need to go back to zfec

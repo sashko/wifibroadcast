@@ -58,7 +58,7 @@ void WBReceiver::dump_stats() {
         wifiCard.reset();
     }
     std::stringstream ss;
-    ss << runTime << "\tPKT\t\t" << "All:"<<count_p_all << "Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err << ") FEC(recoveredP:" << count_p_recovered << " lostB:" << count_blocks_lost<<")";
+    ss << runTime << "\tPKT\t\t" <<count_p_all << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err << ") FEC(recoveredP:" << count_p_recovered << " lostB:" << count_blocks_lost<<")";
     std::cout<<ss.str()<<"\n";
     // it is actually much more understandable when I use the absolute values for the logging
 #ifdef ENABLE_ADVANCED_DEBUGGING

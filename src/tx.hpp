@@ -59,10 +59,10 @@ enum FEC_VARIABLE_INPUT_TYPE{none,h264,h265};
 // FEC can be either enabled or disabled.
 class WBTransmitter {
 public:
-    WBTransmitter(RadiotapHeader radiotapHeader, Options options);
+    WBTransmitter(RadiotapHeader radiotapHeader,const Options& options1);
     ~WBTransmitter();
 private:
-    const Options options;
+    const Options& options;
     // process the input data stream
     void processInputPacket(const uint8_t *buf, size_t size);
     // send the current session key via WIFI (located in mEncryptor)
