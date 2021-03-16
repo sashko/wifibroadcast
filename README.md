@@ -27,7 +27,7 @@ FEC packets of 50% (if your input stream is 20MBit/s, the used bandwidth is goin
 This reads as follow: fixed block length where each block contains 8 data packets and 8*50/100= 4 fec packets.   
 In "old k:n terms" this would be 8:12   
 ### 3) FEC disabled (udp-like) for telemetry (use only if your upper level deals with packet re-ordering, like mavlink):
-**./wfb_tx -k 0**\
+**./wfb_tx -k 0**
    
 
 ## Information about using -k 0 or -k 1:
