@@ -306,7 +306,7 @@ public:
             }
         }
         //std::cout<<"D:"<<fecNonce.blockIdx<<" "<<fecNonce.fragmentIdx<<" "<<(int)fecNonce.flag<<" "<<(int)fecNonce.number<<"\n";
-        std::cout<<"block_idx"<<blockIdx<<"frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
+        //std::cout<<"block_idx"<<blockIdx<<"frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
     }
     // returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed). Once an index is returned here, it won't be returned again
     // (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
