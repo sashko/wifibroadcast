@@ -369,7 +369,6 @@ public:
             }
         }
         assert(indicesAvailableSecondaryFragments.size()==nAvailableSecondaryFragments);
-
         fecDecode(sizeOfSecondaryFragments, blockBuffer, fec_k, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
         // after the decode step,all previously missing primary fragments have become available - mark them as such
         for(const auto idx:indicesMissingPrimaryFragments){
