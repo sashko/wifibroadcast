@@ -615,11 +615,11 @@ public:
        decreaseRxRingSize(0);
     }
 public:
-    // n of primary fragments that were reconstructed
-    uint64_t count_packets_recovered=0;
     // a block is "lost" if it cannot be fully recovered (partial data for this block is still forwarded,though)
     uint64_t count_blocks_lost=0;
     uint64_t count_blocks_total=0;
+    // n of primary fragments that were reconstructed
+    uint64_t count_packets_recovered=0;
 };
 
 // quick math regarding sequence numbers:
