@@ -1,10 +1,10 @@
 ## Summary
-This code originated from https://github.com/svpcom/wifibroadcast \
+This code originated from https://github.com/svpcom/wifibroadcast  
 It was re-written in c++ with the intention to reduce latency, improve syntax, improve documentation 
-and modularize the FEC Enc/Dec and Encryption/Decryption part. (represented by FECEncoder/Decoder and Encryptor/Decryptor now).\
+and modularize the FEC Enc/Dec and Encryption/Decryption part. (represented by FECEncoder/Decoder and Encryptor/Decryptor now).
 By doing so I was able to reduce latency quite a lot (even though the fix was one line of code in the end) and
-write simple unit tests that don't require a wifi card.\
-I also added some new features, like 
+write simple unit tests that don't require a wifi card.
+I also added some new features,listed:
 #### 1) variable block size:
 If you are transmitting h264,h265 or mjpeg video, automatically end a block with the end of each frame. This reduces latency and can increase resiliency against packet loss
 #### 2) disable FEC:
