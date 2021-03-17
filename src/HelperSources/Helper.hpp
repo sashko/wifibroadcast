@@ -32,6 +32,7 @@
 #include <iostream>
 #include <memory>
 #include <cassert>
+#include <functional>
 
 // For all the stuff that was once in wifibroadcast.hpp
 
@@ -358,6 +359,20 @@ namespace RTPLockup{
     static bool mjpeg_end_block(const uint8_t* payload, const std::size_t payloadSize){
         // TODO not yet supported
         return false;
+    }
+}
+
+//https://stackoverflow.com/questions/66588729/is-there-an-alternative-to-stdbind-that-doesnt-require-placeholders-if-functi/66640702#66640702
+namespace notstd{
+    template<class F, class...Args>
+    auto inline bind_front( F&& f, Args&&...args ) {
+        return [f = std::forward<F>(f), tup=std::make_tuple(std::forward<Args>(args)...)](auto&&... more_args)
+                ->decltype(auto)
+        {
+            return std::apply([&](auto&&...args)->decltype(auto){
+                return std::invoke( f, decltype(args)(args)..., decltype(more_args)(more_args)... );
+            }, tup);
+        };
     }
 }
 /*#include <linux/wireless.h>
