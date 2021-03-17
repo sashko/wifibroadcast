@@ -30,20 +30,20 @@ RADIO_PORT=61
 MY_WIFI_CHANNEL=149 #5ghz channel
 #MY_WIFI_CHANNEL=13 #2.4ghz channel
 
-sudo rfkill unblock wifi
+#sudo rfkill unblock wifi
 #sudo killall ifplugd #stop management of interface
 
-sudo ifconfig $MY_TX down
-sudo iw dev $MY_TX set monitor otherbss fcsfail
-sudo ifconfig $MY_TX up
-sudo iwconfig $MY_TX channel $MY_WIFI_CHANNEL
+#sudo ifconfig $MY_TX down
+#sudo iw dev $MY_TX set monitor otherbss fcsfail
+#sudo ifconfig $MY_TX up
+#sudo iwconfig $MY_TX channel $MY_WIFI_CHANNEL
 #sudo iw dev $MY_TX set channel "6" HT40+
 #sudo iwconfig $MY_TX rts off
 
-sudo ifconfig $MY_RX down
-sudo iw dev $MY_RX set monitor otherbss fcsfail
-sudo ifconfig $MY_RX up
-sudo iwconfig $MY_RX channel $MY_WIFI_CHANNEL
+#sudo ifconfig $MY_RX down
+#sudo iw dev $MY_RX set monitor otherbss fcsfail
+#sudo ifconfig $MY_RX up
+#sudo iwconfig $MY_RX channel $MY_WIFI_CHANNEL
 #sudo iwconfig $MY_RX channel "6" HT40+
 
 ## test with multiple RXes
