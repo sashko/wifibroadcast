@@ -349,6 +349,7 @@ public:
         assert(nAvailableSecondaryFragments>0);
         assert(sizeOfSecondaryFragments!=-1);
         const int nMissingPrimaryFragments=fec_k-nAvailablePrimaryFragments;
+        // greater than or equal would also work, but mean the fec step is called later than needed, introducing latency
         assert(nMissingPrimaryFragments==nAvailableSecondaryFragments);
         // now bring it into a format that the c-style fec implementation understands
         std::vector<unsigned int> indicesMissingPrimaryFragments;
