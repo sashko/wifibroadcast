@@ -261,9 +261,9 @@ public:
      * @param log_interval the log callback is called in the interval specified by @param log_interval
      * @param flush_interval the flush callback is called every time no data has been received for more than @param flush_interval milliseconds
      */
-    explicit MultiRxPcapReceiver(const std::vector<std::string> rxInterfaces,const int radio_port,const std::chrono::milliseconds log_interval,const std::chrono::milliseconds flush_interval,
+    explicit MultiRxPcapReceiver(const std::vector<std::string> rxInterfaces1,const int radio_port,const std::chrono::milliseconds log_interval,const std::chrono::milliseconds flush_interval,
                                  PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback,GENERIC_CALLBACK logCallback,GENERIC_CALLBACK flushCallback):
-            rxInterfaces(rxInterfaces), radio_port(radio_port), log_interval(log_interval), flush_interval(flush_interval), mCallbackData(std::move(dataCallback)), mCallbackLog(std::move(logCallback)), mCallbackFlush(std::move(flushCallback)){
+            rxInterfaces(rxInterfaces1), radio_port(radio_port), log_interval(log_interval), flush_interval(flush_interval), mCallbackData(std::move(dataCallback)), mCallbackLog(std::move(logCallback)), mCallbackFlush(std::move(flushCallback)){
         const int N_RECEIVERS = rxInterfaces.size();
         mReceivers.resize(N_RECEIVERS);
         mReceiverFDs.resize(N_RECEIVERS);
@@ -323,7 +323,7 @@ public:
             // TODO Optimization: If rc>1 we have data on more than one wifi card. It would be better to alternating process a couple of packets from card 1, then card 2 or similar
             for (int i = 0; rc > 0 && i < mReceiverFDs.size(); i++) {
                 if (mReceiverFDs[i].revents & (POLLERR | POLLNVAL)) {
-                    throw std::runtime_error(StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",i,mReceivers[i]->WLAN_NAME.c_str()));
+                    throw std::runtime_error(StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",i,rxInterfaces[i].c_str()));
                 }
                 if (mReceiverFDs[i].revents & POLLIN) {
                     mReceivers[i]->loop_iter();
