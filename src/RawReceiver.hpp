@@ -190,7 +190,7 @@ public:
     // this callback is called with the received packet from pcap
     typedef std::function<void(const uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt)> PROCESS_PACKET_CALLBACK;
     // This constructor only takes one wlan (aka one wlan adapter)
-    PcapReceiver(const std::string& wlan, int wlan_idx, int radio_port,PROCESS_PACKET_CALLBACK callback): WLAN_IDX(wlan_idx),RADIO_PORT(radio_port), mCallback(callback){
+    PcapReceiver(const std::string& wlan, int wlan_idx, int radio_port,PROCESS_PACKET_CALLBACK callback): WLAN_NAME(wlan),WLAN_IDX(wlan_idx),RADIO_PORT(radio_port), mCallback(callback){
         ppcap=RawReceiverHelper::openRxWithPcap(wlan, RADIO_PORT);
         fd = pcap_get_selectable_fd(ppcap);
     }
@@ -228,6 +228,8 @@ public:
     int getfd() const { return fd; }
 
 public:
+    // name of the wlan
+    const std::string WLAN_NAME;
     // the wifi interface this receiver listens on (not the radio port)
     const int WLAN_IDX;
     // the radio port it filters pacp packets for
@@ -321,7 +323,7 @@ public:
             // TODO Optimization: If rc>1 we have data on more than one wifi card. It would be better to alternating process a couple of packets from card 1, then card 2 or similar
             for (int i = 0; rc > 0 && i < mReceiverFDs.size(); i++) {
                 if (mReceiverFDs[i].revents & (POLLERR | POLLNVAL)) {
-                    throw std::runtime_error("socket error!");
+                    throw std::runtime_error(StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",i,mReceivers[i]->WLAN_NAME.c_str()));
                 }
                 if (mReceiverFDs[i].revents & POLLIN) {
                     mReceivers[i]->loop_iter();

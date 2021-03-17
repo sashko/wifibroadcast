@@ -36,7 +36,7 @@ WBReceiver::WBReceiver(const Options& options1) :
 options(options1),
 mDecryptor(options.keypair){
     sockfd = SocketHelper::open_udp_socket_for_tx(options.client_addr,options.client_udp_port);
-    std::cout<<"WFB-RX UDP_PORT:"<<options.client_udp_port<<" RADIO_PORT:"<<options.radio_port<<"\n";
+    std::cout<<"WFB-RX UDP_PORT:"<<options.client_udp_port<<" RADIO_PORT:"<<(int)options.radio_port<<"\n";
 }
 
 WBReceiver::~WBReceiver() {
