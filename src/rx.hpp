@@ -50,14 +50,14 @@ struct Options{
 // and forwards it via UDP.
 class WBReceiver{
 public:
-    explicit WBReceiver(Options options1);
+    explicit WBReceiver(const Options& options1);
     ~WBReceiver();
     void processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
     // dump statistics
     void dump_stats();
     // flush pipeline
     void flushFecPipeline();
-    const Options options;
+    const Options& options;
 private:
     void sendPacketViaUDP(const uint8_t *packet,std::size_t packetSize) const{
         send(sockfd,packet,packetSize, MSG_DONTWAIT);
