@@ -49,8 +49,8 @@ public:
         data[SRC_MAC_LASTBYTE] = radioPort;
         data[DST_MAC_LASTBYTE] = radioPort;
         //setSequenceControl({0,seqenceNumber});
-        //data[FRAME_SEQ_LB] = seqenceNumber & 0xff;
-        //data[FRAME_SEQ_HB] = (seqenceNumber >> 8) & 0xff;
+        data[FRAME_SEQ_LB] = seqenceNumber & 0xff;
+        data[FRAME_SEQ_HB] = (seqenceNumber >> 8) & 0xff;
     }
     uint8_t getRadioPort()const{
         return data[SRC_MAC_LASTBYTE];
