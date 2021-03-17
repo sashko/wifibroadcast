@@ -77,8 +77,30 @@ public:
     bool isDataFrame()const{
         return data[0]==0x08 && data[1]==0x01;
     }
+    //https://witestlab.poly.edu/blog/802-11-wireless-lan-2/
+    //Sequence Control: Contains a 4-bit fragment number subfield, used for frag- mentation and reassembly, and a 12-bit sequence number used to number
+    //frames sent between a given transmitter and receiver.
+    struct SequenceControl{
+        uint8_t subfield:4;
+        uint16_t sequence_nr:12;
+    }__attribute__ ((packed));
+    static_assert(sizeof(SequenceControl)==2);
+    void setSequenceControl(const SequenceControl& sequenceControl){
+        memcpy(&data[FRAME_SEQ_LB],(void*)&sequenceControl,sizeof(SequenceControl));
+    };
+    SequenceControl getSequenceControl()const{
+        SequenceControl ret;
+        memcpy(&ret,&data[FRAME_SEQ_LB],sizeof(SequenceControl));
+        return ret;
+    }
+    void printSequenceControl()const{
+        const auto tmp=getSequenceControl();
+        std::cout<<"subfield:"<<(int)tmp.subfield<<" sequenceNr:"<<(int)tmp.sequence_nr<<"\n";
+    }
+
 }__attribute__ ((packed));
 static_assert(sizeof(Ieee80211Header) == Ieee80211Header::SIZE_BYTES, "ALWAYS TRUE");
+
 
 namespace Ieee80211ControllFrames{
     static uint8_t u8aIeeeHeader_rts[] = {
