@@ -259,7 +259,7 @@ int main(int argc, char *const *argv) {
     }
     SchedulingHelper::setThreadParamsMaxRealtime();
 
-    testLol();
+    //testLol();
 
     std::vector<std::string> rxInterfaces;
     for (int i = 0; i < nRxInterfaces; i++) {
