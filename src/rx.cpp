@@ -259,6 +259,8 @@ int main(int argc, char *const *argv) {
     }
     SchedulingHelper::setThreadParamsMaxRealtime();
 
+    testLol();
+
     std::vector<std::string> rxInterfaces;
     for (int i = 0; i < nRxInterfaces; i++) {
         rxInterfaces.emplace_back(argv[optind + i]);

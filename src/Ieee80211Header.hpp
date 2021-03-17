@@ -39,7 +39,7 @@ public:
             0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // something MAC ( 6 bytes)
             0x13, 0x22, 0x33, 0x44, 0x55, 0x66, // something MAC ( 6 bytes)
             0x13, 0x22, 0x33, 0x44, 0x55, 0x66, // something MAC ( 6 bytes)
-            0x00, 0x00,  // iee80211 sequence number ( 2 bytes )
+            0x00, 0x00,  // iee80211 sequence control ( 2 bytes )
     };
     // default constructor
     Ieee80211Header()=default;
@@ -49,8 +49,8 @@ public:
         data[SRC_MAC_LASTBYTE] = radioPort;
         data[DST_MAC_LASTBYTE] = radioPort;
         //setSequenceControl({0,seqenceNumber});
-        data[FRAME_SEQ_LB] = seqenceNumber & 0xff;
-        data[FRAME_SEQ_HB] = (seqenceNumber >> 8) & 0xff;
+        //data[FRAME_SEQ_LB] = seqenceNumber & 0xff;
+        //data[FRAME_SEQ_HB] = (seqenceNumber >> 8) & 0xff;
     }
     uint8_t getRadioPort()const{
         return data[SRC_MAC_LASTBYTE];

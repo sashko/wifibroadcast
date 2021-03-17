@@ -275,8 +275,6 @@ int main(int argc, char *const *argv) {
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader, sizeof(OldRadiotapHeaders::u8aRadiotapHeader));
     SchedulingHelper::setThreadParamsMaxRealtime();
 
-    testLol();
-
     if(options.fec_k.index() == 0){
         // If the user selected -k as an integer number
         const int k=std::get<int>(options.fec_k);
