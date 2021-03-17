@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <iostream>
 
 // Wrapper around the Ieee80211 header (declared as raw array initially)
 // info https://witestlab.poly.edu/blog/802-11-wireless-lan-2/
@@ -47,6 +48,7 @@ public:
     void writeParams(const uint8_t radioPort,const uint16_t seqenceNumber){
         data[SRC_MAC_LASTBYTE] = radioPort;
         data[DST_MAC_LASTBYTE] = radioPort;
+        //setSequenceControl({0,seqenceNumber});
         data[FRAME_SEQ_LB] = seqenceNumber & 0xff;
         data[FRAME_SEQ_HB] = (seqenceNumber >> 8) & 0xff;
     }
@@ -95,12 +97,41 @@ public:
     }
     void printSequenceControl()const{
         const auto tmp=getSequenceControl();
-        std::cout<<"subfield:"<<(int)tmp.subfield<<" sequenceNr:"<<(int)tmp.sequence_nr<<"\n";
+        std::cout<<"SequenceControl subfield:"<<(int)tmp.subfield<<" sequenceNr:"<<(int)tmp.sequence_nr<<"\n";
     }
 
 }__attribute__ ((packed));
 static_assert(sizeof(Ieee80211Header) == Ieee80211Header::SIZE_BYTES, "ALWAYS TRUE");
 
+static void testLol(){
+    Ieee80211Header ieee80211Header;
+    uint16_t seqenceNumber=0;
+    for(int i=0;i<5;i++){
+        ieee80211Header.data[Ieee80211Header::FRAME_SEQ_LB] = seqenceNumber & 0xff;
+        ieee80211Header.data[Ieee80211Header::FRAME_SEQ_HB] = (seqenceNumber >> 8) & 0xff;
+        // now print it
+        ieee80211Header.printSequenceControl();
+        seqenceNumber+=16;
+    }
+}
+
+class Ieee80211HeaderSeqNrCounter{
+public:
+    void onNewPacket(const Ieee80211Header& ieee80211Header){
+        const auto seqCtrl=ieee80211Header.getSequenceControl();
+        if(lastSeqNr==-1){
+            lastSeqNr=seqCtrl.sequence_nr;
+            countPacketsOutOfOrder=0;
+            return;
+        }
+        const int32_t delta=seqCtrl.sequence_nr-lastSeqNr;
+        std::cout<<"Delta: "<<delta<<"\n";
+        lastSeqNr=seqCtrl.sequence_nr;
+    }
+private:
+    int64_t lastSeqNr=-1;
+    int countPacketsOutOfOrder=0;
+};
 
 namespace Ieee80211ControllFrames{
     static uint8_t u8aIeeeHeader_rts[] = {

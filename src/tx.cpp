@@ -84,6 +84,8 @@ void WBTransmitter::sendPacket(const AbstractWBPacket& abstractWbPacket) {
     //std::cout << "WBTransmitter::sendPacket\n";
     mIeee80211Header.writeParams(options.radio_port, ieee80211_seq);
     ieee80211_seq += 16;
+    mIeee80211Header.printSequenceControl();
+
     const auto injectionTime=mPcapTransmitter.injectPacket(mRadiotapHeader,mIeee80211Header,abstractWbPacket);
     nInjectedPackets++;
 #ifdef ENABLE_ADVANCED_DEBUGGING
@@ -272,6 +274,8 @@ int main(int argc, char *const *argv) {
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader80211n, sizeof(OldRadiotapHeaders::u8aRadiotapHeader80211n));
     //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader, sizeof(OldRadiotapHeaders::u8aRadiotapHeader));
     SchedulingHelper::setThreadParamsMaxRealtime();
+
+    testLol();
 
     if(options.fec_k.index() == 0){
         // If the user selected -k as an integer number
