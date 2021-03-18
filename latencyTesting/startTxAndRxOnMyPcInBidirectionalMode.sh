@@ -11,7 +11,7 @@ MY_RX=$TAOBAO
 WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
 
 FEC_K=0
-FEC_P=0
+FEC_PERCENTAGE=0
 
 sudo rfkill unblock wifi
 #sudo killall ifplugd #stop management of interface
@@ -29,11 +29,11 @@ sudo iwconfig $MY_RX channel 6
 #sudo iwconfig $MY_RX channel "6" HT40+
 
 
-xterm -hold -e $WFB_FOLDER/wfb_tx -k $FEC_K -p $FEC_P -u 6000 -r 60 -M 7 -K $WFB_FOLDER/drone.key $MY_TX &
+xterm -hold -e $WFB_FOLDER/wfb_tx -k $FEC_K -p $FEC_PERCENTAGE -u 6000 -r 60 -M 7 -K $WFB_FOLDER/drone.key $MY_TX &
 
 xterm -hold -e $WFB_FOLDER/wfb_rx  -u 6100 -r 60 -K $WFB_FOLDER/gs.key $MY_RX &
 
-xterm -hold -e $WFB_FOLDER/wfb_tx -k $FEC_K -p $FEC_P -u 6001 -r 70 -M 7 -K $WFB_FOLDER/drone.key $MY_RX &
+xterm -hold -e $WFB_FOLDER/wfb_tx -k $FEC_K -p $FEC_PERCENTAGE -u 6001 -r 70 -M 7 -K $WFB_FOLDER/drone.key $MY_RX &
 
 xterm -hold -e $WFB_FOLDER/wfb_rx  -u 6101 -r 70 -K $WFB_FOLDER/gs.key $MY_TX
 
