@@ -498,6 +498,10 @@ private:
         // check: make sure to always put blocks into the queue in order !
         if(!rx_queue.empty()){
             // the newest block in the queue should be equal to block_idx -1
+            // but it must not ?!
+            if(rx_queue.back()->getBlockIdx() != (blockIdx-1)){
+                std::cout<<"In queue:"<<rx_queue.back()->getBlockIdx()<<" But new:"<<blockIdx<<"\n";
+            }
             assert(rx_queue.back()->getBlockIdx() == (blockIdx - 1));
         }
         // we can return early if this operation doesn't exceed the size limit
