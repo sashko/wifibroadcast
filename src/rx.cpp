@@ -62,7 +62,7 @@ void WBReceiver::dump_stats() {
     std::stringstream ss;
 
     ss << runTime << "\tPKT\t\t" <<count_p_all << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
-    ") FEC(totalB:"<<count_blocks_total<<" lostB:" << count_blocks_lost<<" recoveredP"<<count_p_recovered<<")";
+    ") FEC(totalB:"<<count_blocks_total<<" lostB:" << count_blocks_lost<<" recoveredP:"<<count_p_recovered<<")";
 
     std::cout<<ss.str()<<"\n";
     // it is actually much more understandable when I use the absolute values for the logging

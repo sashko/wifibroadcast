@@ -578,6 +578,7 @@ private:
             }
             if(block.allPrimaryFragmentsCanBeRecovered()){
                 count_packets_recovered+=block.reconstructAllMissingData();
+                count_blocks_recovered++;
                 forwardMissingPrimaryFragmentsIfAvailable(block);
                 assert(block.allPrimaryFragmentsHaveBeenForwarded());
                 // remove block when done with it
@@ -602,6 +603,7 @@ private:
                 }else{
                     // apply fec for this block
                     count_packets_recovered+=block.reconstructAllMissingData();
+                    count_blocks_recovered++;
                     forwardMissingPrimaryFragmentsIfAvailable(block);
                     assert(block.allPrimaryFragmentsHaveBeenForwarded());
                 }
@@ -625,9 +627,10 @@ public:
        decreaseRxRingSize(0);
     }
 public:
+    uint64_t count_blocks_total=0;
     // a block is "lost" if it cannot be fully recovered (partial data for this block is still forwarded,though)
     uint64_t count_blocks_lost=0;
-    uint64_t count_blocks_total=0;
+    uint64_t count_blocks_recovered=0;
     // n of primary fragments that were reconstructed
     uint64_t count_packets_recovered=0;
 };
