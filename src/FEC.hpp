@@ -308,7 +308,7 @@ public:
             }
         }
         //std::cout<<"D:"<<fecNonce.blockIdx<<" "<<fecNonce.fragmentIdx<<" "<<(int)fecNonce.flag<<" "<<(int)fecNonce.number<<"\n";
-        //std::cout<<"block_idx"<<blockIdx<<"frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
+        std::cout<<"block_idx:"<<blockIdx<<" frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
     }
     // returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed). Once an index is returned here, it won't be returned again
     // (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
@@ -368,7 +368,7 @@ public:
             const auto idx=fec_k+i;
             // if secondary fragment is available,add its index to the list of secondary packets that will be used for reconstruction
             if(fragment_map[idx]==AVAILABLE){
-                indicesAvailableSecondaryFragments.push_back(i);
+                indicesAvailableSecondaryFragments.push_back(idx);
             }
         }
         assert(indicesAvailableSecondaryFragments.size()==nAvailableSecondaryFragments);
@@ -483,6 +483,7 @@ private:
         if (packet_size > FEC_MAX_PAYLOAD_SIZE) {
             // this should never happen !
             std::cerr<<"corrupted packet on FECDecoder out ("<<block.getBlockIdx()<<":"<<(int)fragmentIdx<<") : "<<packet_size<<"B\n";
+            assert(false);
         } else {
             // we use packets of size 0 to flush the tx pipeline
             if(packet_size>0){

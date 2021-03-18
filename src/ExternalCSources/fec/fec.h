@@ -80,6 +80,7 @@ void fecEncode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
  * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
  * During the FEC step, all missing primary Fragments (indices from @param indicesMissingPrimaryFragments) are reconstructed from the FEC packets,
  * using indices from @param indicesAvailableSecondaryFragments
+ * Note: both @param indicesMissingPrimaryFragments and @param indicesAvailableSecondaryFragments refer to a position in @param blockBuffer
  */
 template<std::size_t S>
 void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,
@@ -90,7 +91,26 @@ void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
     // I treat calling fecDecode() with more primary fragments than needed for the reconstruction step as an error here
     // (because it would create unneeded latency) though it would work just fine
     assert(indicesMissingPrimaryFragments.size()==indicesAvailableSecondaryFragments.size());
-    std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
+    // unfortunately the fec implementation needs an array of primary fragments
+    // and a different array of secondary fragments where obviously the indices of all primary fragments are the same,
+    // but the indices for secondary fragments start at 0 and not fec_k
+    // ( in this regard, fec_encode() differs from fec_decode() )
+    std::vector<uint8_t*> primaryFragmentsP(nPrimaryFragments);
+    for(unsigned int i=0;i<nPrimaryFragments;i++){
+        primaryFragmentsP[i]=blockBuffer[i].data();
+    }
+    const int nSecondaryFragmentsPointers=blockBuffer.size()-nPrimaryFragments;
+    std::vector<uint8_t*> secondaryFragmentsP(nSecondaryFragmentsPointers);
+    for(unsigned int i=0;i<nSecondaryFragmentsPointers;i++){
+        secondaryFragmentsP[i]=blockBuffer[nPrimaryFragments+i].data();
+    }
+    std::vector<unsigned int> indicesAvailableSecondaryFragmentsAdjusted(indicesAvailableSecondaryFragments.size());
+    for(int i=0;i<indicesAvailableSecondaryFragments.size();i++){
+        indicesAvailableSecondaryFragmentsAdjusted[i]=indicesAvailableSecondaryFragments[i]-nPrimaryFragments;
+    }
+    fec_decode(packetSize,primaryFragmentsP.data(),nPrimaryFragments,secondaryFragmentsP.data(),indicesAvailableSecondaryFragmentsAdjusted.data(),indicesMissingPrimaryFragments.data(),indicesAvailableSecondaryFragmentsAdjusted.size());
+
+    /*std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
     for(unsigned int i=0;i<nPrimaryFragments;i++){
         primaryFragments[i]=blockBuffer[i].data();
     }
@@ -100,7 +120,7 @@ void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
     for(unsigned int i=0;i<nTheoreticalSecondaryFragments;i++){
         secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
     }
-    fec_decode(packetSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());
+    fec_decode(packetSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());*/
 }
 
 #endif
