@@ -280,7 +280,7 @@ int main(int argc, char *const *argv) {
         if(k==0){
             std::cout<<"FEC is disabled. -p won't do anything\n";
         }else{
-            const int n=k+ k * options.fec_percentage / 100;
+            const auto n=FECEncoder::calculateN(k,options.fec_percentage);
             if(n>MAX_TOTAL_FRAGMENTS_PER_BLOCK){
                 std::cout<<"Please select a smaller -p (FEC_PERCENTAGE) value\n";
                 exit(1);
