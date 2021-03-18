@@ -36,12 +36,14 @@
 namespace TestFEC{
     static void testFecCPlusPlusWrapper(){
         fec_init();
+        srand (time(NULL));
+
         constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
         for(int test=0;test<100;test++){
             const auto nBuffers=255;
             auto blockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
-            const auto nPrimaryFragments= rand() % 128;
-            const auto nSecondaryFragments= rand() % 128;
+            const auto nPrimaryFragments= 8;//rand() % 128;
+            const auto nSecondaryFragments= 4;//rand() % 128;
             std::cout<<"Selected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
             fecEncode(FRAGMENT_SIZE, blockBuffer, nPrimaryFragments, nSecondaryFragments);
             // decode step
@@ -55,12 +57,16 @@ namespace TestFEC{
             }
             // take a random number of primaryFragmentIndices and a random number of secondaryFragmentIndices such that the total count
             // of indices is nPrimaryFragments <=>
-            const auto nReceivedPrimaryFragments= rand() % nPrimaryFragments;
-            const auto nReceivedSecondaryFragments=nPrimaryFragments-nReceivedPrimaryFragments;
+            //const auto nReceivedPrimaryFragments= rand() % nPrimaryFragments;
+            //const auto nReceivedSecondaryFragments=nPrimaryFragments-nReceivedPrimaryFragments;
+            const auto nReceivedSecondaryFragments=rand() % nSecondaryFragments;
+            const auto nReceivedPrimaryFragments=nPrimaryFragments-nReceivedSecondaryFragments;
             std::cout<<"(Emulated) nReceivedPrimaryFragments:"<<nReceivedPrimaryFragments<<" nReceivedSecondaryFragments:"<<nReceivedSecondaryFragments<<"\n";
 
             const auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(primaryFragmentIndices,nReceivedPrimaryFragments);
             const auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(secondaryFragmentIndices,nReceivedSecondaryFragments);
+
+            std::cout<<"primaryFragments:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" secondaryFragments:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
 
             auto blockBuffer2=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
             for(const auto& idx:receivedPrimaryFragmentIndices){
@@ -72,6 +78,7 @@ namespace TestFEC{
             fecDecode2(FRAGMENT_SIZE,blockBuffer2,nPrimaryFragments,receivedPrimaryFragmentIndices,receivedSecondaryFragmentIndices);
 
             for(unsigned int i=0;i<nPrimaryFragments;i++){
+                std::cout<<"Comparing fragment:"<<i<<"\n";
                 GenericHelper::assertArraysEqual(blockBuffer[i],blockBuffer2[i]);
             }
         }
