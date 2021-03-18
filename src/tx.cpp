@@ -218,7 +218,6 @@ int main(int argc, char *const *argv) {
                     options.fec_k=std::string(optarg);
                 }else{
                     options.fec_k=(int)atoi(optarg);
-                    std::cout<<"Ehm\n";
                 }
                 break;
             case 'p':
