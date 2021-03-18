@@ -146,29 +146,31 @@ void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
 }
 
 template<std::size_t S>
-void fecDecode2(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,
-                const std::vector<unsigned int>& indicesReceivedPrimaryFragments,const std::vector<unsigned int>& indicesReceivedSecondaryFragments){
-    assert(indicesReceivedPrimaryFragments.size()+indicesReceivedSecondaryFragments.size()==nPrimaryFragments);
+void fecDecode2(unsigned int packetSize, std::vector<std::array<uint8_t,S>>& blockBuffer, unsigned int nPrimaryFragments,
+                const std::vector<unsigned int>& indicesAvailablePrimaryFragments, const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
+    assert(indicesAvailablePrimaryFragments.size() + indicesAvailableSecondaryFragments.size() == nPrimaryFragments);
+    // the fec impl. wants the indices of missing primary fragments, not those ones available
     std::vector<unsigned int> indicesMissingPrimaryFragments;
     for(unsigned int i=0;i<nPrimaryFragments;i++){
-        auto found=indicesReceivedPrimaryFragments.end() != std::find(indicesReceivedPrimaryFragments.begin(),indicesReceivedPrimaryFragments.end(),i);
+        auto found= indicesAvailablePrimaryFragments.end() != std::find(indicesAvailablePrimaryFragments.begin(), indicesAvailablePrimaryFragments.end(), i);
         if(!found){
             indicesMissingPrimaryFragments.push_back(i);
         }
     }
-    assert(indicesMissingPrimaryFragments.size()==nPrimaryFragments-indicesReceivedPrimaryFragments.size());
+    assert(indicesMissingPrimaryFragments.size()== nPrimaryFragments - indicesAvailablePrimaryFragments.size());
     std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
 
     //
     auto cPointers=split(blockBuffer,nPrimaryFragments);
 
-    std::vector<unsigned int> indicesAvailableSecondaryFragmentsAdjusted(indicesReceivedSecondaryFragments.size());
-    for(int i=0;i<indicesReceivedSecondaryFragments.size();i++){
-        indicesAvailableSecondaryFragmentsAdjusted[i]=indicesReceivedSecondaryFragments[i]-nPrimaryFragments;
+    std::vector<unsigned int> indicesAvailableSecondaryFragmentsAdjusted(indicesAvailableSecondaryFragments.size());
+    for(int i=0; i < indicesAvailableSecondaryFragments.size(); i++){
+        indicesAvailableSecondaryFragmentsAdjusted[i]= indicesAvailableSecondaryFragments[i] - nPrimaryFragments;
     }
     std::cout<<"indicesAvailableSecondaryFragmentsAdjusted:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragmentsAdjusted)<<"\n";
 
-    fecDecode(packetSize,blockBuffer,nPrimaryFragments,indicesMissingPrimaryFragments,indicesReceivedSecondaryFragments);
+    fec_decode(packetSize,std::get<0>(cPointers).data(),nPrimaryFragments,std::get<1>(cPointers).data(),indicesAvailableSecondaryFragmentsAdjusted.data(),indicesMissingPrimaryFragments.data(),indicesAvailableSecondaryFragmentsAdjusted.size());
+
 
 }
 

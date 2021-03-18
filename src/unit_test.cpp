@@ -66,7 +66,7 @@ namespace TestFEC{
             const auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(primaryFragmentIndices,nReceivedPrimaryFragments);
             const auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(secondaryFragmentIndices,nReceivedSecondaryFragments);
 
-            std::cout<<"primaryFragments:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" secondaryFragments:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
+            std::cout<<"primaryFragmentIndices:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" secondaryFragmentIndices:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
 
             auto blockBuffer2=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
             for(const auto& idx:receivedPrimaryFragmentIndices){
