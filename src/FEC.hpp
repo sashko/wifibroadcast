@@ -627,11 +627,13 @@ public:
        decreaseRxRingSize(0);
     }
 public:
+    // total block count
     uint64_t count_blocks_total=0;
-    // a block is "lost" if it cannot be fully recovered (partial data for this block is still forwarded,though)
+    // a block counts as "lost" if it was removed before being fully received or recovered
     uint64_t count_blocks_lost=0;
+    // a block counts as "recovered" if it was recovered using FEC packets
     uint64_t count_blocks_recovered=0;
-    // n of primary fragments that were reconstructed
+    // n of primary fragments that were reconstructed during the recovery process of a block
     uint64_t count_packets_recovered=0;
 };
 
