@@ -15,7 +15,7 @@
 
 class PacketInfoData{
 public:
-    uint32_t seqNr;
+    uint64_t seqNr;
 private:
     //std::chrono::steady_clock::time_point timestamp;
     int64_t timestamp;
@@ -29,7 +29,7 @@ public:
 } __attribute__ ((packed));
 //static_assert(sizeof(PacketInfoData)==4+8);
 
-uint32_t currentSequenceNumber=0;
+uint64_t currentSequenceNumber=0;
 
 void writeSequenceNumberAndTimestamp(std::vector<uint8_t>& data){
     assert(data.size()>=sizeof(PacketInfoData));
@@ -81,7 +81,7 @@ struct SentDataSave{
 SentDataSave sentDataSave{};
 AvgCalculator2 avgUDPProcessingTime{0};
 //AvgCalculator avgUDPProcessingTime;
-std::uint32_t lastReceivedSequenceNr=0;
+std::uint64_t lastReceivedSequenceNr=0;
 const bool COMPARE_RECEIVED_DATA=true;
 std::vector<int> lostPacketsSeqNrDiffs;
 std::size_t receivedPackets=0;
