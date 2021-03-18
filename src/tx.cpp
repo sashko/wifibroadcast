@@ -61,12 +61,12 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const Options& option
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
     if(IS_FEC_DISABLED){
         mFecDisabledEncoder=std::make_unique<FECDisabledEncoder>();
-        mFecDisabledEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        mFecDisabledEncoder->outputDataCallback=notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
     }else{
         // variable if k is a string with video type
         const int kMax= options.fec_k.index() == 0 ? std::get<int>(options.fec_k) : MAX_N_P_FRAGMENTS_PER_BLOCK;
         mFecEncoder=std::make_unique<FECEncoder>(kMax,options.fec_percentage);
-        mFecEncoder->outputDataCallback=std::bind(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        mFecEncoder->outputDataCallback=notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
         sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK=FECEncoder::calculateN(kMax,options.fec_percentage);
     }
     mInputSocket=SocketHelper::openUdpSocketForRx(options.udp_port);

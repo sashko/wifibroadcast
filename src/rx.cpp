@@ -179,10 +179,10 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
             IS_FEC_ENABLED=sessionKeyPacket.IS_FEC_ENABLED;
             if(IS_FEC_ENABLED){
                 mFECDDecoder=std::make_unique<FECDecoder>((unsigned int)sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
-                mFECDDecoder->mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
+                mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::sendPacketViaUDP, this);
             }else{
                 mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
-                mFECDisabledDecoder->mSendDecodedPayloadCallback=std::bind(&WBReceiver::sendPacketViaUDP, this, std::placeholders::_1, std::placeholders::_2);
+                mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::sendPacketViaUDP, this);
             }
         } else {
             count_p_decryption_ok++;
@@ -269,9 +269,9 @@ int main(int argc, char *const *argv) {
     try {
         std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(options);
         MultiRxPcapReceiver receiver(rxInterfaces,options.radio_port,log_interval,std::chrono::milliseconds(-1),
-                                     std::bind(&WBReceiver::processPacket, agg.get(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-                                     std::bind(&WBReceiver::dump_stats, agg.get()),
-                                     std::bind(&WBReceiver::flushFecPipeline, agg.get()));
+                                     notstd::bind_front(&WBReceiver::processPacket, agg.get()),
+                                     notstd::bind_front(&WBReceiver::dump_stats, agg.get()),
+                                     notstd::bind_front(&WBReceiver::flushFecPipeline, agg.get()));
         receiver.loop();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());
