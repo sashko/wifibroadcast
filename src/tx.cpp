@@ -217,32 +217,32 @@ int main(int argc, char *const *argv) {
                     std::cout<<"LolX"<<std::string(optarg)<<"\n";
                     options.fec_k=std::string(optarg);
                 }else{
-                    options.fec_k=(int)atoi(optarg);
+                    options.fec_k=(int)std::stoi(optarg);
                 }
                 break;
             case 'p':
-                options.fec_percentage=atoi(optarg);
+                options.fec_percentage=std::stoi(optarg);
                 break;
             case 'u':
-                options.udp_port = atoi(optarg);
+                options.udp_port = std::stoi(optarg);
                 break;
             case 'r':
-                options.radio_port = atoi(optarg);
+                options.radio_port = std::stoi(optarg);
                 break;
             case 'B':
-                wifiParams.bandwidth = atoi(optarg);
+                wifiParams.bandwidth =std::stoi(optarg);
                 break;
             case 'G':
                 wifiParams.short_gi = (optarg[0] == 's' || optarg[0] == 'S');
                 break;
             case 'S':
-                wifiParams.stbc = atoi(optarg);
+                wifiParams.stbc = std::stoi(optarg);
                 break;
             case 'L':
-                wifiParams.ldpc = atoi(optarg);
+                wifiParams.ldpc = std::stoi(optarg);
                 break;
             case 'M':
-                wifiParams.mcs_index = atoi(optarg);
+                wifiParams.mcs_index = std::stoi(optarg);
                 break;
             case 'n':
                 std::cerr<<"-n is deprecated. Please read https://github.com/Consti10/wifibroadcast/blob/master/README.md \n";

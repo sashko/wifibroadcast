@@ -227,13 +227,13 @@ int main(int argc, char *const *argv) {
                 options.client_addr = std::string(optarg);
                 break;
             case 'u':
-                options.client_udp_port = atoi(optarg);
+                options.client_udp_port = std::stoi(optarg);
                 break;
             case 'r':
-                options.radio_port = atoi(optarg);
+                options.radio_port = std::stoi(optarg);
                 break;
             case 'l':
-                log_interval = std::chrono::milliseconds(atoi(optarg));
+                log_interval = std::chrono::milliseconds(std::stoi(optarg));
                 break;
             case 'k':
             case 'n':
