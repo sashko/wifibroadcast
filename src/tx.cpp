@@ -84,7 +84,7 @@ void WBTransmitter::sendPacket(const AbstractWBPacket& abstractWbPacket) {
     //std::cout << "WBTransmitter::sendPacket\n";
     mIeee80211Header.writeParams(options.radio_port, ieee80211_seq);
     ieee80211_seq += 16;
-    mIeee80211Header.printSequenceControl();
+    //mIeee80211Header.printSequenceControl();
 
     const auto injectionTime=mPcapTransmitter.injectPacket(mRadiotapHeader,mIeee80211Header,abstractWbPacket);
     nInjectedPackets++;

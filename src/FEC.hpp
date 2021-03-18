@@ -20,14 +20,16 @@
 #include <functional>
 #include <map>
 
+// RN this module depends on "wifibroadcast.hpp", since it holds the "packet size(s)" needed to calculate FEC_MAX_PAYLOAD_SIZE
+// Removing this dependency (to write your own customized link) would be easy to do though.
 
 // NOTE: When working with FEC, people seem to use the terms block, fragments and more in different context(s).
-// I use (and highly recommend this to anyone else) the following notation:
+// I use the following notation:
 // A primary fragment is a data packet
 // A secondary fragment is a data correction (FEC) packet
 // K primary and N-K secondary fragments together form a FEC block,
-// On the rx though,for decoding, you don't need to know the n of secondary fragments
-// created on the encoder - since it doesn't matter which secondary fragments you get,you either get "enough" for FEC step or "not enough" for FEC step
+// NOTE: On the rx (for decoding) you don't need to know the n of secondary fragments created on the encoder -
+// it doesn't matter which secondary fragments you get,you either get "enough" for FEC step or "not enough" for FEC step
 
 static_assert(__BYTE_ORDER == __LITTLE_ENDIAN,"This code is written for little endian only !");
 // nonce: 64 bit value, consisting of
@@ -107,8 +109,8 @@ public:
     // Else, if you want to use the encoder for variable k, just use K_MAX=MAX_N_P_FRAGMENTS_PER_BLOCK and call
     // encodePacket(...,true) as needed.
     explicit FECEncoder(unsigned int K_MAX,unsigned int percentage):mKMax(K_MAX),mPercentage(percentage){
-        std::cout<<"FEC with k max:"<<mKMax<<" and percentage:"<<percentage<<"\n";
         const auto tmp_n=calculateN(K_MAX,percentage);
+        std::cout<<"FEC with k max:"<<mKMax<<" and percentage:"<<percentage<<"\n";
         std::cout << "For a block size of k max this is (" << mKMax << ":" << tmp_n << ") in old (K:N) terms.\n";
         assert(K_MAX>0);
         assert(K_MAX<=MAX_N_P_FRAGMENTS_PER_BLOCK);

@@ -79,7 +79,7 @@ private:
     // On the rx, either one of those two is active at the same time. NOTE: nullptr until the first session key packet
     std::unique_ptr<FECDecoder> mFECDDecoder;
     std::unique_ptr<FECDisabledDecoder> mFECDisabledDecoder;
-    Ieee80211HeaderSeqNrCounter mSeqNrCounter;
+    //Ieee80211HeaderSeqNrCounter mSeqNrCounter;
 public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
     // time between <packet arrives at pcap processing queue> <<->> <packet is pulled out of pcap by RX>

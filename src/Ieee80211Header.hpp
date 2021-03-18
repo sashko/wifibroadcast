@@ -115,6 +115,8 @@ static void testLol(){
     }
 }
 
+// Unfortunately / luckily the sequence number is overwritten by the TX. This means we can't get
+// lost packets per stream, but rather lost packets per all streams only
 class Ieee80211HeaderSeqNrCounter{
 public:
     void onNewPacket(const Ieee80211Header& ieee80211Header){

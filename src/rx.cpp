@@ -127,8 +127,8 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
     //std::cout<<"RADIO_PORT"<<(int)tmpHeader->getRadioPort()<<" IEEE_SEQ_NR "<<(int)tmpHeader->getSequenceNumber()<<"\n";
     //std::cout<<"FrameControl:"<<(int)tmpHeader->getFrameControl()<<"\n";
     //std::cout<<"DurationOrConnectionId:"<<(int)tmpHeader->getDurationOrConnectionId()<<"\n";
-    parsedPacket->ieee80211Header->printSequenceControl();
-    mSeqNrCounter.onNewPacket(*parsedPacket->ieee80211Header);
+    //parsedPacket->ieee80211Header->printSequenceControl();
+    //mSeqNrCounter.onNewPacket(*parsedPacket->ieee80211Header);
 
 
     // now to the actual payload
