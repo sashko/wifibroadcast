@@ -34,6 +34,50 @@
 // Simple unit testing for the lib that doesn't require wifi cards
 
 namespace TestFEC{
+    static void testFecCPlusPlusWrapper(){
+        constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
+        for(int test=0;test<100;test++){
+            const auto nBuffers=255;
+            auto blockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
+            const auto nPrimaryFragments= rand() % 128;
+            const auto nSecondaryFragments= rand() % 128;
+            fecEncode(FRAGMENT_SIZE, blockBuffer, nPrimaryFragments, nSecondaryFragments);
+            // decode step
+            std::vector<unsigned int> primaryFragmentIndices(nPrimaryFragments);
+            for(int i=0;i<nPrimaryFragments;i++){
+                primaryFragmentIndices[i]=i;
+            }
+            std::vector<unsigned int> secondaryFragmentIndices(nSecondaryFragments);
+            for(int i=0;i<nSecondaryFragments;i++){
+                secondaryFragmentIndices[i]=i+nPrimaryFragments;
+            }
+            // take a random number of primaryFragmentIndices and a random number of secondaryFragmentIndices such that the total count
+            // of indices is nPrimaryFragments <=>
+            const auto nReceivedPrimaryFragments= rand() % nPrimaryFragments;
+            const auto nReceivedSecondaryFragments=nPrimaryFragments-nReceivedPrimaryFragments;
+
+            const auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(primaryFragmentIndices,nReceivedPrimaryFragments);
+            const auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(secondaryFragmentIndices,nReceivedSecondaryFragments);
+
+
+
+
+            for(int i=0;i<nPrimaryFragments;i++){
+                bool takePrimary=rand() % 2;
+                if(takePrimary){
+                    // take random
+                    receivedPrimaryFragmentIndices.push_back()
+                }
+            }
+
+
+            // emulate: n of the primary fragments were received
+            const auto nReceivedPrimaryFragments=rand() % nPrimaryFragments;
+
+
+        }
+    }
+
     static void testNonce(){
         const uint32_t blockIdx=0;
         const uint16_t fragmentIdx=0;

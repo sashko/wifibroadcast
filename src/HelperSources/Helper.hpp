@@ -59,7 +59,7 @@ namespace GenericHelper{
         }
     }
     template<std::size_t size>
-    static void fillArrayWithRandomData(std::array<uint8_t,size>& data){
+    static void fillBufferWithRandomData(std::array<uint8_t,size>& data){
         for(std::size_t i=0;i<size;i++){
             data[i] = rand() % 255;
         }
@@ -89,6 +89,14 @@ namespace GenericHelper{
         }
         return buffers;
     }
+    template<std::size_t size>
+    static std::vector<std::array<uint8_t,size>> createRandomDataBuffers(const std::size_t nBuffers){
+        std::vector<std::array<uint8_t,size>> ret(nBuffers);
+        for(auto& buff:ret){
+            GenericHelper::fillBufferWithRandomData(buff);
+        }
+        return ret;
+    }
     bool compareVectors(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
         if(sb.size()!=rb.size()){
             return false;
@@ -101,6 +109,27 @@ namespace GenericHelper{
         const int result=memcmp (sb.data(),rb.data(),sb.size());
         assert(result==0);
     }
+    template<std::size_t S>
+    void assertArraysEqual(const std::array<uint8_t,S>& sb,const std::array<uint8_t,S>& rb){
+        const int result=memcmp (sb.data(),rb.data(),sb.size());
+        assert(result==0);
+    }
+    /**
+     * take @param nElements elements from @param in, without duplicates
+     */
+    template<typename T>
+    std::vector<T> takeNElements(std::vector<T> values,const std::size_t nElements){
+        assert(nElements<=values.size());
+        std::vector<T> ret;
+        for(int i=0;i<nElements;i++){
+            auto idx=rand() % values.size();
+            ret.push_back(values[idx]);
+            values.erase(idx);
+        }
+        assert(ret.size()==nElements);
+        return ret;
+    }
+
     using namespace std::chrono;
     constexpr nanoseconds timevalToDuration(timeval tv){
         auto duration = seconds{tv.tv_sec}
