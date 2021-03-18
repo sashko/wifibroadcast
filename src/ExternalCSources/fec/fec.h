@@ -123,6 +123,20 @@ void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
     fec_decode(packetSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());*/
 }
 
+template<std::size_t S>
+void fecDecode2(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,
+                const std::vector<unsigned int>& indicesReceivedPrimaryFragments,const std::vector<unsigned int>& indicesReceivedSecondaryFragments){
+    assert(indicesReceivedPrimaryFragments.size()+indicesReceivedSecondaryFragments.size()==nPrimaryFragments);
+    std::vector<unsigned int> indicesMissingPrimaryFragments;
+    for(unsigned int i=0;i<nPrimaryFragments;i++){
+        auto found=indicesReceivedPrimaryFragments.end() != std::find(indicesReceivedPrimaryFragments.begin(),indicesReceivedPrimaryFragments.end(),i);
+        if(!found){
+            indicesMissingPrimaryFragments.push_back(i);
+        }
+    }
+    assert(indicesMissingPrimaryFragments.size()==nPrimaryFragments-indicesReceivedPrimaryFragments.size());
+    fecDecode(packetSize,blockBuffer,nPrimaryFragments,indicesMissingPrimaryFragments,indicesReceivedSecondaryFragments);
+}
 
 #endif
 

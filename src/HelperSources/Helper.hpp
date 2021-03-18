@@ -115,16 +115,16 @@ namespace GenericHelper{
         assert(result==0);
     }
     /**
-     * take @param nElements elements from @param in, without duplicates
+     * take @param nElements random elements from @param values, without duplicates
      */
     template<typename T>
     std::vector<T> takeNElements(std::vector<T> values,const std::size_t nElements){
         assert(nElements<=values.size());
         std::vector<T> ret;
         for(int i=0;i<nElements;i++){
-            auto idx=rand() % values.size();
+            const auto idx=rand() % values.size();
             ret.push_back(values[idx]);
-            values.erase(idx);
+            values.erase(values.begin()+idx);
         }
         assert(ret.size()==nElements);
         return ret;

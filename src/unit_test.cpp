@@ -35,12 +35,14 @@
 
 namespace TestFEC{
     static void testFecCPlusPlusWrapper(){
+        fec_init();
         constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
         for(int test=0;test<100;test++){
             const auto nBuffers=255;
             auto blockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
             const auto nPrimaryFragments= rand() % 128;
             const auto nSecondaryFragments= rand() % 128;
+            std::cout<<"Selected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
             fecEncode(FRAGMENT_SIZE, blockBuffer, nPrimaryFragments, nSecondaryFragments);
             // decode step
             std::vector<unsigned int> primaryFragmentIndices(nPrimaryFragments);
@@ -55,26 +57,23 @@ namespace TestFEC{
             // of indices is nPrimaryFragments <=>
             const auto nReceivedPrimaryFragments= rand() % nPrimaryFragments;
             const auto nReceivedSecondaryFragments=nPrimaryFragments-nReceivedPrimaryFragments;
+            std::cout<<"(Emulated) nReceivedPrimaryFragments:"<<nReceivedPrimaryFragments<<" nReceivedSecondaryFragments:"<<nReceivedSecondaryFragments<<"\n";
 
             const auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(primaryFragmentIndices,nReceivedPrimaryFragments);
             const auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(secondaryFragmentIndices,nReceivedSecondaryFragments);
 
-
-
-
-            for(int i=0;i<nPrimaryFragments;i++){
-                bool takePrimary=rand() % 2;
-                if(takePrimary){
-                    // take random
-                    receivedPrimaryFragmentIndices.push_back()
-                }
+            auto blockBuffer2=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
+            for(const auto& idx:receivedPrimaryFragmentIndices){
+                blockBuffer2[idx]=blockBuffer[idx];
             }
+            for(const auto& idx:receivedSecondaryFragmentIndices){
+                blockBuffer2[idx]=blockBuffer[idx];
+            }
+            fecDecode2(FRAGMENT_SIZE,blockBuffer2,nPrimaryFragments,receivedPrimaryFragmentIndices,receivedSecondaryFragmentIndices);
 
-
-            // emulate: n of the primary fragments were received
-            const auto nReceivedPrimaryFragments=rand() % nPrimaryFragments;
-
-
+            for(unsigned int i=0;i<nPrimaryFragments;i++){
+                GenericHelper::assertArraysEqual(blockBuffer[i],blockBuffer2[i]);
+            }
         }
     }
 
@@ -314,6 +313,7 @@ int main(int argc, char *argv[]){
     std::cout<<"Tests for Wifibroadcast\n";
     try {
         std::cout<<"Testing FEC\n";
+        TestFEC::testFecCPlusPlusWrapper();
         const int N_PACKETS=1200;
         TestFEC::testNonce();
         // With these fec params "testWithoutPacketLoss" is not possible
