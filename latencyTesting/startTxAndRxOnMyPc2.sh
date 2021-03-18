@@ -1,6 +1,7 @@
 #!/bin/bash
 # Given a PC with 2 wifi cards connected that support monitor mode,
 # This starts the tx on one of them and the rx on the other one
+# Assuming tx and rx are already set into monitor mode !
 
 TAOBAO="wlx00e0863200b9" #Taobao card
 ASUS="wlx244bfeb71c05" #ASUS card
