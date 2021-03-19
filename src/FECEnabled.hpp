@@ -245,7 +245,7 @@ public:
     }
     ~RxBlock()= default;
 public:
-    // returns true if the fragment at position fragmentIdx has been already received
+    // returns true if this fragment has been already received
     bool hasFragment(const uint16_t fragmentIdx)const{
         assert(fragmentIdx<fragment_map.size());
         return fragment_map[fragmentIdx]==AVAILABLE;

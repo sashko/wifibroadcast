@@ -336,3 +336,25 @@ std::pair<std::vector<uint8_t*>,std::vector<uint8_t*>> splitBlockBuffer(std::vec
     }
     return std::make_pair(primaryFragmentsP,secondaryFragmentsP);
 }
+
+ /*const int nSecondaryFragmentsPointers=blockBuffer.size()-nPrimaryFragments;
+    std::vector<uint8_t*> secondaryFragmentsP(nSecondaryFragmentsPointers);
+    for(unsigned int i=0;i<nSecondaryFragmentsPointers;i++){
+        secondaryFragmentsP[i]=blockBuffer[nPrimaryFragments+i].data();
+    }*/
+
+    //std::vector<uint8_t*> primaryFragmentsP(nPrimaryFragments);
+        //for(unsigned int i=0;i<nPrimaryFragments;i++){
+        //    primaryFragmentsP[i]=blockBuffer[i].data();
+        //}
+ /*std::vector<uint8_t*> primaryFragments(nPrimaryFragments);
+    for(unsigned int i=0;i<nPrimaryFragments;i++){
+        primaryFragments[i]=blockBuffer[i].data();
+    }
+    // n of all theoretically possible locations for secondary fragments (could be optimized if the full range is not used)
+    const auto nTheoreticalSecondaryFragments=blockBuffer.size()-nPrimaryFragments;
+    std::vector<uint8_t*> secondaryFragments(nTheoreticalSecondaryFragments);
+    for(unsigned int i=0;i<nTheoreticalSecondaryFragments;i++){
+        secondaryFragments[i]=blockBuffer[nPrimaryFragments+i].data();
+    }
+    fec_decode(packetSize, primaryFragments.data(), nPrimaryFragments, secondaryFragments.data(), indicesAvailableSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesAvailableSecondaryFragments.size());*/

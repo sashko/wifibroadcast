@@ -39,10 +39,13 @@ namespace TestFEC{
 
         constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
         for(int test=0;test<100;test++){
-            const auto nBuffers=255;
-            auto blockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
             const auto nPrimaryFragments= 8;//rand() % 128;
             const auto nSecondaryFragments= 4;//rand() % 128;
+
+            //const auto nBuffers=255;
+            const auto nBuffers=nPrimaryFragments+nSecondaryFragments;
+            auto blockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
+
             std::cout<<"Selected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
             fecEncode(FRAGMENT_SIZE, blockBuffer, nPrimaryFragments, nSecondaryFragments);
             // decode step
@@ -54,19 +57,25 @@ namespace TestFEC{
             for(int i=0;i<nSecondaryFragments;i++){
                 secondaryFragmentIndices[i]=i+nPrimaryFragments;
             }
+            std::cout<<"primaryFragmentIndices:"<<StringHelper::vectorAsString(primaryFragmentIndices)<<" secondaryFragmentIndices:"<<StringHelper::vectorAsString(secondaryFragmentIndices)<<"\n";
+
             // take a random number of primaryFragmentIndices and a random number of secondaryFragmentIndices such that the total count
             // of indices is nPrimaryFragments <=>
             //const auto nReceivedPrimaryFragments= rand() % nPrimaryFragments;
             //const auto nReceivedSecondaryFragments=nPrimaryFragments-nReceivedPrimaryFragments;
-            const auto nReceivedSecondaryFragments=4;//rand() % nSecondaryFragments;
+            const auto nReceivedSecondaryFragments=rand() % nSecondaryFragments;
             const auto nReceivedPrimaryFragments=nPrimaryFragments-nReceivedSecondaryFragments;
             std::cout<<"(Emulated) nReceivedPrimaryFragments:"<<nReceivedPrimaryFragments<<" nReceivedSecondaryFragments:"<<nReceivedSecondaryFragments<<"\n";
 
             const auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(primaryFragmentIndices,nReceivedPrimaryFragments);
-            const auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(secondaryFragmentIndices,nReceivedSecondaryFragments);
+            //const auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(secondaryFragmentIndices,nReceivedSecondaryFragments);
             //const auto receivedSecondaryFragmentIndices=std::vector<unsigned int>({secondaryFragmentIndices.at(0)});
+            //const auto receivedPrimaryFragmentIndices=std::vector<unsigned int>{0,2,3,4,5,6,7};
+            const auto receivedSecondaryFragmentIndices=secondaryFragmentIndices;
+            secondaryFragmentIndices.resize(nReceivedSecondaryFragments);
 
-            std::cout<<"primaryFragmentIndices:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" secondaryFragmentIndices:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
+
+            std::cout<<"receivedPrimaryFragmentIndices:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" receivedSecondaryFragmentIndices:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
 
             auto blockBuffer2=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
             for(const auto& idx:receivedPrimaryFragmentIndices){
@@ -76,6 +85,7 @@ namespace TestFEC{
                 blockBuffer2[idx]=blockBuffer[idx];
             }
             fecDecode2(FRAGMENT_SIZE,blockBuffer2,nPrimaryFragments,receivedPrimaryFragmentIndices,receivedSecondaryFragmentIndices);
+            //fecDecode(FRAGMENT_SIZE,blockBuffer2,nPrimaryFragments,missingPrimaryFragmentIndices,receivedSecondaryFragmentIndices);
 
             for(unsigned int i=0;i<nPrimaryFragments;i++){
                 std::cout<<"Comparing fragment:"<<i<<"\n";
@@ -322,7 +332,8 @@ int main(int argc, char *argv[]){
     try {
         std::cout<<"Testing FEC\n";
         TestFEC::testFecCPlusPlusWrapper();
-        const int N_PACKETS=1200;
+        return 0;
+        const int N_PACKETS=600;
         TestFEC::testNonce();
         // With these fec params "testWithoutPacketLoss" is not possible
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams1={
@@ -332,28 +343,28 @@ int main(int argc, char *argv[]){
         for(const auto& fecParam:fecParams1){
             const auto k=fecParam.first;
             const auto p=fecParam.second;
-            TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
-            TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
+            //TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
+            //TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
         }
         // only test with FEC enabled
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
-                {1,200},
-                {2,100},{2,200},
+                //{1,200},
+                //{2,100},{2,200},
                 {4,100},{4,200},
-                {6,50},{6,100},{6,200},
+                /*{6,50},{6,100},{6,200},
                 {8,50},{8,100},{8,200},
                 {10,30},{10,50},{10,100},
                 {40,30},{40,50},{40,100},
                 {100,30},{100,40},{100,50},{100,60},
-                {120,50}
+                {120,50}*/
         };
         for(const auto& fecParam:fecParams){
             const auto k=fecParam.first;
             const auto p=fecParam.second;
-            TestFEC::testWithoutPacketLossFixedPacketSize(k, p, N_PACKETS);
-            TestFEC::testWithoutPacketLossDynamicPacketSize(k, p, N_PACKETS);
-            TestFEC::testRxQueue(k, p);
-            for(int dropMode=0;dropMode<3;dropMode++){
+            //TestFEC::testWithoutPacketLossFixedPacketSize(k, p, N_PACKETS);
+            //TestFEC::testWithoutPacketLossDynamicPacketSize(k, p, N_PACKETS);
+            //TestFEC::testRxQueue(k, p);
+            for(int dropMode=1;dropMode<2;dropMode++){
                 TestFEC::testWithPacketLossButEverythingIsRecoverable(k, p, N_PACKETS, dropMode);
             }
         }
