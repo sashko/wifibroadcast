@@ -73,7 +73,7 @@
 	  if (t1 < t) t = 256000000 + t1 - t ; \
 	  else t = t1 - t ; \
 	  if (t == 0) t = 1 ;}
-	
+
 u_long ticks[10];	/* vars for timekeeping */
 #else
 #define DEB(x)
@@ -284,7 +284,7 @@ generate_gf(void)
  * unrolled 16 times, a good value for 486 and pentium-class machines.
  * The case c=0 is also optimized, whereas c=1 is not. These
  * calls are unfrequent in my typical apps so I did not bother.
- * 
+ *
  * Note that gcc on
  */
 #if 0
@@ -296,10 +296,10 @@ generate_gf(void)
 
 #define UNROLL 16 /* 1, 4, 8, 16 */
 static void
-slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int sz)
+slow_addmul1(gf *dst1, gf *src1, gf c, int sz)
 {
     USE_GF_MULC ;
-    //register gf *dst = dst1, *src = src1 ;
+    register gf *dst = dst1, *src = src1 ;
     gf *lim = &dst[sz - UNROLL + 1] ;
 
     GF_MULC0(c) ;
@@ -333,10 +333,75 @@ slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int 
         GF_ADDMULC( *dst , *src );
 }
 
+#if defined i386 && defined USE_ASSEMBLER
+
+#define LOOPSIZE 8
+
+static void
+addmul1(gf *dst1, gf *src1, gf c, int sz)
+{
+    USE_GF_MULC ;
+
+    GF_MULC0(c) ;
+
+    if(((unsigned long)dst1 % LOOPSIZE) ||
+       ((unsigned long)src1 % LOOPSIZE) ||
+       (sz % LOOPSIZE)) {
+	slow_addmul1(dst1, src1, c, sz);
+	return;
+    }
+
+    asm volatile("xorl %%eax,%%eax;\n"
+		 "	xorl %%edx,%%edx;\n"
+		 ".align 32;\n"
+		 "1:"
+		 "	addl  $8, %%edi;\n"
+
+		 "	movb  (%%esi), %%al;\n"
+		 "	movb 4(%%esi), %%dl;\n"
+		 "	movb  (%%ebx,%%eax), %%al;\n"
+		 "	movb  (%%ebx,%%edx), %%dl;\n"
+		 "	xorb  %%al,  (%%edi);\n"
+		 "	xorb  %%dl, 4(%%edi);\n"
+
+		 "	movb 1(%%esi), %%al;\n"
+		 "	movb 5(%%esi), %%dl;\n"
+		 "	movb  (%%ebx,%%eax), %%al;\n"
+		 "	movb  (%%ebx,%%edx), %%dl;\n"
+		 "	xorb  %%al, 1(%%edi);\n"
+		 "	xorb  %%dl, 5(%%edi);\n"
+
+		 "	movb 2(%%esi), %%al;\n"
+		 "	movb 6(%%esi), %%dl;\n"
+		 "	movb  (%%ebx,%%eax), %%al;\n"
+		 "	movb  (%%ebx,%%edx), %%dl;\n"
+		 "	xorb  %%al, 2(%%edi);\n"
+		 "	xorb  %%dl, 6(%%edi);\n"
+
+		 "	movb 3(%%esi), %%al;\n"
+		 "	movb 7(%%esi), %%dl;\n"
+		 "	addl  $8, %%esi;\n"
+		 "	movb  (%%ebx,%%eax), %%al;\n"
+		 "	movb  (%%ebx,%%edx), %%dl;\n"
+		 "	xorb  %%al, 3(%%edi);\n"
+		 "	xorb  %%dl, 7(%%edi);\n"
+
+		 "	cmpl  %%ecx, %%esi;\n"
+		 "	jb 1b;"
+		 : :
+
+		 "b" (__gf_mulc_),
+		 "D" (dst1-8),
+		 "S" (src1),
+		 "c" (sz+src1) :
+		 "memory", "eax", "edx"
+	);
+}
+#else
 # define addmul1 slow_addmul1
+#endif
 
-
-static void addmul(gf *dst,const gf *src, gf c, int sz) {
+static void addmul(gf *dst, gf *src, gf c, int sz) {
     // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
     if (c != 0) addmul1(dst, src, c, sz);
 }
@@ -347,7 +412,7 @@ static void addmul(gf *dst,const gf *src, gf c, int sz) {
  * unrolled 16 times, a good value for 486 and pentium-class machines.
  * The case c=0 is also optimized, whereas c=1 is not. These
  * calls are unfrequent in my typical apps so I did not bother.
- * 
+ *
  * Note that gcc on
  */
 #if 0
@@ -357,11 +422,10 @@ static void addmul(gf *dst,const gf *src, gf c, int sz) {
 
 #define UNROLL 16 /* 1, 4, 8, 16 */
 static void
-slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
+slow_mul1(gf *dst1, gf *src1, gf c, int sz)
 {
     USE_GF_MULC ;
-    register gf *dst = dst1;
-    const register gf *src = src1 ;
+    register gf *dst = dst1, *src = src1 ;
     gf *lim = &dst[sz - UNROLL + 1] ;
 
     GF_MULC0(c) ;
@@ -395,9 +459,75 @@ slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
         GF_MULC( *dst , *src );
 }
 
-# define mul1 slow_mul1
+#if defined i386 && defined USE_ASSEMBLER
+static void
+mul1(gf *dst1, gf *src1, gf c, int sz)
+{
+    USE_GF_MULC ;
 
-static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
+    GF_MULC0(c) ;
+
+    if(((unsigned long)dst1 % LOOPSIZE) ||
+       ((unsigned long)src1 % LOOPSIZE) ||
+       (sz % LOOPSIZE)) {
+	slow_mul1(dst1, src1, c, sz);
+	return;
+    }
+
+    asm volatile("pushl %%eax;\n"
+		 "pushl %%edx;\n"
+		 "xorl %%eax,%%eax;\n"
+		 "	xorl %%edx,%%edx;\n"
+		 "1:"
+		 "	addl  $8, %%edi;\n"
+
+		 "	movb  (%%esi), %%al;\n"
+		 "	movb 4(%%esi), %%dl;\n"
+		 "	movb  (%%ebx,%%eax), %%al;\n"
+		 "	movb  (%%ebx,%%edx), %%dl;\n"
+		 "	movb  %%al,  (%%edi);\n"
+		 "	movb  %%dl, 4(%%edi);\n"
+
+		 "	movb 1(%%esi), %%al;\n"
+		 "	movb 5(%%esi), %%dl;\n"
+		 "	movb  (%%ebx,%%eax), %%al;\n"
+		 "	movb  (%%ebx,%%edx), %%dl;\n"
+		 "	movb  %%al, 1(%%edi);\n"
+		 "	movb  %%dl, 5(%%edi);\n"
+
+		 "	movb 2(%%esi), %%al;\n"
+		 "	movb 6(%%esi), %%dl;\n"
+		 "	movb  (%%ebx,%%eax), %%al;\n"
+		 "	movb  (%%ebx,%%edx), %%dl;\n"
+		 "	movb  %%al, 2(%%edi);\n"
+		 "	movb  %%dl, 6(%%edi);\n"
+
+		 "	movb 3(%%esi), %%al;\n"
+		 "	movb 7(%%esi), %%dl;\n"
+		 "	addl  $8, %%esi;\n"
+		 "	movb  (%%ebx,%%eax), %%al;\n"
+		 "	movb  (%%ebx,%%edx), %%dl;\n"
+		 "	movb  %%al, 3(%%edi);\n"
+		 "	movb  %%dl, 7(%%edi);\n"
+
+		 "	cmpl  %%ecx, %%esi;\n"
+		 "	jb 1b;\n"
+		 "	popl %%edx;\n"
+		 "	popl %%eax;"
+		 : :
+
+		 "b" (__gf_mulc_),
+		 "D" (dst1-8),
+		 "S" (src1),
+		 "c" (sz+src1) :
+		 "memory", "eax", "edx"
+	);
+}
+#else
+# define mul1 slow_mul1
+#endif
+
+static inline void mul(gf *dst, gf *src, gf c, int sz) {
     /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
     if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
 }
@@ -576,7 +706,7 @@ void fec_init(void)
  *     col of inverse of top Vandermonde matrix)
  *
  *                _____
- *                 | | 
+ *                 | |
  *   P   =  K      | |    (x - i)
  *    col    col   | |
  *             0 < i < 128 &&
@@ -587,7 +717,7 @@ void fec_init(void)
  *                  1
  *           ---------------
  *   K    =       _____
- *    col          | | 
+ *    col          | |
  *                 | |    (col - i)
  *                 | |
  *             0 < i < 128 &&
@@ -602,13 +732,13 @@ void fec_init(void)
  *
  *     Which make P_col resolves to:
  *               _____
- *                | |    
+ *                | |
  *     P   =  K   | |    (x - i)
  *      col       | |
  *             0 < i < 128
  *           -------------------
  *              (x-col)
- * 
+ *
  *     When evaluating this for any x > 0x80, the following thing happens
  *     to the numerator: all (x-i) are different for i, and have high bit
  *     set. Thus, the set of top factors are all values from 0x80 to 0xff,
@@ -633,7 +763,7 @@ void fec_init(void)
 
 
 
-/* We do the matrix multiplication columns by column, instead of the 
+/* We do the matrix multiplication columns by column, instead of the
  * usual row-by-row, in order to capitalize on the cache freshness of
  * each data block . The data block only needs to be fetched once, and
  * can be used to be addmull'ed into all FEC blocks at once. No need
@@ -642,9 +772,9 @@ void fec_init(void)
  * in the L2 cache...)
  */
 void fec_encode(unsigned int blockSize,
-                const gf **data_blocks,
+                unsigned char **data_blocks,
                 unsigned int nrDataBlocks,
-                gf **fec_blocks,
+                unsigned char **fec_blocks,
                 unsigned int nrFecBlocks)
 
 {
@@ -676,11 +806,11 @@ void fec_encode(unsigned int blockSize,
  * + fec)
  */
 static inline void reduce(unsigned int blockSize,
-                          gf **data_blocks,
+                          unsigned char **data_blocks,
                           unsigned int nr_data_blocks,
-                          gf **fec_blocks,
-                          const unsigned int fec_block_nos[],
-                          const unsigned int erased_blocks[],
+                          unsigned char **fec_blocks,
+                          unsigned int *fec_block_nos,
+                          unsigned int *erased_blocks,
                           unsigned short nr_fec_blocks)
 {
     int erasedIdx=0;
@@ -692,7 +822,7 @@ static inline void reduce(unsigned int blockSize,
         if(erasedIdx < nr_fec_blocks && erased_blocks[erasedIdx] == col) {
             erasedIdx++;
         } else {
-            gf *src = data_blocks[col];
+            unsigned char *src = data_blocks[col];
             int j;
             for(j=0; j < nr_fec_blocks; j++) {
                 int blno = fec_block_nos[j];
@@ -722,10 +852,10 @@ long long invTime =0;
  * it, and multiply reduced vector by it.
  */
 static inline void resolve(int blockSize,
-                           gf **data_blocks,
-                           gf **fec_blocks,
-                           const unsigned int fec_block_nos[],
-                           const unsigned int erased_blocks[],
+                           unsigned char **data_blocks,
+                           unsigned char **fec_blocks,
+                           unsigned int *fec_block_nos,
+                           unsigned int *erased_blocks,
                            short nr_fec_blocks)
 {
 #ifdef PROFILE
@@ -733,7 +863,7 @@ static inline void resolve(int blockSize,
 #endif
     /* construct matrix */
     int row;
-    gf matrix[nr_fec_blocks*nr_fec_blocks];
+    unsigned char matrix[nr_fec_blocks*nr_fec_blocks];
     int ptr;
     int r;
 
@@ -776,7 +906,7 @@ static inline void resolve(int blockSize,
     /* do the multiplication with the reduced code vector */
     for(row = 0, ptr=0; row < nr_fec_blocks; row++) {
         int col;
-        gf *target = data_blocks[erased_blocks[row]];
+        unsigned char *target = data_blocks[erased_blocks[row]];
         mul(target,fec_blocks[0],matrix[ptr++],blockSize);
         for(col = 1; col < nr_fec_blocks;  col++,ptr++) {
             addmul(target,fec_blocks[col],matrix[ptr],blockSize);
@@ -786,11 +916,11 @@ static inline void resolve(int blockSize,
 
 void fec_decode(unsigned int blockSize,
 
-                gf **data_blocks,
+                unsigned char **data_blocks,
                 unsigned int nr_data_blocks,
-                gf **fec_blocks,
-                const unsigned int fec_block_nos[],
-                const unsigned int erased_blocks[],
+                unsigned char **fec_blocks,
+                unsigned int *fec_block_nos,
+                unsigned int *erased_blocks,
                 unsigned short nr_fec_blocks)
 {
 #ifdef PROFILE
@@ -820,7 +950,7 @@ void fec_decode(unsigned int blockSize,
 
 #ifdef PROFILE
 void printDetail(void) {
-    fprintf(stderr, "red=%9lld\nres=%9lld\ninv=%9lld\n",  
+    fprintf(stderr, "red=%9lld\nres=%9lld\ninv=%9lld\n",
 	    reduceTime, resolveTime, invTime);
 }
 #endif
@@ -882,4 +1012,3 @@ void fec_license(void)
     );
     exit(0);
 }
-
