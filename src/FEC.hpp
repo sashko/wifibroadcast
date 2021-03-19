@@ -83,6 +83,16 @@ std::vector<uint8_t*> getPossibleSecondaryFragmentPointers(std::vector<std::arra
     return secondaryFragmentsP;
 }
 
+template<std::size_t S>
+std::vector<uint8_t*> getSecondaryFragmentPointers(std::vector<std::array<uint8_t,S>>& blockBuffer, unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
+    //const int nSecondaryFragmentsPointers=blockBuffer.size()-nPrimaryFragments;
+    std::vector<uint8_t*> secondaryFragmentsP(nSecondaryFragments);
+    for(unsigned int i=0;i<secondaryFragmentsP.size();i++){
+        secondaryFragmentsP[i]=blockBuffer[nPrimaryFragments+i].data();
+    }
+    return secondaryFragmentsP;
+}
+
 
 /**
  * @param packetSize size of each data packet (fragment) to use for the FEC encoding step. FEC only works on packets the same size
