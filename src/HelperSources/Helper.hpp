@@ -159,7 +159,7 @@ namespace GenericHelper{
             auto found= indicesAvailable.end() != std::find(indicesAvailable.begin(), indicesAvailable.end(), i);
             if(!found){
                 // if not found, add to missing
-                std::cout<<"Not found:"<<i<<"\n";
+                //std::cout<<"Not found:"<<i<<"\n";
                 indicesMissing.push_back(i);
             }
         }
