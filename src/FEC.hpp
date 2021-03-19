@@ -33,17 +33,17 @@ void fec_encode(unsigned int fragmentSize,
  * @param primaryFragments list of pointers to memory for primary fragments
  * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments)
  * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments
- * @param indicesReceivedSecondaryFragments list of the indices of secondaryFragments that are used to reconstruct missing primary fragments
+ * @param indicesAvailableSecondaryFragments list of the indices of secondaryFragments that are used to reconstruct missing primary fragments
  * Reconstructs all missing primary fragments using the available secondary fragments.
  */
 void fec_decode(unsigned int fragmentSize,
                 std::vector<uint8_t*>& primaryFragments,
                 std::vector<uint8_t*>& secondaryFragments,
                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
-                const std::vector<unsigned int>& indicesReceivedSecondaryFragments){
-    assert(indicesMissingPrimaryFragments.size()<=indicesReceivedSecondaryFragments.size());
+                const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
+    assert(indicesMissingPrimaryFragments.size() <= indicesAvailableSecondaryFragments.size());
     fec_decode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(),
-               (unsigned int*)indicesReceivedSecondaryFragments.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
+               (unsigned int*)indicesAvailableSecondaryFragments.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
 
     /*auto tmp=fec_new(primaryFragments.size(),primaryFragments.size()+secondaryFragments.size());
     std::vector<uint8_t*> block=primaryFragments;
@@ -52,7 +52,47 @@ void fec_decode(unsigned int fragmentSize,
     }
     fec_decode(tmp,b)*/
 }
+template<std::size_t S>
+static std::vector<uint8_t*> convertToP(std::vector<std::array<uint8_t,S>>& buff){
+    std::vector<uint8_t*> ret(buff.size());
+    for(int i=0;i<ret.size();i++){
+        ret[i]=buff[i].data();
+    }
+    return ret;
+}
 
+template<std::size_t S>
+void fec_encode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf){
+    auto pfp=convertToP(pf);
+    auto sfp=convertToP(sf);
+    fec_encode(fragmentSize,pfp,sfp);
+}
+
+template<std::size_t S>
+void fec_decode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf,
+                const std::vector<unsigned int>& indicesMissingPrimaryFragments,
+                const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
+    auto pfp=convertToP(pf);
+    auto sfp=convertToP(sf);
+    fec_decode(fragmentSize, pfp, sfp, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
+}
+
+template<std::size_t S>
+void fec_decode3(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf,
+                 const std::vector<unsigned int>& indicesAvailablePrimaryFragments,
+                 const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
+    const auto nMissingPrimaryFragments=pf.size()-indicesAvailablePrimaryFragments.size();
+    std::vector<unsigned int> indicesMissingPrimaryFragments;
+    for(unsigned int i=0;i<pf.size();i++){
+        auto found= indicesAvailablePrimaryFragments.end() != std::find(indicesAvailablePrimaryFragments.begin(), indicesAvailablePrimaryFragments.end(), i);
+        if(!found){
+            indicesMissingPrimaryFragments.push_back(i);
+        }
+    }
+    std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
+    std::cout<<"indicesAvailableSecondaryFragments:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragments)<<"\n";
+    fec_decode2(fragmentSize,pf,sf,indicesMissingPrimaryFragments,indicesAvailablePrimaryFragments);
+}
 
 
 /*template<std::size_t S>

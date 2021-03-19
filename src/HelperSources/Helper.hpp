@@ -135,6 +135,13 @@ namespace GenericHelper{
         std::sort(ret.begin(),ret.end());
         return ret;
     }
+    std::vector<unsigned int> createIndices(const std::size_t nIndices){
+        std::vector<unsigned int> ret(nIndices);
+        for(int i=0;i<ret.size();i++){
+            ret[i]=i;
+        }
+        return ret;
+    }
 
     using namespace std::chrono;
     constexpr nanoseconds timevalToDuration(timeval tv){
