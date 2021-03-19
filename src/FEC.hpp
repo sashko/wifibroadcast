@@ -50,6 +50,7 @@ void fec_decode(unsigned int fragmentSize,
     fec_decode(tmp,b)*/
 }
 
+
 /*template<std::size_t S>
 void fec_encode(unsigned int fragmentSize,
                 std::vector<std::array<uint8_t,S>>& primaryFragments,

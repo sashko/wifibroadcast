@@ -33,6 +33,7 @@
 #include <memory>
 #include <cassert>
 #include <functional>
+#include "StringHelper.hpp"
 
 // For all the stuff that was once in wifibroadcast.hpp
 
@@ -112,6 +113,10 @@ namespace GenericHelper{
     template<std::size_t S>
     void assertArraysEqual(const std::array<uint8_t,S>& sb,const std::array<uint8_t,S>& rb){
         const int result=memcmp (sb.data(),rb.data(),sb.size());
+        if(result!=0){
+            //std::cout<<"Data1:"<<StringHelper::arrayAsString(sb)<<"\n";
+            //std::cout<<"Data2:"<<StringHelper::arrayAsString(rb)<<"\n";
+        }
         assert(result==0);
     }
     /**

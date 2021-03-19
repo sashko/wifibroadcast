@@ -58,12 +58,13 @@ namespace TestFEC{
             // of indices is nPrimaryFragments <=>
             //const auto nReceivedPrimaryFragments= rand() % nPrimaryFragments;
             //const auto nReceivedSecondaryFragments=nPrimaryFragments-nReceivedPrimaryFragments;
-            const auto nReceivedSecondaryFragments=1;//rand() % nSecondaryFragments;
+            const auto nReceivedSecondaryFragments=4;//rand() % nSecondaryFragments;
             const auto nReceivedPrimaryFragments=nPrimaryFragments-nReceivedSecondaryFragments;
             std::cout<<"(Emulated) nReceivedPrimaryFragments:"<<nReceivedPrimaryFragments<<" nReceivedSecondaryFragments:"<<nReceivedSecondaryFragments<<"\n";
 
             const auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(primaryFragmentIndices,nReceivedPrimaryFragments);
             const auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(secondaryFragmentIndices,nReceivedSecondaryFragments);
+            //const auto receivedSecondaryFragmentIndices=std::vector<unsigned int>({secondaryFragmentIndices.at(0)});
 
             std::cout<<"primaryFragmentIndices:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" secondaryFragmentIndices:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
 

@@ -22,6 +22,16 @@ public:
         }
         return ss.str();
     }
+
+    template<typename T,std::size_t S>
+    static std::string arrayAsString(const std::array<T,S>& a){
+        std::stringstream ss;
+        for (const auto i:a) {
+            ss << (int)i << ",";
+        }
+        return ss.str();
+    }
+
     static std::string memorySizeReadable(const size_t sizeBytes){
         // more than one MB
         if(sizeBytes>1024*1024){
