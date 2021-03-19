@@ -71,9 +71,9 @@ namespace TestFEC{
                 6,
                 7
             });*/
-            auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nSecondaryFragments),nReceivedSecondaryFragments);
+            //auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nSecondaryFragments),nReceivedSecondaryFragments);
             //auto receivedSecondaryFragmentIndices=std::vector<unsigned int>({0});
-            //auto receivedSecondaryFragmentIndices=GenericHelper::createIndices(nSecondaryFragments);
+            auto receivedSecondaryFragmentIndices=GenericHelper::createIndices(nSecondaryFragments);
             for(const auto& idx:receivedPrimaryFragmentIndices){
                 receivedPrimaryFragments[idx]=primaryFragments[idx];
             }
