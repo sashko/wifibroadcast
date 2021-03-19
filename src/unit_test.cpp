@@ -42,16 +42,12 @@ namespace TestFEC{
             const auto nPrimaryFragments= 8;//rand() % 128;
             const auto nSecondaryFragments= 4;//rand() % 128;
 
-            //const auto nBuffers=255;
-            const auto nBuffers=nPrimaryFragments+nSecondaryFragments;
-            //auto blockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
             auto primaryFragments=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments);
             auto secondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
             assert(primaryFragments.size()==nPrimaryFragments);
             assert(secondaryFragments.size()==nSecondaryFragments);
 
             std::cout<<"Selected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
-            //fecEncode(FRAGMENT_SIZE, blockBuffer, nPrimaryFragments, nSecondaryFragments);
             fec_encode2(FRAGMENT_SIZE,primaryFragments,secondaryFragments);
             std::cout<<"X\n";
             auto receivedPrimaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nPrimaryFragments);
@@ -99,7 +95,12 @@ namespace TestFEC{
             }
 
             // decode step
-            /*std::vector<unsigned int> primaryFragmentIndices(nPrimaryFragments);
+            /*
+            //const auto nBuffers=255;
+            const auto nBuffers=nPrimaryFragments+nSecondaryFragments;
+            //auto blockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nBuffers);
+            fecEncode(FRAGMENT_SIZE, blockBuffer, nPrimaryFragments, nSecondaryFragments);
+            std::vector<unsigned int> primaryFragmentIndices(nPrimaryFragments);
             for(int i=0;i<nPrimaryFragments;i++){
                 primaryFragmentIndices[i]=i;
             }
