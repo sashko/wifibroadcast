@@ -55,6 +55,10 @@ void fec_decode(unsigned int fragmentSize,
     for(const auto& idx:indicesAvailableSecondaryFragments){
         assert(idx<secondaryFragments.size());
     }
+    std::vector<uint8_t*> secondaryFragmentsAdj;
+    for(const auto & idx:indicesAvailableSecondaryFragments){
+        secondaryFragmentsAdj.push_back(secondaryFragments[idx]);
+    }
     //
     /*std::vector<uint8_t*> fuuSec;
     for(const auto& idx:indicesAvailableSecondaryFragments){
@@ -63,8 +67,7 @@ void fec_decode(unsigned int fragmentSize,
     fec_decode(fragmentSize,(unsigned char**)primaryFragments.data(), primaryFragments.size(),(unsigned char**)fuuSec.data(),
                (unsigned int*)indicesAvailableSecondaryFragments.data(),(unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());*/
 
-
-    fec_decode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(),
+    fec_decode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragmentsAdj.data(),
                (unsigned int*)indicesAvailableSecondaryFragments.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
 
     /*auto tmp=fec_new(primaryFragments.size(),primaryFragments.size()+secondaryFragments.size());
