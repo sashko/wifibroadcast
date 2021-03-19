@@ -39,7 +39,14 @@ namespace TestFEC{
         srand (time(NULL));
 
         constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
-        for(int test=0;test<100;test++){
+        /*for(int nPrimaryFragments=1;nPrimaryFragments<MAX_N_P_FRAGMENTS_PER_BLOCK;nPrimaryFragments++){
+            for(int nSecondaryFragments=0;nSecondaryFragments<MAX_N_S_FRAGMENTS_PER_BLOCK;nSecondaryFragments++){
+                for(int test=0;test<1000;test++){
+
+                }
+            }
+        }*/
+        for(int test=0;test<10000;test++){
             const auto nPrimaryFragments= rand() % 128;
             const auto nSecondaryFragments= rand() % 128;
 
@@ -54,23 +61,11 @@ namespace TestFEC{
             auto receivedPrimaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nPrimaryFragments);
             auto receivedSecondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
 
-            //const auto nReceivedPrimaryFragments= 0;//rand() % nPrimaryFragments;
-            //const auto nReceivedSecondaryFragments=8;//nPrimaryFragments-nReceivedPrimaryFragments;
             const auto nReceivedSecondaryFragments=rand() % nSecondaryFragments;
-            const auto nReceivedPrimaryFragments=nPrimaryFragments-nReceivedSecondaryFragments;
+            const auto nReceivedPrimaryFragments=(nPrimaryFragments-nReceivedSecondaryFragments) >0 ? (nPrimaryFragments-nReceivedSecondaryFragments) : 0;
             std::cout<<"(Emulated) nReceivedPrimaryFragments:"<<nReceivedPrimaryFragments<<" nReceivedSecondaryFragments:"<<nReceivedSecondaryFragments<<"\n";
 
             auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nPrimaryFragments),nReceivedPrimaryFragments);
-            /*auto receivedPrimaryFragmentIndices=std::vector<unsigned int>({
-                //0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7
-            });*/
             auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nSecondaryFragments),nReceivedSecondaryFragments);
             //auto receivedSecondaryFragmentIndices=std::vector<unsigned int>({0});
             //auto receivedSecondaryFragmentIndices=GenericHelper::createIndices(nSecondaryFragments);
