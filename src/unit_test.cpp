@@ -320,7 +320,7 @@ int main(int argc, char *argv[]){
     srand (time(NULL));
     try {
         std::cout<<"Testing FEC\n";
-        //TestFEC::testFecCPlusPlusWrapper();
+        TestFEC::testFecCPlusPlusWrapper();
         const int N_PACKETS=1200;
         TestFEC::testNonce();
         // With these fec params "testWithoutPacketLoss" is not possible

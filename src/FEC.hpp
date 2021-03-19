@@ -11,18 +11,32 @@
 
 // c++ wrapper around fec library
 
-
+/**
+ * @param fragmentSize size of each fragment in this block
+ * @param primaryFragments list of pointers to memory for primary fragments
+ * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments)
+ * Using the data from @param primaryFragments constructs as many secondary fragments as @param secondaryFragments holds
+ */
 void fec_encode(unsigned int fragmentSize,
                 const std::vector<uint8_t*>& primaryFragments,
                 const std::vector<uint8_t*>& secondaryFragments){
     fec_encode(fragmentSize, (const unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
 }
 
+/**
+ * @param fragmentSize size of each fragment in this block
+ * @param primaryFragments list of pointers to memory for primary fragments
+ * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments)
+ * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments
+ * @param indicesReceivedSecondaryFragments list of the indices of secondaryFragments that are used to reconstruct missing primary fragments
+ * Reconstructs all missing primary fragments using the available secondary fragments.
+ */
 void fec_decode(unsigned int fragmentSize,
                 std::vector<uint8_t*>& primaryFragments,
                 std::vector<uint8_t*>& secondaryFragments,
                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
                 const std::vector<unsigned int>& indicesReceivedSecondaryFragments){
+    assert(indicesMissingPrimaryFragments.size()<=indicesReceivedSecondaryFragments.size());
     fec_decode(fragmentSize, primaryFragments.data(), primaryFragments.size(), secondaryFragments.data(),
                indicesReceivedSecondaryFragments.data(), indicesMissingPrimaryFragments.data(), indicesReceivedSecondaryFragments.size());
 }
