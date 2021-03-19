@@ -36,6 +36,7 @@
 namespace TestFEC{
     static void testFecCPlusPlusWrapper(){
         fec_init();
+        srand (time(NULL));
 
         constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
         for(int test=0;test<100;test++){
@@ -55,12 +56,12 @@ namespace TestFEC{
 
             //const auto nReceivedPrimaryFragments= 0;//rand() % nPrimaryFragments;
             //const auto nReceivedSecondaryFragments=8;//nPrimaryFragments-nReceivedPrimaryFragments;
-            const auto nReceivedSecondaryFragments=1;//rand() % nSecondaryFragments;
+            const auto nReceivedSecondaryFragments=rand() % nSecondaryFragments;
             const auto nReceivedPrimaryFragments=nPrimaryFragments-nReceivedSecondaryFragments;
             std::cout<<"(Emulated) nReceivedPrimaryFragments:"<<nReceivedPrimaryFragments<<" nReceivedSecondaryFragments:"<<nReceivedSecondaryFragments<<"\n";
 
-            //auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nPrimaryFragments),nReceivedPrimaryFragments);
-            auto receivedPrimaryFragmentIndices=std::vector<unsigned int>({
+            auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nPrimaryFragments),nReceivedPrimaryFragments);
+            /*auto receivedPrimaryFragmentIndices=std::vector<unsigned int>({
                 //0,
                 1,
                 2,
@@ -69,9 +70,9 @@ namespace TestFEC{
                 5,
                 6,
                 7
-            });
-            //auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nSecondaryFragments),nReceivedSecondaryFragments);
-            auto receivedSecondaryFragmentIndices=std::vector<unsigned int>({0});
+            });*/
+            auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nSecondaryFragments),nReceivedSecondaryFragments);
+            //auto receivedSecondaryFragmentIndices=std::vector<unsigned int>({0});
             //auto receivedSecondaryFragmentIndices=GenericHelper::createIndices(nSecondaryFragments);
             for(const auto& idx:receivedPrimaryFragmentIndices){
                 receivedPrimaryFragments[idx]=primaryFragments[idx];
@@ -88,8 +89,8 @@ namespace TestFEC{
 
             std::cout<<"receivedPrimaryFragmentIndices:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" receivedSecondaryFragmentIndices:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
 
-            fec_decode_available(FRAGMENT_SIZE, receivedPrimaryFragments, receivedSecondaryFragments,
-                                 receivedPrimaryFragmentIndices, receivedSecondaryFragmentIndices);
+            fec_decode2_available(FRAGMENT_SIZE, receivedPrimaryFragments, receivedSecondaryFragments,
+                                  receivedPrimaryFragmentIndices, receivedSecondaryFragmentIndices);
 
             for(unsigned int i=0;i<nPrimaryFragments;i++){
                 std::cout<<"Comparing fragment:"<<i<<"\n";
@@ -384,8 +385,8 @@ int main(int argc, char *argv[]){
     srand (time(NULL));
     try {
         std::cout<<"Testing FEC\n";
-        //TestFEC::testFecCPlusPlusWrapper();
-        //return 0;
+        TestFEC::testFecCPlusPlusWrapper();
+        return 0;
         const int N_PACKETS=80;
         TestFEC::testNonce();
         // With these fec params "testWithoutPacketLoss" is not possible

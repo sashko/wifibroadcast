@@ -151,6 +151,20 @@ namespace GenericHelper{
         }
         return ret;
     }
+    // given an array of available indices, for each index int the rane [0...range[, check if this index is contained in the input array.
+    // if not, the index is "missing" and added to the return array
+    static std::vector<unsigned int> findMissingIndices(const std::vector<unsigned int>& indicesAvailable,const std::size_t range){
+        std::vector<unsigned int> indicesMissing;
+        for(unsigned int i=0;i<range;i++){
+            auto found= indicesAvailable.end() != std::find(indicesAvailable.begin(), indicesAvailable.end(), i);
+            if(!found){
+                // if not found, add to missing
+                std::cout<<"Not found:"<<i<<"\n";
+                indicesMissing.push_back(i);
+            }
+        }
+        return indicesMissing;
+    }
     using namespace std::chrono;
     constexpr nanoseconds timevalToDuration(timeval tv){
         auto duration = seconds{tv.tv_sec}

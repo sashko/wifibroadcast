@@ -85,26 +85,24 @@ void fec_encode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& p
 
 template<std::size_t S>
 void fec_decode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf,
-                const std::vector<unsigned int>& indicesMissingPrimaryFragments,
-                const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
+                std::vector<unsigned int> indicesMissingPrimaryFragments,
+                std::vector<unsigned int> indicesAvailableSecondaryFragments){
     auto pfp=GenericHelper::convertToP(pf);
     auto sfp=GenericHelper::convertToP(sf);
+    std::cout<<"YindicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
+    std::cout<<"YindicesAvailableSecondaryFragments:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragments)<<"\n";
     fec_decode(fragmentSize, pfp, sfp, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
 }
 
 template<std::size_t S>
-void fec_decode_available(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& pf, std::vector<std::array<uint8_t,S>>& sf,
-                          const std::vector<unsigned int>& indicesAvailablePrimaryFragments,
-                          const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
-    const auto nMissingPrimaryFragments=pf.size()-indicesAvailablePrimaryFragments.size();
-    std::vector<unsigned int> indicesMissingPrimaryFragments;
-    for(unsigned int i=0;i<pf.size();i++){
-        auto found= indicesAvailablePrimaryFragments.end() != std::find(indicesAvailablePrimaryFragments.begin(), indicesAvailablePrimaryFragments.end(), i);
-        if(!found){
-            indicesMissingPrimaryFragments.push_back(i);
-        }
-    }
-    fec_decode2(fragmentSize,pf,sf,indicesMissingPrimaryFragments,indicesAvailablePrimaryFragments);
+void fec_decode2_available(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& pf, std::vector<std::array<uint8_t,S>>& sf,
+                           std::vector<unsigned int> indicesAvailablePrimaryFragments,
+                           std::vector<unsigned int> indicesAvailableSecondaryFragments){
+
+    std::cout<<"XindicesAvailablePrimaryFragments:"<<StringHelper::vectorAsString(indicesAvailablePrimaryFragments)<<"\n";
+    std::cout<<"XindicesAvailableSecondaryFragments:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragments)<<"\n";
+    auto indicesMissingPrimaryFragments=GenericHelper::findMissingIndices(indicesAvailablePrimaryFragments,pf.size());
+    fec_decode2(fragmentSize,pf,sf,indicesMissingPrimaryFragments,indicesAvailableSecondaryFragments);
 }
 
 
