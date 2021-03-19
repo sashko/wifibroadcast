@@ -72,6 +72,7 @@ namespace TestFEC{
             });
             //auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nSecondaryFragments),nReceivedSecondaryFragments);
             auto receivedSecondaryFragmentIndices=std::vector<unsigned int>({0});
+            //auto receivedSecondaryFragmentIndices=GenericHelper::createIndices(nSecondaryFragments);
             for(const auto& idx:receivedPrimaryFragmentIndices){
                 receivedPrimaryFragments[idx]=primaryFragments[idx];
             }
@@ -87,7 +88,8 @@ namespace TestFEC{
 
             std::cout<<"receivedPrimaryFragmentIndices:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" receivedSecondaryFragmentIndices:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
 
-            fec_decode3(FRAGMENT_SIZE,receivedPrimaryFragments,receivedSecondaryFragments,receivedPrimaryFragmentIndices,receivedSecondaryFragmentIndices);
+            fec_decode_available(FRAGMENT_SIZE, receivedPrimaryFragments, receivedSecondaryFragments,
+                                 receivedPrimaryFragmentIndices, receivedSecondaryFragmentIndices);
 
             for(unsigned int i=0;i<nPrimaryFragments;i++){
                 std::cout<<"Comparing fragment:"<<i<<"\n";
@@ -351,7 +353,7 @@ namespace TestFEC{
             const auto size= (rand() % FEC_MAX_PAYLOAD_SIZE) + 1;
             testIn.push_back(GenericHelper::createRandomDataBuffer(size));
         }
-        testWithPacketLossButEverythingIsRecoverable(k, percentage, testIn,DROP_MODE, true);
+        testWithPacketLossButEverythingIsRecoverable(k, percentage, testIn,DROP_MODE, false);
     }
 }
 
@@ -382,9 +384,9 @@ int main(int argc, char *argv[]){
     srand (time(NULL));
     try {
         std::cout<<"Testing FEC\n";
-        TestFEC::testFecCPlusPlusWrapper();
-        return 0;
-        const int N_PACKETS=600;
+        //TestFEC::testFecCPlusPlusWrapper();
+        //return 0;
+        const int N_PACKETS=80;
         TestFEC::testNonce();
         // With these fec params "testWithoutPacketLoss" is not possible
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams1={
@@ -401,7 +403,8 @@ int main(int argc, char *argv[]){
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
                 //{1,200},
                 //{2,100},{2,200},
-                {4,100},{4,200},
+                //{4,100},{4,200},
+                {8,50}
                 /*{6,50},{6,100},{6,200},
                 {8,50},{8,100},{8,200},
                 {10,30},{10,50},{10,100},
@@ -419,10 +422,10 @@ int main(int argc, char *argv[]){
                 TestFEC::testWithPacketLossButEverythingIsRecoverable(k, p, N_PACKETS, dropMode);
             }
         }
-        TestFEC::testWithoutPacketLossDynamicBlockSize();
+        //TestFEC::testWithoutPacketLossDynamicBlockSize();
         //
-        std::cout<<"Testing Encryption\n";
-        TestEncryption::test();
+        //std::cout<<"Testing Encryption\n";
+        //TestEncryption::test();
         //
     }catch (std::runtime_error &e) {
         std::cerr<<"Error: "<<std::string(e.what());

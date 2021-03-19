@@ -112,4 +112,3 @@ void fec_decode(const fec_t* code, const gf** inpkts, gf** outpkts, const unsign
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
-

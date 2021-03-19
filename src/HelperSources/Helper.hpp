@@ -142,7 +142,15 @@ namespace GenericHelper{
         }
         return ret;
     }
-
+    template<std::size_t S>
+    static std::vector<uint8_t*> convertToP(std::vector<std::array<uint8_t,S>>& buff,std::size_t offset=0,std::size_t n=-1){
+        if(n==-1)n=buff.size();
+        std::vector<uint8_t*> ret(n);
+        for(int i=0;i<ret.size();i++){
+            ret[i]=buff[offset+i].data();
+        }
+        return ret;
+    }
     using namespace std::chrono;
     constexpr nanoseconds timevalToDuration(timeval tv){
         auto duration = seconds{tv.tv_sec}
