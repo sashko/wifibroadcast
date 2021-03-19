@@ -26,7 +26,7 @@
 #include <sstream>
 
 #include "wifibroadcast.hpp"
-#include "FEC.hpp"
+#include "FECEnabled.hpp"
 
 #include "HelperSources/Helper.hpp"
 #include "Encryption.hpp"
@@ -36,7 +36,6 @@
 namespace TestFEC{
     static void testFecCPlusPlusWrapper(){
         fec_init();
-        srand (time(NULL));
 
         constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
         for(int test=0;test<100;test++){
@@ -318,9 +317,10 @@ namespace TestEncryption{
 
 int main(int argc, char *argv[]){
     std::cout<<"Tests for Wifibroadcast\n";
+    srand (time(NULL));
     try {
         std::cout<<"Testing FEC\n";
-        TestFEC::testFecCPlusPlusWrapper();
+        //TestFEC::testFecCPlusPlusWrapper();
         const int N_PACKETS=1200;
         TestFEC::testNonce();
         // With these fec params "testWithoutPacketLoss" is not possible

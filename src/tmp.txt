@@ -317,3 +317,22 @@ void forceForwardBlocksOlderThan(const std::chrono::nanoseconds& maxLatency){
              idx++;
          }*/
 std::cout<<"block_idx"<<blockIdx<<" k:"<<fec_k<<" X1:"<<indicesAvailableSecondaryFragments.size()<<" X2:"<<nAvailableSecondaryFragments<<"\n";
+
+/**
+ * create 2 arrays of data pointers.
+ * First one holds pointers to all primary fragments (index 0 = first primary fragment, index 1= second primary fragment, ...
+ * And second one holds pointers to all secondary fragments ( index 0 = first secondary fragment, index 1 = second secondary fragment, ...
+ */
+template<std::size_t S>
+std::pair<std::vector<uint8_t*>,std::vector<uint8_t*>> splitBlockBuffer(std::vector<std::array<uint8_t,S>>& blockBuffer, unsigned int nPrimaryFragments){
+    std::vector<uint8_t*> primaryFragmentsP(nPrimaryFragments);
+    for(unsigned int i=0;i<nPrimaryFragments;i++){
+        primaryFragmentsP[i]=blockBuffer[i].data();
+    }
+    const int nSecondaryFragmentsPointers=blockBuffer.size()-nPrimaryFragments;
+    std::vector<uint8_t*> secondaryFragmentsP(nSecondaryFragmentsPointers);
+    for(unsigned int i=0;i<nSecondaryFragmentsPointers;i++){
+        secondaryFragmentsP[i]=blockBuffer[nPrimaryFragments+i].data();
+    }
+    return std::make_pair(primaryFragmentsP,secondaryFragmentsP);
+}
