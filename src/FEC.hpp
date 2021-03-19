@@ -25,10 +25,6 @@ void fec_encode(unsigned int fragmentSize,
                 std::vector<uint8_t*> primaryFragments,
                 std::vector<uint8_t*> secondaryFragments){
     fec_encode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
-    //auto tmp=fec_new(primaryFragments.size(),primaryFragments.size()+secondaryFragments.size());
-    //fec_encode(tmp,(const gf**)primaryFragments.data(),(gf**)secondaryFragments.data(),fragmentSize);
-    //fec_free(tmp);
-    //auto tmp=fec_new(4,8);
 }
 
 /**
@@ -59,23 +55,8 @@ void fec_decode(unsigned int fragmentSize,
     for(const auto & idx:indicesAvailableSecondaryFragments){
         secondaryFragmentsAdj.push_back(secondaryFragments[idx]);
     }
-    //
-    /*std::vector<uint8_t*> fuuSec;
-    for(const auto& idx:indicesAvailableSecondaryFragments){
-        fuuSec.push_back(secondaryFragments[idx]);
-    }
-    fec_decode(fragmentSize,(unsigned char**)primaryFragments.data(), primaryFragments.size(),(unsigned char**)fuuSec.data(),
-               (unsigned int*)indicesAvailableSecondaryFragments.data(),(unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());*/
-
     fec_decode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragmentsAdj.data(),
                (unsigned int*)indicesAvailableSecondaryFragments.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
-
-    /*auto tmp=fec_new(primaryFragments.size(),primaryFragments.size()+secondaryFragments.size());
-    std::vector<uint8_t*> block=primaryFragments;
-    for(const auto el:secondaryFragments){
-        block.push_back(el);
-    }
-    fec_decode(tmp,b)*/
 }
 
 

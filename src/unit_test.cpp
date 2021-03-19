@@ -40,8 +40,8 @@ namespace TestFEC{
 
         constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
         for(int test=0;test<100;test++){
-            const auto nPrimaryFragments= 8;//rand() % 128;
-            const auto nSecondaryFragments= 4;//rand() % 128;
+            const auto nPrimaryFragments= rand() % 128;
+            const auto nSecondaryFragments= rand() % 128;
 
             auto primaryFragments=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments);
             auto secondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
