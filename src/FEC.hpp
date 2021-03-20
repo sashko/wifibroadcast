@@ -43,8 +43,9 @@ void fec_encode(unsigned int fragmentSize,
  * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments.
  * Example: if @param indicesMissingPrimaryFragments contains 2, the 3rd primary fragment is missing
  * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments). Must not be same size as used for fec_encode(), only MUST contain "enough" secondary fragments
- * @param indicesAvailableSecondaryFragments list of the indices of secondaryFragments that are used to reconstruct missing primary fragments
- * Reconstructs all missing primary fragments using the available secondary fragments.
+ * @param indicesAvailableSecondaryFragments list of the indices of secondaryFragments that are used to reconstruct missing primary fragments.
+ * Example: if @param indicesAvailableSecondaryFragments contains {0,2}, the first secondary fragment has the index 0, and the second secondary fragment has the index 2
+ * When this call returns, all missing primary fragments (gaps) have been filled / reconstructed
  */
 void fec_decode(unsigned int fragmentSize,
                 std::vector<uint8_t*> primaryFragments,
@@ -144,6 +145,7 @@ std::vector<unsigned int> fecDecodeX(unsigned int fragmentSize, std::vector<std:
 
 
 static void testFecCPlusPlusWrapperX(){
+    std::cout<<"testFecCPlusPlusWrapperX\n";
     fec_init();
     srand (time(NULL));
     constexpr auto FRAGMENT_SIZE=1446;
