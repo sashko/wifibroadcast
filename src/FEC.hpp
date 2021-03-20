@@ -16,7 +16,7 @@
 // c++ wrapper around fec library
 // NOTE: When working with FEC, people seem to use the terms block, fragments and more in different context(s).
 // To avoid confusion,I decided to use the following notation:
-// ! A block is formed by K primary and N-K secondary fragments. Each of these fragments must have the same size. !
+// A block is formed by K primary and N-K secondary fragments. Each of these fragments must have the same size.
 // Therefore,
 // fragmentSize is the size of each fragment in this block (for some reason, this is called blockSize in the underlying c fec implementation).
 // A primary fragment is a data packet
@@ -39,7 +39,7 @@ void fec_encode(unsigned int fragmentSize,
 
 // same as above, but different way of passing primary / secondary fragments.
 template<std::size_t S>
-void fec_encode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf){
+void fec_encode(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf){
     auto pfp=GenericHelper::convertToP(pf);
     auto sfp=GenericHelper::convertToP(sf);
     fec_encode(fragmentSize,pfp,sfp);
@@ -79,8 +79,9 @@ void fec_decode(unsigned int fragmentSize,
 }
 
 
+// same as above, but different way of passing primary / secondary fragments.
 template<std::size_t S>
-void fec_decode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf,
+void fec_decode(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf,
                 std::vector<unsigned int> indicesMissingPrimaryFragments,
                 std::vector<unsigned int> indicesAvailableSecondaryFragments){
     auto pfp=GenericHelper::convertToP(pf);
@@ -100,17 +101,9 @@ void fec_decode2_available(unsigned int fragmentSize, std::vector<std::array<uin
 }
 
 
-/*template<std::size_t S>
-void fec_encode(unsigned int fragmentSize,
-                std::vector<std::array<uint8_t,S>>& primaryFragments,
-                std::vector<std::array<uint8_t,S>>& secondaryFragments){
-
-}*/
-
 
 //Note: By using "blockBuffer" as input the fecEncode / fecDecode function(s) don't need to allocate any new memory.
 // The "blockBuffer" can be either at least as big as needed or bigger, implementation doesn't care
-
 
 
 /**
