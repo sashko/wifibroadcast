@@ -34,66 +34,6 @@
 // Simple unit testing for the lib that doesn't require wifi cards
 
 namespace TestFEC{
-    static void testFecCPlusPlusWrapper(){
-        fec_init();
-        srand (time(NULL));
-
-        constexpr auto FRAGMENT_SIZE=FEC_MAX_PAYLOAD_SIZE;
-        /*for(int nPrimaryFragments=1;nPrimaryFragments<MAX_N_P_FRAGMENTS_PER_BLOCK;nPrimaryFragments++){
-            for(int nSecondaryFragments=0;nSecondaryFragments<MAX_N_S_FRAGMENTS_PER_BLOCK;nSecondaryFragments++){
-                for(int test=0;test<1000;test++){
-
-                }
-            }
-        }*/
-        for(int test=0;test<100;test++){
-            const int nPrimaryFragments= 8;//rand() % 128 +1;
-            const int nSecondaryFragments= 4;//rand() % 128;
-
-            auto primaryFragments=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments);
-            auto secondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
-
-            std::cout<<"Selected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
-            fec_encode(FRAGMENT_SIZE, GenericHelper::convertToP(primaryFragments), GenericHelper::convertToP(secondaryFragments));
-            std::cout<<"X\n";
-            auto receivedPrimaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nPrimaryFragments);
-            auto receivedSecondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
-
-            const int nReceivedSecondaryFragments=nSecondaryFragments>0 ? rand() % nSecondaryFragments : 0;
-            const int nReceivedPrimaryFragments=(nPrimaryFragments-nReceivedSecondaryFragments) >0 ? (nPrimaryFragments-nReceivedSecondaryFragments) : 0;
-            std::cout<<"(Emulated) nReceivedPrimaryFragments:"<<nReceivedPrimaryFragments<<" nReceivedSecondaryFragments:"<<nReceivedSecondaryFragments<<"\n";
-
-            auto receivedPrimaryFragmentIndices= GenericHelper::takeNRandomElements(
-                    GenericHelper::createIndices(nPrimaryFragments), nReceivedPrimaryFragments);
-            auto receivedSecondaryFragmentIndices= GenericHelper::takeNRandomElements(
-                    GenericHelper::createIndices(nSecondaryFragments), nReceivedSecondaryFragments);
-
-            for(const auto& idx:receivedPrimaryFragmentIndices){
-                receivedPrimaryFragments[idx]=primaryFragments[idx];
-            }
-            for(const auto& idx:receivedSecondaryFragmentIndices){
-                receivedSecondaryFragments[idx]=secondaryFragments[idx];
-            }
-            for(unsigned int idx:receivedPrimaryFragmentIndices){
-                GenericHelper::assertArraysEqual(primaryFragments[idx],receivedPrimaryFragments[idx]);
-            }
-            for(unsigned int idx:receivedSecondaryFragmentIndices){
-                GenericHelper::assertArraysEqual(secondaryFragments[idx],receivedSecondaryFragments[idx]);
-            }
-
-            std::cout<<"receivedPrimaryFragmentIndices:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" receivedSecondaryFragmentIndices:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
-            //auto indicesMissingPrimaryFragments=GenericHelper::findMissingIndices(receivedPrimaryFragmentIndices,nPrimaryFragments);
-            //fec_decode2(FRAGMENT_SIZE,receivedPrimaryFragments,receivedSecondaryFragments,indicesMissingPrimaryFragments,receivedPrimaryFragmentIndices);
-
-            fec_decode2_available(FRAGMENT_SIZE, receivedPrimaryFragments,receivedPrimaryFragmentIndices,
-                                  receivedSecondaryFragments,receivedSecondaryFragmentIndices);
-
-            for(unsigned int i=0;i<nPrimaryFragments;i++){
-                std::cout<<"Comparing fragment:"<<i<<"\n";
-                GenericHelper::assertArraysEqual(primaryFragments[i],receivedPrimaryFragments[i]);
-            }
-        }
-    }
 
     static void testNonce(){
         const uint32_t blockIdx=0;
@@ -107,9 +47,6 @@ namespace TestFEC{
         assert(fecNonce2.flag==0);
         assert(fecNonce2.number==number);
     }
-
-
-
 
     // test without packet loss, fixed block size
     static void testWithoutPacketLoss(const int k, const int percentage, const std::vector<std::vector<uint8_t>>& testIn){
@@ -332,9 +269,7 @@ int main(int argc, char *argv[]){
     srand (time(NULL));
     try {
         std::cout<<"Testing FEC\n";
-        TestFEC::testFecCPlusPlusWrapper();
         testFecCPlusPlusWrapperX();
-        return 0;
         const int N_PACKETS=1200;
         TestFEC::testNonce();
         // With these fec params "testWithoutPacketLoss" is not possible
@@ -345,8 +280,8 @@ int main(int argc, char *argv[]){
         for(const auto& fecParam:fecParams1){
             const auto k=fecParam.first;
             const auto p=fecParam.second;
-            //TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
-            //TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
+            TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
+            TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
         }
         // only test with FEC enabled
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
@@ -363,17 +298,17 @@ int main(int argc, char *argv[]){
         for(const auto& fecParam:fecParams){
             const auto k=fecParam.first;
             const auto p=fecParam.second;
-            //TestFEC::testWithoutPacketLossFixedPacketSize(k, p, N_PACKETS);
-            //TestFEC::testWithoutPacketLossDynamicPacketSize(k, p, N_PACKETS);
-            //TestFEC::testRxQueue(k, p);
+            TestFEC::testWithoutPacketLossFixedPacketSize(k, p, N_PACKETS);
+            TestFEC::testWithoutPacketLossDynamicPacketSize(k, p, N_PACKETS);
+            TestFEC::testRxQueue(k, p);
             for(int dropMode=1;dropMode<2;dropMode++){
                 TestFEC::testWithPacketLossButEverythingIsRecoverable(k, p, N_PACKETS, dropMode);
             }
         }
-        //TestFEC::testWithoutPacketLossDynamicBlockSize();
+        TestFEC::testWithoutPacketLossDynamicBlockSize();
         //
-        //std::cout<<"Testing Encryption\n";
-        //TestEncryption::test();
+        std::cout<<"Testing Encryption\n";
+        TestEncryption::test();
         //
     }catch (std::runtime_error &e) {
         std::cerr<<"Error: "<<std::string(e.what());

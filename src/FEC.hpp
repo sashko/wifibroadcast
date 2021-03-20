@@ -155,7 +155,6 @@ std::vector<unsigned int> fecDecode(unsigned int fragmentSize, std::vector<std::
 
 // randomly select a possible combination of received indices (either primary or secondary).
 static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSecondaryFragments){
-    std::cout<<"testFecCPlusPlusWrapperX\n";
     fec_init();
     srand (time(NULL));
     constexpr auto FRAGMENT_SIZE=1446;
@@ -194,6 +193,7 @@ static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSeco
 
 // Note: This test will take quite a long time ! (or rather ages :) when trying to do all possible combinations. )
 void testFecCPlusPlusWrapperX(){
+    std::cout<<"testFecCPlusPlusWrapper Begin\n";
     //constexpr auto MAX_N_P_F=128;
     //constexpr auto MAX_N_S_F=128;
     // else it really takes ages
@@ -204,6 +204,7 @@ void testFecCPlusPlusWrapperX(){
             testFecCPlusPlusWrapperY(nPrimaryFragments,nSecondaryFragments);
         }
     }
+    std::cout<<"testFecCPlusPlusWrapper End\n";
 }
 
 #endif //WIFIBROADCAST_FEC_H
