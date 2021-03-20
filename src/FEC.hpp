@@ -14,6 +14,16 @@
 
 
 // c++ wrapper around fec library
+// NOTE: When working with FEC, people seem to use the terms block, fragments and more in different context(s).
+// To avoid confusion,I decided to use the following notation:
+// ! A block is formed by K primary and N-K secondary fragments. Each of these fragments must have the same size. !
+// Therefore,
+// fragmentSize is the size of each fragment in this block (for some reason, this is called blockSize in the underlying c fec implementation).
+// A primary fragment is a data packet
+// A secondary fragment is a data correction (FEC) packet
+// Note: for the fec_decode() step, it doesn't matter how many secondary fragments were created during the fec_encode() step -
+// only thing that matters is how many secondary fragments you received (either enough for fec_decode() or not enough for fec_decode() )
+// Also note: you obviously cannot use the same secondary fragment more than once
 
 /**
  * @param fragmentSize size of each fragment in this block
@@ -27,11 +37,20 @@ void fec_encode(unsigned int fragmentSize,
     fec_encode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
 }
 
+// same as above, but different way of passing primary / secondary fragments.
+template<std::size_t S>
+void fec_encode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf){
+    auto pfp=GenericHelper::convertToP(pf);
+    auto sfp=GenericHelper::convertToP(sf);
+    fec_encode(fragmentSize,pfp,sfp);
+}
+
 /**
  * @param fragmentSize size of each fragment in this block
- * @param primaryFragments list of pointers to memory for primary fragments
+ * @param primaryFragments list of pointers to memory for primary fragments.
  * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments)
- * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments
+ * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments.
+ * Example: if @param indicesMissingPrimaryFragments contains 2, the 3rd primary fragment is missing
  * @param indicesAvailableSecondaryFragments list of the indices of secondaryFragments that are used to reconstruct missing primary fragments
  * Reconstructs all missing primary fragments using the available secondary fragments.
  */
@@ -61,20 +80,11 @@ void fec_decode(unsigned int fragmentSize,
 
 
 template<std::size_t S>
-void fec_encode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf){
-    auto pfp=GenericHelper::convertToP(pf);
-    auto sfp=GenericHelper::convertToP(sf);
-    fec_encode(fragmentSize,pfp,sfp);
-}
-
-template<std::size_t S>
 void fec_decode2(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf,
                 std::vector<unsigned int> indicesMissingPrimaryFragments,
                 std::vector<unsigned int> indicesAvailableSecondaryFragments){
     auto pfp=GenericHelper::convertToP(pf);
     auto sfp=GenericHelper::convertToP(sf);
-    //std::cout<<"YindicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
-    //std::cout<<"YindicesAvailableSecondaryFragments:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragments)<<"\n";
     fec_decode(fragmentSize, pfp, sfp, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
 }
 

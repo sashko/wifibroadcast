@@ -388,3 +388,8 @@ std::pair<std::vector<uint8_t*>,std::vector<uint8_t*>> splitBlockBuffer(std::vec
                 6,
                 7
             });*/
+
+    //std::cout<<"YindicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
+    //std::cout<<"YindicesAvailableSecondaryFragments:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragments)<<"\n";
+            //auto receivedSecondaryFragmentIndices=std::vector<unsigned int>({0});
+            //auto receivedSecondaryFragmentIndices=GenericHelper::createIndices(nSecondaryFragments);

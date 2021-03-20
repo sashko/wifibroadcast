@@ -23,14 +23,6 @@
 // RN this module depends on "wifibroadcast.hpp", since it holds the "packet size(s)" needed to calculate FEC_MAX_PAYLOAD_SIZE
 // Removing this dependency (to write your own customized link) would be easy to do though.
 
-// NOTE: When working with FEC, people seem to use the terms block, fragments and more in different context(s).
-// I use the following notation:
-// A primary fragment is a data packet
-// A secondary fragment is a data correction (FEC) packet
-// K primary and N-K secondary fragments together form a FEC block,
-// NOTE: On the rx (for decoding) you don't need to know the n of secondary fragments created on the encoder -
-// it doesn't matter which secondary fragments you get,you either get "enough" for FEC step or "not enough" for FEC step
-
 static_assert(__BYTE_ORDER == __LITTLE_ENDIAN,"This code is written for little endian only !");
 // nonce: 64 bit value, consisting of
 // 32 bit block idx
