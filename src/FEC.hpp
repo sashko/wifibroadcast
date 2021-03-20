@@ -91,7 +91,8 @@ void fec_decode2_available(unsigned int fragmentSize,
 
 
 //Note: By using "blockBuffer" as input the fecEncode / fecDecode function(s) don't need to allocate any new memory.
-// The "blockBuffer" can be either at least as big as needed or bigger, implementation doesn't care
+// Also note, indices in blockBuffer can refer to either primary or secondary fragments. Whereas when calling
+// fec_decode(), secondary fragment numbers start from 0, not from nPrimaryFragments.
 
 
 /**
@@ -191,7 +192,7 @@ static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSeco
     }
 }
 
-// Note: This test will take quite a long time !
+// Note: This test will take quite a long time ! (or rather ages :) )
 void testFecCPlusPlusWrapperX(){
     for(int nPrimaryFragments=1;nPrimaryFragments<128;nPrimaryFragments++){
         for(int nSecondaryFragments=0;nSecondaryFragments<128;nSecondaryFragments++){
