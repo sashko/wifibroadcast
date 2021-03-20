@@ -110,7 +110,7 @@ std::vector<unsigned int> fecDecode(unsigned int fragmentSize, std::vector<std::
         }
         primaryFragmentP[idx]=blockBuffer[idx].data();
     }
-    //
+    // find enough secondary fragments
     std::vector<uint8_t*> secondaryFragmentP;
     std::vector<unsigned int> secondaryFragmentIndices;
     for(int i=0; i < fragmentStatusList.size() - nPrimaryFragments; i++) {
