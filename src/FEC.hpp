@@ -30,8 +30,8 @@
  * Using the data from @param primaryFragments constructs as many secondary fragments as @param secondaryFragments holds
  */
 void fec_encode(unsigned int fragmentSize,
-                std::vector<uint8_t*> primaryFragments,
-                std::vector<uint8_t*> secondaryFragments){
+                const std::vector<uint8_t*>& primaryFragments,
+                const std::vector<uint8_t*>& secondaryFragments){
     fec_encode(fragmentSize, (const unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
 }
 
@@ -46,10 +46,10 @@ void fec_encode(unsigned int fragmentSize,
  * When this call returns, all missing primary fragments (gaps) have been filled / reconstructed
  */
 void fec_decode(unsigned int fragmentSize,
-                std::vector<uint8_t*> primaryFragments,
-                std::vector<unsigned int> indicesMissingPrimaryFragments,
-                std::vector<uint8_t*> secondaryFragments,
-                std::vector<unsigned int> indicesOfSecondaryFragments){
+                const std::vector<uint8_t*>& primaryFragments,
+                const std::vector<unsigned int>& indicesMissingPrimaryFragments,
+                const std::vector<uint8_t*>& secondaryFragments,
+                const std::vector<unsigned int>& indicesOfSecondaryFragments){
     std::cout<<"primaryFragmentsS:"<<primaryFragments.size()<<"\n";
     std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
     std::cout<<"secondaryFragmentsS:"<<secondaryFragments.size()<<"\n";
