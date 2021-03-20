@@ -118,8 +118,8 @@ template<std::size_t S>
 void fecEncode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& blockBuffer,unsigned int nPrimaryFragments,unsigned int nSecondaryFragments){
     assert(packetSize<=S);
     assert(nPrimaryFragments+nSecondaryFragments<=blockBuffer.size());
-    auto primaryFragmentsP= GenericHelper::convertToP(blockBuffer,0,nPrimaryFragments);//getPrimaryFragmentPointers(blockBuffer, nPrimaryFragments);
-    auto secondaryFragmentsP=GenericHelper::convertToP(blockBuffer,nPrimaryFragments,blockBuffer.size()-nPrimaryFragments); //getPossibleSecondaryFragmentPointers(blockBuffer, nPrimaryFragments);
+    auto primaryFragmentsP= GenericHelper::convertToP(blockBuffer,0,nPrimaryFragments);
+    auto secondaryFragmentsP=GenericHelper::convertToP(blockBuffer,nPrimaryFragments,blockBuffer.size()-nPrimaryFragments);
     secondaryFragmentsP.resize(nSecondaryFragments);
     fec_encode(packetSize,primaryFragmentsP,secondaryFragmentsP);
     //fec_encode(packetSize, (const unsigned char**)primaryFragmentsP.data(), primaryFragmentsP.size(), (unsigned char**)secondaryFragmentsP.data(), nSecondaryFragments);
@@ -148,7 +148,6 @@ void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
     std::cout<<"blockBufferS:"<<blockBuffer.size()<<"\n";
     auto primaryFragmentsP=GenericHelper::convertToP(blockBuffer,0,nPrimaryFragments);
     auto secondaryFragmentsP=GenericHelper::convertToP(blockBuffer,nPrimaryFragments,blockBuffer.size()-nPrimaryFragments);;
-    //secondaryFragmentsP.resize(4);
 
     std::vector<unsigned int> indicesAvailableSecondaryFragmentsAdjusted(indicesAvailableSecondaryFragments.size());
     for(int i=0;i<indicesAvailableSecondaryFragments.size();i++){
@@ -161,35 +160,5 @@ void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
     fec_decode(packetSize,primaryFragmentsP,secondaryFragmentsP,indicesMissingPrimaryFragments,indicesAvailableSecondaryFragmentsAdjusted);
 }
 
-template<std::size_t S>
-void fecDecode2(unsigned int packetSize, std::vector<std::array<uint8_t,S>>& blockBuffer, unsigned int nPrimaryFragments,
-                const std::vector<unsigned int>& indicesAvailablePrimaryFragments, const std::vector<unsigned int>& indicesAvailableSecondaryFragments){
-    assert(indicesAvailablePrimaryFragments.size() + indicesAvailableSecondaryFragments.size() == nPrimaryFragments);
-    // the fec impl. wants the indices of missing primary fragments, not those ones available
-    std::vector<unsigned int> indicesMissingPrimaryFragments;
-    for(unsigned int i=0;i<nPrimaryFragments;i++){
-        auto found= indicesAvailablePrimaryFragments.end() != std::find(indicesAvailablePrimaryFragments.begin(), indicesAvailablePrimaryFragments.end(), i);
-        if(!found){
-            indicesMissingPrimaryFragments.push_back(i);
-        }
-    }
-    assert(indicesMissingPrimaryFragments.size()== nPrimaryFragments - indicesAvailablePrimaryFragments.size());
-    std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
-
-    //
-    auto primaryFragmentP=GenericHelper::convertToP(blockBuffer,0,nPrimaryFragments);
-    auto secondaryFragmentP=GenericHelper::convertToP(blockBuffer,nPrimaryFragments,blockBuffer.size()-nPrimaryFragments);
-
-    std::vector<unsigned int> indicesAvailableSecondaryFragmentsAdjusted(indicesAvailableSecondaryFragments.size());
-    for(int i=0; i < indicesAvailableSecondaryFragments.size(); i++){
-        indicesAvailableSecondaryFragmentsAdjusted[i]= indicesAvailableSecondaryFragments[i] - nPrimaryFragments;
-    }
-    std::cout<<"indicesAvailableSecondaryFragmentsAdjusted:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragmentsAdjusted)<<"\n";
-
-    fec_decode(packetSize, primaryFragmentP, secondaryFragmentP, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragmentsAdjusted);
-
-    //fec_decode(packetSize,primaryFragmentPointers.data(),nPrimaryFragments,secondaryFragmentPointers.data(),indicesAvailableSecondaryFragmentsAdjusted.data(),indicesMissingPrimaryFragments.data(),indicesAvailableSecondaryFragmentsAdjusted.size());
-
-}
 
 #endif //WIFIBROADCAST_FEC_H
