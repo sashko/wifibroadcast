@@ -124,6 +124,7 @@ template<std::size_t S>
 std::vector<unsigned int> fecDecode(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& blockBuffer, const unsigned int nPrimaryFragments, const std::vector<FragmentStatus>& fragmentStatusList){
     assert(fragmentSize <= S);
     assert(fragmentStatusList.size() <= blockBuffer.size());
+    assert(fragmentStatusList.size()==blockBuffer.size());
     std::vector<unsigned int> indicesMissingPrimaryFragments;
     std::vector<uint8_t*> primaryFragmentP(nPrimaryFragments);
     for(unsigned int idx=0;idx<nPrimaryFragments;idx++){
@@ -151,22 +152,23 @@ std::vector<unsigned int> fecDecode(unsigned int fragmentSize, std::vector<std::
     return indicesMissingPrimaryFragments;
 }
 
-
-static void testFecCPlusPlusWrapperX(){
+// randomly select a possible combination of received indices (either primary or secondary).
+static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSecondaryFragments){
     std::cout<<"testFecCPlusPlusWrapperX\n";
     fec_init();
     srand (time(NULL));
     constexpr auto FRAGMENT_SIZE=1446;
-    for(int test=0;test<100;test++) {
-        const int nPrimaryFragments = 8;//rand() % 128 + 1;
-        const int nSecondaryFragments = 4;//rand() % 128;
 
-        auto txBlockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments + nSecondaryFragments);
-        std::cout<<"XSelected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
+    auto txBlockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments + nSecondaryFragments);
+    std::cout<<"XSelected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
 
-        fecEncode(FRAGMENT_SIZE, txBlockBuffer, nPrimaryFragments, nSecondaryFragments);
-        std::cout<<"Encode done\n";
+    fecEncode(FRAGMENT_SIZE, txBlockBuffer, nPrimaryFragments, nSecondaryFragments);
+    std::cout<<"Encode done\n";
 
+    for(int test=0;test<10;test++) {
+        // takes nPrimaryFragments random (possible) indices without duplicates
+        // NOTE: Perhaps you could calculate all possible permutations, but these would be quite a lot.
+        // Therefore, I just use n random selections of received indices
         auto receivedFragmentIndices= GenericHelper::takeNRandomElements(
                 GenericHelper::createIndices(nPrimaryFragments + nSecondaryFragments),
                 nPrimaryFragments);
@@ -185,6 +187,15 @@ static void testFecCPlusPlusWrapperX(){
         for(unsigned int i=0;i<nPrimaryFragments;i++){
             std::cout<<"Comparing fragment:"<<i<<"\n";
             GenericHelper::assertArraysEqual(txBlockBuffer[i], rxBlockBuffer[i]);
+        }
+    }
+}
+
+// Note: This test will take quite a long time !
+void testFecCPlusPlusWrapperX(){
+    for(int nPrimaryFragments=1;nPrimaryFragments<128;nPrimaryFragments++){
+        for(int nSecondaryFragments=0;nSecondaryFragments<128;nSecondaryFragments++){
+            testFecCPlusPlusWrapperY(nPrimaryFragments,nSecondaryFragments);
         }
     }
 }
