@@ -93,7 +93,7 @@ void fec_decode2_available(unsigned int fragmentSize,
 //Note: By using "blockBuffer" as input the fecEncode / fecDecode function(s) don't need to allocate any new memory.
 // Also note, indices in blockBuffer can refer to either primary or secondary fragments. Whereas when calling
 // fec_decode(), secondary fragment numbers start from 0, not from nPrimaryFragments.
-
+// These declarations are written such that you can do "variable block size" on tx and rx.
 
 /**
  * @param packetSize size of each fragment to use for the FEC encoding step. FEC only works on packets the same size
@@ -166,7 +166,7 @@ static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSeco
     fecEncode(FRAGMENT_SIZE, txBlockBuffer, nPrimaryFragments, nSecondaryFragments);
     std::cout<<"Encode done\n";
 
-    for(int test=0;test<10;test++) {
+    for(int test=0;test<100;test++) {
         // takes nPrimaryFragments random (possible) indices without duplicates
         // NOTE: Perhaps you could calculate all possible permutations, but these would be quite a lot.
         // Therefore, I just use n random selections of received indices
@@ -192,10 +192,15 @@ static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSeco
     }
 }
 
-// Note: This test will take quite a long time ! (or rather ages :) )
+// Note: This test will take quite a long time ! (or rather ages :) when trying to do all possible combinations. )
 void testFecCPlusPlusWrapperX(){
-    for(int nPrimaryFragments=1;nPrimaryFragments<128;nPrimaryFragments++){
-        for(int nSecondaryFragments=0;nSecondaryFragments<128;nSecondaryFragments++){
+    //constexpr auto MAX_N_P_F=128;
+    //constexpr auto MAX_N_S_F=128;
+    // else it really takes ages
+    constexpr auto MAX_N_P_F=32;
+    constexpr auto MAX_N_S_F=32;
+    for(int nPrimaryFragments=1;nPrimaryFragments<MAX_N_P_F;nPrimaryFragments++){
+        for(int nSecondaryFragments=0;nSecondaryFragments<MAX_N_S_F;nSecondaryFragments++){
             testFecCPlusPlusWrapperY(nPrimaryFragments,nSecondaryFragments);
         }
     }
