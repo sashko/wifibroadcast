@@ -123,7 +123,7 @@ namespace GenericHelper{
      * take @param nElements random elements from @param values, without duplicates
      */
     //template<typename T>
-    std::vector<unsigned int> takeNElements(std::vector<unsigned int> values,const std::size_t nElements){
+    std::vector<unsigned int> takeNRandomElements(std::vector<unsigned int> values, const std::size_t nElements){
         assert(nElements<=values.size());
         std::vector<unsigned int> ret;
         for(int i=0;i<nElements;i++){

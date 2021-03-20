@@ -46,15 +46,15 @@ namespace TestFEC{
                 }
             }
         }*/
-        for(int test=0;test<10000;test++){
-            const int nPrimaryFragments= rand() % 128 +1;
-            const int nSecondaryFragments= rand() % 128;
+        for(int test=0;test<100;test++){
+            const int nPrimaryFragments= 8;//rand() % 128 +1;
+            const int nSecondaryFragments= 4;//rand() % 128;
 
             auto primaryFragments=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments);
             auto secondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
 
             std::cout<<"Selected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
-            fec_encode2(FRAGMENT_SIZE, primaryFragments, secondaryFragments);
+            fec_encode(FRAGMENT_SIZE, GenericHelper::convertToP(primaryFragments), GenericHelper::convertToP(secondaryFragments));
             std::cout<<"X\n";
             auto receivedPrimaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nPrimaryFragments);
             auto receivedSecondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
@@ -63,8 +63,10 @@ namespace TestFEC{
             const int nReceivedPrimaryFragments=(nPrimaryFragments-nReceivedSecondaryFragments) >0 ? (nPrimaryFragments-nReceivedSecondaryFragments) : 0;
             std::cout<<"(Emulated) nReceivedPrimaryFragments:"<<nReceivedPrimaryFragments<<" nReceivedSecondaryFragments:"<<nReceivedSecondaryFragments<<"\n";
 
-            auto receivedPrimaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nPrimaryFragments),nReceivedPrimaryFragments);
-            auto receivedSecondaryFragmentIndices=GenericHelper::takeNElements(GenericHelper::createIndices(nSecondaryFragments),nReceivedSecondaryFragments);
+            auto receivedPrimaryFragmentIndices= GenericHelper::takeNRandomElements(
+                    GenericHelper::createIndices(nPrimaryFragments), nReceivedPrimaryFragments);
+            auto receivedSecondaryFragmentIndices= GenericHelper::takeNRandomElements(
+                    GenericHelper::createIndices(nSecondaryFragments), nReceivedSecondaryFragments);
 
             for(const auto& idx:receivedPrimaryFragmentIndices){
                 receivedPrimaryFragments[idx]=primaryFragments[idx];
@@ -83,8 +85,8 @@ namespace TestFEC{
             //auto indicesMissingPrimaryFragments=GenericHelper::findMissingIndices(receivedPrimaryFragmentIndices,nPrimaryFragments);
             //fec_decode2(FRAGMENT_SIZE,receivedPrimaryFragments,receivedSecondaryFragments,indicesMissingPrimaryFragments,receivedPrimaryFragmentIndices);
 
-            fec_decode2_available(FRAGMENT_SIZE, receivedPrimaryFragments, receivedSecondaryFragments,
-                                  receivedPrimaryFragmentIndices, receivedSecondaryFragmentIndices);
+            fec_decode2_available(FRAGMENT_SIZE, receivedPrimaryFragments,receivedPrimaryFragmentIndices,
+                                  receivedSecondaryFragments,receivedSecondaryFragmentIndices);
 
             for(unsigned int i=0;i<nPrimaryFragments;i++){
                 std::cout<<"Comparing fragment:"<<i<<"\n";
@@ -380,8 +382,9 @@ int main(int argc, char *argv[]){
     try {
         std::cout<<"Testing FEC\n";
         TestFEC::testFecCPlusPlusWrapper();
+        //testFecCPlusPlusWrapperX();
         return 0;
-        const int N_PACKETS=80;
+        const int N_PACKETS=1200;
         TestFEC::testNonce();
         // With these fec params "testWithoutPacketLoss" is not possible
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams1={
@@ -396,16 +399,15 @@ int main(int argc, char *argv[]){
         }
         // only test with FEC enabled
         const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
-                //{1,200},
-                //{2,100},{2,200},
-                //{4,100},{4,200},
-                {8,50}
-                /*{6,50},{6,100},{6,200},
+                {1,200},
+                {2,100},{2,200},
+                {4,100},{4,200},
+                {6,50},{6,100},{6,200},
                 {8,50},{8,100},{8,200},
                 {10,30},{10,50},{10,100},
                 {40,30},{40,50},{40,100},
                 {100,30},{100,40},{100,50},{100,60},
-                {120,50}*/
+                {120,50}
         };
         for(const auto& fecParam:fecParams){
             const auto k=fecParam.first;

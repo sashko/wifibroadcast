@@ -274,7 +274,7 @@ public:
         // set the rest to zero such that FEC works
         memset(blockBuffer[fecNonce.fragmentIdx].data() + dataLen, '\0', FEC_MAX_PACKET_SIZE - dataLen);
         // mark it as available
-        fragment_map[fecNonce.fragmentIdx] = RxBlock::AVAILABLE;
+        fragment_map[fecNonce.fragmentIdx] = FragmentStatus::AVAILABLE;
         if(fecNonce.flag==0){
             nAvailablePrimaryFragments++;
             // when we receive the last primary fragment for this block we know the "K" parameter
@@ -345,8 +345,16 @@ public:
         const int nMissingPrimaryFragments=fec_k-nAvailablePrimaryFragments;
         // greater than or equal would also work, but mean the fec step is called later than needed, introducing latency
         assert(nMissingPrimaryFragments==nAvailableSecondaryFragments);
+
+        auto recoveredFragmentIndices=fecDecodeX(sizeOfSecondaryFragments,blockBuffer,fec_k,fragment_map);
+        for(const auto idx:recoveredFragmentIndices){
+            fragment_map[idx]=AVAILABLE;
+        }
+        nAvailablePrimaryFragments+=recoveredFragmentIndices.size();
+        // n of reconstructed packets
+        return recoveredFragmentIndices.size();
         // now bring it into a format that the c-style fec implementation understands
-        std::vector<unsigned int> indicesMissingPrimaryFragments;
+        /*std::vector<unsigned int> indicesMissingPrimaryFragments;
         for(int i=0;i<fec_k;i++){
             // if primary fragment is not available,add its index to the list of missing primary fragments
             if(fragment_map[i]!=AVAILABLE){
@@ -371,7 +379,7 @@ public:
         }
         nAvailablePrimaryFragments+=indicesMissingPrimaryFragments.size();
         // n of reconstructed packets
-        return indicesMissingPrimaryFragments.size();
+        return indicesMissingPrimaryFragments.size();*/
     }
     uint64_t getBlockIdx()const{
         return blockIdx;
@@ -382,7 +390,6 @@ private:
     // n of primary fragments that are already pulled out
     int nAlreadyForwardedPrimaryFragments=0;
     // for each fragment (via fragment_idx) store if it has been received yet
-    enum FragmentStatus{UNAVAILABLE=0,AVAILABLE=1};
     std::vector<FragmentStatus> fragment_map;
     // holds all the data for all received fragments (if fragment_map says UNAVALIABLE at this position, content is undefined)
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
