@@ -345,7 +345,6 @@ public:
         const int nMissingPrimaryFragments=fec_k-nAvailablePrimaryFragments;
         // greater than or equal would also work, but mean the fec step is called later than needed, introducing latency
         assert(nMissingPrimaryFragments==nAvailableSecondaryFragments);
-
         auto recoveredFragmentIndices= fecDecode(sizeOfSecondaryFragments, blockBuffer, fec_k, fragment_map);
         for(const auto idx:recoveredFragmentIndices){
             fragment_map[idx]=AVAILABLE;
@@ -353,33 +352,6 @@ public:
         nAvailablePrimaryFragments+=recoveredFragmentIndices.size();
         // n of reconstructed packets
         return recoveredFragmentIndices.size();
-        // now bring it into a format that the c-style fec implementation understands
-        /*std::vector<unsigned int> indicesMissingPrimaryFragments;
-        for(int i=0;i<fec_k;i++){
-            // if primary fragment is not available,add its index to the list of missing primary fragments
-            if(fragment_map[i]!=AVAILABLE){
-                indicesMissingPrimaryFragments.push_back(i);
-            }
-        }
-        assert(indicesMissingPrimaryFragments.size()==nMissingPrimaryFragments);
-        // find enough secondary fragments to recover all missing primary ones
-        std::vector<unsigned int> indicesAvailableSecondaryFragments;
-        for(int i=0;i<fragment_map.size()-fec_k;i++){
-            const auto idx=fec_k+i;
-            // if secondary fragment is available,add its index to the list of secondary packets that will be used for reconstruction
-            if(fragment_map[idx]==AVAILABLE){
-                indicesAvailableSecondaryFragments.push_back(idx);
-            }
-        }
-        assert(indicesAvailableSecondaryFragments.size()==nAvailableSecondaryFragments);
-        fecDecode(sizeOfSecondaryFragments, blockBuffer, fec_k, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
-        // after the decode step,all previously missing primary fragments have become available - mark them as such
-        for(const auto idx:indicesMissingPrimaryFragments){
-            fragment_map[idx]=AVAILABLE;
-        }
-        nAvailablePrimaryFragments+=indicesMissingPrimaryFragments.size();
-        // n of reconstructed packets
-        return indicesMissingPrimaryFragments.size();*/
     }
     uint64_t getBlockIdx()const{
         return blockIdx;
