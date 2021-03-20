@@ -337,6 +337,7 @@ public:
         //std::cout<<"reconstructAllMissingData"<<nAvailablePrimaryFragments<<" "<<nAvailableSecondaryFragments<<" "<<fec.FEC_K<<"\n";
         // NOTE: FEC does only work if nPrimaryFragments+nSecondaryFragments>=FEC_K
         assert(fec_k!=-1);
+        // do not reconstruct if reconstruction is impossible
         assert(nAvailablePrimaryFragments+nAvailableSecondaryFragments>=fec_k);
         // also do not reconstruct if reconstruction is not needed
         assert(nAvailablePrimaryFragments<fec_k);

@@ -1,10 +1,12 @@
-#pragma once
+#ifndef FEC_2_H
+#define FEC_2_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct fec_parms *fec_code_t;
+typedef unsigned char gf;
 
 /*
  * create a new encoder, returning a descriptor. This contains k,n and
@@ -14,18 +16,20 @@ typedef struct fec_parms *fec_code_t;
  */
 void fec_init(void);
 
+// don't bother to understand that c style crap, look at FEC.hpp
 void fec_encode(unsigned int blockSize,
-                unsigned char **data_blocks,
+                const gf **data_blocks,
                 unsigned int nrDataBlocks,
-                unsigned char **fec_blocks,
+                gf **fec_blocks,
                 unsigned int nrFecBlocks);
 
+// don't bother to understand that c style crap, look at FEC.hpp
 void fec_decode(unsigned int blockSize,
-                unsigned char **data_blocks,
+                gf **data_blocks,
                 unsigned int nr_data_blocks,
-                unsigned char **fec_blocks,
-                unsigned int *fec_block_nos,
-                unsigned int *erased_blocks,
+                gf **fec_blocks,
+                const unsigned int fec_block_nos[],
+                const unsigned int erased_blocks[],
                 unsigned short nr_fec_blocks  /* how many blocks per stripe */);
 
 void fec_print(fec_code_t code, int width);
@@ -35,3 +39,5 @@ void fec_license(void);
 #ifdef __cplusplus
 }
 #endif
+
+#endif //FEC_2_H

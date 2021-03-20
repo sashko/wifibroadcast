@@ -32,7 +32,7 @@
 void fec_encode(unsigned int fragmentSize,
                 std::vector<uint8_t*> primaryFragments,
                 std::vector<uint8_t*> secondaryFragments){
-    fec_encode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
+    fec_encode(fragmentSize, (const unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(), secondaryFragments.size());
 }
 
 /**
@@ -95,7 +95,7 @@ enum FragmentStatus{UNAVAILABLE=0,AVAILABLE=1};
  * @param nPrimaryFragments n of primary fragments used during encode step
  * @param fragmentStatusList information which (primary or secondary fragments) were received.
  * values from [0,nPrimaryFragments[ are treated as primary fragments, values from [nPrimaryFragments,size[ are treated as secondary fragments.
- * @return
+ * @return indices of reconstructed primary fragments
  */
 template<std::size_t S>
 std::vector<unsigned int> fecDecode(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& blockBuffer, const unsigned int nPrimaryFragments, const std::vector<FragmentStatus>& fragmentStatusList){
