@@ -50,10 +50,10 @@ void fec_decode(unsigned int fragmentSize,
                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
                 const std::vector<uint8_t*>& secondaryFragments,
                 const std::vector<unsigned int>& indicesOfSecondaryFragments){
-    std::cout<<"primaryFragmentsS:"<<primaryFragments.size()<<"\n";
-    std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
-    std::cout<<"secondaryFragmentsS:"<<secondaryFragments.size()<<"\n";
-    std::cout << "indicesOfSecondaryFragments:" << StringHelper::vectorAsString(indicesOfSecondaryFragments) << "\n";
+    //std::cout<<"primaryFragmentsS:"<<primaryFragments.size()<<"\n";
+    //std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
+    //std::cout<<"secondaryFragmentsS:"<<secondaryFragments.size()<<"\n";
+    //std::cout << "indicesOfSecondaryFragments:" << StringHelper::vectorAsString(indicesOfSecondaryFragments) << "\n";
     for(const auto& idx:indicesMissingPrimaryFragments){
         assert(idx<primaryFragments.size());
     }
