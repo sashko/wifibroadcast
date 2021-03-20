@@ -346,7 +346,7 @@ public:
         // greater than or equal would also work, but mean the fec step is called later than needed, introducing latency
         assert(nMissingPrimaryFragments==nAvailableSecondaryFragments);
 
-        auto recoveredFragmentIndices=fecDecodeX(sizeOfSecondaryFragments,blockBuffer,fec_k,fragment_map);
+        auto recoveredFragmentIndices= fecDecode(sizeOfSecondaryFragments, blockBuffer, fec_k, fragment_map);
         for(const auto idx:recoveredFragmentIndices){
             fragment_map[idx]=AVAILABLE;
         }

@@ -95,10 +95,10 @@ void fec_decode2_available(unsigned int fragmentSize,
 
 
 /**
- * @param packetSize size of each data packet (fragment) to use for the FEC encoding step. FEC only works on packets the same size
+ * @param packetSize size of each fragment to use for the FEC encoding step. FEC only works on packets the same size
  * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
  * During the FEC step, @param nPrimaryFragments fragments are used to calculate nSecondaryFragments FEC blocks.
- * After the FEC step,beginning at idx @param nPrimaryFragments ,@param nSecondaryFragments are stored at the following indices, each of size @param packetSize
+ * After the FEC step,beginning at position @param nPrimaryFragments ,@param nSecondaryFragments are stored at the following positions, each of size @param fragmentSize
  */
 template<std::size_t S>
 void fecEncode(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& blockBuffer, unsigned int nPrimaryFragments, unsigned int nSecondaryFragments){
@@ -112,8 +112,16 @@ void fecEncode(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& bl
 
 enum FragmentStatus{UNAVAILABLE=0,AVAILABLE=1};
 
+/**
+ * @param fragmentSize size of each fragment
+ * @param blockBuffer blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
+ * @param nPrimaryFragments n of primary fragments used during encode step
+ * @param fragmentStatusList information which (primary or secondary fragments) were received.
+ * values from [0,nPrimaryFragments[ are treated as primary fragments, values from [nPrimaryFragments,size[ are treated as secondary fragments.
+ * @return
+ */
 template<std::size_t S>
-std::vector<unsigned int> fecDecodeX(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& blockBuffer, const unsigned int nPrimaryFragments, const std::vector<FragmentStatus>& fragmentStatusList){
+std::vector<unsigned int> fecDecode(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& blockBuffer, const unsigned int nPrimaryFragments, const std::vector<FragmentStatus>& fragmentStatusList){
     assert(fragmentSize <= S);
     assert(fragmentStatusList.size() <= blockBuffer.size());
     std::vector<unsigned int> indicesMissingPrimaryFragments;
@@ -153,10 +161,10 @@ static void testFecCPlusPlusWrapperX(){
         const int nPrimaryFragments = 8;//rand() % 128 + 1;
         const int nSecondaryFragments = 4;//rand() % 128;
 
-        auto blockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments+nSecondaryFragments);
+        auto txBlockBuffer=GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments + nSecondaryFragments);
         std::cout<<"XSelected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
 
-        fecEncode(FRAGMENT_SIZE,blockBuffer,nPrimaryFragments,nSecondaryFragments);
+        fecEncode(FRAGMENT_SIZE, txBlockBuffer, nPrimaryFragments, nSecondaryFragments);
         std::cout<<"Encode done\n";
 
         auto receivedFragmentIndices= GenericHelper::takeNRandomElements(
@@ -168,15 +176,15 @@ static void testFecCPlusPlusWrapperX(){
         auto rxBlockBuffer=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nPrimaryFragments+nSecondaryFragments);
         std::vector<FragmentStatus> fragmentMap(nPrimaryFragments+nSecondaryFragments,FragmentStatus::UNAVAILABLE);
         for(const auto idx:receivedFragmentIndices){
-            rxBlockBuffer[idx]=blockBuffer[idx];
+            rxBlockBuffer[idx]=txBlockBuffer[idx];
             fragmentMap[idx]=FragmentStatus::AVAILABLE;
         }
 
-        fecDecodeX(FRAGMENT_SIZE,blockBuffer,nPrimaryFragments,fragmentMap);
+        fecDecode(FRAGMENT_SIZE, rxBlockBuffer, nPrimaryFragments, fragmentMap);
 
         for(unsigned int i=0;i<nPrimaryFragments;i++){
             std::cout<<"Comparing fragment:"<<i<<"\n";
-            GenericHelper::assertArraysEqual(blockBuffer[i],rxBlockBuffer[i]);
+            GenericHelper::assertArraysEqual(txBlockBuffer[i], rxBlockBuffer[i]);
         }
     }
 }
