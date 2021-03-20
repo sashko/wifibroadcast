@@ -54,7 +54,7 @@ namespace TestFEC{
             auto secondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
 
             std::cout<<"Selected nPrimaryFragments:"<<nPrimaryFragments<<" nSecondaryFragments:"<<nSecondaryFragments<<"\n";
-            fec_encode(FRAGMENT_SIZE,primaryFragments,secondaryFragments);
+            fec_encode2(FRAGMENT_SIZE, primaryFragments, secondaryFragments);
             std::cout<<"X\n";
             auto receivedPrimaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nPrimaryFragments);
             auto receivedSecondaryFragments=std::vector<std::array<uint8_t,FRAGMENT_SIZE>>(nSecondaryFragments);
@@ -80,6 +80,8 @@ namespace TestFEC{
             }
 
             std::cout<<"receivedPrimaryFragmentIndices:"<<StringHelper::vectorAsString(receivedPrimaryFragmentIndices)<<" receivedSecondaryFragmentIndices:"<<StringHelper::vectorAsString(receivedSecondaryFragmentIndices)<<"\n";
+            //auto indicesMissingPrimaryFragments=GenericHelper::findMissingIndices(receivedPrimaryFragmentIndices,nPrimaryFragments);
+            //fec_decode2(FRAGMENT_SIZE,receivedPrimaryFragments,receivedSecondaryFragments,indicesMissingPrimaryFragments,receivedPrimaryFragmentIndices);
 
             fec_decode2_available(FRAGMENT_SIZE, receivedPrimaryFragments, receivedSecondaryFragments,
                                   receivedPrimaryFragmentIndices, receivedSecondaryFragmentIndices);

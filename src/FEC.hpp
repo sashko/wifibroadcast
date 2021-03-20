@@ -39,11 +39,11 @@ void fec_encode(unsigned int fragmentSize,
 
 // same as above, but different way of passing primary / secondary fragments.
 template<std::size_t S>
-void fec_encode(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf){
+void fec_encode2(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& pf, std::vector<std::array<uint8_t,S>>& sf){
     assert(fragmentSize<=S);
     auto pfp=GenericHelper::convertToP(pf);
     auto sfp=GenericHelper::convertToP(sf);
-    fec_encode(fragmentSize,pfp,sfp);
+    fec_encode(fragmentSize, pfp, sfp);
 }
 
 /**
@@ -82,9 +82,9 @@ void fec_decode(unsigned int fragmentSize,
 
 // same as above, but different way of passing primary / secondary fragments.
 template<std::size_t S>
-void fec_decode(unsigned int fragmentSize,std::vector<std::array<uint8_t,S>>& pf,std::vector<std::array<uint8_t,S>>& sf,
-                std::vector<unsigned int> indicesMissingPrimaryFragments,
-                std::vector<unsigned int> indicesAvailableSecondaryFragments){
+void fec_decode2(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& pf, std::vector<std::array<uint8_t,S>>& sf,
+                 std::vector<unsigned int> indicesMissingPrimaryFragments,
+                 std::vector<unsigned int> indicesAvailableSecondaryFragments){
     assert(fragmentSize<=S);
     auto pfp=GenericHelper::convertToP(pf);
     auto sfp=GenericHelper::convertToP(sf);
@@ -95,11 +95,8 @@ template<std::size_t S>
 void fec_decode2_available(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& pf, std::vector<std::array<uint8_t,S>>& sf,
                            std::vector<unsigned int> indicesAvailablePrimaryFragments,
                            std::vector<unsigned int> indicesAvailableSecondaryFragments){
-
-    //std::cout<<"XindicesAvailablePrimaryFragments:"<<StringHelper::vectorAsString(indicesAvailablePrimaryFragments)<<"\n";
-    //std::cout<<"XindicesAvailableSecondaryFragments:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragments)<<"\n";
     auto indicesMissingPrimaryFragments=GenericHelper::findMissingIndices(indicesAvailablePrimaryFragments,pf.size());
-    fec_decode(fragmentSize,pf,sf,indicesMissingPrimaryFragments,indicesAvailableSecondaryFragments);
+    fec_decode2(fragmentSize, pf, sf, indicesMissingPrimaryFragments, indicesAvailableSecondaryFragments);
 }
 
 
@@ -121,8 +118,7 @@ void fecEncode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
     auto primaryFragmentsP= GenericHelper::convertToP(blockBuffer,0,nPrimaryFragments);
     auto secondaryFragmentsP=GenericHelper::convertToP(blockBuffer,nPrimaryFragments,blockBuffer.size()-nPrimaryFragments);
     secondaryFragmentsP.resize(nSecondaryFragments);
-    fec_encode(packetSize,primaryFragmentsP,secondaryFragmentsP);
-    //fec_encode(packetSize, (const unsigned char**)primaryFragmentsP.data(), primaryFragmentsP.size(), (unsigned char**)secondaryFragmentsP.data(), nSecondaryFragments);
+    fec_encode(packetSize, primaryFragmentsP, secondaryFragmentsP);
 }
 
 /**
@@ -157,7 +153,8 @@ void fecDecode(unsigned int packetSize,std::vector<std::array<uint8_t,S>>& block
     std::cout<<"indicesAvailableSecondaryFragmentsAdjusted:"<<StringHelper::vectorAsString(indicesAvailableSecondaryFragmentsAdjusted)<<"\n";
 
     //fec_decode(packetSize,primaryFragmentsP.data(),primaryFragmentsP.size(),secondaryFragmentsP.data(),indicesAvailableSecondaryFragmentsAdjusted.data(),indicesMissingPrimaryFragments.data(),indicesAvailableSecondaryFragmentsAdjusted.size());
-    fec_decode(packetSize,primaryFragmentsP,secondaryFragmentsP,indicesMissingPrimaryFragments,indicesAvailableSecondaryFragmentsAdjusted);
+    fec_decode(packetSize, primaryFragmentsP, secondaryFragmentsP, indicesMissingPrimaryFragments,
+                indicesAvailableSecondaryFragmentsAdjusted);
 }
 
 
