@@ -40,16 +40,16 @@ void fec_encode(unsigned int fragmentSize,
  * @param primaryFragments list of pointers to memory for primary fragments. Must be same size as used for fec_encode()
  * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments.
  * Example: if @param indicesMissingPrimaryFragments contains 2, the 3rd primary fragment is missing
- * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments). Must not be same size as used for fec_encode(), only MUST contain "enough" secondary fragments
- * @param indicesOfSecondaryFragments list of the indices of secondaryFragments that are used to reconstruct missing primary fragments.
- * Example: if @param indicesOfSecondaryFragments contains {0,2}, the first secondary fragment has the index 0, and the second secondary fragment has the index 2
+ * @param secondaryFragmentsReceived list of pointers to memory for secondary fragments (fec fragments). Must not be same size as used for fec_encode(), only MUST contain "enough" secondary fragments
+ * @param indicesOfSecondaryFragmentsReceived list of the indices of secondaryFragments that are used to reconstruct missing primary fragments.
+ * Example: if @param indicesOfSecondaryFragmentsReceived contains {0,2}, the first secondary fragment has the index 0, and the second secondary fragment has the index 2
  * When this call returns, all missing primary fragments (gaps) have been filled / reconstructed
  */
 void fec_decode(unsigned int fragmentSize,
                 const std::vector<uint8_t*>& primaryFragments,
                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
-                const std::vector<uint8_t*>& secondaryFragments,
-                const std::vector<unsigned int>& indicesOfSecondaryFragments){
+                const std::vector<uint8_t*>& secondaryFragmentsReceived,
+                const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived){
     //std::cout<<"primaryFragmentsS:"<<primaryFragments.size()<<"\n";
     //std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
     //std::cout<<"secondaryFragmentsS:"<<secondaryFragments.size()<<"\n";
@@ -57,11 +57,11 @@ void fec_decode(unsigned int fragmentSize,
     for(const auto& idx:indicesMissingPrimaryFragments){
         assert(idx<primaryFragments.size());
     }
-    assert(indicesMissingPrimaryFragments.size() <= indicesOfSecondaryFragments.size());
-    assert(indicesMissingPrimaryFragments.size()==secondaryFragments.size());
-    assert(secondaryFragments.size() == indicesOfSecondaryFragments.size());
-    fec_decode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragments.data(),
-               (unsigned int*)indicesOfSecondaryFragments.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
+    assert(indicesMissingPrimaryFragments.size() <= indicesOfSecondaryFragmentsReceived.size());
+    assert(indicesMissingPrimaryFragments.size() == secondaryFragmentsReceived.size());
+    assert(secondaryFragmentsReceived.size() == indicesOfSecondaryFragmentsReceived.size());
+    fec_decode(fragmentSize, (unsigned char**)primaryFragments.data(), primaryFragments.size(), (unsigned char**)secondaryFragmentsReceived.data(),
+               (unsigned int*)indicesOfSecondaryFragmentsReceived.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
 
 }
 
