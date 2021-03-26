@@ -139,13 +139,35 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
     // now to the actual payload
     const uint8_t *packetPayload=parsedPacket->payload;
     const size_t packetPayloadSize=parsedPacket->payloadSize;
-    if(packetPayload[0] == WFB_PACKET_DATA){
+
+    if(packetPayload[0]==WFB_PACKET_KEY){
+        if (packetPayloadSize != WBSessionKeyPacket::SIZE_BYTES) {
+            std::cerr << "invalid session key packet\n";
+            count_p_bad++;
+            return;
+        }
+        WBSessionKeyPacket &sessionKeyPacket = *((WBSessionKeyPacket *) parsedPacket->payload);
+        if (mDecryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)) {
+            // We got a new session key (aka a session key that has not been received yet)
+            count_p_decryption_ok++;
+            IS_FEC_ENABLED=sessionKeyPacket.IS_FEC_ENABLED;
+            if(IS_FEC_ENABLED){
+                mFECDDecoder=std::make_unique<FECDecoder>((unsigned int)sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
+                mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::sendPacketViaUDP, this);
+            }else{
+                mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
+                mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::sendPacketViaUDP, this);
+            }
+        } else {
+            count_p_decryption_ok++;
+        }
+        return;
+    }else if(packetPayload[0] == WFB_PACKET_DATA){
         if (packetPayloadSize < sizeof(WBDataHeader) + sizeof(FECPayloadHdr)) {
             std::cerr<<"Too short packet (fec header missing)\n";
             count_p_bad++;
             return;
         }
-        // FEC data or FEC correction packet
         const WBDataHeader& wbDataHeader=*((WBDataHeader*)packetPayload);
         assert(wbDataHeader.packet_type==WFB_PACKET_DATA);
 
@@ -169,30 +191,12 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
                 count_p_bad++;
             }
         }else{
+            if(mFECDisabledDecoder==nullptr){
+                std::cout<<"FEC K,N is not set yet(disabled)\n";
+                return;
+            }
             mFECDisabledDecoder->processRawDataBlockFecDisabled(wbDataHeader.nonce,*decryptedPayload);
         }
-    }else if(packetPayload[0] == WFB_PACKET_KEY) {
-        if (packetPayloadSize != WBSessionKeyPacket::SIZE_BYTES) {
-            std::cerr << "invalid session key packet\n";
-            count_p_bad++;
-            return;
-        }
-        WBSessionKeyPacket &sessionKeyPacket = *((WBSessionKeyPacket *) parsedPacket->payload);
-        if (mDecryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)) {
-            // We got a new session key (aka a session key that has not been received yet)
-            count_p_decryption_ok++;
-            IS_FEC_ENABLED=sessionKeyPacket.IS_FEC_ENABLED;
-            if(IS_FEC_ENABLED){
-                mFECDDecoder=std::make_unique<FECDecoder>((unsigned int)sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
-                mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::sendPacketViaUDP, this);
-            }else{
-                mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
-                mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::sendPacketViaUDP, this);
-            }
-        } else {
-            count_p_decryption_ok++;
-        }
-        return;
     }
 #ifdef ENABLE_ADVANCED_DEBUGGING
     else if(payload[0]==WFB_PACKET_LATENCY_BEACON){
