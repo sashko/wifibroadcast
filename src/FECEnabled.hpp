@@ -243,12 +243,13 @@ public:
     ~RxBlock()= default;
 public:
     // returns true if this fragment has been already received
-    bool hasFragment(const uint16_t fragmentIdx)const{
-        assert(fragmentIdx<fragment_map.size());
-        return fragment_map[fragmentIdx]==AVAILABLE;
+    bool hasFragment(const FECNonce& fecNonce){
+        assert(fecNonce.blockIdx==blockIdx);
+        return fragment_map[fecNonce.fragmentIdx]==AVAILABLE;
     }
     // returns true if we are "done with this block" aka all data has been already forwarded
     bool allPrimaryFragmentsHaveBeenForwarded()const{
+        // if k is not known for this block,last primary fragment for this block is missing
         if(fec_k==-1)return false;
         // never send out secondary fragments !
         assert(nAlreadyForwardedPrimaryFragments <= fec_k);
@@ -256,7 +257,8 @@ public:
     }
     // returns true if enough FEC secondary fragments are available to replace all missing primary fragments
     bool allPrimaryFragmentsCanBeRecovered()const{
-        // return false if k is not known for this block yet
+        // return false if k is not known for this block yet (which means we didn't get a secondary fragment yet,
+        // since each secondary fragment contains k)
         if(fec_k==-1)return false;
         // ready for FEC step if we have as many secondary fragments as we are missing on primary fragments
         if(nAvailablePrimaryFragments+nAvailableSecondaryFragments>=fec_k)return true;
@@ -271,6 +273,7 @@ public:
     // you should check if it is already available with hasFragment() to avoid storing a fragment multiple times
     // when using multiple RX cards
     void addFragment(const FECNonce& fecNonce, const uint8_t* data,const std::size_t dataLen){
+        assert(!hasFragment(fecNonce));
         assert(fecNonce.blockIdx==blockIdx);
         assert(fragment_map[fecNonce.fragmentIdx]==UNAVAILABLE);
         assert(fecNonce.fragmentIdx<blockBuffer.size());
@@ -314,7 +317,7 @@ public:
         // note: when pulling the available fragments, we do not need to know how many primary fragments this block actually contains
         std::vector<uint16_t> ret;
         for(int i=nAlreadyForwardedPrimaryFragments; i < nAvailablePrimaryFragments; i++){
-            if(!hasFragment(i)){
+            if(fragment_map[i]==FragmentStatus::UNAVAILABLE){
                 if(breakOnFirstGap){
                     break;
                 }else{
@@ -430,10 +433,20 @@ private:
      * forward as many primary fragments as they are available until there is a gap
      * @param breakOnFirstGap : if true, stop on the first gap in all primary fragments. Else, keep going skipping packets with gaps
      */
-    void forwardMissingPrimaryFragmentsIfAvailable(RxBlock& block, const bool breakOnFirstGap= true){
+    void forwardMissingPrimaryFragmentsIfAvailable(RxBlock& block, const bool breakOnFirstGap= true)const{
         const auto indices=block.pullAvailablePrimaryFragments(breakOnFirstGap);
-        for(auto index:indices){
-            forwardPrimaryFragment(block, index);
+        for(auto primaryFragmentIndex:indices){
+            const uint8_t* primaryFragment= block.getDataPrimaryFragment(primaryFragmentIndex);
+            const FECPayloadHdr &packet_hdr = *(FECPayloadHdr*) primaryFragment;
+            // data pinter and actual size of payload
+            const uint8_t *payload = primaryFragment + sizeof(FECPayloadHdr);
+            const auto packet_size = packet_hdr.getPrimaryFragmentSize();
+            if (packet_size > FEC_MAX_PAYLOAD_SIZE || packet_size<=0) {
+                // this should never happen !
+                std::cerr<<"corrupted packet on FECDecoder out ("<<block.getBlockIdx()<<":"<<(int)primaryFragmentIndex<<") : "<<packet_size<<"B\n";
+            }else{
+                mSendDecodedPayloadCallback(payload, packet_size);
+            }
         }
     }
     // also increase lost block count if block is not fully recovered
@@ -444,26 +457,6 @@ private:
         }
         rx_queue.pop_front();
     }
-    /**
-     * Forward the primary (data) fragment at index fragmentIdx via the output callback
-     */
-    void forwardPrimaryFragment(RxBlock& block, const uint16_t fragmentIdx)const{
-        //std::cout<<"forwardPrimaryFragment("<<(int)block.getBlockIdx()<<","<<(int)fragmentIdx<<")\n";
-        assert(block.hasFragment(fragmentIdx));
-        const uint8_t* primaryFragment= block.getDataPrimaryFragment(fragmentIdx);
-        const FECPayloadHdr &packet_hdr = *(FECPayloadHdr*) primaryFragment;
-
-        const uint8_t *payload = primaryFragment + sizeof(FECPayloadHdr);
-        const auto packet_size = packet_hdr.getPrimaryFragmentSize();
-
-        if (packet_size > FEC_MAX_PAYLOAD_SIZE || packet_size==0) {
-            // this should never happen !
-            std::cerr<<"corrupted packet on FECDecoder out ("<<block.getBlockIdx()<<":"<<(int)fragmentIdx<<") : "<<packet_size<<"B\n";
-        }else{
-            mSendDecodedPayloadCallback(payload, packet_size);
-        }
-    }
-
     // create a new RxBlock for the specified block_idx and push it into the queue
     // NOTE: Checks first if this operation would increase the size of the queue over its max capacity
     // In this case, the only solution is to remove the oldest block before adding the new one
@@ -538,7 +531,7 @@ private:
         // cannot be nullptr
         RxBlock& block = *blockP;
         // ignore already processed fragments
-        if(block.hasFragment(fecNonce.fragmentIdx)){
+        if(block.hasFragment(fecNonce)){
             return;
         }
         block.addFragment(fecNonce, decrypted.data(), decrypted.size());
