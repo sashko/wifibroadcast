@@ -309,9 +309,12 @@ public:
         }
         //std::cout<<"block_idx:"<<blockIdx<<" frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
     }
-    // returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed). Once an index is returned here, it won't be returned again
-    // (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
-    // @param discardMissingPackets : if true, gaps are ignored and fragments are forwarded even though this means the missing ones are irreversible lost
+    /**
+     * @returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed).
+     * Once an index is returned here, it won't be returned again
+     * (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
+     * @param discardMissingPackets : if true, gaps are ignored and fragments are forwarded even though this means the missing ones are irreversible lost
+     * Be carefully with this param, use it only before you need to get rid of a block */
     std::vector<uint16_t> pullAvailablePrimaryFragments(const bool discardMissingPackets= false){
         // note: when pulling the available fragments, we do not need to know how many primary fragments this block actually contains
         std::vector<uint16_t> ret;
@@ -329,10 +332,11 @@ public:
         nAlreadyForwardedPrimaryFragments+=(int)ret.size();
         return ret;
     }
-    const uint8_t* getDataPrimaryFragment(const uint16_t fragmentIdx){
-        assert(fragment_map[fragmentIdx]==AVAILABLE);
-        return blockBuffer[fragmentIdx].data();
+    const uint8_t* getDataPrimaryFragment(const uint16_t primaryFragmentIdx){
+        assert(fragment_map[primaryFragmentIdx] == AVAILABLE);
+        return blockBuffer[primaryFragmentIdx].data();
     }
+    // returns the n of primary and secondary fragments for this block
     int getNAvailableFragments()const{
         return nAvailablePrimaryFragments+nAvailableSecondaryFragments;
     }
