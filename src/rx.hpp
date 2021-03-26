@@ -77,8 +77,8 @@ private:
     //We know that once we get the first session key packet
     bool IS_FEC_ENABLED=false;
     // On the rx, either one of those two is active at the same time. NOTE: nullptr until the first session key packet
-    std::unique_ptr<FECDecoder> mFECDDecoder;
-    std::unique_ptr<FECDisabledDecoder> mFECDisabledDecoder;
+    std::unique_ptr<FECDecoder> mFECDDecoder=nullptr;
+    std::unique_ptr<FECDisabledDecoder> mFECDisabledDecoder=nullptr;
     //Ieee80211HeaderSeqNrCounter mSeqNrCounter;
 public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
