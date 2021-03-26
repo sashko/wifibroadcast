@@ -431,6 +431,7 @@ private:
      * starting at the primary fragment we stopped on last time,
      * forward as many primary fragments as they are available until there is a gap
      * @param discardMissingPackets : if true, gaps are ignored and fragments are forwarded even though this means the missing ones are irreversible lost
+     * Be carefully with this param, use it only before you need to get rid of a block
      */
     void forwardMissingPrimaryFragmentsIfAvailable(RxBlock& block, const bool discardMissingPackets= false)const{
         const auto indices=block.pullAvailablePrimaryFragments(discardMissingPackets);
