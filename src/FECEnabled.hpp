@@ -125,6 +125,11 @@ public:
     // else, the FEC step is only applied if reaching mKMax
     void encodePacket(const uint8_t *buf,const size_t size,const bool endBlock=false) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
+        // do not feed an "empty" packet to the FECEncoder
+        if(size<=0){
+            std::cerr<<"Do not feed empty packets to FECEncoder\n";
+            return;
+        }
 
         FECPayloadHdr dataHeader(size);
         // write the size of the data part into each primary fragment.
@@ -451,15 +456,11 @@ private:
         const uint8_t *payload = primaryFragment + sizeof(FECPayloadHdr);
         const auto packet_size = packet_hdr.getPrimaryFragmentSize();
 
-        if (packet_size > FEC_MAX_PAYLOAD_SIZE) {
+        if (packet_size > FEC_MAX_PAYLOAD_SIZE || packet_size==0) {
             // this should never happen !
             std::cerr<<"corrupted packet on FECDecoder out ("<<block.getBlockIdx()<<":"<<(int)fragmentIdx<<") : "<<packet_size<<"B\n";
-            assert(false);
-        } else {
-            // we use packets of size 0 to flush the tx pipeline
-            if(packet_size>0){
-                mSendDecodedPayloadCallback(payload, packet_size);
-            }
+        }else{
+            mSendDecodedPayloadCallback(payload, packet_size);
         }
     }
 
