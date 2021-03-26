@@ -130,7 +130,7 @@ public:
         }
         if (memcmp(session_key.data(), new_session_key.data(), sizeof(session_key)) != 0) {
             // this is NOT an error, the same session key is sent multiple times !
-            std::cout<<"New session detected\n";
+            std::cout<<"Decryptor-New session detected\n";
             session_key = new_session_key;
             return true;
         }
