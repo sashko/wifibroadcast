@@ -135,7 +135,7 @@ namespace TestFEC{
         }
         // and then check if in and out match
         for(std::size_t i=0;i<testIn.size();i++){
-            std::cout<<"Step\n";
+            //std::cout<<"Step\n";
             const auto& in=testIn[i];
             const auto& out=testOut[i];
             GenericHelper::assertVectorsEqual(in,out);
