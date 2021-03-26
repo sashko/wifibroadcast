@@ -153,10 +153,10 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
             IS_FEC_ENABLED=sessionKeyPacket.IS_FEC_ENABLED;
             if(IS_FEC_ENABLED){
                 mFECDDecoder=std::make_unique<FECDecoder>((unsigned int)sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
-                mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::sendPacketViaUDP, this);
+                mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::forwardPacketViaUDP, this);
             }else{
                 mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
-                mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::sendPacketViaUDP, this);
+                mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::forwardPacketViaUDP, this);
             }
         } else {
             count_p_decryption_ok++;

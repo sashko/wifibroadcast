@@ -122,7 +122,7 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
     }else{
         if(IS_FEC_VARIABLE){
             // variable k
-            bool endBlock;
+            bool endBlock=false;
             if(fecVariableInputType==FEC_VARIABLE_INPUT_TYPE::h264){
                 endBlock=RTPLockup::h264_end_block(buf,size);
             }else{

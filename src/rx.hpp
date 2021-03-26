@@ -59,7 +59,7 @@ public:
     void flushFecPipeline();
     const Options& options;
 private:
-    void sendPacketViaUDP(const uint8_t *packet,std::size_t packetSize) const{
+    void forwardPacketViaUDP(const uint8_t *packet, std::size_t packetSize) const{
         send(sockfd,packet,packetSize, MSG_DONTWAIT);
     }
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
