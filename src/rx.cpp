@@ -183,7 +183,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
 
         assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
         if(IS_FEC_ENABLED){
-            if(mFECDDecoder== nullptr){
+            if(!mFECDDecoder){
                 std::cout<<"FEC K,N is not set yet\n";
                 return;
             }
@@ -191,7 +191,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
                 count_p_bad++;
             }
         }else{
-            if(mFECDisabledDecoder==nullptr){
+            if(!mFECDisabledDecoder){
                 std::cout<<"FEC K,N is not set yet(disabled)\n";
                 return;
             }
