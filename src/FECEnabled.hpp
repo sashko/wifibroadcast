@@ -311,17 +311,16 @@ public:
     }
     // returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed). Once an index is returned here, it won't be returned again
     // (Therefore, as long as you immediately forward all primary fragments returned here,everything happens in order)
-    // @param breakOnFirstGap : if true (default), stop on the first gap (missing packet). Else, keep going, skipping packets with gaps. Use this parameter if
-    // you need to forward everything left on a block before getting rid of it.
-    std::vector<uint16_t> pullAvailablePrimaryFragments(const bool breakOnFirstGap= true){
+    // @param discardMissingPackets : if true, gaps are ignored and fragments are forwarded even though this means the missing ones are irreversible lost
+    std::vector<uint16_t> pullAvailablePrimaryFragments(const bool discardMissingPackets= false){
         // note: when pulling the available fragments, we do not need to know how many primary fragments this block actually contains
         std::vector<uint16_t> ret;
         for(int i=nAlreadyForwardedPrimaryFragments; i < nAvailablePrimaryFragments; i++){
             if(fragment_map[i]==FragmentStatus::UNAVAILABLE){
-                if(breakOnFirstGap){
-                    break;
-                }else{
+                if(discardMissingPackets){
                     continue;
+                }else{
+                    break;
                 }
             }
             ret.push_back(i);
@@ -431,10 +430,10 @@ private:
      * For this Block,
      * starting at the primary fragment we stopped on last time,
      * forward as many primary fragments as they are available until there is a gap
-     * @param breakOnFirstGap : if true, stop on the first gap in all primary fragments. Else, keep going skipping packets with gaps
+     * @param discardMissingPackets : if true, gaps are ignored and fragments are forwarded even though this means the missing ones are irreversible lost
      */
-    void forwardMissingPrimaryFragmentsIfAvailable(RxBlock& block, const bool breakOnFirstGap= true)const{
-        const auto indices=block.pullAvailablePrimaryFragments(breakOnFirstGap);
+    void forwardMissingPrimaryFragmentsIfAvailable(RxBlock& block, const bool discardMissingPackets= false)const{
+        const auto indices=block.pullAvailablePrimaryFragments(discardMissingPackets);
         for(auto primaryFragmentIndex:indices){
             const uint8_t* primaryFragment= block.getDataPrimaryFragment(primaryFragmentIndex);
             const FECPayloadHdr &packet_hdr = *(FECPayloadHdr*) primaryFragment;
@@ -485,7 +484,7 @@ private:
         // forward remaining data for the (oldest) block, since we need to get rid of it
         auto& oldestBlock=rx_queue.front();
         std::cerr<<"Forwarding block that is not yet fully finished "<<oldestBlock->getBlockIdx()<<" with n fragments"<<oldestBlock->getNAvailableFragments()<<"\n";
-        forwardMissingPrimaryFragmentsIfAvailable(*oldestBlock,false);
+        forwardMissingPrimaryFragmentsIfAvailable(*oldestBlock, true);
         // and remove the block once done with it
         rxQueuePopFront();
 
@@ -563,7 +562,7 @@ private:
             if(block.allPrimaryFragmentsAreAvailable() || block.allPrimaryFragmentsCanBeRecovered()){
                 // send all queued packets in all unfinished blocks before and remove them
                 while(block != *rx_queue.front()){
-                    forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), false);
+                    forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), true);
                     rxQueuePopFront();
                 }
                 // then process the block who is fully recoverable or has no gaps in the primary fragments
@@ -586,7 +585,7 @@ public:
     void decreaseRxRingSize(int newSize){
         std::cout << "Decreasing ring size from " << rx_queue.size() << "to " << newSize << "\n";
         while(rx_queue.size() >newSize){
-            forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), false);
+            forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), true);
             rxQueuePopFront();
         }
     }
