@@ -217,12 +217,6 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
     }
 }
 
-void WBReceiver::flushFecPipeline() {
-    //if(mFECDDecoder){
-    //    mFECDDecoder->flushRxRing();
-    //}
-}
-
 int main(int argc, char *const *argv) {
     int opt;
     Options options{};
@@ -278,10 +272,9 @@ int main(int argc, char *const *argv) {
     }
     try {
         std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(options);
-        MultiRxPcapReceiver receiver(rxInterfaces,options.radio_port,log_interval,std::chrono::milliseconds(-1),
+        MultiRxPcapReceiver receiver(rxInterfaces,options.radio_port,log_interval,
                                      notstd::bind_front(&WBReceiver::processPacket, agg.get()),
-                                     notstd::bind_front(&WBReceiver::dump_stats, agg.get()),
-                                     notstd::bind_front(&WBReceiver::flushFecPipeline, agg.get()));
+                                     notstd::bind_front(&WBReceiver::dump_stats, agg.get()));
         receiver.loop();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());

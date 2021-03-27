@@ -261,9 +261,9 @@ public:
      * @param log_interval the log callback is called in the interval specified by @param log_interval
      * @param flush_interval the flush callback is called every time no data has been received for more than @param flush_interval milliseconds
      */
-    explicit MultiRxPcapReceiver(const std::vector<std::string> rxInterfaces1,const int radio_port,const std::chrono::milliseconds log_interval,const std::chrono::milliseconds flush_interval,
-                                 PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback,GENERIC_CALLBACK logCallback,GENERIC_CALLBACK flushCallback):
-            rxInterfaces(rxInterfaces1), radio_port(radio_port), log_interval(log_interval), flush_interval(flush_interval), mCallbackData(std::move(dataCallback)), mCallbackLog(std::move(logCallback)), mCallbackFlush(std::move(flushCallback)){
+    explicit MultiRxPcapReceiver(const std::vector<std::string> rxInterfaces1,const int radio_port,const std::chrono::milliseconds log_interval,
+                                 PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback,GENERIC_CALLBACK logCallback):
+            rxInterfaces(rxInterfaces1), radio_port(radio_port), log_interval(log_interval), mCallbackData(std::move(dataCallback)), mCallbackLog(std::move(logCallback)){
         const int N_RECEIVERS = rxInterfaces.size();
         mReceivers.resize(N_RECEIVERS);
         mReceiverFDs.resize(N_RECEIVERS);
@@ -275,18 +275,12 @@ public:
         }
         ss<<"]";
         std::cout<<ss.str()<<"\n";
-        std::cout<<"FLUSH_INTERVAL(ms):"<<(int)flush_interval.count()<<" LOG_INTERVAL(ms)"<<(int)log_interval.count()<<"\n";
+        std::cout<<"LOG_INTERVAL(ms)"<<(int)log_interval.count()<<"\n";
 
         for (int i = 0; i < N_RECEIVERS; i++) {
             mReceivers[i] = std::make_unique<PcapReceiver>(rxInterfaces[i], i, radio_port,mCallbackData);
             mReceiverFDs[i].fd = mReceivers[i]->getfd();
             mReceiverFDs[i].events = POLLIN;
-        }
-        if(flush_interval>log_interval){
-            std::cerr<<"Please use a flush interval smaller than the log interval\n";
-        }
-        if(flush_interval==std::chrono::milliseconds(0)){
-            std::cerr<<"Please do not use a flush interval of 0 (this hogs the cpu)\n";
         }
     }
     ~MultiRxPcapReceiver()=default;
@@ -295,8 +289,7 @@ public:
         std::chrono::steady_clock::time_point log_send_ts{};
         for (;;) {
             auto cur_ts=std::chrono::steady_clock::now();
-            //const int timeoutMS=log_send_ts > cur_ts ? (int)std::chrono::duration_cast<std::chrono::milliseconds>(log_send_ts - cur_ts).count() : 0;
-            const int timeoutMS=flush_interval.count()>0 ? std::chrono::duration_cast<std::chrono::milliseconds>(flush_interval).count() : std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
+            const int timeoutMS=std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
             int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(),timeoutMS);
 
             if (rc < 0) {
@@ -313,11 +306,6 @@ public:
 
             if (rc == 0){
                 // timeout expired
-                if(flush_interval.count()>0){
-                    // smaller than 0 means no flush enabled
-                    // else we didn't receive data for FLUSH_INTERVAL ms
-                    mCallbackFlush();
-                }
                 continue;
             }
             // TODO Optimization: If rc>1 we have data on more than one wifi card. It would be better to alternating process a couple of packets from card 1, then card 2 or similar
@@ -336,7 +324,6 @@ private:
     const std::vector<std::string> rxInterfaces;
     const int radio_port;
     const std::chrono::milliseconds log_interval;
-    const std::chrono::milliseconds flush_interval;
     std::vector<std::unique_ptr<PcapReceiver>> mReceivers;
     std::vector<pollfd> mReceiverFDs;
     // this callback is called with the received packets from pcap
@@ -346,8 +333,6 @@ private:
     const PcapReceiver::PROCESS_PACKET_CALLBACK mCallbackData;
     // This callback is called regularily independent weather data was received or not
     const GENERIC_CALLBACK mCallbackLog;
-    // This callback is called after @param flush_intervall ms if no data was received
-    const GENERIC_CALLBACK mCallbackFlush;
 public:
 };
 

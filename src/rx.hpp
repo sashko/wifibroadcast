@@ -55,8 +55,6 @@ public:
     void processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
     // dump statistics
     void dump_stats();
-    // flush pipeline
-    void flushFecPipeline();
     const Options& options;
 private:
     void forwardPacketViaUDP(const uint8_t *packet, std::size_t packetSize) const{
