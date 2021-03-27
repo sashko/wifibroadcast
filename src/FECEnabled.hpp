@@ -227,7 +227,6 @@ public:
             blockIdx(blockIdx1),
             fragment_map(maxNFragmentsPerBlock, FragmentStatus::UNAVAILABLE), //after creation of the RxBlock every f. is marked as unavailable
             blockBuffer(maxNFragmentsPerBlock){
-        creationTime=std::chrono::steady_clock::now();
         assert(fragment_map.size()==blockBuffer.size());
     }
     // No copy constructor for safety
@@ -307,6 +306,9 @@ public:
                 assert(sizeOfSecondaryFragments==dataLen);
             }
         }
+        if(firstFragmentTimePoint==std::nullopt){
+            firstFragmentTimePoint=std::chrono::steady_clock::now();
+        }
         //std::cout<<"block_idx:"<<blockIdx<<" frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
     }
     /**
@@ -367,6 +369,9 @@ public:
     uint64_t getBlockIdx()const{
         return blockIdx;
     }
+    std::optional<std::chrono::steady_clock::time_point> getFirstFragmentTimePoint()const{
+        return firstFragmentTimePoint;
+    }
 private:
     // the block idx marks which block this element refers to
     const uint64_t blockIdx=0;
@@ -378,7 +383,8 @@ private:
     std::vector<std::array<uint8_t,FEC_MAX_PACKET_SIZE>> blockBuffer;
     int nAvailablePrimaryFragments=0;
     int nAvailableSecondaryFragments=0;
-    std::chrono::steady_clock::time_point creationTime;
+    // time point when the first fragment for this block was received (via addFragment() )
+    std::optional<std::chrono::steady_clock::time_point> firstFragmentTimePoint=std::nullopt;
     // we don't know how many primary fragments this block contains until we either receive the last primary fragment for this block
     // or receive any secondary fragment.
     int fec_k=-1;
@@ -539,6 +545,7 @@ private:
             return;
         }
         block.addFragment(fecNonce, decrypted.data(), decrypted.size());
+        //
         if (block == *rx_queue.front()) {
             //std::cout<<"In front\n";
             // we are in the front of the queue (e.g. at the oldest block)
@@ -599,6 +606,20 @@ public:
     // For example, if the RX doesn't receive anything for N ms any data that is going to arrive will not have a smaller or equal block index than the blocks that are currently in the queue
     void flushRxRing(){
        decreaseRxRingSize(0);
+    }
+    //TODO maybe this would make sense
+    void removeBlocksOlderThan(const std::chrono::steady_clock::duration& maxDelta){
+        // if there is any, find the "newest" block which age is bigger than delta
+        const auto now=std::chrono::steady_clock::now();
+        for(auto& block:rx_queue){
+            const auto firstFragmentTimePoint=block->getFirstFragmentTimePoint();
+            if(firstFragmentTimePoint!=std::nullopt){
+                const auto delta=now-*firstFragmentTimePoint;
+                if(delta>maxDelta){
+                    //std::cout<<"Got block"<<block->getBlockIdx()<<" with age"<<MyTimeHelper::R(delta)<<"\n";
+                }
+            }
+        }
     }
 public:
     // total block count
