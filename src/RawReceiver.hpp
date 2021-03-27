@@ -274,8 +274,8 @@ public:
             ss<<s<<",";
         }
         ss<<"]";
+        ss<<" LOG_INTERVAL(ms)"<<(int)log_interval.count()<<"\n";
         std::cout<<ss.str()<<"\n";
-        std::cout<<"LOG_INTERVAL(ms)"<<(int)log_interval.count()<<"\n";
 
         for (int i = 0; i < N_RECEIVERS; i++) {
             mReceivers[i] = std::make_unique<PcapReceiver>(rxInterfaces[i], i, radio_port,mCallbackData);
