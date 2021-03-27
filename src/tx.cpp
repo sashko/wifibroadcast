@@ -199,8 +199,6 @@ void WBTransmitter::loop() {
 int main(int argc, char *const *argv) {
     int opt;
     Options options{};
-    // use -1 for no flush interval
-    std::chrono::milliseconds flushInterval=std::chrono::milliseconds(-1);
 
     RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, 1};
 
