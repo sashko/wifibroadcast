@@ -47,10 +47,10 @@ void WBReceiver::dump_stats() {
     const auto count_blocks_total=mFECDDecoder ? mFECDDecoder->count_blocks_total :0;
     const auto count_blocks_lost=mFECDDecoder ? mFECDDecoder->count_blocks_lost :0;
     const auto count_blocks_recovered=mFECDDecoder ? mFECDDecoder->count_blocks_recovered : 0;
-    const auto  count_packets_recovered= mFECDDecoder ? mFECDDecoder->count_packets_recovered : 0;
+    const auto count_fragments_recovered= mFECDDecoder ? mFECDDecoder->count_fragments_recovered : 0;
     // first forward to OpenHD
     openHdStatisticsWriter.writeStats({
-                                              count_p_all, count_p_decryption_err, count_p_decryption_ok, count_packets_recovered, count_blocks_lost, count_p_bad, rssiForWifiCard
+                                              count_p_all, count_p_decryption_err, count_p_decryption_ok, count_fragments_recovered, count_blocks_lost, count_p_bad, rssiForWifiCard
     });
     //timestamp in ms
     const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
@@ -62,8 +62,8 @@ void WBReceiver::dump_stats() {
     }
     std::stringstream ss;
 
-    ss << runTime << "\tPKT\t" <<count_p_all << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
-    ") FEC(totalB:"<<count_blocks_total<<" lostB:" << count_blocks_lost<<" recB:"<<count_blocks_recovered<<" recP:"<< count_packets_recovered<<")";
+    ss << runTime << "\tPKT\t" << count_p_all << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
+       ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
 
     std::cout<<ss.str()<<"\n";
     // it is actually much more understandable when I use the absolute values for the logging

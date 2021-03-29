@@ -558,7 +558,7 @@ private:
                 return;
             }
             if(block.allPrimaryFragmentsCanBeRecovered()){
-                count_packets_recovered+=block.reconstructAllMissingData();
+                count_fragments_recovered+=block.reconstructAllMissingData();
                 count_blocks_recovered++;
                 forwardMissingPrimaryFragmentsIfAvailable(block);
                 assert(block.allPrimaryFragmentsHaveBeenForwarded());
@@ -583,7 +583,7 @@ private:
                     assert(block.allPrimaryFragmentsHaveBeenForwarded());
                 }else{
                     // apply fec for this block
-                    count_packets_recovered+=block.reconstructAllMissingData();
+                    count_fragments_recovered+=block.reconstructAllMissingData();
                     count_blocks_recovered++;
                     forwardMissingPrimaryFragmentsIfAvailable(block);
                     assert(block.allPrimaryFragmentsHaveBeenForwarded());
@@ -629,7 +629,7 @@ public:
     // a block counts as "recovered" if it was recovered using FEC packets
     uint64_t count_blocks_recovered=0;
     // n of primary fragments that were reconstructed during the recovery process of a block
-    uint64_t count_packets_recovered=0;
+    uint64_t count_fragments_recovered=0;
 };
 
 // quick math regarding sequence numbers:
