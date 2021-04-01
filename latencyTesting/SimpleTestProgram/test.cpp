@@ -45,7 +45,7 @@ PacketInfoData getSequenceNumberAndTimestamp(const std::vector<uint8_t>& data){
     return packetInfoData;
 }
 
-// Returns true if everyhting except the first couble of bytes (PacketInfoData) match
+// Returns true if everyhting except the first couple of bytes (PacketInfoData) match
 // first couple of bytes are the PacketInfoData (which is written after creating the packet)
 bool compareSentAndReceivedPacket(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
     if(sb.size()!=rb.size()){
