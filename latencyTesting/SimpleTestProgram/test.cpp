@@ -152,6 +152,7 @@ static void test_latency(const Options& o){
 
     // XXX
     //UDPReceiver udpReceiver2{o.INPUT_PORT,"LTUdpRec2",lol,0,false};
+    //udpReceiver2.addGroup=true;
     //udpReceiver2.startReceiving();
 
     // Wait a bit such that the OS can start the receiver before we start sending data

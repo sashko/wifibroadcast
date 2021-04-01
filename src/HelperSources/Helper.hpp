@@ -205,23 +205,6 @@ namespace SocketHelper{
         }
         return fd;
     }
-    static int openUdpSocketForSendingData2(const std::string &client_addr, int client_port) {
-        struct sockaddr_in saddr;
-        int fd = socket(AF_INET, SOCK_DGRAM, 0);
-        if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
-
-        bzero((char *) &saddr, sizeof(saddr));
-        saddr.sin_family = AF_INET;
-        saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
-        saddr.sin_port = htons((unsigned short) client_port);
-
-
-
-        if (connect(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
-            throw std::runtime_error(StringFormat::convert("Connect error: %s", strerror(errno)));
-        }
-        return fd;
-    }
     // Open the specified port for udp receiving
     // sets SO_REUSEADDR to true if possible
     // throws a runtime exception if opening the socket fails
@@ -271,10 +254,12 @@ namespace SocketHelper{
     class UDPForwarder{
     public:
         explicit UDPForwarder(std::string client_addr,int client_udp_port){
-            sockfd = SocketHelper::openUdpSocketForSendingData2(client_addr, client_udp_port);
+            sockfd = SocketHelper::openUdpSocketForSendingData(client_addr, client_udp_port);
             std::cout<<"UDPForwarder::configured for "<<client_addr<<" "<<client_udp_port<<"\n";
         }
-        ~UDPForwarder(){close(sockfd);}
+        ~UDPForwarder(){
+            close(sockfd);
+        }
         void forwardPacketViaUDP(const uint8_t *packet,const std::size_t packetSize)const{
             //std::cout<<"Send"<<packetSize<<"\n";
             send(sockfd,packet,packetSize, MSG_DONTWAIT);
