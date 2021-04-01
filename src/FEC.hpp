@@ -72,7 +72,7 @@ void fec_decode(unsigned int fragmentSize,
 // These declarations are written such that you can do "variable block size" on tx and rx.
 
 /**
- * @param packetSize size of each fragment to use for the FEC encoding step. FEC only works on packets the same size
+ * @param fragmentSize size of each fragment to use for the FEC encoding step. FEC only works on packets the same size
  * @param blockBuffer (big) data buffer. The nth element is to be treated as the nth fragment of the block, either as primary or secondary fragment.
  * During the FEC step, @param nPrimaryFragments fragments are used to calculate nSecondaryFragments FEC blocks.
  * After the FEC step,beginning at position @param nPrimaryFragments ,@param nSecondaryFragments are stored at the following positions, each of size @param fragmentSize
