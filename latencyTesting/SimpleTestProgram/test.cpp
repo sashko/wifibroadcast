@@ -90,7 +90,7 @@ std::size_t nReceivedPacketsWhereContentDoesntMatch=0;
 
 
 static void validateReceivedData(const uint8_t* dataP,size_t data_length){
-    std::cout<<"LOL1 got data\n";
+    //std::cout<<"LOL1 got data\n";
     receivedPackets++;
 	receivedBytes+=data_length;
     const auto data=std::vector<uint8_t>(dataP,dataP+data_length);
