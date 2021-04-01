@@ -69,7 +69,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const Options& option
         mFecEncoder->outputDataCallback=notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
         sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK=FECEncoder::calculateN(kMax,options.fec_percentage);
     }
-    mInputSocket=SocketHelper::openUdpSocketForRx(options.udp_port);
+    mInputSocket= SocketHelper::openUdpSocketForReceiving(options.udp_port);
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s\n", options.udp_port,options.radio_port,options.wlan.c_str());
     // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
     sessionKeyPacket.IS_FEC_ENABLED=!IS_FEC_DISABLED;

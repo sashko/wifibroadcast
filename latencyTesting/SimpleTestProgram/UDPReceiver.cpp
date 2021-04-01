@@ -51,6 +51,10 @@ void UDPReceiver::receiveFromUDPLoop() {
     if (setsockopt(mSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){
         std::cout<<"Error setting reuse\n";
     }
+    //if(setsockopt(mSocket,SOL_SOCKET,SO_REUSEPORT,&enable,sizeof(int))<0){
+    //    std::cout<<"Error setting SO_REUSEPORT\n";
+    //}
+
     int recvBufferSize=0;
     socklen_t len=sizeof(recvBufferSize);
     getsockopt(mSocket, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, &len);

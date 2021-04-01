@@ -88,7 +88,9 @@ std::size_t receivedPackets=0;
 std::size_t receivedBytes=0;
 std::size_t nReceivedPacketsWhereContentDoesntMatch=0;
 
+
 static void validateReceivedData(const uint8_t* dataP,size_t data_length){
+    std::cout<<"LOL1 got data\n";
     receivedPackets++;
 	receivedBytes+=data_length;
     const auto data=std::vector<uint8_t>(dataP,dataP+data_length);
@@ -133,6 +135,10 @@ static void validateReceivedData(const uint8_t* dataP,size_t data_length){
     }
 }
 
+static void lol(const uint8_t* dataP,size_t data_length){
+    std::cout<<"LOL2 got data\n";
+}
+
 static void test_latency(const Options& o){
     SchedulingHelper::setThreadParamsMaxRealtime();
     SchedulingHelper::printCurrentThreadPriority("TEST_MAIN");
@@ -143,6 +149,11 @@ static void test_latency(const Options& o){
 	// Listening always happens on localhost
     UDPReceiver udpReceiver{o.INPUT_PORT,"LTUdpRec",validateReceivedData,0,false};
     udpReceiver.startReceiving();
+
+    // XXX
+    //UDPReceiver udpReceiver2{o.INPUT_PORT,"LTUdpRec2",lol,0,false};
+    //udpReceiver2.startReceiving();
+
     // Wait a bit such that the OS can start the receiver before we start sending data
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
@@ -182,6 +193,7 @@ static void test_latency(const Options& o){
     // Wait for any packet that might be still in transit
     std::this_thread::sleep_for(std::chrono::seconds(1));
     udpReceiver.stopReceiving();
+    //udpReceiver2.stopReceiving();
     udpSender.logSendtoDelay();
 
     const double testTimeSeconds=(testEnd-testBegin).count()/1000.0f/1000.0f/1000.0f;

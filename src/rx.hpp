@@ -51,18 +51,16 @@ struct Options{
 class WBReceiver{
 public:
     explicit WBReceiver(const Options& options1);
-    ~WBReceiver();
+    ~WBReceiver()=default;
     void processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
     // dump statistics
     void dump_stats();
     const Options& options;
 private:
-    void forwardPacketViaUDP(const uint8_t *packet, std::size_t packetSize) const{
-        send(sockfd,packet,packetSize, MSG_DONTWAIT);
-    }
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     Decryptor mDecryptor;
-    int sockfd;
+    // this one is used to forward packets
+    SocketHelper::UDPForwarder mUDPForwarder;
     std::array<RSSIForWifiCard,MAX_RX_INTERFACES> rssiForWifiCard;
     // n of all received packets, absolute
     uint64_t count_p_all=0;

@@ -34,13 +34,10 @@
 
 WBReceiver::WBReceiver(const Options& options1) :
 options(options1),
-mDecryptor(options.keypair){
-    sockfd = SocketHelper::open_udp_socket_for_tx(options.client_addr,options.client_udp_port);
+mDecryptor(options.keypair),
+mUDPForwarder(options.client_addr,options.client_udp_port)
+{
     std::cout<<"WFB-RX UDP_PORT:"<<options.client_udp_port<<" RADIO_PORT:"<<(int)options.radio_port<<"\n";
-}
-
-WBReceiver::~WBReceiver() {
-    close(sockfd);
 }
 
 void WBReceiver::dump_stats() {
@@ -152,12 +149,20 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
             // We got a new session key (aka a session key that has not been received yet)
             count_p_decryption_ok++;
             IS_FEC_ENABLED=sessionKeyPacket.IS_FEC_ENABLED;
+            auto callback=[this](const uint8_t * payload,std::size_t payloadSize){
+                this->mUDPForwarder.forwardPacketViaUDP(payload,payloadSize);
+                //this->forwardPacketViaUDP(payload,payloadSize);
+            };
             if(IS_FEC_ENABLED){
                 mFECDDecoder=std::make_unique<FECDecoder>((unsigned int)sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
-                mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::forwardPacketViaUDP, this);
+                //mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::forwardPacketViaUDP,this);
+                //mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&SocketHelper::UDPForwarder::forwardPacketViaUDP, mUDPForwarder);
+                mFECDDecoder->mSendDecodedPayloadCallback=callback;
             }else{
                 mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
-                mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::forwardPacketViaUDP, this);
+                //mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::forwardPacketViaUDP,this);
+                //mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&SocketHelper::UDPForwarder::forwardPacketViaUDP, mUDPForwarder);
+                mFECDDecoder->mSendDecodedPayloadCallback=callback;
             }
         } else {
             count_p_decryption_ok++;

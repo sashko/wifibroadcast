@@ -190,9 +190,7 @@ namespace GenericHelper{
 }
 
 namespace SocketHelper{
-    // originally in wifibroadcast.cpp/ h
-    // I thought it might be a good idea to have all these helpers inside their own namespace
-    static int open_udp_socket(const std::string &client_addr, int client_port) {
+    static int openUdpSocketForSendingData(const std::string &client_addr, int client_port) {
         struct sockaddr_in saddr;
         int fd = socket(AF_INET, SOCK_DGRAM, 0);
         if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
@@ -207,7 +205,7 @@ namespace SocketHelper{
         }
         return fd;
     }
-    static int open_udp_socket_for_tx(const std::string &client_addr, int client_port) {
+    static int openUdpSocketForSendingData2(const std::string &client_addr, int client_port) {
         struct sockaddr_in saddr;
         int fd = socket(AF_INET, SOCK_DGRAM, 0);
         if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
@@ -217,34 +215,17 @@ namespace SocketHelper{
         saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
         saddr.sin_port = htons((unsigned short) client_port);
 
+
+
         if (connect(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
             throw std::runtime_error(StringFormat::convert("Connect error: %s", strerror(errno)));
-        }
-        return fd;
-    }
-    static int open_udp_socket_for_rx(int port){
-        struct sockaddr_in saddr;
-        int fd = socket(AF_INET, SOCK_DGRAM, 0);
-        if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
-
-        int optval = 1;
-        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
-
-        bzero((char *) &saddr, sizeof(saddr));
-        saddr.sin_family = AF_INET;
-        saddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        saddr.sin_port = htons((unsigned short)port);
-
-        if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0)
-        {
-            throw std::runtime_error(StringFormat::convert("Bind error: %s", strerror(errno)));
         }
         return fd;
     }
     // Open the specified port for udp receiving
     // sets SO_REUSEADDR to true if possible
     // throws a runtime exception if opening the socket fails
-    static int openUdpSocketForRx(const int port){
+    static int openUdpSocketForReceiving(const int port){
         int fd=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket %d: %s",port, strerror(errno)));
         int enable = 1;
@@ -285,50 +266,22 @@ namespace SocketHelper{
             }
         }
     }
-    // taken from https://github.com/OpenHD/Open.HD/blob/2.0/wifibroadcast-base/tx_rawsock.c#L86
-    // open wifi interface using a socket (somehow this works ?!)
-    static int openWifiInterfaceAsTx(const std::string& wifi) {
-        struct sockaddr_ll ll_addr{};
-        struct ifreq ifr{};
-        int sock = socket(AF_PACKET, SOCK_RAW, 0);
-        if (sock == -1) {
-            throw std::runtime_error(StringFormat::convert("Socket failed %s %s",wifi.c_str(),strerror(errno)));
+    // Wrapper around an UDP port you can send data to
+    // opens port on construction, closes port on destruction
+    class UDPForwarder{
+    public:
+        explicit UDPForwarder(std::string client_addr,int client_udp_port){
+            sockfd = SocketHelper::openUdpSocketForSendingData2(client_addr, client_udp_port);
+            std::cout<<"UDPForwarder::configured for "<<client_addr<<" "<<client_udp_port<<"\n";
         }
-
-        ll_addr.sll_family = AF_PACKET;
-        ll_addr.sll_protocol = 0;
-        ll_addr.sll_halen = ETH_ALEN;
-
-        strncpy(ifr.ifr_name, wifi.c_str(), IFNAMSIZ);
-
-        if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
-            throw std::runtime_error(StringFormat::convert("ioctl(SIOCGIFINDEX) failed\n"));
+        ~UDPForwarder(){close(sockfd);}
+        void forwardPacketViaUDP(const uint8_t *packet,const std::size_t packetSize)const{
+            //std::cout<<"Send"<<packetSize<<"\n";
+            send(sockfd,packet,packetSize, MSG_DONTWAIT);
         }
-
-        ll_addr.sll_ifindex = ifr.ifr_ifindex;
-
-        if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
-            throw std::runtime_error(StringFormat::convert("ioctl(SIOCGIFHWADDR) failed\n"));
-        }
-
-        memcpy(ll_addr.sll_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
-
-        if (bind(sock, (struct sockaddr *)&ll_addr, sizeof(ll_addr)) == -1) {
-            close(sock);
-            throw std::runtime_error("bind failed\n");
-        }
-        struct timeval timeout;
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 8000;
-        if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
-            throw std::runtime_error("setsockopt SO_SNDTIMEO\n");
-        }
-        int sendbuff = 131072;
-        if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, sizeof(sendbuff)) < 0) {
-            throw std::runtime_error("setsockopt SO_SNDBUF\n");
-        }
-        return sock;
-    }
+    private:
+        int sockfd;
+    };
 }
 
 namespace RTPLockup{
