@@ -31,8 +31,9 @@
 #include <sstream>
 #include "FECEnabled.hpp"
 
-// Test the FEC encoding / decoding performance of this system
-// Basically measures the throughput of both encoding and decoding FEC packets on one CPU core
+// Test the FEC encoding / decoding performance (throughput) of this system
+// Basically measures the throughput of encoding,decoding or en&decoding FEC packets on one CPU core
+// NOTE: Does not take WIFI card throughput into account
 
 //TODO: Decode only is not implemented yet.
 enum BenchmarkType{ENCODE_ONLY=0,DECODE_ONLY=1,ENCODE_AND_DECODE=2};
