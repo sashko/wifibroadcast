@@ -49,10 +49,10 @@ public:
 };
 
 namespace RawTransmitterHelper {
-    // construct a pcap packet with the following data layout:
+    // construct a radiotap packet with the following data layout:
     // [RadiotapHeader | Ieee80211Header | customHeader (if not size 0) | payload (if not size 0)]
     static std::vector<uint8_t>
-    createPcapPacket(const RadiotapHeader &radiotapHeader, const Ieee80211Header &ieee80211Header,const AbstractWBPacket& abstractWbPacket) {
+    createRadiotapPacket(const RadiotapHeader &radiotapHeader, const Ieee80211Header &ieee80211Header,const AbstractWBPacket& abstractWbPacket) {
         const auto customHeaderAndPayloadSize=abstractWbPacket.customHeaderSize + abstractWbPacket.payloadSize;
         std::vector<uint8_t> packet(radiotapHeader.getSize() + ieee80211Header.getSize() + customHeaderAndPayloadSize);
         uint8_t *p = packet.data();
@@ -113,7 +113,7 @@ public:
     // inject packet by prefixing wifibroadcast packet with the IEE and Radiotap header
     // return: time it took to inject the packet.If the injection time is absurdly high, you might want to do something about it
     std::chrono::steady_clock::duration injectPacket(const RadiotapHeader& radiotapHeader, const Ieee80211Header& ieee80211Header,const AbstractWBPacket& abstractWbPacket){
-        const auto packet = RawTransmitterHelper::createPcapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
+        const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
         const auto before=std::chrono::steady_clock::now();
         RawTransmitterHelper::injectPacket(ppcap, packet);
         return std::chrono::steady_clock::now()-before;
@@ -142,7 +142,7 @@ public:
     // inject packet by prefixing wifibroadcast packet with the IEE and Radiotap header
     // return: time it took to inject the packet.If the injection time is absurdly high, you might want to do something about it
     std::chrono::steady_clock::duration injectPacket(const RadiotapHeader& radiotapHeader, const Ieee80211Header& ieee80211Header,const AbstractWBPacket& abstractWbPacket)const{
-        const auto packet = RawTransmitterHelper::createPcapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
+        const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
         const auto before=std::chrono::steady_clock::now();
         if (write(sockFd,packet.data(),packet.size()) !=packet.size()) {
             throw std::runtime_error(StringFormat::convert("Unable to inject packet (raw sock) %s",strerror(errno)));

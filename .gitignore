@@ -9,6 +9,7 @@ _trial_temp/
 wfb_rx
 wfb_tx
 unit_test
+benchmark
 #gs.key
 #drone.key
 wfb_keygen
