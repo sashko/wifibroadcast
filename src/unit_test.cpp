@@ -31,7 +31,7 @@
 #include "HelperSources/Helper.hpp"
 #include "Encryption.hpp"
 
-// Simple unit testing for the lib that doesn't require wifi cards
+// Simple unit testing for the FEC lib that doesn't require wifi cards
 
 namespace TestFEC{
 
