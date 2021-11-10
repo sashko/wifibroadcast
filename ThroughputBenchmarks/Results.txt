@@ -1,0 +1,25 @@
+Gigabyte Aero 15x (Modern Intel CPU):
+consti10@consti10-AERO-15XV8:~/Desktop/wifibroadcast$ ./benchmark -k 10
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+curr. Packets per second:154040 before FEC: 1699.38Mbit/s after FEC: 2549.08MBit/s
+...
+curr. Packets per second:154110 before FEC: 1700.16Mbit/s after FEC: 2550.24MBit/s
+TOTAL Packets per second:153873 before FEC: 1697.54Mbit/s after FEC: 2546.32MBit/s
+
+consti10@consti10-AERO-15XV8:~/Desktop/wifibroadcast$ ./benchmark -k 30
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446
+FEC_K: 30
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:30 and percentage:50
+For a block size of k max this is (30:45) in old (K:N) terms.
+curr. Packets per second:51060 before FEC: 563.299Mbit/s after FEC: 844.948MBit/s
+...
+TOTAL Packets per second:50705 before FEC: 559.384Mbit/s after FEC: 839.075MBit/s
