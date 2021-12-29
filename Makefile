@@ -41,5 +41,5 @@ gs.key: wfb_keygen
 	@if ! [ -f gs.key ]; then ./wfb_keygen; fi
 
 clean:
-	rm -rf env wfb_rx wfb_tx wfb_keygen unit_tests benchmark src/*.o src/ExternalCSources/fec/*.o src/ExternalCSources/radiotap/*.o
+	rm -rf env wfb_rx wfb_tx wfb_keygen unit_test benchmark src/*.o src/ExternalCSources/fec/*.o src/ExternalCSources/radiotap/*.o
 
