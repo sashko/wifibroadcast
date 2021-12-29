@@ -23,3 +23,54 @@ For a block size of k max this is (30:45) in old (K:N) terms.
 curr. Packets per second:51060 before FEC: 563.299Mbit/s after FEC: 844.948MBit/s
 ...
 TOTAL Packets per second:50705 before FEC: 559.384Mbit/s after FEC: 839.075MBit/s
+
+
+
+RPI CM4
+pi@raspberrypi:~/Desktop/wifibroadcast $ ./benchmark -k 10
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 10
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:10 and percentage:50
+For a block size of k max this is (10:15) in old (K:N) terms.
+curr. Packets per second:53830 before FEC: 593.857Mbit/s after FEC: 890.786MBit/s
+...
+curr. Packets per second:54010 before FEC: 595.844Mbit/s after FEC: 893.766MBit/s
+TOTAL Packets per second:53998 before FEC: 49.5885Mbit/s after FEC: 74.3828MBit/s
+
+
+pi@raspberrypi:~/Desktop/wifibroadcast $ ./benchmark -k 30
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 30
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:30 and percentage:50
+For a block size of k max this is (30:45) in old (K:N) terms.
+curr. Packets per second:18270 before FEC: 201.556Mbit/s after FEC: 302.333MBit/s
+...
+curr. Packets per second:18240 before FEC: 201.226Mbit/s after FEC: 301.838MBit/s
+TOTAL Packets per second:18244 before FEC: 64.7393Mbit/s after FEC: 97.109MBit/s
+
+pi@raspberrypi:~/Desktop/wifibroadcast $ ./benchmark -k 50
+Benchmark type: 0(ENCODE_ONLY)
+PacketSize: 1446 B
+FEC_K: 50
+FEC_PERCENTAGE: 50
+Benchmark time: 60 s
+FEC with k max:50 and percentage:50
+For a block size of k max this is (50:75) in old (K:N) terms.
+curr. Packets per second:11000 before FEC: 121.353Mbit/s after FEC: 182.029MBit/s
+...
+curr. Packets per second:11000 before FEC: 121.353Mbit/s after FEC: 182.029MBit/s
+TOTAL Packets per second:10973 before FEC: 52.7982Mbit/s after FEC: 79.1973MBit/s
+
+
+
+
+RV1126 (TODO investigate low performance)
+
+
+

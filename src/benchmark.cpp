@@ -104,6 +104,9 @@ void test(const Options& options){
             }
         }
     }
+    const auto testDuration=std::chrono::steady_clock::now()-testBegin;
+    std::cout<<"Wanted duration:"<<options.benchmarkTimeSeconds<<" actual duration:"<<std::chrono::duration_cast<std::chrono::milliseconds>(testDuration)/1000.0f<<"\n";
+
     float rawBitrate_MBits=totalPacketsDelta*options.PACKET_SIZE*8/1024/1024.0f/options.benchmarkTimeSeconds;
     std::cout<<"TOTAL Packets per second:"<<totalPacketsDelta/options.benchmarkTimeSeconds<<" before FEC: "<<rawBitrate_MBits<<"Mbit/s after FEC: "<<rawBitrate_MBits*(100+options.FEC_PERCENTAGE)/100.0f<<"MBit/s\n";
 }
