@@ -30,17 +30,17 @@
 #include <utime.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <pcap.h>
 #include <endian.h>
 #include <fcntl.h>
 #include <ctime>
 #include <sys/mman.h>
-#include <sodium.h>
 #include <endian.h>
 #include <string>
 #include <vector>
 #include <chrono>
 #include <optional>
+// need it for the "size" definitions
+#include <sodium.h>
 
 
 /**

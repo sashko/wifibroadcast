@@ -27,7 +27,6 @@
 #include <poll.h>
 #include <ctime>
 #include <sys/resource.h>
-#include <pcap/pcap.h>
 #include <cassert>
 #include <chrono>
 #include <memory>

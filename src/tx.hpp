@@ -100,4 +100,3 @@ public:
     // run as long as nothing goes completely wrong
     void loop();
 };
-

@@ -12,7 +12,6 @@
 #include <endian.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include <sodium.h>
 #include <endian.h>
 #include <string>
 #include <vector>

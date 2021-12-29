@@ -99,10 +99,19 @@ namespace RawTransmitterHelper {
     }
 }
 
+class IRawPacketInjector{
+public:
+    /**
+     * Inject the packet data after prefixing it with Radiotap and IEEE80211 header
+     * @return time it took to inject the packet
+     */
+    virtual std::chrono::steady_clock::duration injectPacket(const RadiotapHeader& radiotapHeader, const Ieee80211Header& ieee80211Header,const AbstractWBPacket& abstractWbPacket)const=0;
+};
+
 // Pcap Transmitter injects packets into the wifi adapter using pcap
 // It does not specify what the payload is and therefore is just a really small wrapper around the pcap interface
 // that properly opens / closes the interface on construction/destruction
-class PcapTransmitter{
+class PcapTransmitter:public IRawPacketInjector{
 public:
     explicit PcapTransmitter(const std::string &wlan){
         ppcap=RawTransmitterHelper::openTxWithPcap(wlan);
@@ -112,7 +121,7 @@ public:
     }
     // inject packet by prefixing wifibroadcast packet with the IEE and Radiotap header
     // return: time it took to inject the packet.If the injection time is absurdly high, you might want to do something about it
-    std::chrono::steady_clock::duration injectPacket(const RadiotapHeader& radiotapHeader, const Ieee80211Header& ieee80211Header,const AbstractWBPacket& abstractWbPacket){
+    std::chrono::steady_clock::duration injectPacket(const RadiotapHeader& radiotapHeader, const Ieee80211Header& ieee80211Header,const AbstractWBPacket& abstractWbPacket)const{
         const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
         const auto before=std::chrono::steady_clock::now();
         RawTransmitterHelper::injectPacket(ppcap, packet);
@@ -131,7 +140,7 @@ private:
 // Doesn't use pcap but somehow directly talks to the OS via socket
 // note that you still have to prefix data with the proper RadiotapHeader in this mode (just as if you were using pcap)
 // NOTE: I didn't measure any advantage for RawSocketTransmitter compared to PcapTransmitter, so I'd recommend using PcapTransmitter only
-class RawSocketTransmitter{
+class RawSocketTransmitter : public IRawPacketInjector{
 public:
     explicit RawSocketTransmitter(const std::string &wlan) {
         sockFd= openWifiInterfaceAsTxRawSocket(wlan);

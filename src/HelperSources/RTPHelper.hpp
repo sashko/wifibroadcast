@@ -47,7 +47,7 @@ namespace RTPLockup{
             uint8_t nri:    2;
             uint8_t f:      1;
         } __attribute__ ((packed));
-        typedef struct fu_header_t {
+        struct fu_header_t {
             uint8_t type:   5;
             uint8_t r:      1;
             uint8_t e:      1;

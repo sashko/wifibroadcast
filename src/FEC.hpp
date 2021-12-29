@@ -5,11 +5,10 @@
 #ifndef WIFIBROADCAST_FEC_H
 #define WIFIBROADCAST_FEC_H
 
-#include <vector>
-#include <array>
 #include "HelperSources/Helper.hpp"
 #include "ExternalCSources/fec/fec.h"
-
+#include <vector>
+#include <array>
 
 // c++ wrapper around fec library
 // NOTE: When working with FEC, people seem to use the terms block, fragments and more in different context(s).

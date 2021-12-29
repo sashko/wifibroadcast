@@ -16,20 +16,17 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "RawReceiver.hpp"
-#include "wifibroadcast.hpp"
 #include "HelperSources/SchedulingHelper.hpp"
+#include "FECEnabled.hpp"
 #include <cassert>
 #include <cstdio>
 #include <cinttypes>
 #include <unistd.h>
-#include <pcap/pcap.h>
 #include <poll.h>
 #include <memory>
 #include <string>
 #include <chrono>
 #include <sstream>
-#include "FECEnabled.hpp"
 
 // Test the FEC encoding / decoding performance (throughput) of this system
 // Basically measures the throughput of encoding,decoding or en&decoding FEC packets on one CPU core

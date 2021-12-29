@@ -20,7 +20,6 @@ extern "C"{
 #include <fcntl.h>
 #include <ctime>
 #include <sys/mman.h>
-#include <sodium.h>
 #include <endian.h>
 #include <string>
 #include <vector>

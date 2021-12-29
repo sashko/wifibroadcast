@@ -5,7 +5,6 @@
 #ifndef WIFIBROADCAST_FECENABLED_HPP
 #define WIFIBROADCAST_FECENABLED_HPP
 
-#include "wifibroadcast.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "FEC.hpp"
 #include <cstdint>
@@ -19,6 +18,7 @@
 #include <iostream>
 #include <functional>
 #include <map>
+
 
 // RN this module depends on "wifibroadcast.hpp", since it holds the "packet size(s)" needed to calculate FEC_MAX_PAYLOAD_SIZE
 // Removing this dependency (to write your own customized link) would be easy to do though.
@@ -75,8 +75,10 @@ static_assert(sizeof(FECPayloadHdr) == 2, "ALWAYS_TRUE");
 
 // 1510-(13+24+9+16+2)
 //A: Any UDP with packet size <= 1466. For example x264 inside RTP or Mavlink.
-static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
-static constexpr const auto FEC_MAX_PAYLOAD_SIZE= WB_FRAME_MAX_PAYLOAD - sizeof(FECPayloadHdr);
+// set here to removoe dependency on wifibroadcast.hpp
+static constexpr const auto FEC_MAX_PACKET_SIZE= 1448;
+//static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
+static constexpr const auto FEC_MAX_PAYLOAD_SIZE= FEC_MAX_PACKET_SIZE - sizeof(FECPayloadHdr);
 static_assert(FEC_MAX_PAYLOAD_SIZE == 1446);
 // max 255 primary and secondary fragments together for now. Theoretically, this implementation has enough bytes in the header for
 // up to 15 bit fragment indices, 2^15=32768
@@ -407,6 +409,7 @@ public:
     }
     FECDecoder(const FECDecoder& other)=delete;
     ~FECDecoder() = default;
+    // data forwarded on this callback is always in-order but possibly with gaps
     typedef std::function<void(const uint8_t * payload,std::size_t payloadSize)> SEND_DECODED_PACKET;
     // WARNING: Don't forget to register this callback !
     SEND_DECODED_PACKET mSendDecodedPayloadCallback;

@@ -7,6 +7,10 @@
 
 #include <pthread.h>
 #include <sys/resource.h>
+#include <unistd.h>
+#include <string>
+#include <iostream>
+#include <assert.h>
 
 namespace SchedulingHelper{
     static void printCurrentThreadPriority(const std::string name){
