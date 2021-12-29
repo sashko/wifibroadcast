@@ -74,6 +74,7 @@ void test(const Options& options){
     FECEncoder encoder(options.FEC_K,options.FEC_PERCENTAGE);
     FECDecoder decoder;
     const auto cb1=[&decoder,&options](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
+        // only decode packets if enabled (no decoding is done if test is encode only)
         if(options.benchmarkType==DECODE_ONLY || options.benchmarkType==ENCODE_AND_DECODE){
             decoder.validateAndProcessPacket(nonce, std::vector<uint8_t>(payload,payload +payloadSize));
         }
@@ -97,8 +98,9 @@ void test(const Options& options){
             totalPacketsDelta++;
             const auto delta=std::chrono::steady_clock::now()-logTs;
             if(delta>std::chrono::seconds(1)){
-                float rawBitrate_MBits=packetsDelta*options.PACKET_SIZE*8/1024/1024.0f;
-                std::cout<<"curr. Packets per second:"<<packetsDelta<<" before FEC: "<<rawBitrate_MBits<<"Mbit/s after FEC: "<<rawBitrate_MBits*(100+options.FEC_PERCENTAGE)/100.0f<<"MBit/s\n";
+                const float currRawBitrate_MBits=packetsDelta*options.PACKET_SIZE*8.0/1024.0/1024.0;
+                const float currPacketsPerSecond=packetsDelta;
+                std::cout<<"curr. Packets per second:"<<currPacketsPerSecond<<" before FEC: "<<currRawBitrate_MBits<<"Mbit/s after FEC: "<<currRawBitrate_MBits*(100+options.FEC_PERCENTAGE)/100.0f<<"MBit/s\n";
                 logTs=std::chrono::steady_clock::now();
                 packetsDelta=0;
             }
