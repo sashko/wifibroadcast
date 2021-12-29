@@ -43,3 +43,12 @@ gs.key: wfb_keygen
 clean:
 	rm -rf env wfb_rx wfb_tx wfb_keygen unit_test benchmark src/*.o src/ExternalCSources/fec/*.o src/ExternalCSources/radiotap/*.o
 
+
+# experimental
+.PHONY: install
+install:
+	cp -f wfb_tx $(TARGET_DIR)/usr/bin/
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(TARGET_DIR)/usr/bin/wfb_tx
