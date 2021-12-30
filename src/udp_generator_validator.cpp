@@ -97,6 +97,7 @@ int main(int argc, char *const *argv) {
     std::cout<<"Bitrate: "<<options.bitrate_mbits<<"MBit/s"<<"\n";
     std::cout<<"Generator: "<<(options.generator ? "yes":"no")<<"\n";
     std::cout<<"UDP port: "<<options.udp_port<<"\n";
+    std::cout<<"UDP host: "<<options.udp_host<<"\n";
 
     if(options.generator){
         uint32_t seqNr=0;
