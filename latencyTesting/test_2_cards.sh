@@ -17,9 +17,15 @@ WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
 # enable monitor mode on rx card, start wfb_rx
 sh ./enable_monitor_mode.sh $MY_RX
 
-$WFB_FOLDER/wfb_rx -u 6100 -r 60 $MY_RX
+xterm -hold -e $WFB_FOLDER/wfb_rx -u 6200 -r 60 $MY_RX &
 
 # enable monitor mode on tx card, start wfb_tx
 sh ./enable_monitor_mode.sh $MY_RX
 
+xterm -hold -e $WFB_FOLDER/wfb_tx -u 6000 -r 60 -M 5 -B 20 $MY_TX &
+
 # start the generator / validator
+xterm -hold -e $WFB_FOLDER/udp_generator_validator -u 6000 &
+
+# validate incoming packets
+$WFB_FOLDER/udp_generator_validator -u 6200 -v 1
