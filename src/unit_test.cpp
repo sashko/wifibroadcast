@@ -243,9 +243,13 @@ namespace TestFEC{
 }
 
 namespace TestEncryption{
-    static void test(){
-        Encryptor encryptor("gs.key");
-        Decryptor decryptor("drone.key");
+    static void test(const bool useGeneratedFiles){
+        std::cout<<"Using generated keypair (default seed otherwise):"<<(useGeneratedFiles ? "y":"n")<<"\n";
+        std::optional<std::string> encKey=useGeneratedFiles ?  std::optional<std::string>("gs.key") : std::nullopt;
+        std::optional<std::string> decKey=useGeneratedFiles ?  std::optional<std::string>("drone.key") : std::nullopt;
+
+        Encryptor encryptor{encKey};
+        Decryptor decryptor{decKey};
         WBSessionKeyPacket sessionKeyPacket;
         // make session key (tx)
         encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
@@ -260,6 +264,7 @@ namespace TestEncryption{
             assert(decrypted!=std::nullopt);
             assert(GenericHelper::compareVectors(data,*decrypted) == true);
         }
+        std::cout<<"encryption test passed\n";
     }
 }
 
@@ -267,49 +272,70 @@ namespace TestEncryption{
 int main(int argc, char *argv[]){
     std::cout<<"Tests for Wifibroadcast\n";
     srand (time(NULL));
+    int opt;
+    int test_mode=0;
+
+    while ((opt = getopt(argc, argv, "m:")) != -1) {
+        switch (opt) {
+            case 'm':
+                test_mode = atoi(optarg);
+                break;
+            default: /* '?' */
+            show_usage:
+                std::cout<<"Usage: Unit tests for FEC and encryption. -m 0,1,2 test mode: 0==ALL, 1==FEC only 2==Encryption only\n";
+                return 1;
+        }
+    }
+
+
     try {
-        std::cout<<"Testing FEC\n";
-        testFecCPlusPlusWrapperX();
-        const int N_PACKETS=1200;
-        TestFEC::testNonce();
-        // With these fec params "testWithoutPacketLoss" is not possible
-        const std::vector<std::pair<unsigned int,unsigned int>> fecParams1={
-                {1,0},{1,100},
-                {2,0},{2,50},{2,100}
-        };
-        for(const auto& fecParam:fecParams1){
-            const auto k=fecParam.first;
-            const auto p=fecParam.second;
-            TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
-            TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
-        }
-        // only test with FEC enabled
-        const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
-                {1,200},
-                {2,100},{2,200},
-                {4,100},{4,200},
-                {6,50},{6,100},{6,200},
-                {8,50},{8,100},{8,200},
-                {10,30},{10,50},{10,100},
-                {40,30},{40,50},{40,100},
-                {100,30},{100,40},{100,50},{100,60},
-                {120,50}
-        };
-        for(const auto& fecParam:fecParams){
-            const auto k=fecParam.first;
-            const auto p=fecParam.second;
-            TestFEC::testWithoutPacketLossFixedPacketSize(k, p, N_PACKETS);
-            TestFEC::testWithoutPacketLossDynamicPacketSize(k, p, N_PACKETS);
-            TestFEC::testRxQueue(k, p);
-            for(int dropMode=1;dropMode<2;dropMode++){
-                TestFEC::testWithPacketLossButEverythingIsRecoverable(k, p, N_PACKETS, dropMode);
+        if(test_mode==0 || test_mode==1){
+            std::cout<<"Testing FEC\n";
+            testFecCPlusPlusWrapperX();
+            const int N_PACKETS=1200;
+            TestFEC::testNonce();
+            // With these fec params "testWithoutPacketLoss" is not possible
+            const std::vector<std::pair<unsigned int,unsigned int>> fecParams1={
+                    {1,0},{1,100},
+                    {2,0},{2,50},{2,100}
+            };
+            for(const auto& fecParam:fecParams1){
+                const auto k=fecParam.first;
+                const auto p=fecParam.second;
+                TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
+                TestFEC::testWithoutPacketLossFixedPacketSize(k,p, N_PACKETS);
             }
+            // only test with FEC enabled
+            const std::vector<std::pair<unsigned int,unsigned int>> fecParams={
+                    {1,200},
+                    {2,100},{2,200},
+                    {4,100},{4,200},
+                    {6,50},{6,100},{6,200},
+                    {8,50},{8,100},{8,200},
+                    {10,30},{10,50},{10,100},
+                    {40,30},{40,50},{40,100},
+                    {100,30},{100,40},{100,50},{100,60},
+                    {120,50}
+            };
+            for(const auto& fecParam:fecParams){
+                const auto k=fecParam.first;
+                const auto p=fecParam.second;
+                TestFEC::testWithoutPacketLossFixedPacketSize(k, p, N_PACKETS);
+                TestFEC::testWithoutPacketLossDynamicPacketSize(k, p, N_PACKETS);
+                TestFEC::testRxQueue(k, p);
+                for(int dropMode=1;dropMode<2;dropMode++){
+                    TestFEC::testWithPacketLossButEverythingIsRecoverable(k, p, N_PACKETS, dropMode);
+                }
+            }
+            TestFEC::testWithoutPacketLossDynamicBlockSize();
         }
-        TestFEC::testWithoutPacketLossDynamicBlockSize();
-        //
-        std::cout<<"Testing Encryption\n";
-        TestEncryption::test();
-        //
+        if(test_mode==0 || test_mode==2){
+            //
+            std::cout<<"Testing Encryption\n";
+            TestEncryption::test(false);
+            TestEncryption::test(true);
+            //
+        }
     }catch (std::runtime_error &e) {
         std::cerr<<"Error: "<<std::string(e.what());
         exit(1);
