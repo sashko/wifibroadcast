@@ -43,7 +43,8 @@ struct Options{
     uint8_t radio_port=0;
     int client_udp_port=5600;
     std::string client_addr="127.0.0.1";// default to localhost
-    std::string keypair="gs.key"; //default filename
+    //std::string keypair="gs.key"; //default filename
+    std::optional<std::string> keypair=std::nullopt;
 };
 
 // This class processes the received wifi data (decryption and FEC)

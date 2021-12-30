@@ -44,7 +44,9 @@ struct Options{
     // input UDP port
     int udp_port = 5600;
     // file for encryptor
-    std::string keypair="drone.key";
+    // make optional for ease of use - with no keypair given the default "seed" is used
+    // std::string keypair="drone.key";
+    std::optional<std::string> keypair=std::nullopt;
     // wlan interface to send packets with
     std::string wlan;
     // either fixed or variable. If int==fixed, if string==variable but hook needs to be added (currently only hooked h264 and h265)

@@ -10,8 +10,8 @@ wfb_rx
 wfb_tx
 unit_test
 benchmark
-#gs.key
-#drone.key
+gs.key
+drone.key
 wfb_keygen
 telemetry/conf/site.cfg
 telemetry/conf/local.cfg
