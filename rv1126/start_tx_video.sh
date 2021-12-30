@@ -27,4 +27,4 @@ iwconfig $MY_TX channel $MY_WIFI_CHANNEL
 #sudo iw dev $MY_TX set channel "6" HT40+
 #sudo iwconfig $MY_TX rts off
 
-wfb_tx -k $FEC_K -p $FEC_PERCENTAGE -u 5600 -r 60 -M 5 -B 20 -K /oem/drone.key  $MY_TX 
+wfb_tx -k $FEC_K -p $FEC_PERCENTAGE -u 5600 -r 60 -M 5 -B 20  $MY_TX

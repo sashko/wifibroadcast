@@ -22,6 +22,12 @@
 // the content of each packet is simple -
 // the sequence number appended by some random data depending on the sequence number
 
+static bool quit = false;
+static void sigterm_handler(int sig) {
+    fprintf(stderr, "signal %d\n", sig);
+    quit = true;
+}
+
 struct Options{
     // size of each packet
     int PACKET_SIZE=1446;
@@ -99,16 +105,17 @@ int main(int argc, char *const *argv) {
     std::cout<<"UDP port: "<<options.udp_port<<"\n";
     std::cout<<"UDP host: "<<options.udp_host<<"\n";
 
+    signal(SIGINT, sigterm_handler);
+
     if(options.generator){
         uint32_t seqNr=0;
         SocketHelper::UDPForwarder forwarder(options.udp_host,options.udp_port);
-        while (true){
+        while (!quit){
             const auto packet= generateDeterministicPacket(seqNr);
             forwarder.forwardPacketViaUDP(packet.data(),packet.size());
             std::cout<<"Sent packet:"<<seqNr<<"\n";
             seqNr++;
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            if(seqNr>10000000)break;
         }
     }else{
         const auto cb=[](const uint8_t* payload,const std::size_t payloadSize)mutable {

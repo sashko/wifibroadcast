@@ -25,4 +25,4 @@ sudo iwconfig $MY_RX channel $MY_WIFI_CHANNEL
 #sudo iw dev $MY_TX set channel "6" HT40+
 #sudo iwconfig $MY_TX rts off
 
-$WFB_FOLDER/wfb_rx -u 5600 -r 60 -K $WFB_FOLDER/gs.key $MY_RX
+$WFB_FOLDER/wfb_rx -u 5600 -r 60 $MY_RX
