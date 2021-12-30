@@ -6,24 +6,23 @@ TAOBAO="wlx00e0863200b9" #Taobao card
 ASUS="wlx244bfeb71c05" #ASUS card
 
 
-#MY_TX=$TAOBAO
-MY_TX="wlan0" #rv1126
+MY_RX=$TAOBAO
+#MY_RX="wlan0" #rpi testing
 
-
-FEC_K=10
-FEC_PERCENTAGE=50
+WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
+#WFB_FOLDER="/home/pi/Desktop/wifibroadcast"
 
 MY_WIFI_CHANNEL=149 #5ghz channel
 #MY_WIFI_CHANNEL=13 #2.4ghz channel
 
-rfkill unblock wifi
+sudo rfkill unblock wifi
 #sudo killall ifplugd #stop management of interface
 
-ifconfig $MY_TX down
-iw dev $MY_TX set monitor otherbss fcsfail
-ifconfig $MY_TX up
-iwconfig $MY_TX channel $MY_WIFI_CHANNEL
+sudo ifconfig $MY_RX down
+sudo iw dev $MY_RX set monitor otherbss fcsfail
+sudo ifconfig $MY_RX up
+sudo iwconfig $MY_RX channel $MY_WIFI_CHANNEL
 #sudo iw dev $MY_TX set channel "6" HT40+
 #sudo iwconfig $MY_TX rts off
 
-wfb_tx -k $FEC_K -p $FEC_PERCENTAGE -u 5600 -r 60 -M 5 -B 20 -K /oem/drone.key  $MY_TX 
+$WFB_FOLDER/wfb_rx -u 6100 -r 60 -K $WFB_FOLDER/gs.key $MY_RX
