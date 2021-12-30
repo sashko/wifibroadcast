@@ -135,8 +135,6 @@ public:
         std::cout<<"N packets received:"<<nReceivedPackets<<"\tlost:"<<nLostPackets<<"\n";
         std::cout<<"Packet gaps:"<<StringHelper::vectorAsString(gapsBetweenLostPackets)<<"\n";
         if(clear){
-            nReceivedPackets=0;
-            nLostPackets=0;
             gapsBetweenLostPackets.resize(0);
         }
     }
@@ -243,14 +241,16 @@ int main(int argc, char *const *argv) {
 
             bool valid=TestPacket::checkPayloadMatches(receivedPacket,*validPacket.get());
 
+
             if(valid){
                 nValidPackets++;
             }else{
                 nInvalidPackets++;
+                std::cout<<"Packet nr:"<< info.seqNr<<"is invalid."<<" N packets V,INV:"<<nValidPackets<<","<<nInvalidPackets<<"\n";
             }
             auto delta=std::chrono::steady_clock::now()-lastLog;
             if(delta>std::chrono::milliseconds (500)){
-                std::cout<<"Packet nr:"<< info.seqNr<<"Valid:"<<(valid ? "y":"n")<<" N packets V,INV:"<<nValidPackets<<","<<nInvalidPackets<<"\n";
+                //std::cout<<"Packet nr:"<< info.seqNr<<"Valid:"<<(valid ? "y":"n")<<" N packets V,INV:"<<nValidPackets<<","<<nInvalidPackets<<"\n";
                 sequenceNumberDebugger.debug(true);
                 lastLog=std::chrono::steady_clock::now();
             }
