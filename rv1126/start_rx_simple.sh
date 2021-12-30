@@ -17,4 +17,6 @@ WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
 
 sh ./enable_monitor_mode.sh $MY_RX $MY_WIFI_CHANNEL
 
-$WFB_FOLDER/wfb_rx -u 5600 -r 60 $MY_RX
+xterm -hold -e $WFB_FOLDER/wfb_rx -u 5600 -r 60 $MY_RX &
+
+$WFB_FOLDER/udp_generator_validator -u 5600 -v 1
