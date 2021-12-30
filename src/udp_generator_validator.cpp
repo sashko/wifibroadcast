@@ -64,7 +64,7 @@ static bool validateDeterministicPacket(std::vector<uint8_t> packet,SEQUENCE_NUM
 int main(int argc, char *const *argv) {
     int opt;
 
-    while ((opt = getopt(argc, argv, "s:v:u:b:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:v:u:b:h:")) != -1) {
         switch (opt) {
             case 's':
                 options.PACKET_SIZE = atoi(optarg);
