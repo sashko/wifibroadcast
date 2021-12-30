@@ -276,7 +276,7 @@ namespace SocketHelper{
          * Receive data from socket and forward it via callback until stop() is called
          */
         explicit UDPReceiver(std::string client_addr,int client_udp_port,OUTPUT_DATA_CALLBACK cb):mCb(cb){
-            int mSocket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            mSocket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
             int enable = 1;
             if (setsockopt(mSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){
                 std::cout<<"Error setting reuse"<<"\n";
@@ -290,10 +290,11 @@ namespace SocketHelper{
                 std::cout<<"Error binding Port; "<<client_udp_port;
                 return;
             }
+        }
+        void start(){
             const auto buff=std::make_unique<std::array<uint8_t,UDP_PACKET_MAX_SIZE>>();
             sockaddr_in source;
             socklen_t sourceLen= sizeof(sockaddr_in);
-
             while (receiving) {
                 const ssize_t message_length = recvfrom(mSocket,buff->data(),UDP_PACKET_MAX_SIZE, MSG_WAITALL,(sockaddr*)&source,&sourceLen);
                 if (message_length > 0) {
@@ -303,14 +304,15 @@ namespace SocketHelper{
                     receiving= false;
                 }
             }
-            close(mSocket);
         }
         void stop(){
             receiving= false;
+            close(mSocket);
         }
     private:
         const OUTPUT_DATA_CALLBACK mCb;
         bool receiving=true;
+        int mSocket;
     };
 }
 
