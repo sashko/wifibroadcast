@@ -119,6 +119,10 @@ int main(int argc, char *const *argv) {
     int opt;
     Options options{};
 
+    SchedulingHelper::setThreadParamsMaxRealtime();
+    SchedulingHelper::printCurrentThreadPriority("TEST_MAIN");
+    SchedulingHelper::printCurrentThreadSchedulingPolicy("TEST_MAIN");
+
     while ((opt = getopt(argc, argv, "s:k:p:x:t:")) != -1) {
         switch (opt) {
             case 's':
