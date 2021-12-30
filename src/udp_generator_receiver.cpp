@@ -29,6 +29,7 @@ struct Options{
     int bitrate_mbits=10;
     bool generator=true; // else validator
     int udp_port=5600; // port to send data to (generator) or listen on (validator)
+    std::string udp_host=SocketHelper::ADDRESS_LOCALHOST;
 };
 
 using SEQUENCE_NUMBER=uint32_t;
@@ -77,9 +78,13 @@ int main(int argc, char *const *argv) {
             case 'b':
                 options.bitrate_mbits = std::stoi(optarg); //TODO unimplemented
                 break;
+            case 'h':
+                options.udp_host=std::string(optarg);
+                break;
             default: /* '?' */
             show_usage:
-                std::cout<<"Usage: [-s=packet size in bytes,default:"<<options.PACKET_SIZE<<"] [-v validate packets (else generate packets)]\n";
+                std::cout<<"Usage: [-s=packet size in bytes,default:"<<options.PACKET_SIZE<<"] [-v validate packets (else generate packets)] [-u udp port,default:"<<options.udp_port<<
+                "] [-h udp host default:"<<options.udp_host<<"]\n";
                 return 1;
         }
     }
@@ -95,7 +100,7 @@ int main(int argc, char *const *argv) {
 
     if(options.generator){
         uint32_t seqNr=0;
-        SocketHelper::UDPForwarder forwarder(SocketHelper::ADDRESS_LOCALHOST,options.udp_port);
+        SocketHelper::UDPForwarder forwarder(options.udp_host,options.udp_port);
         while (true){
             const auto packet= generateDeterministicPacket(seqNr);
             forwarder.forwardPacketViaUDP(packet.data(),packet.size());
