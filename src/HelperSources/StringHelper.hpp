@@ -17,18 +17,22 @@ public:
     template<typename T>
     static std::string vectorAsString(const std::vector<T>& v){
         std::stringstream ss;
+        ss<<"[";
         for (const auto i:v) {
             ss << (int)i << ",";
         }
+        ss<<"]";
         return ss.str();
     }
 
     template<typename T,std::size_t S>
     static std::string arrayAsString(const std::array<T,S>& a){
         std::stringstream ss;
+        ss<<"[";
         for (const auto i:a) {
             ss << (int)i << ",";
         }
+        ss<<"]";
         return ss.str();
     }
 

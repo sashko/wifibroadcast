@@ -16,4 +16,4 @@ FEC_K=1
 
 sh ./enable_monitor_mode.sh $MY_TX $MY_WIFI_CHANNEL
 
-./oem/usr/bin/wfb_tx -u 5600 -r 60 -M 5 -B 20 -k $FEC_K $MY_TX
+/oem/usr/bin/wfb_tx -u 5600 -r 60 -M 5 -B 20 -k $FEC_K $MY_TX
