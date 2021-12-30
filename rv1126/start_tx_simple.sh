@@ -12,7 +12,8 @@ MY_TX=$RV1126
 MY_WIFI_CHANNEL=149 #5ghz channel
 #MY_WIFI_CHANNEL=13 #2.4ghz channel
 
+FEC_K=1
 
 sh ./enable_monitor_mode.sh $MY_TX $MY_WIFI_CHANNEL
 
-wfb_tx -u 5600 -r 60 -M 5 -B 20  $MY_TX
+wfb_tx -u 5600 -r 60 -M 5 -B 20 -k $FEC_K $MY_TX
