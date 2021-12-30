@@ -7,7 +7,7 @@ _LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium
 # WFB_VERSION is date and time and the last commit of this branch
 _CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'
 
-all_bin: wfb_rx wfb_tx wfb_keygen unit_test benchmark
+all_bin: wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_receiver
 all: all_bin gs.key
 
 # The non-c++ part
@@ -34,6 +34,9 @@ unit_test: src/unit_test.o src/ExternalCSources/fec/fec.o
 benchmark: src/benchmark.o src/ExternalCSources/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
+udp_generator_receiver: src/udp_generator_receiver.o
+	$(CXX) -o $@ $^ $(_LDFLAGS)
+
 wfb_keygen: src/keygen.o
 	$(CC) -o $@ $^ $(_LDFLAGS)
 
@@ -41,7 +44,7 @@ gs.key: wfb_keygen
 	@if ! [ -f gs.key ]; then ./wfb_keygen; fi
 
 clean:
-	rm -rf env wfb_rx wfb_tx wfb_keygen unit_test benchmark src/*.o src/ExternalCSources/fec/*.o src/ExternalCSources/radiotap/*.o
+	rm -rf env wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_receiver src/*.o src/ExternalCSources/fec/*.o src/ExternalCSources/radiotap/*.o
 
 
 # experimental

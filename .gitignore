@@ -13,6 +13,7 @@ benchmark
 gs.key
 drone.key
 wfb_keygen
+udp_generator_receiver
 telemetry/conf/site.cfg
 telemetry/conf/local.cfg
 

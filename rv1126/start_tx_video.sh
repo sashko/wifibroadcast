@@ -15,6 +15,8 @@ FEC_PERCENTAGE=50
 MY_WIFI_CHANNEL=149 #5ghz channel
 #MY_WIFI_CHANNEL=13 #2.4ghz channel
 
+# had to remove the sudo stuff, since there is no differentiation in buildroot
+
 rfkill unblock wifi
 #sudo killall ifplugd #stop management of interface
 

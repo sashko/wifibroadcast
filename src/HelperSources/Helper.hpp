@@ -189,6 +189,7 @@ namespace GenericHelper{
 }
 
 namespace SocketHelper{
+    static const std::string ADDRESS_LOCALHOST="127.0.0.1";
     static int openUdpSocketForSendingData(const std::string &client_addr, int client_port) {
         struct sockaddr_in saddr;
         int fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -265,6 +266,51 @@ namespace SocketHelper{
         }
     private:
         int sockfd;
+    };
+
+    class UDPReceiver{
+    public:
+        typedef std::function<void(const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
+        static constexpr const size_t UDP_PACKET_MAX_SIZE=65507;
+        /**
+         * Receive data from socket and forward it via callback until stop() is called
+         */
+        explicit UDPReceiver(std::string client_addr,int client_udp_port,OUTPUT_DATA_CALLBACK cb):mCb(cb){
+            int mSocket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            int enable = 1;
+            if (setsockopt(mSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){
+                std::cout<<"Error setting reuse"<<"\n";
+            }
+            struct sockaddr_in myaddr;
+            memset((uint8_t *) &myaddr, 0, sizeof(myaddr));
+            myaddr.sin_family = AF_INET;
+            myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+            myaddr.sin_port = htons(client_udp_port);
+            if (bind(mSocket, (struct sockaddr *) &myaddr, sizeof(myaddr)) == -1) {
+                std::cout<<"Error binding Port; "<<client_udp_port;
+                return;
+            }
+            const auto buff=std::make_unique<std::array<uint8_t,UDP_PACKET_MAX_SIZE>>();
+            sockaddr_in source;
+            socklen_t sourceLen= sizeof(sockaddr_in);
+
+            while (receiving) {
+                const ssize_t message_length = recvfrom(mSocket,buff->data(),UDP_PACKET_MAX_SIZE, MSG_WAITALL,(sockaddr*)&source,&sourceLen);
+                if (message_length > 0) {
+                    mCb(buff->data(), (size_t)message_length);
+                }else{
+                    std::cout<<"ERROR got message length of:"<<message_length<<"\n";
+                    receiving= false;
+                }
+            }
+            close(mSocket);
+        }
+        void stop(){
+            receiving= false;
+        }
+    private:
+        const OUTPUT_DATA_CALLBACK mCb;
+        bool receiving=true;
     };
 }
 
