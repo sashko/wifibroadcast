@@ -92,37 +92,16 @@ void benchmark_fec(const Options& options){
     decoder.mSendDecodedPayloadCallback=cb2;
 
     PacketizedBenchmark packetizedBenchmark("FEC",(100+options.FEC_PERCENTAGE)/100.0f);
-
-    const std::chrono::steady_clock::time_point testBegin=std::chrono::steady_clock::now();
-    std::chrono::steady_clock::time_point logTs=std::chrono::steady_clock::now();
-    int packetsDelta=0;
-    int totalPacketsDelta=0;
-
+    const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
     // run the test for X seconds
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)){
         for(const auto& packet:testPackets){
             encoder.encodePacket(packet.data(),packet.size());
-            packetsDelta++;
-            totalPacketsDelta++;
-            const auto delta=std::chrono::steady_clock::now()-logTs;
-            if(delta>std::chrono::seconds(1)){
-                const float currPacketsPerSecond=packetsDelta;
-                const float currRawBitrate_MBits=currPacketsPerSecond*options.PACKET_SIZE*8.0/1024.0/1024.0;
-                std::cout<<"curr. Packets per second:"<<currPacketsPerSecond<<" before FEC: "<<currRawBitrate_MBits<<"Mbit/s after FEC: "<<currRawBitrate_MBits*(100+options.FEC_PERCENTAGE)/100.0f<<"MBit/s\n";
-                logTs=std::chrono::steady_clock::now();
-                packetsDelta=0;
-            }
+            //
             packetizedBenchmark.doneWithPacket(packet.size());
         }
     }
-    const auto testDuration=std::chrono::steady_clock::now()-testBegin;
-    const float testDurationSeconds=std::chrono::duration_cast<std::chrono::milliseconds>(testDuration).count()/1000.0f;
-    //std::cout<<"Wanted duration:"<<options.benchmarkTimeSeconds<<" actual duration:"<<testDurationSeconds<<"\n";
-
-    float totalPacketsPerSecond=totalPacketsDelta/(float)options.benchmarkTimeSeconds;
-    float rawBitrate_MBits=totalPacketsPerSecond*options.PACKET_SIZE*8.0/1024.0/1024.0;
-    std::cout<<"TOTAL Packets per second:"<<totalPacketsPerSecond<<" before FEC: "<<rawBitrate_MBits<<"Mbit/s after FEC: "<<rawBitrate_MBits*(100+options.FEC_PERCENTAGE)/100.0f<<"MBit/s\n";
     packetizedBenchmark.end();
 }
 
@@ -136,10 +115,10 @@ void benchmark_crypt(const Options& options){
     RandomBufferPot randomBufferPot{N_BUFFERS,1466};
     uint64_t nonce=0;
 
-    const std::chrono::steady_clock::time_point testBegin=std::chrono::steady_clock::now();
-    std::chrono::steady_clock::time_point logTs=std::chrono::steady_clock::now();
-    int packetsDelta=0;
-    int totalPacketsDelta=0;
+    PacketizedBenchmark packetizedBenchmark("FEC",1.0);
+
+    const auto testBegin=std::chrono::steady_clock::now();
+    packetizedBenchmark.begin();
 
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)){
         for(int i=0;i<N_BUFFERS;i++){
@@ -148,27 +127,11 @@ void benchmark_crypt(const Options& options){
             const auto encrypted=encryptor.encryptPacket(nonce,buffer->data(),buffer->size(),add);
             assert(encrypted.size()>0);
             nonce++;
-
-            packetsDelta++;
-            totalPacketsDelta++;
-            const auto delta=std::chrono::steady_clock::now()-logTs;
-            if(delta>std::chrono::seconds(1)){
-                const float currPacketsPerSecond=packetsDelta;
-                const float currRawBitrate_MBits=currPacketsPerSecond*options.PACKET_SIZE*8.0/1024.0/1024.0;
-                std::cout<<"curr. Packets per second:"<<currPacketsPerSecond<<" bitrate: "<<currRawBitrate_MBits<<"MBit/s\n";
-                logTs=std::chrono::steady_clock::now();
-                packetsDelta=0;
-            }
+            //
+            packetizedBenchmark.doneWithPacket(buffer->size());
         }
     }
-
-    const auto testDuration=std::chrono::steady_clock::now()-testBegin;
-    const float testDurationSeconds=std::chrono::duration_cast<std::chrono::milliseconds>(testDuration).count()/1000.0f;
-    //std::cout<<"Wanted duration:"<<options.benchmarkTimeSeconds<<" actual duration:"<<testDurationSeconds<<"\n";
-
-    float totalPacketsPerSecond=totalPacketsDelta/(float)options.benchmarkTimeSeconds;
-    float rawBitrate_MBits=totalPacketsPerSecond*options.PACKET_SIZE*8.0/1024.0/1024.0;
-    std::cout<<"TOTAL Packets per second:"<<totalPacketsPerSecond<<" bitrate: "<<"MBit/s\n";
+    packetizedBenchmark.end();
 }
 
 int main(int argc, char *const *argv) {
