@@ -115,7 +115,7 @@ void benchmark_crypt(const Options& options){
     RandomBufferPot randomBufferPot{N_BUFFERS,1466};
     uint64_t nonce=0;
 
-    PacketizedBenchmark packetizedBenchmark("FEC",1.0);
+    PacketizedBenchmark packetizedBenchmark("CRYPT",1.0); // roughly 1:1
 
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
