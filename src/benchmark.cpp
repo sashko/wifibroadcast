@@ -64,54 +64,8 @@ struct Options{
 static std::size_t N_ALLOCATED_BUFFERS=1024;
 
 
-/*void benchmark_fec(const Options& options){
-    assert(options.benchmarkType==ENCODE_ONLY || options.benchmarkType==DECODE_ONLY):
-    const auto testPackets=GenericHelper::createRandomDataBuffers(N_ALLOCATED_BUFFERS,options.PACKET_SIZE,options.PACKET_SIZE);
-    // only used when we want to benchmark decoding performance only
-    auto testPacketsAfterEncode=std::vector<std::pair<uint64_t,std::vector<uint8_t>>>();
-    // when benchmarking the decoding performance only pre-compute the FEC packets before starting the test
-    if(options.benchmarkType==DECODE_ONLY){
-        FECEncoder encoder(options.FEC_K,options.FEC_PERCENTAGE);
-        const auto cb1=[&testPacketsAfterEncode](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
-            testPacketsAfterEncode.push_back(std::make_pair(nonce,std::vector<uint8_t>(payload,payload+payloadSize)));
-        };
-        encoder.outputDataCallback=cb1;
-        for(const auto& packet:testPackets){
-            encoder.encodePacket(packet.data(),packet.size());
-        }
-    }
-    // init encoder and decoder, link the callback
-    FECEncoder encoder(options.FEC_K,options.FEC_PERCENTAGE);
-    FECDecoder decoder;
-    const auto cb1=[&decoder,&options](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
-        // only decode packets if enabled (no decoding is done if test is encode only)
-        if(options.benchmarkType==DECODE_ONLY || options.benchmarkType==ENCODE_AND_DECODE){
-            decoder.validateAndProcessPacket(nonce, std::vector<uint8_t>(payload,payload +payloadSize));
-        }
-    };
-    const auto cb2=[](const uint8_t * payload,std::size_t payloadSize)mutable{
-        // do nothing here. Let's hope the compiler doesn't notice.
-    };
-    encoder.outputDataCallback=cb1;
-    decoder.mSendDecodedPayloadCallback=cb2;
 
-    PacketizedBenchmark packetizedBenchmark(benchmarkTypeReadable(options.benchmarkType),(100+options.FEC_PERCENTAGE)/100.0f);
-    const auto testBegin=std::chrono::steady_clock::now();
-    packetizedBenchmark.begin();
-    // run the test for X seconds
-    while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)){
-        if(options.benchmarkType==ENCODE_ONLY)
-        for(const auto& packet:testPackets){
-            encoder.encodePacket(packet.data(),packet.size());
-            //
-            packetizedBenchmark.doneWithPacket(packet.size());
-        }
-    }
-    packetizedBenchmark.end();
-}*/
-
-
-void benchmark_fec_encode(const Options& options){
+void benchmark_fec_encode(const Options& options,bool printBlockTime=false){
     assert(options.benchmarkType==FEC_ENCODE);
     const auto testPackets=GenericHelper::createRandomDataBuffers(N_ALLOCATED_BUFFERS,options.PACKET_SIZE,options.PACKET_SIZE);
     FECEncoder encoder(options.FEC_K,options.FEC_PERCENTAGE);
@@ -123,16 +77,31 @@ void benchmark_fec_encode(const Options& options){
     PacketizedBenchmark packetizedBenchmark("FEC_ENCODE",(100+options.FEC_PERCENTAGE)/100.0f);
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
+    double blockEncodingTimeUsTotal=0;
+    int blockEncodingTimeCount=0;
+    const int blockSizeBytes=options.PACKET_SIZE*options.FEC_K;
     // run the test for X seconds
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)) {
         for (const auto &packet: testPackets) {
-            encoder.encodePacket(packet.data(), packet.size());
-            //
+            // also measure the time (in us) it takes to encode a FEC block
+            const auto before=std::chrono::steady_clock::now();
+            bool fecPerformed=encoder.encodePacket(packet.data(), packet.size());
+            if(fecPerformed){
+                auto delta=std::chrono::steady_clock::now()-before;
+                const auto blockEncodingTimeUs=std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
+                //std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
+                //    " took "<<blockEncodingTimeUs/1000.0f<<" ms"<<"\n";
+                blockEncodingTimeUsTotal+=blockEncodingTimeUs;
+                blockEncodingTimeCount++;
+            }
             packetizedBenchmark.doneWithPacket(packet.size());
         }
     }
     packetizedBenchmark.end();
+    std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
+        " took "<<(blockEncodingTimeUsTotal/blockEncodingTimeCount)/1000.0f<<" ms on average"<<"\n";
 }
+
 
 // NOTE: benchmarking the fec_decode step is not easy, since FEC is only performed if there are missing packets
 // TODO do properly

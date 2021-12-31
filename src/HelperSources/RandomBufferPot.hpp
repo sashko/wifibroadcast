@@ -55,6 +55,19 @@ namespace SemiRandomBuffers{
         }*/
         return ret;
     }
+    // same as above, but different return type
+    template<size_t S>
+    static std::vector<std::array<uint8_t,S>> createSemiRandomBuffers2(const std::size_t nBuffers){
+        std::vector<std::array<uint8_t,S>> ret(nBuffers);
+        std::mt19937 random_engine(0);
+        std::uniform_int_distribution<> distrib(0, 256);
+        for(auto& buffer:ret){
+            for(auto& value:buffer){
+                value=distrib(random_engine);
+            }
+        }
+        return ret;
+    }
 }
 
 // holds x buffers with (semi-random) data.
