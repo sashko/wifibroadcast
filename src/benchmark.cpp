@@ -29,6 +29,7 @@
 #include <string>
 #include <chrono>
 #include <sstream>
+#include <list>
 #include "HelperSources/PacketizedBenchmark.hpp"
 
 // Test the FEC encoding / decoding performance (throughput) of this system
@@ -138,7 +139,7 @@ void benchmark_fec_encode(const Options& options){
 void benchmark_fec_decode(const Options& options){
     // init encoder and decoder, link the callback
     FECEncoder encoder(options.FEC_K,options.FEC_PERCENTAGE);
-    auto testPacketsAfterEncode=std::vector<std::pair<uint64_t,std::vector<uint8_t>>>();
+    auto testPacketsAfterEncode=std::list<std::pair<uint64_t,std::vector<uint8_t>>>();
     const auto encoderCb=[&testPacketsAfterEncode](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
         testPacketsAfterEncode.push_back(std::make_pair(nonce,std::vector<uint8_t>(payload,payload+payloadSize)));
     };
@@ -157,6 +158,7 @@ void benchmark_fec_decode(const Options& options){
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)){
+
         for(auto& encodedPacket:testPacketsAfterEncode){
             decoder.validateAndProcessPacket(encodedPacket.first,encodedPacket.second);
             packetizedBenchmark.doneWithPacket(encodedPacket.second.size());
