@@ -37,12 +37,12 @@
 
 
 //TODO: Decode only is not implemented yet.
-enum BenchmarkType{ENCODE_ONLY=0,DECODE_ONLY=1,ENCODE_AND_DECODE=2,ENCRYPT=3,DECRYPT=4};
+enum BenchmarkType{FEC_ENCODE=0,FEC_DECODE=1,ENCRYPT=2,DECRYPT=3};
 static std::string benchmarkTypeReadable(const BenchmarkType value){
     switch (value) {
-        case ENCODE_ONLY:return "ENCODE_ONLY";
-        case DECODE_ONLY:return "DECODE_ONLY";
-        case ENCODE_AND_DECODE:return "ENCODE_AND_DECODE";
+        case FEC_ENCODE:return "FEC_ENCODE";
+        case FEC_DECODE:return "FEC_DECODE";
+        //case ENCODE_AND_DECODE:return "ENCODE_AND_DECODE";
         case ENCRYPT:return "ENCRYPT";
         case DECRYPT:return "DECRYPT";
         default:return "ERROR";
@@ -54,7 +54,7 @@ struct Options{
     int PACKET_SIZE=1446;
     int FEC_K=10;
     int FEC_PERCENTAGE=50;
-    BenchmarkType benchmarkType=BenchmarkType::ENCODE_ONLY;
+    BenchmarkType benchmarkType=BenchmarkType::FEC_ENCODE;
     // How long the benchmark will take
     int benchmarkTimeSeconds=60;
 };
@@ -62,7 +62,9 @@ struct Options{
 // How many buffers we allocate (must be enough to simulate a constant flow of random data, but too many packets might result in OOM)
 static std::size_t N_ALLOCATED_BUFFERS=1024;
 
-void benchmark_fec(const Options& options){
+
+/*void benchmark_fec(const Options& options){
+    assert(options.benchmarkType==ENCODE_ONLY || options.benchmarkType==DECODE_ONLY):
     const auto testPackets=GenericHelper::createRandomDataBuffers(N_ALLOCATED_BUFFERS,options.PACKET_SIZE,options.PACKET_SIZE);
     // only used when we want to benchmark decoding performance only
     auto testPacketsAfterEncode=std::vector<std::pair<uint64_t,std::vector<uint8_t>>>();
@@ -72,6 +74,7 @@ void benchmark_fec(const Options& options){
         const auto cb1=[&testPacketsAfterEncode](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
             testPacketsAfterEncode.push_back(std::make_pair(nonce,std::vector<uint8_t>(payload,payload+payloadSize)));
         };
+        encoder.outputDataCallback=cb1;
         for(const auto& packet:testPackets){
             encoder.encodePacket(packet.data(),packet.size());
         }
@@ -91,11 +94,12 @@ void benchmark_fec(const Options& options){
     encoder.outputDataCallback=cb1;
     decoder.mSendDecodedPayloadCallback=cb2;
 
-    PacketizedBenchmark packetizedBenchmark("FEC",(100+options.FEC_PERCENTAGE)/100.0f);
+    PacketizedBenchmark packetizedBenchmark(benchmarkTypeReadable(options.benchmarkType),(100+options.FEC_PERCENTAGE)/100.0f);
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
     // run the test for X seconds
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)){
+        if(options.benchmarkType==ENCODE_ONLY)
         for(const auto& packet:testPackets){
             encoder.encodePacket(packet.data(),packet.size());
             //
@@ -103,9 +107,67 @@ void benchmark_fec(const Options& options){
         }
     }
     packetizedBenchmark.end();
+}*/
+
+
+void benchmark_fec_encode(const Options& options){
+    assert(options.benchmarkType==FEC_ENCODE);
+    const auto testPackets=GenericHelper::createRandomDataBuffers(N_ALLOCATED_BUFFERS,options.PACKET_SIZE,options.PACKET_SIZE);
+    FECEncoder encoder(options.FEC_K,options.FEC_PERCENTAGE);
+    const auto cb=[](const uint64_t nonce,const uint8_t * payload,std::size_t payloadSize)mutable{
+        // do nothing here. Let's hope the compiler doesn't notice.
+    };
+    encoder.outputDataCallback=cb;
+    //
+    PacketizedBenchmark packetizedBenchmark("FEC_ENCODE",(100+options.FEC_PERCENTAGE)/100.0f);
+    const auto testBegin=std::chrono::steady_clock::now();
+    packetizedBenchmark.begin();
+    // run the test for X seconds
+    while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)) {
+        for (const auto &packet: testPackets) {
+            encoder.encodePacket(packet.data(), packet.size());
+            //
+            packetizedBenchmark.doneWithPacket(packet.size());
+        }
+    }
+    packetizedBenchmark.end();
 }
 
+// NOTE: benchmarking the fec_decode step is not easy, since FEC is only performed if there are missing packets
+// TODO do properly
+void benchmark_fec_decode(const Options& options){
+    // init encoder and decoder, link the callback
+    FECEncoder encoder(options.FEC_K,options.FEC_PERCENTAGE);
+    auto testPacketsAfterEncode=std::vector<std::pair<uint64_t,std::vector<uint8_t>>>();
+    const auto encoderCb=[&testPacketsAfterEncode](const uint64_t nonce,const uint8_t* payload,const std::size_t payloadSize)mutable {
+        testPacketsAfterEncode.push_back(std::make_pair(nonce,std::vector<uint8_t>(payload,payload+payloadSize)));
+    };
+    encoder.outputDataCallback=encoderCb;
+    const auto testPackets=GenericHelper::createRandomDataBuffers(N_ALLOCATED_BUFFERS,options.PACKET_SIZE,options.PACKET_SIZE);
+    for(const auto& packet:testPackets){
+        encoder.encodePacket(packet.data(),packet.size());
+    }
+
+    FECDecoder decoder;
+    const auto decoderCb=[](const uint8_t * payload,std::size_t payloadSize)mutable{
+        // do nothing here. Let's hope the compiler doesn't notice.
+    };
+    decoder.mSendDecodedPayloadCallback=decoderCb;
+    PacketizedBenchmark packetizedBenchmark("FEC_ENCODE",1.0);
+    const auto testBegin=std::chrono::steady_clock::now();
+    packetizedBenchmark.begin();
+    while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)){
+        for(auto& encodedPacket:testPacketsAfterEncode){
+            decoder.validateAndProcessPacket(encodedPacket.first,encodedPacket.second);
+            packetizedBenchmark.doneWithPacket(encodedPacket.second.size());
+        }
+    }
+    packetizedBenchmark.end();
+}
+
+// TODO: implement decryption benchmark
 void benchmark_crypt(const Options& options){
+    assert(options.benchmarkType==ENCRYPT || options.benchmarkType==DECRYPT);
     Encryptor encryptor{std::nullopt};
     std::array<uint8_t,crypto_box_NONCEBYTES> sessionKeyNonce;
     std::array<uint8_t,crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES> sessionKeyData;
@@ -115,7 +177,7 @@ void benchmark_crypt(const Options& options){
     RandomBufferPot randomBufferPot{N_BUFFERS,1466};
     uint64_t nonce=0;
 
-    PacketizedBenchmark packetizedBenchmark("CRYPT",1.0); // roughly 1:1
+    PacketizedBenchmark packetizedBenchmark(benchmarkTypeReadable(options.benchmarkType),1.0); // roughly 1:1
 
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
@@ -162,7 +224,7 @@ int main(int argc, char *const *argv) {
                 break;
             default: /* '?' */
             show_usage:
-                std::cout<<"Usage: [-s=packet size in bytes] [-k=FEC_K] [-p=FEC_P] [-x Benchmark type. 0=encoding 1=decoding 2=encoding & decoding] [-t benchmark time in seconds]\n";
+                std::cout<<"Usage: [-s=packet size in bytes] [-k=FEC_K] [-p=FEC_P] [-x Benchmark type. 0=FEC_ENCODE 1=FEC_DECODE 2=ENCRYPT 3=DECRYPT ] [-t benchmark time in seconds]\n";
                 return 1;
         }
     }
@@ -172,10 +234,19 @@ int main(int argc, char *const *argv) {
     std::cout<<"FEC_K: "<<options.FEC_K<<"\n";
     std::cout<<"FEC_PERCENTAGE: "<<options.FEC_PERCENTAGE<<"\n";
     std::cout<<"Benchmark time: "<<options.benchmarkTimeSeconds<<" s\n";
-    if(options.benchmarkType==BenchmarkType::ENCRYPT || options.benchmarkType==BenchmarkType::DECRYPT){
-        benchmark_crypt(options);
-    }else{
-        benchmark_fec(options);
+    switch (options.benchmarkType) {
+        case FEC_ENCODE:
+            benchmark_fec_encode(options);
+            break;
+        case FEC_DECODE:
+            benchmark_fec_decode(options);
+            break;
+        case ENCRYPT:
+            benchmark_crypt(options);
+            break;
+        case DECRYPT:
+            benchmark_crypt(options);
+            break;
     }
 
     return 0;

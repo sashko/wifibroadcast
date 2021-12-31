@@ -132,6 +132,7 @@ public:
             std::cerr<<"Do not feed empty packets to FECEncoder\n";
             return;
         }
+        //assert(outputDataCallback);
 
         FECPayloadHdr dataHeader(size);
         // write the size of the data part into each primary fragment.
@@ -447,6 +448,7 @@ private:
      * Be carefully with this param, use it only before you need to get rid of a block
      */
     void forwardMissingPrimaryFragmentsIfAvailable(RxBlock& block, const bool discardMissingPackets= false)const{
+        assert(mSendDecodedPayloadCallback);
         const auto indices=block.pullAvailablePrimaryFragments(discardMissingPackets);
         for(auto primaryFragmentIndex:indices){
             const uint8_t* primaryFragment= block.getDataPrimaryFragment(primaryFragmentIndex);

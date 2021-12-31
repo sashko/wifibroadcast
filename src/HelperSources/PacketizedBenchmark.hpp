@@ -48,7 +48,7 @@ public:
 
         double totalPacketsPerSecond=totalPacketsDelta/(double)testDurationSeconds;
         double totalBitRate_MBits=totalBytesDelta*8.0/1024.0/1024.0/(double)testDurationSeconds;
-        std::cout<<"Test took "<<testDurationSeconds<<" seconds"<<"\n";
+        std::cout<<"Testing "<<name<<" took "<<testDurationSeconds<<" seconds"<<"\n";
         std::cout<<"TOTAL Packets per second:"<<totalPacketsPerSecond<<" before "<<name<<": "<<totalBitRate_MBits<<"Mbit/s";
         if(factor!=1.0f){
             std::cout<<" after "<<name<<": "<<totalBitRate_MBits*factor<<"MBit/s";
