@@ -18,6 +18,8 @@
  */
 #include "HelperSources/SchedulingHelper.hpp"
 #include "FECEnabled.hpp"
+#include "Encryption.hpp"
+#include "HelperSources/RandomBufferPot.hpp"
 #include <cassert>
 #include <cstdio>
 #include <cinttypes>
@@ -27,18 +29,22 @@
 #include <string>
 #include <chrono>
 #include <sstream>
+#include "HelperSources/PacketizedBenchmark.hpp"
 
 // Test the FEC encoding / decoding performance (throughput) of this system
 // Basically measures the throughput of encoding,decoding or en&decoding FEC packets on one CPU core
 // NOTE: Does not take WIFI card throughput into account
 
+
 //TODO: Decode only is not implemented yet.
-enum BenchmarkType{ENCODE_ONLY=0,DECODE_ONLY=1,ENCODE_AND_DECODE=2};
+enum BenchmarkType{ENCODE_ONLY=0,DECODE_ONLY=1,ENCODE_AND_DECODE=2,ENCRYPT=3,DECRYPT=4};
 static std::string benchmarkTypeReadable(const BenchmarkType value){
     switch (value) {
         case ENCODE_ONLY:return "ENCODE_ONLY";
         case DECODE_ONLY:return "DECODE_ONLY";
         case ENCODE_AND_DECODE:return "ENCODE_AND_DECODE";
+        case ENCRYPT:return "ENCRYPT";
+        case DECRYPT:return "DECRYPT";
         default:return "ERROR";
     }
 }
@@ -56,7 +62,7 @@ struct Options{
 // How many buffers we allocate (must be enough to simulate a constant flow of random data, but too many packets might result in OOM)
 static std::size_t N_ALLOCATED_BUFFERS=1024;
 
-void test(const Options& options){
+void benchmark_fec(const Options& options){
     const auto testPackets=GenericHelper::createRandomDataBuffers(N_ALLOCATED_BUFFERS,options.PACKET_SIZE,options.PACKET_SIZE);
     // only used when we want to benchmark decoding performance only
     auto testPacketsAfterEncode=std::vector<std::pair<uint64_t,std::vector<uint8_t>>>();
@@ -85,11 +91,14 @@ void test(const Options& options){
     encoder.outputDataCallback=cb1;
     decoder.mSendDecodedPayloadCallback=cb2;
 
+    PacketizedBenchmark packetizedBenchmark("FEC",(100+options.FEC_PERCENTAGE)/100.0f);
+
     const std::chrono::steady_clock::time_point testBegin=std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point logTs=std::chrono::steady_clock::now();
     int packetsDelta=0;
     int totalPacketsDelta=0;
 
+    packetizedBenchmark.begin();
     // run the test for X seconds
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)){
         for(const auto& packet:testPackets){
@@ -104,6 +113,7 @@ void test(const Options& options){
                 logTs=std::chrono::steady_clock::now();
                 packetsDelta=0;
             }
+            packetizedBenchmark.doneWithPacket(packet.size());
         }
     }
     const auto testDuration=std::chrono::steady_clock::now()-testBegin;
@@ -113,6 +123,52 @@ void test(const Options& options){
     float totalPacketsPerSecond=totalPacketsDelta/(float)options.benchmarkTimeSeconds;
     float rawBitrate_MBits=totalPacketsPerSecond*options.PACKET_SIZE*8.0/1024.0/1024.0;
     std::cout<<"TOTAL Packets per second:"<<totalPacketsPerSecond<<" before FEC: "<<rawBitrate_MBits<<"Mbit/s after FEC: "<<rawBitrate_MBits*(100+options.FEC_PERCENTAGE)/100.0f<<"MBit/s\n";
+    packetizedBenchmark.end();
+}
+
+void benchmark_crypt(const Options& options){
+    Encryptor encryptor{std::nullopt};
+    std::array<uint8_t,crypto_box_NONCEBYTES> sessionKeyNonce;
+    std::array<uint8_t,crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES> sessionKeyData;
+    encryptor.makeNewSessionKey(sessionKeyNonce,sessionKeyData);
+
+    constexpr auto N_BUFFERS=1000;
+    RandomBufferPot randomBufferPot{N_BUFFERS,1466};
+    uint64_t nonce=0;
+
+    const std::chrono::steady_clock::time_point testBegin=std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point logTs=std::chrono::steady_clock::now();
+    int packetsDelta=0;
+    int totalPacketsDelta=0;
+
+    while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)){
+        for(int i=0;i<N_BUFFERS;i++){
+            const auto buffer=randomBufferPot.getBuffer(i);
+            uint8_t add=1;
+            const auto encrypted=encryptor.encryptPacket(nonce,buffer->data(),buffer->size(),add);
+            assert(encrypted.size()>0);
+            nonce++;
+
+            packetsDelta++;
+            totalPacketsDelta++;
+            const auto delta=std::chrono::steady_clock::now()-logTs;
+            if(delta>std::chrono::seconds(1)){
+                const float currPacketsPerSecond=packetsDelta;
+                const float currRawBitrate_MBits=currPacketsPerSecond*options.PACKET_SIZE*8.0/1024.0/1024.0;
+                std::cout<<"curr. Packets per second:"<<currPacketsPerSecond<<" bitrate: "<<currRawBitrate_MBits<<"MBit/s\n";
+                logTs=std::chrono::steady_clock::now();
+                packetsDelta=0;
+            }
+        }
+    }
+
+    const auto testDuration=std::chrono::steady_clock::now()-testBegin;
+    const float testDurationSeconds=std::chrono::duration_cast<std::chrono::milliseconds>(testDuration).count()/1000.0f;
+    //std::cout<<"Wanted duration:"<<options.benchmarkTimeSeconds<<" actual duration:"<<testDurationSeconds<<"\n";
+
+    float totalPacketsPerSecond=totalPacketsDelta/(float)options.benchmarkTimeSeconds;
+    float rawBitrate_MBits=totalPacketsPerSecond*options.PACKET_SIZE*8.0/1024.0/1024.0;
+    std::cout<<"TOTAL Packets per second:"<<totalPacketsPerSecond<<" bitrate: "<<"MBit/s\n";
 }
 
 int main(int argc, char *const *argv) {
@@ -153,7 +209,11 @@ int main(int argc, char *const *argv) {
     std::cout<<"FEC_K: "<<options.FEC_K<<"\n";
     std::cout<<"FEC_PERCENTAGE: "<<options.FEC_PERCENTAGE<<"\n";
     std::cout<<"Benchmark time: "<<options.benchmarkTimeSeconds<<" s\n";
-    test(options);
+    if(options.benchmarkType==BenchmarkType::ENCRYPT || options.benchmarkType==BenchmarkType::DECRYPT){
+        benchmark_crypt(options);
+    }else{
+        benchmark_fec(options);
+    }
 
     return 0;
 }

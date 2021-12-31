@@ -6,6 +6,7 @@
 // when run as creator, creates deterministic packets and forwards them as udp packets
 // when run as validator, validates these (deterministic) packets
 
+#include "HelperSources/RandomBufferPot.hpp"
 #include "HelperSources/Helper.hpp"
 #include <cassert>
 #include <cstdio>
@@ -17,8 +18,6 @@
 #include <chrono>
 #include <sstream>
 #include <thread>
-#include <random>
-#include <cassert>
 
 
 
@@ -46,33 +45,6 @@ using TIMESTAMP=uint64_t;
 
 Options options{};
 
-// holds x buffers with (semi-random) data.
-class RandomBufferPot{
-public:
-    /**
-     * Holds @param nBuffers random data buffers of size @param bufferSize
-     */
-    RandomBufferPot(const std::size_t nBuffers,const std::size_t bufferSize):m_buffers(nBuffers,std::make_unique<std::vector<uint8_t>>(bufferSize)){
-        // fill all buffers with random data
-        int seqNr=0;
-        std::mt19937 random_engine(seqNr);
-        for(auto& buffer:m_buffers){
-            random_engine.seed(seqNr);
-            std::generate(buffer->data(),buffer->data()+buffer->size(),random_engine);
-            //std::cout<<StringHelper::vectorAsString(*buffer.get())<<"\n\n";
-            seqNr++;
-        }
-    }
-    // get a semi-random data buffer for this sequence number. If the sequence number is higher than the n of allocated buffers,
-    // it loops around. As long as this pot is big enough, it should be sufficient to emulate a random data stream
-    std::shared_ptr<std::vector<uint8_t>> getBuffer(SEQUENCE_NUMBER sequenceNumber){
-        auto index=sequenceNumber % m_buffers.size();
-        return m_buffers.at(index);
-    }
-private:
-    std::vector<std::shared_ptr<std::vector<uint8_t>>> m_buffers;
-    //static constexpr const uint32_t SEED=12345;
-};
 
 namespace TestPacket{
     // each test packet has the following layout:
