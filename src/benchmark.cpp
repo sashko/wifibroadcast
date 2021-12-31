@@ -239,13 +239,15 @@ int main(int argc, char *const *argv) {
             benchmark_fec_encode(options);
             break;
         case FEC_DECODE:
-            benchmark_fec_decode(options);
+            //benchmark_fec_decode(options);
+            std::cout<<"Unimplemented\n";
             break;
         case ENCRYPT:
             benchmark_crypt(options);
             break;
         case DECRYPT:
-            benchmark_crypt(options);
+            //benchmark_crypt(options);
+            std::cout<<"Unimplemented\n";
             break;
     }
 
