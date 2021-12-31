@@ -79,6 +79,11 @@ namespace GenericHelper{
     std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB,const ssize_t maxSizeB){
         // https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
         const auto sizeBytes = rand()%(maxSizeB-minSizeB + 1) + minSizeB;
+        assert(sizeBytes<=maxSizeB);
+        assert(sizeBytes>=minSizeB);
+        if(minSizeB==maxSizeB){
+            assert(sizeBytes==minSizeB);
+        }
         return createRandomDataBuffer(sizeBytes);
     }
     // create n random data buffers with size [minSizeB,...,maxSizeB]
