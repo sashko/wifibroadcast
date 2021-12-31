@@ -125,12 +125,13 @@ public:
     // encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback
     // if @param endBlock=true, the FEC step is applied immediately
     // else, the FEC step is only applied if reaching mKMax
-    void encodePacket(const uint8_t *buf,const size_t size,const bool endBlock=false) {
+    // @return true if the fec step was performed, false otherwise
+    bool encodePacket(const uint8_t *buf,const size_t size,const bool endBlock=false) {
         assert(size <= FEC_MAX_PAYLOAD_SIZE);
         // do not feed an "empty" packet to the FECEncoder
         if(size<=0){
             std::cerr<<"Do not feed empty packets to FECEncoder\n";
-            return;
+            return false;
         }
         //assert(outputDataCallback);
 
@@ -160,7 +161,7 @@ public:
         currFragmentIdx += 1;
         // if this is not the last primary fragment, wo don't need to do anything else
         if(!lastPrimaryFragment){
-            return;
+            return false;
         }
         //std::cout<<"Doing FEC step on block size"<<currNPrimaryFragments<<"\n";
         // prepare for the fec step
@@ -178,6 +179,7 @@ public:
         currBlockIdx += 1;
         currFragmentIdx = 0;
         currMaxPacketSize = 0;
+        return true;
     }
 
     // returns true if the block_idx has reached its maximum

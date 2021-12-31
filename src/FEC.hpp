@@ -83,7 +83,10 @@ void fecEncode(unsigned int fragmentSize, std::vector<std::array<uint8_t,S>>& bl
     auto primaryFragmentsP= GenericHelper::convertToP(blockBuffer,0,nPrimaryFragments);
     auto secondaryFragmentsP=GenericHelper::convertToP(blockBuffer,nPrimaryFragments,blockBuffer.size()-nPrimaryFragments);
     secondaryFragmentsP.resize(nSecondaryFragments);
+    //const auto before=std::chrono::steady_clock::now();
     fec_encode(fragmentSize, primaryFragmentsP, secondaryFragmentsP);
+    //const auto delta=std::chrono::steady_clock::now()-before;
+    //std::cout<<"fec_encode step took:"<<std::chrono::duration_cast<std::chrono::microseconds>(delta).count()<<"us\n";
 }
 
 enum FragmentStatus{UNAVAILABLE=0,AVAILABLE=1};
@@ -181,5 +184,6 @@ void testFecCPlusPlusWrapperX(){
     }
     std::cout<<"testFecCPlusPlusWrapper End\n";
 }
+
 
 #endif //WIFIBROADCAST_FEC_H
