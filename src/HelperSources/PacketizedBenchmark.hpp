@@ -22,7 +22,7 @@ public:
         bytesDelta=0;
         totalBytesDelta=0;
     }
-    void doneWithPacket(double packetSizeBytes){
+    void doneWithPacket(const double packetSizeBytes){
         packetsDelta++;
         totalPacketsDelta++;
         bytesDelta+=packetSizeBytes;
@@ -38,6 +38,7 @@ public:
             std::cout<<"\n";
             logTs=std::chrono::steady_clock::now();
             packetsDelta=0;
+            bytesDelta=0;
         }
     }
     void end(){
