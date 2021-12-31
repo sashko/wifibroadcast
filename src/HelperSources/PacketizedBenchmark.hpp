@@ -6,7 +6,7 @@
 #define WIFIBROADCAST_PACKETIZEDBENCHMARK_H
 
 // Wrapper for counting the packet throughput in packets per second and MBit/s.
-// also print the total in the end.
+// Print the current in 1 second intervals and the total at the end.
 class PacketizedBenchmark{
 public:
     /**
