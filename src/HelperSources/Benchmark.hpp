@@ -5,6 +5,9 @@
 #ifndef WIFIBROADCAST_PACKETIZEDBENCHMARK_H
 #define WIFIBROADCAST_PACKETIZEDBENCHMARK_H
 
+// Helpers fo performing packet-based throughput measurement
+// and/or duration-based measurement
+
 // Wrapper for counting the packet throughput in packets per second and MBit/s.
 // Print the current in 1 second intervals and the total at the end.
 class PacketizedBenchmark{
