@@ -1,4 +1,3 @@
-/*#define PROFILE*/
 /*
  * fec.c -- forward error correction based on Vandermonde matrices
  * 980624

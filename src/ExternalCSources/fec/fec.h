@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#define PROFILE
+
 typedef struct fec_parms *fec_code_t;
 typedef unsigned char gf;
 
@@ -35,6 +37,10 @@ void fec_decode(unsigned int blockSize,
 void fec_print(fec_code_t code, int width);
 
 void fec_license(void);
+
+#ifdef PROFILE
+void printDetail(void);
+#endif
 
 #ifdef __cplusplus
 }
