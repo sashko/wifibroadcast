@@ -75,31 +75,24 @@ void benchmark_fec_encode(const Options& options,bool printBlockTime=false){
     encoder.outputDataCallback=cb;
     //
     PacketizedBenchmark packetizedBenchmark("FEC_ENCODE",(100+options.FEC_PERCENTAGE)/100.0f);
+    DurationBenchmark durationBenchmark("FEC_BLOCK_ENCODE",options.PACKET_SIZE*options.FEC_K);
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
-    double blockEncodingTimeUsTotal=0;
-    int blockEncodingTimeCount=0;
-    const int blockSizeBytes=options.PACKET_SIZE*options.FEC_K;
     // run the test for X seconds
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)) {
         for (const auto &packet: testPackets) {
             // also measure the time (in us) it takes to encode a FEC block
             const auto before=std::chrono::steady_clock::now();
+            durationBenchmark.start();
             bool fecPerformed=encoder.encodePacket(packet.data(), packet.size());
             if(fecPerformed){
-                auto delta=std::chrono::steady_clock::now()-before;
-                const auto blockEncodingTimeUs=std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
-                //std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
-                //    " took "<<blockEncodingTimeUs/1000.0f<<" ms"<<"\n";
-                blockEncodingTimeUsTotal+=blockEncodingTimeUs;
-                blockEncodingTimeCount++;
+                durationBenchmark.stop();
             }
             packetizedBenchmark.doneWithPacket(packet.size());
         }
     }
     packetizedBenchmark.end();
-    std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
-        " took "<<(blockEncodingTimeUsTotal/blockEncodingTimeCount)/1000.0f<<" ms on average"<<"\n";
+    durationBenchmark.print();
     //printDetail();
 }
 
@@ -222,7 +215,6 @@ int main(int argc, char *const *argv) {
             std::cout<<"Unimplemented\n";
             break;
     }
-
     return 0;
 }
 

@@ -67,5 +67,38 @@ private:
     const double factor=1.0f;
 };
 
+// Measure how long "something" took and print the average at the end.
+// E.g. encoding a FEC block, encrypting/decrypting a packet,...
+class DurationBenchmark{
+public:
+    DurationBenchmark(std::string name1,int dataSizeBytes1):name(name1),dataSizeBytes(dataSizeBytes1){}
+    void start(){
+        before=std::chrono::steady_clock::now();
+    }
+    void stop(){
+        const auto delta=std::chrono::steady_clock::now()-before;
+        const auto deltaUs=std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
+        //std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
+        //    " took "<<blockEncodingTimeUs/1000.0f<<" ms"<<"\n";
+        blockEncodingTimeUsTotal+=deltaUs;
+        blockEncodingTimeCount++;
+    }
+    void print(){
+        double avgDeltaUs=(blockEncodingTimeUsTotal/blockEncodingTimeCount);
+        float avgDeltaMs=avgDeltaUs/100.0f;
+        std::cout<<"Performing "<<name<<" on "<<StringHelper::memorySizeReadable(dataSizeBytes)<<
+                 " took "<<avgDeltaMs<<" ms on average"<<"\n";
+        //
+        double emulatedThroughputMBits=avgDeltaMs/1000.0*dataSizeBytes*8/1024/1024;
+        std::cout<<"This would equate to a throughput of: "<<emulatedThroughputMBits<<" Mbit/s\n";
+    }
+private:
+    const std::string name;
+    const int dataSizeBytes;
+    double blockEncodingTimeUsTotal=0;
+    int blockEncodingTimeCount=0;
+    std::chrono::steady_clock::time_point before;
+};
+
 
 #endif //WIFIBROADCAST_PACKETIZEDBENCHMARK_H
