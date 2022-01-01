@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#define PROFILE
+//#define PROFILE
 
 typedef struct fec_parms *fec_code_t;
 typedef unsigned char gf;

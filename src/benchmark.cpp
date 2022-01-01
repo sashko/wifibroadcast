@@ -100,7 +100,7 @@ void benchmark_fec_encode(const Options& options,bool printBlockTime=false){
     packetizedBenchmark.end();
     std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
         " took "<<(blockEncodingTimeUsTotal/blockEncodingTimeCount)/1000.0f<<" ms on average"<<"\n";
-    printDetail();
+    //printDetail();
 }
 
 
