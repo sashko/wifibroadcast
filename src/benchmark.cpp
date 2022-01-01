@@ -100,6 +100,7 @@ void benchmark_fec_encode(const Options& options,bool printBlockTime=false){
     packetizedBenchmark.end();
     std::cout<<"Encoding a block of size:"<<StringHelper::memorySizeReadable(blockSizeBytes)<<
         " took "<<(blockEncodingTimeUsTotal/blockEncodingTimeCount)/1000.0f<<" ms on average"<<"\n";
+    printDetail();
 }
 
 
@@ -225,3 +226,8 @@ int main(int argc, char *const *argv) {
     return 0;
 }
 
+// Quick math:
+// With a 20Mbit/s @ 60 fps one frame is on average 20*1024*1024 / 8 / 60 = 43690 bytes.
+// With a max usable MTU of 1446 Bytes this means one block ideally consists of up to 443690/1446=306 packets
+// if you analyze the dji link (Bitrate and resolution unknown though) you get:
+// For an IDR frame: 72674 bytes, for a non-idr frame: 34648, 43647
