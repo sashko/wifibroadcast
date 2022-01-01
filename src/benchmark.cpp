@@ -30,7 +30,7 @@
 #include <chrono>
 #include <sstream>
 #include <list>
-#include "HelperSources/PacketizedBenchmark.hpp"
+#include "HelperSources/Benchmark.hpp"
 
 // Test the FEC encoding / decoding performance (throughput) of this system
 // Basically measures the throughput of encoding,decoding or en&decoding FEC packets on one CPU core
@@ -81,8 +81,6 @@ void benchmark_fec_encode(const Options& options,bool printBlockTime=false){
     // run the test for X seconds
     while ((std::chrono::steady_clock::now()-testBegin)<std::chrono::seconds(options.benchmarkTimeSeconds)) {
         for (const auto &packet: testPackets) {
-            // also measure the time (in us) it takes to encode a FEC block
-            const auto before=std::chrono::steady_clock::now();
             durationBenchmark.start();
             bool fecPerformed=encoder.encodePacket(packet.data(), packet.size());
             if(fecPerformed){
