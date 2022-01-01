@@ -141,6 +141,7 @@ void benchmark_crypt(const Options& options){
     uint64_t nonce=0;
 
     PacketizedBenchmark packetizedBenchmark(benchmarkTypeReadable(options.benchmarkType),1.0); // roughly 1:1
+    DurationBenchmark durationBenchmark("ENC",options.PACKET_SIZE);
 
     const auto testBegin=std::chrono::steady_clock::now();
     packetizedBenchmark.begin();
@@ -149,7 +150,9 @@ void benchmark_crypt(const Options& options){
         for(int i=0;i<N_BUFFERS;i++){
             const auto buffer=randomBufferPot.getBuffer(i);
             uint8_t add=1;
+            durationBenchmark.start();
             const auto encrypted=encryptor.encryptPacket(nonce,buffer->data(),buffer->size(),add);
+            durationBenchmark.stop();
             assert(encrypted.size()>0);
             nonce++;
             //
@@ -157,7 +160,9 @@ void benchmark_crypt(const Options& options){
         }
     }
     packetizedBenchmark.end();
+    durationBenchmark.print();
 }
+
 
 int main(int argc, char *const *argv) {
     int opt;
