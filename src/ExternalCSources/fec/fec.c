@@ -50,6 +50,8 @@
 #include "fec.h"
 //Consti10
 #include "c_linalg.h"
+#include "galoiFields_reference.h"
+
 #define CONSTI10_N_UNROLLS 16
 
 /*
@@ -426,6 +428,28 @@ static void mul_consti2(gf *dst,const gf *src,gf c, int sz) {
     // we can calculate the offset in the multiplication table for c at the beginning (once)
     gf* mulTableOffset=&gf_mul_table[(c)<<8];
     for(int i=0;i<sz;i++){
+        dst[i]=mulTableOffset[src[i]];
+    }
+}
+
+#define LOL_UNROLL 4
+
+static void mul_consti3(gf *dst,const gf *src,gf c, int sz) {
+    // since there are many multiplications of a (random) number with a fixed number (c),
+    // we can calculate the offset in the multiplication table for c at the beginning (once)
+    gf* mulTableOffset=&gf_mul_table[(c)<<8];
+    //for(int i=0;i<sz;i++){
+    //    dst[i]=mulTableOffset[src[i]];
+    //}
+    for(int i=0;i<sz;i+=4){
+        dst[i]=mulTableOffset[src[i]];
+        dst[i+1]=mulTableOffset[src[i+1]];
+        dst[i+2]=mulTableOffset[src[i+2]];
+        dst[i+3]=mulTableOffset[src[i+3]];
+    }
+    // do the rest if it was not a multiple of 4
+    int remaining=sz - (sz % 4);
+    for(int i=sz-remaining;i<sz;i++){
         dst[i]=mulTableOffset[src[i]];
     }
 }
@@ -932,7 +956,7 @@ test_gf()
 {
     fec_init();
     int i ;
-    fprintf(stderr,"GF_SIZE is %d",GF_SIZE);
+    fprintf(stderr,"GF_SIZE is %d\n",GF_SIZE);
     /*
      * test gf tables. Sufficiently tested...
      */
@@ -975,4 +999,32 @@ test_gf()
            }
        }
    }*/
+    for(i=0;i<GF_SIZE;i++){
+        for(int j=0;j<GF_SIZE;j++){
+            gf res;
+            mul(&res,&i,j,1);
+            assert(res==gal_mul(i,j));
+        }
+    }
+    for(i=0;i<GF_SIZE;i++){
+        for(int j=0;j<GF_SIZE;j++){
+            for(int k=0;k<GF_SIZE;k++){
+                gf res=k;
+                addmul(&res,&i,j,1);
+                assert(res== gal_addmul(k,j,i));
+            }
+        }
+    }
+
+
+    {
+        uint8x8_t out_uint8x8_t;
+        uint8x8_t arg0_uint8x8_t;
+        uint8x8_t arg1_uint8x8_t;
+        uint8x8_t arg2_uint8x8_t;
+
+        out_uint8x8_t = vtbx1_u8 (arg0_uint8x8_t, arg1_uint8x8_t, arg2_uint8x8_t);
+    }
+
+
 }
