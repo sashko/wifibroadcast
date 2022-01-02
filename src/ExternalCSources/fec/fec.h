@@ -1,13 +1,12 @@
 #ifndef FEC_2_H
 #define FEC_2_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 //#define PROFILE
 
-typedef struct fec_parms *fec_code_t;
 typedef unsigned char gf;
 
 /*
@@ -34,8 +33,6 @@ void fec_decode(unsigned int blockSize,
                 const unsigned int erased_blocks[],
                 unsigned short nr_fec_blocks  /* how many blocks per stripe */);
 
-void fec_print(fec_code_t code, int width);
-
 void fec_license(void);
 
 void test_gf();
@@ -44,8 +41,8 @@ void test_gf();
 void printDetail(void);
 #endif
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif //FEC_2_H

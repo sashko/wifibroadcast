@@ -49,8 +49,7 @@
 #include <assert.h>
 #include "fec.h"
 //Consti10
-#include "c_linalg.h"
-#include "galoiFields_reference.h"
+#include "gf/gf_simple.h"
 
 #define CONSTI10_N_UNROLLS 16
 
@@ -183,7 +182,7 @@ static gf gf_mul_table[(GF_SIZE + 1)*(GF_SIZE + 1)]
 
 #define gf_mul(x,y) gf_mul_table[(x<<8)+y]
 
-#define USE_GF_MULC register gf * __gf_mulc_
+#define USE_GF_MULC gf * __gf_mulc_
 #define GF_MULC0(c) __gf_mulc_ = &gf_mul_table[(c)<<8]
 #define GF_ADDMULC(dst, x) dst ^= __gf_mulc_[x]
 #define GF_MULC(dst, x) dst = __gf_mulc_[x]
@@ -302,10 +301,9 @@ generate_gf(void)
 // #define UNROLL 16 /* 1, 4, 8, 16 */
 #define UNROLL CONSTI10_N_UNROLLS
 static void
-slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int sz)
+slow_addmul1(gf* dst,const gf* src, gf c, int sz)
 {
     USE_GF_MULC ;
-    //register gf *dst = dst1, *src = src1 ;
     gf *lim = &dst[sz - UNROLL + 1] ;
 
     GF_MULC0(c) ;
@@ -378,8 +376,8 @@ static void
 slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
 {
     USE_GF_MULC ;
-    register gf *dst = dst1;
-    const register gf *src = src1 ;
+    gf *dst = dst1;
+    const gf *src = src1 ;
     gf *lim = &dst[sz - UNROLL + 1] ;
 
     GF_MULC0(c) ;
@@ -446,6 +444,7 @@ static void mul_consti3(gf *dst,const gf *src,gf c, int sz) {
         dst[i+1]=mulTableOffset[src[i+1]];
         dst[i+2]=mulTableOffset[src[i+2]];
         dst[i+3]=mulTableOffset[src[i+3]];
+        //
     }
     // do the rest if it was not a multiple of 4
     int remaining=sz - (sz % 4);
@@ -950,19 +949,7 @@ void fec_license(void)
     exit(0);
 }
 
-#include <arm_neon.h>
 
-uint32x4_t double_elements(uint32x4_t input)
-{
-    return(vaddq_u32(input, input));
-}
-
-void neon_test(){
-
-    uint32x4_t input;
-    double_elements(input);
-    fprintf(stderr,"Executed NEON\n");
-}
 
 
 // from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
@@ -1017,7 +1004,7 @@ test_gf()
     for(i=0;i<GF_SIZE;i++){
         for(int j=0;j<GF_SIZE;j++){
             gf res;
-            mul(&res,&i,j,1);
+            mul(&res,(const gf*)&i,j,1);
             assert(res==gal_mul(i,j));
         }
     }
@@ -1025,13 +1012,9 @@ test_gf()
         for(int j=0;j<GF_SIZE;j++){
             for(int k=0;k<GF_SIZE;k++){
                 gf res=k;
-                addmul(&res,&i,j,1);
+                addmul(&res,(const gf*)&i,j,1);
                 assert(res== gal_addmul(k,j,i));
             }
         }
     }
-
-    neon_test();
-
-
 }
