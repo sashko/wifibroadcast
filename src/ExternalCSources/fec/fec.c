@@ -337,10 +337,6 @@ slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int 
         GF_ADDMULC( *dst , *src );
 }
 
-static void admul_consti(gf *dst,const gf *src, gf c, int sz){
-    // TODO
-}
-
 # define addmul1 slow_addmul1
 
 
@@ -409,11 +405,17 @@ slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
 
 # define mul1 slow_mul1
 
+static void mul_consti(gf *dst,const gf *src, gf c, int sz){
+    for(int i=0;i<sz;i++){
+        dst[i]= gf_mul(src[i],c);
+    }
+}
+
 static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
     // Consti10
     if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
-    //if (c != 0) consti_mul(dst, src, c, sz); else memset(dst, 0, sz);
+    //if (c != 0) mul_consti(dst, src, c, sz); else memset(dst, 0, sz);
 }
 
 /*
@@ -944,4 +946,13 @@ test_gf()
             }
         }
     }*/
+    /*for(i=0;i<=GF_SIZE;i++){
+       for(int j=0;j<=3;j++){
+           gf wantedResMul= mul()
+           gf res= gf_mul(i,j);
+           if(wantedResMul!=res){
+               fprintf(stderr,"For %d*%d we got %d istead of %d\n",i,j,res,wantedResMul);
+           }
+       }
+   }*/
 }
