@@ -50,6 +50,7 @@
 #include "fec.h"
 //Consti10
 #include "c_linalg.h"
+#define CONSTI10_N_UNROLLS 16
 
 /*
  * stuff used for testing purposes only
@@ -294,8 +295,9 @@ generate_gf(void)
 #endif
 
 
-
-#define UNROLL 16 /* 1, 4, 8, 16 */
+// Consti10
+// #define UNROLL 16 /* 1, 4, 8, 16 */
+#define UNROLL CONSTI10_N_UNROLLS
 static void
 slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int sz)
 {
@@ -358,7 +360,9 @@ static void addmul(gf *dst,const gf *src, gf c, int sz) {
     do { if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz); } while(0)
 #endif
 
-#define UNROLL 16 /* 1, 4, 8, 16 */
+// Consti10
+// #define UNROLL 16 /* 1, 4, 8, 16 */
+#define UNROLL CONSTI10_N_UNROLLS
 static void
 slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
 {
