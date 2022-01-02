@@ -337,6 +337,10 @@ slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int 
         GF_ADDMULC( *dst , *src );
 }
 
+static void admul_consti(gf *dst,const gf *src, gf c, int sz){
+    // TODO
+}
+
 # define addmul1 slow_addmul1
 
 
