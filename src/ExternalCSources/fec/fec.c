@@ -952,13 +952,15 @@ void fec_license(void)
 
 #include <arm_neon.h>
 
-void neon_test(){
-    uint8x8_t out_uint8x8_t;
-    uint8x8_t arg0_uint8x8_t;
-    uint8x8_t arg1_uint8x8_t;
-    uint8x8_t arg2_uint8x8_t;
+uint32x4_t double_elements(uint32x4_t input)
+{
+    return(vaddq_u32(input, input));
+}
 
-    out_uint8x8_t = vtbx1_u8 (arg0_uint8x8_t, arg1_uint8x8_t, arg2_uint8x8_t);
+void neon_test(){
+
+    uint32x4_t input;
+    double_elements(input);
     fprintf(stderr,"Executed NEON\n");
 }
 
