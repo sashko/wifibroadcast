@@ -339,6 +339,14 @@ slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int 
 
 # define addmul1 slow_addmul1
 
+__attribute__((optimize("unroll-loops")))
+static void addmul_consti(gf *dst,const gf *src, gf c, int sz) {
+    gf* mulTableOffset=&gf_mul_table[(c)<<8];
+    for(int i=0;i<sz;i++){
+        // NOTE: ^= is the "Bitwise XOR assignment" operator
+        dst[i] ^= mulTableOffset[src[i]];
+    }
+}
 
 static void addmul(gf *dst,const gf *src, gf c, int sz) {
     // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
@@ -407,15 +415,27 @@ slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
 
 static void mul_consti(gf *dst,const gf *src, gf c, int sz){
     for(int i=0;i<sz;i++){
-        dst[i]= gf_mul(src[i],c);
+        //dst[i]= gf_mul(src[i],c);
+        dst[i] = gal_mul(src[i],c);
     }
 }
+
+__attribute__((optimize("unroll-loops")))
+static void mul_consti2(gf *dst,const gf *src,gf c, int sz) {
+    // since there are many multiplications of a (random) number with a fixed number (c),
+    // we can calculate the offset in the multiplication table for c at the beginning (once)
+    gf* mulTableOffset=&gf_mul_table[(c)<<8];
+    for(int i=0;i<sz;i++){
+        dst[i]=mulTableOffset[src[i]];
+    }
+}
+
 
 static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
     // Consti10
-    if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
-    //if (c != 0) mul_consti(dst, src, c, sz); else memset(dst, 0, sz);
+    //if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
+    if (c != 0) mul_consti2(dst, src, c, sz); else memset(dst, 0, sz);
 }
 
 /*
