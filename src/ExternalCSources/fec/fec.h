@@ -14,6 +14,8 @@ typedef unsigned char gf;
  * the encoding matrix.
  * n is the number of data blocks + fec blocks (matrix height)
  * k is just the data blocks (matrix width)
+ * NOTE: Since k,n are variable this call is still required to setup the lookup tables
+ * But k,n don't have to be specified at creation time
  */
 void fec_init(void);
 
