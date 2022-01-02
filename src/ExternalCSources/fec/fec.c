@@ -950,6 +950,19 @@ void fec_license(void)
     exit(0);
 }
 
+#include <arm_neon.h>
+
+void neon_test(){
+    uint8x8_t out_uint8x8_t;
+    uint8x8_t arg0_uint8x8_t;
+    uint8x8_t arg1_uint8x8_t;
+    uint8x8_t arg2_uint8x8_t;
+
+    out_uint8x8_t = vtbx1_u8 (arg0_uint8x8_t, arg1_uint8x8_t, arg2_uint8x8_t);
+    fprintf(stderr,"Executed NEON\n");
+}
+
+
 // from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
 void
 test_gf()
@@ -1016,15 +1029,7 @@ test_gf()
         }
     }
 
-
-    {
-        uint8x8_t out_uint8x8_t;
-        uint8x8_t arg0_uint8x8_t;
-        uint8x8_t arg1_uint8x8_t;
-        uint8x8_t arg2_uint8x8_t;
-
-        out_uint8x8_t = vtbx1_u8 (arg0_uint8x8_t, arg1_uint8x8_t, arg2_uint8x8_t);
-    }
+    neon_test();
 
 
 }
