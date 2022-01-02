@@ -163,6 +163,24 @@ void benchmark_crypt(const Options& options){
     durationBenchmark.print();
 }
 
+/*void benchmark_lol(const Options& options){
+    static constexpr auto SIZE=1446;
+    const auto N_ALLOCATED_BLOCKS=100:
+    const auto N_ALLOCATED_PACKETS=options.FEC_K*100;
+
+    const int FEC_N=options.FEC_K*options.FEC_PERCENTAGE;
+
+    auto buffers=SemiRandomBuffers::createSemiRandomBuffers2<SIZE>(N_ALLOCATED_PACKETS);
+
+    while (true){
+        for(int i=0;i<N_ALLOCATED_BLOCKS;i++){
+            st
+        }
+    }
+
+
+}*/
+
 
 int main(int argc, char *const *argv) {
     int opt;

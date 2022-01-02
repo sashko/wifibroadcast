@@ -48,6 +48,8 @@
 
 #include <assert.h>
 #include "fec.h"
+//Consti10
+#include "c_linalg.h"
 
 /*
  * stuff used for testing purposes only
@@ -337,7 +339,8 @@ slow_addmul1(register gf*restrict dst,const register gf*restrict src, gf c, int 
 
 static void addmul(gf *dst,const gf *src, gf c, int sz) {
     // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
-    if (c != 0) addmul1(dst, src, c, sz);
+    // Consti10 if (c != 0) addmul1(dst, src, c, sz);
+    if (c != 0) consti_addmul(dst, src, c, sz);
 }
 
 /*
@@ -398,7 +401,8 @@ slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
 
 static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
-    if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
+    // Consti10 if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
+    if (c != 0) consti_mul(dst, src, c, sz); else memset(dst, 0, sz);
 }
 
 /*
@@ -639,6 +643,13 @@ void fec_init(void)
  * to worry about evicting FEC blocks from the cache: those are so
  * few (typically, 4 or 8) that they will fit easily in the cache (even
  * in the L2 cache...)
+ */
+/**
+ * Consti10 time complexity
+ * for "mul" part:
+ * nrFecBlocks times we multiply a vector of size blockSize with a scalar
+ * for "addmul" part:
+ *
  */
 void fec_encode(unsigned int blockSize,
                 const gf **data_blocks,
