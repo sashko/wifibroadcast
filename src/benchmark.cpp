@@ -222,6 +222,7 @@ int main(int argc, char *const *argv) {
     std::cout<<"Benchmark time: "<<options.benchmarkTimeSeconds<<" s\n";
     switch (options.benchmarkType) {
         case FEC_ENCODE:
+            test_gf();
             benchmark_fec_encode(options);
             break;
         case FEC_DECODE:

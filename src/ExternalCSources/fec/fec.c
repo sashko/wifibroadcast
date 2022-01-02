@@ -161,6 +161,7 @@ modnn(int x)
 #define SWAP(a,b,t) {t tmp; tmp=a; a=b; b=tmp;}
 
 /*
+ * Consti10: I think this is "galois field" multiplication or something, not "normal" multiplication
  * gf_mul(x,y) multiplies two numbers. If GF_BITS<=8, it is much
  * faster to use a multiplication table.
  *
@@ -897,4 +898,46 @@ void fec_license(void)
             "OF SUCH DAMAGE.\n"
     );
     exit(0);
+}
+
+// from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
+void
+test_gf()
+{
+    fec_init();
+    int i ;
+    fprintf(stderr,"GF_SIZE is %d",GF_SIZE);
+    /*
+     * test gf tables. Sufficiently tested...
+     */
+    for (i=0; i<= GF_SIZE; i++) {
+        if (gf_exp[gf_log[i]] != i)
+            fprintf(stderr, "bad exp/log i %d log %d exp(log) %d\n",
+                    i, gf_log[i], gf_exp[gf_log[i]]);
+
+        if (i != 0 && gf_mul(i, inverse[i]) != 1)
+            fprintf(stderr, "bad mul/inv i %d inv %d i*inv(i) %d\n",
+                    i, inverse[i], gf_mul(i, inverse[i]) );
+        if (gf_mul(0,i) != 0)
+            fprintf(stderr, "bad mul table 0,%d\n",i);
+        if (gf_mul(i,0) != 0)
+            fprintf(stderr, "bad mul table %d,0\n",i);
+        // Consti10
+        gf res=gf_mul(1,i);
+        if (res != i)
+            fprintf(stderr, "bad mul table 1,%d result: %d\n",i,res);
+        res=gf_mul(i,1);
+        if (res != i)
+            fprintf(stderr, "bad mul table %d,1 result: %d\n",i,res);
+    }
+    // Consti10 - won't work, galois fields math !
+    /*for(i=0;i<=GF_SIZE;i++){
+        for(int j=0;j<=3;j++){
+            gf wantedResMul=i*j;
+            gf res= gf_mul(i,j);
+            if(wantedResMul!=res){
+                fprintf(stderr,"For %d*%d we got %d istead of %d\n",i,j,res,wantedResMul);
+            }
+        }
+    }*/
 }
