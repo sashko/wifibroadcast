@@ -5,6 +5,14 @@
 #ifndef WIFIBROADCAST_PACKETIZEDBENCHMARK_H
 #define WIFIBROADCAST_PACKETIZEDBENCHMARK_H
 
+#include <cassert>
+#include <cstdio>
+#include <memory>
+#include <string>
+#include <chrono>
+#include <sstream>
+#include <list>
+
 // Helpers fo performing packet-based throughput measurement
 // and/or duration-based measurement
 
@@ -88,11 +96,11 @@ public:
     }
     void print(){
         double avgDeltaUs=(blockEncodingTimeUsTotal/blockEncodingTimeCount);
-        float avgDeltaMs=avgDeltaUs/100.0f;
+        float avgDeltaMs=avgDeltaUs/1000.0f;
         std::cout<<"Performing "<<name<<" on "<<StringHelper::memorySizeReadable(dataSizeBytes)<<
                  " took "<<avgDeltaMs<<" ms on average"<<"\n";
         //
-        double emulatedThroughputMBits=avgDeltaMs/1000.0*dataSizeBytes*8/1024/1024;
+        double emulatedThroughputMBits=1000.0/avgDeltaMs*dataSizeBytes*8/1024/1024;
         std::cout<<"This would equate to a throughput of: "<<emulatedThroughputMBits<<" Mbit/s\n";
     }
 private:
