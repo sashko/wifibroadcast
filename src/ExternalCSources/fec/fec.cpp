@@ -373,11 +373,9 @@ static void addmul(gf *dst,const gf *src, gf c, int sz) {
 // #define UNROLL 16 /* 1, 4, 8, 16 */
 #define UNROLL CONSTI10_N_UNROLLS
 static void
-slow_mul1(gf *dst1,const gf *src1, gf c,const int sz)
+slow_mul1(gf *dst,const gf *src, gf c,const int sz)
 {
     USE_GF_MULC ;
-    gf *dst = dst1;
-    const gf *src = src1 ;
     gf *lim = &dst[sz - UNROLL + 1] ;
 
     GF_MULC0(c) ;
