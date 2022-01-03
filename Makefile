@@ -18,7 +18,6 @@ src/ExternalCSources/radiotap/%.o: src/ExternalCSources/radiotap/%.c src/Externa
 # compile the (general) fec part
 src/ExternalCSources/fec/gf256/%.o: src/ExternalCSources/fec/gf256/%.cpp src/ExternalCSources/fec/gf256/%.h
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
-
 src/ExternalCSources/fec/%.o: src/ExternalCSources/fec/%.cpp src/ExternalCSources/fec/*.h src/ExternalCSources/fec/gf256/gf256.o
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 

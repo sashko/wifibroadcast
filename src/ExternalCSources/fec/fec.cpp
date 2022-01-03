@@ -49,8 +49,11 @@
 #include <assert.h>
 #include "fec.h"
 //Consti10
-#include "gf/gf_simple.h"
+#include "gf_simple/gf_simple.h"
+#include "gf256/gf256.h"
+#include "gf/gf256.h"
 #include <vector>
+#include <iostream>
 
 #define CONSTI10_N_UNROLLS 16
 
@@ -354,6 +357,7 @@ static void addmul(gf *dst,const gf *src, gf c, int sz) {
     // Consti10
     if (c != 0) addmul1(dst, src, c, sz);
     //if (c != 0) consti_addmul(dst, src, c, sz);
+    //gf256_muladd_mem(dst,c,src,sz);
 }
 
 /*
@@ -458,6 +462,7 @@ static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     // Consti10
     if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
     //if (c != 0) mul_consti2(dst, src, c, sz); else memset(dst, 0, sz);
+    //gf256_mul_mem(dst,src,c,sz);
 }
 
 /*
@@ -600,6 +605,7 @@ void fec_init(void)
     init_mul_table();
     TOCK(ticks[0]);
     DDB(fprintf(stderr, "init_mul_table took %ldus\n", ticks[0]);)
+    gf256_init();
     fec_initialized = 1 ;
 }
 
@@ -948,8 +954,26 @@ void fec_license(void)
     exit(0);
 }
 
+namespace FUCK{
+    static void fillBufferWithRandomData(std::vector<uint8_t>& data){
+        const std::size_t size=data.size();
+        for(std::size_t i=0;i<size;i++){
+            data[i] = rand() % 255;
+        }
+    }
+    std::vector<uint8_t> createRandomDataBuffer(const ssize_t sizeBytes){
+        std::vector<uint8_t> buf(sizeBytes);
+        fillBufferWithRandomData(buf);
+        return buf;
+    }
+    void assertVectorsEqual(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
+        assert(sb.size()==rb.size());
+        const int result=memcmp (sb.data(),rb.data(),sb.size());
+        assert(result==0);
+    }
+}
 
-#include "gf256/gf256.h"
+
 
 // from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
 void
@@ -990,7 +1014,15 @@ test_gf()
             gf res;
             mul(&res,(const gf*)&i,j,1);
             assert(res==gal_mul(i,j));
-            //assert(res== gf256_mul(i,j));
+            //assert(res== gf256_mul(j,i));
+            /*{
+                auto lol=gf256_mul(i,j);
+                if(res != lol){
+                    printf("XX %d %d\n",res,lol);
+                }else{
+                    printf("Okay\n");
+                }
+            }*/
         }
     }
     for(i=0;i<GF_SIZE;i++){
@@ -1002,16 +1034,30 @@ test_gf()
             }
         }
     }
+    /*for(i=0;i<GF_SIZE;i++){
+        std::cout<<i<<"\t";
+        for(int j=0;j<10;j++){
+            //printf("%d or: %d other: %d\n",i,gf_mul(i,j),gf256_mul(i,j));
+            std::cout<<"["<<(int)gf_mul(i,j)<<","<<(int)gf256_mul(i,j)<<"]";
+        }
+        std::cout<<"\n";
+    }*/
 
-    /*static constexpr auto X_SIZE=1024;
-    auto source=GenericHelper::createRandomDataBuffer(X_SIZE);
+    static constexpr auto X_SIZE=1024;
+    auto source=FUCK::createRandomDataBuffer(X_SIZE);
     std::vector<uint8_t> res1(X_SIZE);
     std::vector<uint8_t> res2(X_SIZE);
     for(i=0;i<GF_SIZE;i++){
-        slow_mul1(res1.data(),source.data(),i,X_SIZE);
-        gf256_mul_mem(res2.data(),source.data(),i,X_SIZE);
-        GenericHelper::assertVectorsEqual(res1,res2);
-    }*/
+        //slow_mul1(res1.data(),source.data(),i,X_SIZE);
+        //gal_mul_region(res2.data(),source.data(),i,X_SIZE);
+        slow_addmul1(res1.data(),source.data(),i,X_SIZE);
+        maddrc256_flat_table(res2.data(),source.data(),i,X_SIZE);
+        FUCK::assertVectorsEqual(res1,res2);
+    }
+
+
+
+    std::cout<<"test done\n";
 
 
 }
