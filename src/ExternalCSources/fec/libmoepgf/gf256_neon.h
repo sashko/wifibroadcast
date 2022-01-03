@@ -71,7 +71,7 @@ maddrc256_imul_neon_128(uint8_t *region1, const uint8_t *region2,
     sp[7] = vdupq_n_u8(p[7]);
 
     for (end=region1+length; region1<end; region1+=16, region2+=16) {
-        reg2 = vld1q_u8((void *)region2);
+        reg2 = vld1q_u8((const void *)region2);
         reg1 = vld1q_u8((void *)region1);
 
         ri[0] = vandq_u8(reg2, mi[0]);
