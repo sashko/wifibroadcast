@@ -41,14 +41,14 @@ maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
         return;
     }
 
-    t1 = vld2_u8((void *)tl[constant]);
-    t2 = vld2_u8((void *)th[constant]);
+    t1 = vld2_u8((const uint8_t *)tl[constant]);
+    t2 = vld2_u8((const uint8_t *)th[constant]);
     m1 = vdup_n_u8(0x0f);
     m2 = vdup_n_u8(0xf0);
 
     for (end=region1+length; region1<end; region1+=8, region2+=8) {
-        in2 = vld1_u8((void *)region2);
-        in1 = vld1_u8((void *)region1);
+        in2 = vld1_u8((const uint8_t *)region2);
+        in1 = vld1_u8((const uint8_t *)region1);
         l = vand_u8(in2, m1);
         l = vtbl2_u8(t1, l);
         h = vand_u8(in2, m2);
