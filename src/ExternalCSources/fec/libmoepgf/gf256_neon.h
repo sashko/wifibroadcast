@@ -20,7 +20,7 @@ xorr_neon_128(uint8_t *region1, const uint8_t *region2, size_t length)
         in  = vld1q_u64((const uint64_t *)region2);
         out = vld1q_u64((const uint64_t *)region1);
         out = veorq_u64(in, out);
-        vst1q_u64((const uint64_t *)region1, out);
+        vst1q_u64((uint64_t *)region1, out);
     }
 }
 /*
