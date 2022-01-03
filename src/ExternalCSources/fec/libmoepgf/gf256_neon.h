@@ -23,7 +23,8 @@ xorr_neon_128(uint8_t *region1, const uint8_t *region2, size_t length)
         vst1q_u64((uint64_t *)region1, out);
     }
 }
-/*
+
+
 static void
 maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
                           uint8_t constant, size_t length)
@@ -57,4 +58,4 @@ maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
         out = veor_u8(out, in1);
         vst1_u8(region1, out);
     }
-}*/
+}
