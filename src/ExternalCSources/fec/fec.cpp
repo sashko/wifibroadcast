@@ -51,7 +51,7 @@
 //Consti10
 #include "gf_simple/gf_simple.h"
 #include "gf256/gf256.h"
-#include "gf/gf256.h"
+#include "libmoepgf/gf256.h"
 #include <vector>
 #include <iostream>
 
@@ -1057,7 +1057,7 @@ test_gf()
 
 
 
-    std::cout<<"test done\n";
+    std::cout<<"test done2\n";
 
 
 }
