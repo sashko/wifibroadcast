@@ -52,6 +52,7 @@
 #include "gf_simple/gf_simple.h"
 #include "gf256/gf256.h"
 #include "libmoepgf/gf256.h"
+#include "libmoepgf/gf256_neon.h"
 #include <vector>
 #include <iostream>
 
@@ -1051,7 +1052,8 @@ test_gf()
         //slow_mul1(res1.data(),source.data(),i,X_SIZE);
         //gal_mul_region(res2.data(),source.data(),i,X_SIZE);
         slow_addmul1(res1.data(),source.data(),i,X_SIZE);
-        maddrc256_flat_table(res2.data(),source.data(),i,X_SIZE);
+        //maddrc256_flat_table(res2.data(),source.data(),i,X_SIZE);
+        maddrc256_imul_neon_128(res2.data(),source.data(),i,X_SIZE);
         FUCK::assertVectorsEqual(res1,res2);
     }
 
