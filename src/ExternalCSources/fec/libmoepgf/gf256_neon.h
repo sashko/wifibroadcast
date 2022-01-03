@@ -10,6 +10,20 @@ static const uint8_t pt[MOEPGF256_SIZE][MOEPGF256_EXPONENT] = MOEPGF256_POLYNOMI
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
 
+void
+xorr_neon_128(uint8_t *region1, const uint8_t *region2, size_t length)
+{
+    uint8_t *end;
+    register uint64x2_t in, out;
+
+    for (end=region1+length; region1<end; region1+=16, region2+=16) {
+        in  = vld1q_u64((void *)region2);
+        out = vld1q_u64((void *)region1);
+        out = veorq_u64(in, out);
+        vst1q_u64((void *)region1, out);
+    }
+}
+
 static void
 maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
                           uint8_t constant, size_t length)
