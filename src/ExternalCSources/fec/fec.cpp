@@ -1053,7 +1053,7 @@ test_gf()
         //gal_mul_region(res2.data(),source.data(),i,X_SIZE);
         slow_addmul1(res1.data(),source.data(),i,X_SIZE);
         //maddrc256_flat_table(res2.data(),source.data(),i,X_SIZE);
-        maddrc256_imul_neon_128(res2.data(),source.data(),i,X_SIZE);
+        maddrc256_shuffle_neon_64(res2.data(),source.data(),i,X_SIZE);
         FUCK::assertVectorsEqual(res1,res2);
     }
 
