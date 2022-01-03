@@ -50,6 +50,7 @@
 #include "fec.h"
 //Consti10
 #include "gf/gf_simple.h"
+#include <vector>
 
 #define CONSTI10_N_UNROLLS 16
 
@@ -176,7 +177,7 @@ static gf gf_mul_table[(GF_SIZE + 1)*(GF_SIZE + 1)]
 #ifdef WINDOWS
         __attribute__((aligned (16)))
 #else
-        __attribute__((aligned (256)))
+       // __attribute__((aligned (256)))
 #endif
 ;
 
@@ -948,13 +949,17 @@ void fec_license(void)
 }
 
 
-
+#include "gf256/gf256.h"
 
 // from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
 void
 test_gf()
 {
     fec_init();
+    //
+    auto res=gf256_init();
+    fprintf(stderr, "gf256_init returned %d\n",res);
+    //
     int i ;
     fprintf(stderr,"GF_SIZE is %d\n",GF_SIZE);
     /*
@@ -980,30 +985,12 @@ test_gf()
         if (res != i)
             fprintf(stderr, "bad mul table %d,1 result: %d\n",i,res);
     }
-    // Consti10 - won't work, galois fields math !
-    /*for(i=0;i<=GF_SIZE;i++){
-        for(int j=0;j<=3;j++){
-            gf wantedResMul=i*j;
-            gf res= gf_mul(i,j);
-            if(wantedResMul!=res){
-                fprintf(stderr,"For %d*%d we got %d istead of %d\n",i,j,res,wantedResMul);
-            }
-        }
-    }*/
-    /*for(i=0;i<=GF_SIZE;i++){
-       for(int j=0;j<=3;j++){
-           gf wantedResMul= mul()
-           gf res= gf_mul(i,j);
-           if(wantedResMul!=res){
-               fprintf(stderr,"For %d*%d we got %d istead of %d\n",i,j,res,wantedResMul);
-           }
-       }
-   }*/
     for(i=0;i<GF_SIZE;i++){
         for(int j=0;j<GF_SIZE;j++){
             gf res;
             mul(&res,(const gf*)&i,j,1);
             assert(res==gal_mul(i,j));
+            //assert(res== gf256_mul(i,j));
         }
     }
     for(i=0;i<GF_SIZE;i++){
@@ -1015,4 +1002,16 @@ test_gf()
             }
         }
     }
+
+    /*static constexpr auto X_SIZE=1024;
+    auto source=GenericHelper::createRandomDataBuffer(X_SIZE);
+    std::vector<uint8_t> res1(X_SIZE);
+    std::vector<uint8_t> res2(X_SIZE);
+    for(i=0;i<GF_SIZE;i++){
+        slow_mul1(res1.data(),source.data(),i,X_SIZE);
+        gf256_mul_mem(res2.data(),source.data(),i,X_SIZE);
+        GenericHelper::assertVectorsEqual(res1,res2);
+    }*/
+
+
 }

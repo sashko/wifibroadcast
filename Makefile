@@ -10,28 +10,32 @@ _CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=
 all_bin: wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_validator
 all: all_bin gs.key
 
-# The non-c++ part
-src/ExternalCSources/%.o: src/ExternalCSources/radiotap/%.c src/ExternalCSources/radiotap/*.h
+# Just compile everything as c++ code
+# compile radiotap
+src/ExternalCSources/radiotap/%.o: src/ExternalCSources/radiotap/%.c src/ExternalCSources/radiotap/*.h
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
-#src/ExternalCSources/%.o: src/ExternalCSources/fec/%.c src/ExternalCSources/fec/*.h
-#	$(CC) $(_CFLAGS) -Werror -std=gnu99 -c -o $@ $<
+# compile the (general) fec part
+src/ExternalCSources/fec/gf256/%.o: src/ExternalCSources/fec/gf256/%.cpp src/ExternalCSources/fec/gf256/%.h
+	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
+src/ExternalCSources/fec/%.o: src/ExternalCSources/fec/%.cpp src/ExternalCSources/fec/*.h src/ExternalCSources/fec/gf256/gf256.o
+	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # the c++ part
 src/%.o: src/%.cpp src/*.hpp
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
-wfb_rx: src/rx.o src/ExternalCSources/radiotap/radiotap.o src/ExternalCSources/fec/fec.o
+wfb_rx: src/rx.o src/ExternalCSources/radiotap/radiotap.o src/ExternalCSources/fec/fec.o src/ExternalCSources/fec/gf256/gf256.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-wfb_tx: src/tx.o src/ExternalCSources/radiotap/radiotap.o src/ExternalCSources/fec/fec.o
+wfb_tx: src/tx.o src/ExternalCSources/radiotap/radiotap.o src/ExternalCSources/fec/fec.o src/ExternalCSources/fec/gf256/gf256.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-unit_test: src/unit_test.o src/ExternalCSources/fec/fec.o
+unit_test: src/unit_test.o src/ExternalCSources/fec/fec.o src/ExternalCSources/fec/gf256/gf256.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-benchmark: src/benchmark.o src/ExternalCSources/fec/fec.o
+benchmark: src/benchmark.o src/ExternalCSources/fec/fec.o src/ExternalCSources/fec/gf256/gf256.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
 udp_generator_validator: src/udp_generator_validator.o
