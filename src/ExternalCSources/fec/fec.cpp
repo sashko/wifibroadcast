@@ -356,9 +356,10 @@ static void addmul_consti(gf *dst,const gf *src, gf c, int sz) {
 static void addmul(gf *dst,const gf *src, gf c, int sz) {
     // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
     // Consti10
-    if (c != 0) addmul1(dst, src, c, sz);
+    //if (c != 0) addmul1(dst, src, c, sz);
     //if (c != 0) consti_addmul(dst, src, c, sz);
     //gf256_muladd_mem(dst,c,src,sz);
+    maddrc256_flat_table(dst,src,c,sz);
 }
 
 /*
