@@ -113,7 +113,7 @@ mulrc256_shuffle_neon_64(uint8_t *region1,const uint8_t* region2, uint8_t consta
     m1 = vdup_n_u8(0x0f);
     m2 = vdup_n_u8(0xf0);
 
-    for (end=region1+length; region1<end; region1+=8;region2+=8) {
+    for (end=region1+length; region1<end; region1+=8,region2+=8) {
         in = vld1_u8((const uint8_t *)region2);
         l = vand_u8(in, m1);
         l = vtbl2_u8(t1, l);
