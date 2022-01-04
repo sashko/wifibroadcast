@@ -61,8 +61,8 @@ maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
         return;
 
     if (constant == 1) {
-        xorr_neon_64(region1, region2, length);
-        return;
+        //xorr_neon_64(region1, region2, length);
+        //return;
     }
 
     t1 = vld2_u8((const uint8_t *)tl[constant]);
