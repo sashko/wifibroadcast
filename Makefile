@@ -16,25 +16,23 @@ src/ExternalCSources/radiotap/%.o: src/ExternalCSources/radiotap/%.c src/Externa
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # compile the (general) fec part
-src/ExternalCSources/fec/gf256/%.o: src/ExternalCSources/fec/gf256/%.cpp src/ExternalCSources/fec/gf256/%.h
-	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
-src/ExternalCSources/fec/%.o: src/ExternalCSources/fec/%.cpp src/ExternalCSources/fec/*.h src/ExternalCSources/fec/gf256/gf256.o
+src/ExternalCSources/fec/%.o: src/ExternalCSources/fec/%.cpp src/ExternalCSources/fec/*.h
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # the c++ part
 src/%.o: src/%.cpp src/*.hpp
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
-wfb_rx: src/rx.o src/ExternalCSources/radiotap/radiotap.o src/ExternalCSources/fec/fec.o src/ExternalCSources/fec/gf256/gf256.o
+wfb_rx: src/rx.o src/ExternalCSources/radiotap/radiotap.o src/ExternalCSources/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-wfb_tx: src/tx.o src/ExternalCSources/radiotap/radiotap.o src/ExternalCSources/fec/fec.o src/ExternalCSources/fec/gf256/gf256.o
+wfb_tx: src/tx.o src/ExternalCSources/radiotap/radiotap.o src/ExternalCSources/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-unit_test: src/unit_test.o src/ExternalCSources/fec/fec.o src/ExternalCSources/fec/gf256/gf256.o
+unit_test: src/unit_test.o src/ExternalCSources/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-benchmark: src/benchmark.o src/ExternalCSources/fec/fec.o src/ExternalCSources/fec/gf256/gf256.o
+benchmark: src/benchmark.o src/ExternalCSources/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
 udp_generator_validator: src/udp_generator_validator.o
