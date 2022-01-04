@@ -626,7 +626,6 @@ void fec_init(void)
     init_mul_table();
     TOCK(ticks[0]);
     DDB(fprintf(stderr, "init_mul_table took %ldus\n", ticks[0]);)
-    gf256_init();
     fec_initialized = 1 ;
 }
 
