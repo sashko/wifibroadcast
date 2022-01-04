@@ -361,16 +361,16 @@ static void addmul(gf *dst,const gf *src, gf c, int sz) {
     //gf256_muladd_mem(dst,c,src,sz);
     //maddrc256_flat_table(dst,src,c,sz);
     //maddrc256_shuffle_neon_64(dst,src,c,sz);
+    //maddrc256_flat_table(dst,src,c,sz);
     // We can only do the fast algorithm on multiples of 8
-    /*const int sizeFast=sz - (sz % 8);
+    const int sizeFast=sz - (sz % 8);
     const int sizeSlow= sz-sizeFast;
     if(sizeFast){
         maddrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
     if(sizeSlow){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
-    maddrc256_flat_table(dst,src,c,sz);
+    }
 }
 
 /*
@@ -476,15 +476,15 @@ static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
     //if (c != 0) mul_consti2(dst, src, c, sz); else memset(dst, 0, sz);
     //gf256_mul_mem(dst,src,c,sz);
-    /*const int sizeFast=sz - (sz % 8);
+    mulrc256_flat_table(dst,src,c,sz);
+    const int sizeFast=sz - (sz % 8);
     const int sizeSlow= sz-sizeFast;
     if(sizeFast){
         mulrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
     if(sizeSlow){
-        maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
-    mulrc256_flat_table(dst,src,c,sz);
+        mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    }
 }
 
 /*
