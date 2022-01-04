@@ -18,14 +18,14 @@ static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
 void
 xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
 {
-    std::cout<<"X neon"<<length<<"\n";
+    std::cout<<"Xx neon"<<length<<"\n";
     assert(length % 8 ==0);
     uint8_t *end;
     register uint8x8_t in1,in2,out;
 
     for (end=region1+length; region1<end; region1+=8, region2+=8) {
-        in1  = vld1_u8((const uint8_t *)region2);
-        in2 = vld1_u8((const uint8_t *)region1);
+        in1  = vld1_u8((const uint8_t *)region1);
+        in2 = vld1_u8((const uint8_t *)region2);
         out = veor_u8(in1, in2);
         vst1_u8((uint8_t *)region1, out);
     }
@@ -61,8 +61,8 @@ maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
         return;
 
     if (constant == 1) {
-        //xorr_neon_64(region1, region2, length);
-        //return;
+        xorr_neon_64(region1, region2, length);
+        return;
     }
 
     t1 = vld2_u8((const uint8_t *)tl[constant]);
