@@ -1003,7 +1003,7 @@ static void test(const int k,const int n,const int packetSize,const int nLostDat
     const int nFecPackets=n-k;
     const auto dataPackets=FUCK::createRandomDataBuffers(k,packetSize);
     const auto dataPacketsP=FUCK::convertToP(dataPackets);
-    std::vector<std::vector<uint8_t>> fecPackets(std::vector<uint8_t>(packetSize),nFecPackets);
+    std::vector<std::vector<uint8_t>> fecPackets(nFecPackets,std::vector<uint8_t>(packetSize));
     auto fecPacketsP= FUCK::convertToP(fecPackets);
 
     //fec_encode(packetSize,(const gf*)dataPacketsP.data(),dataPacketsP.size(),(gf*)fecPacketsP.data(),fecPacketsP.size());
