@@ -18,7 +18,7 @@ static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
 void
 xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
 {
-    std::cout<<"Xx neon"<<length<<"\n";
+    std::cout<<"Xx neon"<<length<<" "<<region1[0]":"<<region2[0]<<"\n";
     assert(length % 8 ==0);
     /*uint8_t *end;
     register uint8x8_t in1,in2,out;
