@@ -1001,8 +1001,6 @@ test_gf()
 {
     fec_init();
     //
-    auto res=gf256_init();
-    fprintf(stderr, "gf256_init returned %d\n",res);
     //
     int i ;
     fprintf(stderr,"GF_SIZE is %d\n",GF_SIZE);
