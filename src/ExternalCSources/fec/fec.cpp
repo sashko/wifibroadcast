@@ -1059,6 +1059,7 @@ test_gf()
             //maddrc256_shuffle_neon_64(res2.data(),source.data(),i,X_SIZE);
             gf256_madd_optimized(res2.data(),source.data(),i,X_SIZE);
             FUCK::assertVectorsEqual(res1,res2);
+            std::cout<<"Okay "<<X_SIZE<<" *"<<i<<"\n";
         }
     }
 
