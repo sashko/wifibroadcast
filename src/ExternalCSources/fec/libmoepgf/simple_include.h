@@ -74,7 +74,7 @@ static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int
     if(sizeSlow>0){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }*/
-    maddrc256_flat_table(dst,src,c,sz);
+    //maddrc256_flat_table(dst,src,c,sz);
 }
 
 
