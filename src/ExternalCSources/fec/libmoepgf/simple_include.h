@@ -33,6 +33,7 @@
 
 
 static void test(){
+
     const uint8_t buf1[10]{
         0,1,2,3,4,5,6,7,8,9
     };
@@ -40,7 +41,7 @@ static void test(){
             0,1,2,3,4,5,6,7,8,9
     };
     uint8_t res2[10];
-    memcpy(res2,res1);
+    memcpy(res2,res1,10);
 
     xorr_scalar(res1,buf1,10);
     xorr_neon_64(res2,buf1,10);
