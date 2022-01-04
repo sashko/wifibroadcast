@@ -975,10 +975,30 @@ namespace FUCK{
         const int result=memcmp (sb.data(),rb.data(),sb.size());
         assert(result==0);
     }
+    std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t nBuffers, const std::size_t sizeB){
+        std::vector<std::vector<uint8_t>> buffers;
+        for(std::size_t i=0;i<nBuffers;i++){
+            buffers.push_back(createRandomDataBuffer(sizeB));
+        }
+        return buffers;
+    }
+    static std::vector<const uint8_t*> convertToP(const std::vector<std::vector<uint8_t>> buffs){
+        std::vector<const uint8_t*> ret;
+        for(int i=0;i<buffs.size();i++){
+            ret.push_back(buffs[i].data());
+        }
+        return ret;
+    }
 }
 
 
+static void test(const int k,const int n,const int packetSize,const int nLostDataPackets,const int nLostFecPackets){
+    const int nFecPackets=n-k;
+    const auto dataPackets=FUCK::createRandomDataBuffers(k,packetSize);
 
+    //std::vector<std::vector<uint8_t>> fecPackets(std::vector<uint8_t>(packetSize),nFecPackets);
+    //fec_encode(packetSize,dataPackets.data(),)
+}
 
 
 // from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
@@ -1047,7 +1067,7 @@ test_gf()
         std::cout<<"\n";
     }*/
 
-    for(int X_SIZE=0;X_SIZE<1024;X_SIZE++){
+    for(int X_SIZE=1;X_SIZE<1466;X_SIZE++){
         auto source=FUCK::createRandomDataBuffer(X_SIZE);
         std::vector<uint8_t> res1(X_SIZE);
         std::vector<uint8_t> res2(X_SIZE);
@@ -1059,8 +1079,9 @@ test_gf()
             //maddrc256_shuffle_neon_64(res2.data(),source.data(),i,X_SIZE);
             gf256_madd_optimized(res2.data(),source.data(),i,X_SIZE);
             FUCK::assertVectorsEqual(res1,res2);
-            std::cout<<"Okay "<<X_SIZE<<" *"<<i<<"\n";
+            //std::cerr<<"Okay "<<X_SIZE<<" *"<<i<<"\n";
         }
+        std::cerr<<"Okay "<<X_SIZE<<" all 0..255\n";
     }
 
 
