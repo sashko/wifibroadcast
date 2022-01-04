@@ -93,3 +93,19 @@ Testing FEC_ENCODE took 60.016 seconds
 TOTAL Packets per second:45607 before FEC_ENCODE: 503.142Mbit/s after FEC_ENCODE: 603.77MBit/s
 Performing FEC_BLOCK_ENCODE on 70.605469kB took 0.903329 ms on average
 This would equate to a throughput of: 610.636 Mbit/s
+
+
+SUMMARRY:
+-k 10 -p 50: (10:15) in old (K:N) terms.
+TOTAL Packets per second:24911.9 before FEC_ENCODE: 274.831Mbit/s after FEC_ENCODE: 412.247MBit/s
+Performing FEC_BLOCK_ENCODE on 14.121094kB took 0.36251 ms on average
+vs
+TOTAL Packets per second:74749.5 before FEC_ENCODE: 824.644Mbit/s after FEC_ENCODE: 1236.97MBit/s
+Performing FEC_BLOCK_ENCODE on 14.121094kB took 0.0944422 ms on average
+
+-k 50 -p 20 (50:60) in old (K:N) terms.
+TOTAL Packets per second:12852.2 before FEC_ENCODE: 141.787Mbit/s after FEC_ENCODE: 170.144MBit/s
+Performing FEC_BLOCK_ENCODE on 70.605469kB took 3.69511 ms on average
+vs
+TOTAL Packets per second:45607 before FEC_ENCODE: 503.142Mbit/s after FEC_ENCODE: 603.77MBit/s
+Performing FEC_BLOCK_ENCODE on 70.605469kB took 0.903329 ms on average
