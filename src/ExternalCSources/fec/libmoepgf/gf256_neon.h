@@ -28,6 +28,7 @@ static void
 maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
                           uint8_t constant, size_t length)
 {
+    assert(length % 8 ==0);
     uint8_t *end;
     register uint8x8x2_t t1, t2;
     register uint8x8_t m1, m2, in1, in2, out, l, h;
@@ -62,6 +63,7 @@ maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
 void
 mulrc256_shuffle_neon_64(uint8_t *region, uint8_t constant, size_t length)
 {
+    assert(length % 8 ==0);
     uint8_t *end;
     register uint8x8x2_t t1, t2;
     register uint8x8_t m1, m2, in, out, l, h;
@@ -96,6 +98,7 @@ mulrc256_shuffle_neon_64(uint8_t *region, uint8_t constant, size_t length)
 void
 mulrc256_shuffle_neon_64(uint8_t *region1,const uint8_t* region2, uint8_t constant, size_t length)
 {
+    assert(length % 8 ==0);
     uint8_t *end;
     register uint8x8x2_t t1, t2;
     register uint8x8_t m1, m2, in, out, l, h;
