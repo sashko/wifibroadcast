@@ -6,6 +6,7 @@
 #define WIFIBROADCAST_XX_GF256_H
 
 #include "gf256tables285.h"
+#include <stdint.h>
 
 static const uint8_t mult[MOEPGF256_SIZE][MOEPGF256_SIZE] = MOEPGF256_MUL_TABLE;
 

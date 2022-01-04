@@ -4,7 +4,7 @@
 
 #include <arm_neon.h>
 #include "gf256tables285.h"
-
+#include <stdint.h>
 
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
