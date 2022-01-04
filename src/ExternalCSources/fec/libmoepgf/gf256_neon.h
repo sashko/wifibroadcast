@@ -8,6 +8,8 @@
 #include "gf256tables285.h"
 #include <stdint.h>
 
+#include <iostream>
+
 // Fastest if NEON is supported
 
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
@@ -16,6 +18,7 @@ static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
 void
 xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
 {
+    std::cout<<"X neon\n";
     assert(length % 8 ==0);
     uint8_t *end;
     register uint64x1_t in, out;
@@ -26,6 +29,7 @@ xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
         out = veor_u64(in, out);
         vst1_u64((uint64_t *)region1, out);
     }
+    std::cout<<"Y neon\n";
 }
 
 void
