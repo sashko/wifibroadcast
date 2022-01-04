@@ -6,7 +6,6 @@
 #include "gf256tables285.h"
 
 
-static const uint8_t pt[MOEPGF256_SIZE][MOEPGF256_EXPONENT] = MOEPGF256_POLYNOMIAL_DIV_TABLE;
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
 
@@ -24,7 +23,7 @@ xorr_neon_128(uint8_t *region1, const uint8_t *region2, size_t length)
     }
 }
 
-
+// Consti10 NOTE: only works when size % 8==0
 static void
 maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
                           uint8_t constant, size_t length)
@@ -56,6 +55,72 @@ maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
         h = vtbl2_u8(t2, h);
         out = veor_u8(h, l);
         out = veor_u8(out, in1);
+        vst1_u8(region1, out);
+    }
+}
+
+void
+mulrc256_shuffle_neon_64(uint8_t *region, uint8_t constant, size_t length)
+{
+    uint8_t *end;
+    register uint8x8x2_t t1, t2;
+    register uint8x8_t m1, m2, in, out, l, h;
+
+    if (constant == 0) {
+        memset(region, 0, length);
+        return;
+    }
+
+    if (constant == 1)
+        return;
+
+    t1 = vld2_u8((const uint8_t *)tl[constant]);
+    t2 = vld2_u8((const uint8_t *)th[constant]);
+    m1 = vdup_n_u8(0x0f);
+    m2 = vdup_n_u8(0xf0);
+
+    for (end=region+length; region<end; region+=8) {
+        in = vld1_u8((const uint8_t *)region);
+        l = vand_u8(in, m1);
+        l = vtbl2_u8(t1, l);
+        h = vand_u8(in, m2);
+        h = vshr_n_u8(h, 4);
+        h = vtbl2_u8(t2, h);
+        out = veor_u8(h, l);
+        vst1_u8(region, out);
+    }
+}
+
+// Consti10 - same as above, but writes output into a different (output) memory region instead
+// of modifying the input memory region
+void
+mulrc256_shuffle_neon_64(uint8_t *region1,const uint8_t* region2, uint8_t constant, size_t length)
+{
+    uint8_t *end;
+    register uint8x8x2_t t1, t2;
+    register uint8x8_t m1, m2, in, out, l, h;
+
+    if (constant == 0) {
+        memset(region1, 0, length);
+        return;
+    }
+
+    if (constant == 1)
+        return;
+
+    t1 = vld2_u8((const uint8_t *)tl[constant]);
+    t2 = vld2_u8((const uint8_t *)th[constant]);
+    m1 = vdup_n_u8(0x0f);
+    m2 = vdup_n_u8(0xf0);
+
+    for (end=region1+length; region1<end; region1+=8;region2+=8) {
+        in = vld1_u8((const uint8_t *)region2);
+        l = vand_u8(in, m1);
+        l = vtbl2_u8(t1, l);
+        h = vand_u8(in, m2);
+        h = vshr_n_u8(h, 4);
+        h = vtbl2_u8(t2, h);
+        out = veor_u8(h, l);
         vst1_u8(region1, out);
     }
 }

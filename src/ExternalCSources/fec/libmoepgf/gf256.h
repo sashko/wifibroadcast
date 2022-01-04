@@ -34,4 +34,21 @@ maddrc256_flat_table(uint8_t *region1, const uint8_t *region2,
 
 }
 
+static void
+mulrc256_flat_table(uint8_t *region1, const uint8_t *region2,
+                     uint8_t constant, size_t length)
+{
+    if (constant == 0)
+        memset(region1, 0, length);
+
+    if (constant == 1) {
+        return;
+    }
+
+    for (; length; region1++, region2++, length--) {
+        *region1 = mult[constant][*region2];
+    }
+
+}
+
 #endif //WIFIBROADCAST_XX_GF256_H
