@@ -50,6 +50,8 @@ static void test(){
         assert(res1[i]==res2[i]);
     }
 
+    str::cout<<"XXX\n";
+
 }
 
 
