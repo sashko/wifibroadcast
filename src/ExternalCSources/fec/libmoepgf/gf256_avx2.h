@@ -9,7 +9,7 @@
 #include "gf256tables285.h"
 #include <stdint.h>
 
-// fastest option for x86 and AVX2
+// fastest option for x86 if AVX2 is supported
 
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
@@ -22,10 +22,10 @@ xorr_avx2(uint8_t *region1, const uint8_t *region2, size_t length)
     register __m256i in, out;
 
     for (end=region1+length; region1<end; region1+=32, region2+=32) {
-        in  = _mm256_load_si256((void *)region2);
-        out = _mm256_load_si256((void *)region1);
+        in  = _mm256_load_si256((const __m256i *)region2);
+        out = _mm256_load_si256((const __m256i *)region1);
         out = _mm256_xor_si256(in, out);
-        _mm256_store_si256((void *)region1, out);
+        _mm256_store_si256((__m256i *)region1, out);
     }
 }
 
@@ -46,16 +46,16 @@ maddrc256_shuffle_avx2(uint8_t *region1, const uint8_t *region2,
         return;
     }
 
-    bc = _mm_load_si128((void *)tl[constant]);
+    bc = _mm_load_si128((const __m128i *)tl[constant]);
     t1 = __builtin_ia32_vbroadcastsi256(bc);
-    bc = _mm_load_si128((void *)th[constant]);
+    bc = _mm_load_si128((const __m128i* )th[constant]);
     t2 = __builtin_ia32_vbroadcastsi256(bc);
     m1 = _mm256_set1_epi8(0x0f);
     m2 = _mm256_set1_epi8(0xf0);
 
     for (end=region1+length; region1<end; region1+=32, region2+=32) {
-        in2 = _mm256_load_si256((void *)region2);
-        in1 = _mm256_load_si256((void *)region1);
+        in2 = _mm256_load_si256((const __m256i *)region2);
+        in1 = _mm256_load_si256((const __m256i *)region1);
         l = _mm256_and_si256(in2, m1);
         l = _mm256_shuffle_epi8(t1, l);
         h = _mm256_and_si256(in2, m2);
@@ -63,7 +63,7 @@ maddrc256_shuffle_avx2(uint8_t *region1, const uint8_t *region2,
         h = _mm256_shuffle_epi8(t2, h);
         out = _mm256_xor_si256(h, l);
         out = _mm256_xor_si256(out, in1);
-        _mm256_store_si256((void *)region1, out);
+        _mm256_store_si256((__m256i *)region1, out);
     }
 }
 
@@ -83,23 +83,28 @@ mulrc256_shuffle_avx2(uint8_t *region, uint8_t constant, size_t length)
     if (constant == 1)
         return;
 
-    bc = _mm_load_si128((void *)tl[constant]);
+    bc = _mm_load_si128((const __m128i *)tl[constant]);
     t1 = __builtin_ia32_vbroadcastsi256(bc);
-    bc = _mm_load_si128((void *)th[constant]);
+    bc = _mm_load_si128((const __m128i *)th[constant]);
     t2 = __builtin_ia32_vbroadcastsi256(bc);
     m1 = _mm256_set1_epi8(0x0f);
     m2 = _mm256_set1_epi8(0xf0);
 
     for (end=region+length; region<end; region+=32) {
-        in = _mm256_load_si256((void *)region);
+        in = _mm256_load_si256((const __m256i *)region);
         l = _mm256_and_si256(in, m1);
         l = _mm256_shuffle_epi8(t1, l);
         h = _mm256_and_si256(in, m2);
         h = _mm256_srli_epi64(h, 4);
         h = _mm256_shuffle_epi8(t2, h);
         out = _mm256_xor_si256(h, l);
-        _mm256_store_si256((void *)region, out);
+        _mm256_store_si256((__m256i *)region, out);
     }
+}
+
+void mulrc256_shuffle_avx2_2(uint8_t *region,const uint8_t* region2,uint8_t constant, size_t length){
+    memcpy(region,region2,length);
+    mulrc256_shuffle_avx2(region,constant,length);
 }
 
 

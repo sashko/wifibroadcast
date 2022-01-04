@@ -26,34 +26,53 @@
 #endif //__arm__
  */
 
-#include "gf256_neon.h"
+//#include "gf256_neon.h"
+#include "gf256_avx2.h"
 
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
     // We can only do the fast algorithm on multiples of 8
-    const int sizeFast=sz - (sz % 8);
+    /*const int sizeFast=sz - (sz % 8);
     const int sizeSlow= sz-sizeFast;
     if(sizeFast>0){
         mulrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    }*/
+    /*const int sizeFast=sz - (sz % 32);
+    const int sizeSlow= sz-sizeFast;
+    if(sizeFast>0){
+        mulrc256_shuffle_avx2_2(dst,src,c,sizeFast);
     }
+    if(sizeSlow>0){
+        mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    }*/
+    mulrc256_flat_table(dst,src,c,sz);
 }
 
 // computes dst[] = dst[] + c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
     // We can only do the fast algorithm on multiples of 8
-    const int sizeFast=sz - (sz % 8);
+    /*const int sizeFast=sz - (sz % 8);
     const int sizeSlow= sz-sizeFast;
     if(sizeFast>0){
         maddrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    }*/
+    /*const int sizeFast=sz - (sz % 8);
+    const int sizeSlow= sz-sizeFast;
+    if(sizeFast>0){
+        maddrc256_shuffle_avx2(dst,src,c,sizeFast);
     }
+    if(sizeSlow>0){
+        maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    }*/
+    maddrc256_flat_table(dst,src,c,sz);
 }
 
 
