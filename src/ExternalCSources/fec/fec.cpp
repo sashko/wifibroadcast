@@ -50,7 +50,6 @@
 #include "fec.h"
 //Consti10
 #include "gf_simple/gf_simple.h"
-#include "gf256/gf256.h"
 #include "libmoepgf/gf256.h"
 #include "libmoepgf/gf256_neon.h"
 #include <vector>

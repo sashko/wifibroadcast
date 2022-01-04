@@ -49,7 +49,6 @@ mulrc256_flat_table(uint8_t *region1, const uint8_t *region2,
     for (; length; region1++, region2++, length--) {
         *region1 = mult[constant][*region2];
     }
-
 }
 
 #endif //WIFIBROADCAST_XX_GF256_H
