@@ -105,8 +105,10 @@ mulrc256_shuffle_neon_64(uint8_t *region1,const uint8_t* region2, uint8_t consta
         return;
     }
 
-    if (constant == 1)
+    if (constant == 1){
+        memcpy(region1,region2,length);
         return;
+    }
 
     t1 = vld2_u8((const uint8_t *)tl[constant]);
     t2 = vld2_u8((const uint8_t *)th[constant]);

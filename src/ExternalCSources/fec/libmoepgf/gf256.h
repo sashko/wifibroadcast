@@ -42,6 +42,7 @@ mulrc256_flat_table(uint8_t *region1, const uint8_t *region2,
         memset(region1, 0, length);
 
     if (constant == 1) {
+        memcpy(region1,region2,length);
         return;
     }
 

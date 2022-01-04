@@ -484,7 +484,7 @@ static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     if(sizeSlow){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }*/
-    //mulrc256_flat_table(dst,src,c,sz);
+    mulrc256_flat_table(dst,src,c,sz);
 }
 
 /*
