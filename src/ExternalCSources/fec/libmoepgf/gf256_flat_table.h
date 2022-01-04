@@ -2,8 +2,8 @@
 // Created by consti10 on 03.01.22.
 //
 
-#ifndef WIFIBROADCAST_XX_GF256_H
-#define WIFIBROADCAST_XX_GF256_H
+#ifndef LIBMOEPGF_GF256_FLAT_TABLE_H
+#define LIBMOEPGF_GF256_FLAT_TABLE_H
 
 #include "gf256tables285.h"
 #include <stdint.h>
@@ -52,4 +52,4 @@ mulrc256_flat_table(uint8_t *region1, const uint8_t *region2,
     }
 }
 
-#endif //WIFIBROADCAST_XX_GF256_H
+#endif //LIBMOEPGF_GF256_FLAT_TABLE_H

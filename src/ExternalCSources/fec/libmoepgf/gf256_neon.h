@@ -1,6 +1,8 @@
 //
 // Created by consti10 on 02.01.22.
 //
+#ifndef LIBMOEPGF_GF256_NEON_H
+#define LIBMOEPGF_GF256_NEON_H
 
 #include <arm_neon.h>
 #include "gf256tables285.h"
@@ -145,3 +147,5 @@ mulrc256_shuffle_neon_64(uint8_t *region1,const uint8_t* region2, uint8_t consta
         vst1_u8(region1, out);
     }
 }
+
+#endif //LIBMOEPGF_GF256_NEON_H
