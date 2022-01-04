@@ -1006,7 +1006,7 @@ static void test(const int k,const int n,const int packetSize,const int nLostDat
     std::vector<std::vector<uint8_t>> fecPackets(std::vector<uint8_t>(packetSize),nFecPackets);
     auto fecPacketsP= FUCK::convertToP(fecPackets);
 
-    fec_encode(packetSize,dataPacketsP.data(),dataPacketsP.size(),fecPacketsP,fecPacketsP.size());
+    fec_encode(packetSize,(const gf*)dataPacketsP.data(),dataPacketsP.size(),(gf*)fecPacketsP.data(),fecPacketsP.size());
     //
 }
 
