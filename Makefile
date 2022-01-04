@@ -5,7 +5,8 @@ export VERSION COMMIT
 
 _LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium
 # WFB_VERSION is date and time and the last commit of this branch
-_CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"' -mavx2  #-mfpu=neon -march=armv7-a -marm
+_CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"' -mfpu=neon -march=armv7-a -marm
+# -faligned-new -mavx2
 
 all_bin: wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_validator
 all: all_bin gs.key
@@ -16,7 +17,7 @@ src/ExternalCSources/radiotap/%.o: src/ExternalCSources/radiotap/%.c src/Externa
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # compile the (general) fec part
-src/ExternalCSources/fec/%.o: src/ExternalCSources/fec/%.cpp src/ExternalCSources/fec/*.h
+src/ExternalCSources/fec/%.o: src/ExternalCSources/fec/%.cpp src/ExternalCSources/fec/*.h src/ExternalCSources/fec/libmoepgf/*.h
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # the c++ part
