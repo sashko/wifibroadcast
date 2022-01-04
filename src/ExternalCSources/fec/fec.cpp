@@ -989,15 +989,25 @@ namespace FUCK{
         }
         return ret;
     }
+    static std::vector<uint8_t*> convertToP2(std::vector<std::vector<uint8_t>> buffs){
+        std::vector<const uint8_t*> ret;
+        for(int i=0;i<buffs.size();i++){
+            ret.push_back(buffs[i].data());
+        }
+        return ret;
+    }
 }
 
 
 static void test(const int k,const int n,const int packetSize,const int nLostDataPackets,const int nLostFecPackets){
     const int nFecPackets=n-k;
     const auto dataPackets=FUCK::createRandomDataBuffers(k,packetSize);
+    const auto dataPacketsP=FUCK::convertToP(dataPackets);
+    std::vector<std::vector<uint8_t>> fecPackets(std::vector<uint8_t>(packetSize),nFecPackets);
+    auto fecPacketsP= FUCK::convertToP(fecPackets);
 
-    //std::vector<std::vector<uint8_t>> fecPackets(std::vector<uint8_t>(packetSize),nFecPackets);
-    //fec_encode(packetSize,dataPackets.data(),)
+    fec_encode(packetSize,dataPacketsP.data(),dataPacketsP.size(),fecPacketsP,fecPacketsP.size());
+    //
 }
 
 
