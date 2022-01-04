@@ -29,6 +29,8 @@
 #include "gf256_neon.h"
 //#include "gf256_avx2.h"
 
+#include <iostream>
+
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){

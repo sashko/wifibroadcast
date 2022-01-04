@@ -990,7 +990,7 @@ namespace FUCK{
         return ret;
     }
     static std::vector<uint8_t*> convertToP2(std::vector<std::vector<uint8_t>> buffs){
-        std::vector<const uint8_t*> ret;
+        std::vector<uint8_t*> ret;
         for(int i=0;i<buffs.size();i++){
             ret.push_back(buffs[i].data());
         }
@@ -1006,7 +1006,7 @@ static void test(const int k,const int n,const int packetSize,const int nLostDat
     std::vector<std::vector<uint8_t>> fecPackets(std::vector<uint8_t>(packetSize),nFecPackets);
     auto fecPacketsP= FUCK::convertToP(fecPackets);
 
-    fec_encode(packetSize,(const gf*)dataPacketsP.data(),dataPacketsP.size(),(gf*)fecPacketsP.data(),fecPacketsP.size());
+    //fec_encode(packetSize,(const gf*)dataPacketsP.data(),dataPacketsP.size(),(gf*)fecPacketsP.data(),fecPacketsP.size());
     //
 }
 
