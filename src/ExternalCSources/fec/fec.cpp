@@ -1047,18 +1047,19 @@ test_gf()
         std::cout<<"\n";
     }*/
 
-    static constexpr auto X_SIZE=1024;
-    auto source=FUCK::createRandomDataBuffer(X_SIZE);
-    std::vector<uint8_t> res1(X_SIZE);
-    std::vector<uint8_t> res2(X_SIZE);
-    for(i=0;i<GF_SIZE;i++){
-        //slow_mul1(res1.data(),source.data(),i,X_SIZE);
-        //gal_mul_region(res2.data(),source.data(),i,X_SIZE);
-        slow_addmul1(res1.data(),source.data(),i,X_SIZE);
-        //maddrc256_flat_table(res2.data(),source.data(),i,X_SIZE);
-        //maddrc256_shuffle_neon_64(res2.data(),source.data(),i,X_SIZE);
-        gf256_madd_optimized(res2.data(),source.data(),i,X_SIZE);
-        FUCK::assertVectorsEqual(res1,res2);
+    for(int X_SIZE=0;X_SIZE<1024;X_SIZE++){
+        auto source=FUCK::createRandomDataBuffer(X_SIZE);
+        std::vector<uint8_t> res1(X_SIZE);
+        std::vector<uint8_t> res2(X_SIZE);
+        for(i=0;i<GF_SIZE;i++){
+            //slow_mul1(res1.data(),source.data(),i,X_SIZE);
+            //gal_mul_region(res2.data(),source.data(),i,X_SIZE);
+            slow_addmul1(res1.data(),source.data(),i,X_SIZE);
+            //maddrc256_flat_table(res2.data(),source.data(),i,X_SIZE);
+            //maddrc256_shuffle_neon_64(res2.data(),source.data(),i,X_SIZE);
+            gf256_madd_optimized(res2.data(),source.data(),i,X_SIZE);
+            FUCK::assertVectorsEqual(res1,res2);
+        }
     }
 
 
