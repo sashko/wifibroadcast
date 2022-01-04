@@ -364,10 +364,10 @@ static void addmul(gf *dst,const gf *src, gf c, int sz) {
     // We can only do the fast algorithm on multiples of 8
     const int sizeFast=sz - (sz % 8);
     const int sizeSlow= sz-sizeFast;
-    if(sizeFast){
+    if(sizeFast>0){
         maddrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
-    if(sizeSlow){
+    if(sizeSlow>0){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }
 }
@@ -478,10 +478,10 @@ static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     //mulrc256_flat_table(dst,src,c,sz);
     const int sizeFast=sz - (sz % 8);
     const int sizeSlow= sz-sizeFast;
-    if(sizeFast){
+    if(sizeFast>0){
         mulrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
-    if(sizeSlow){
+    if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }
 }
