@@ -24,8 +24,8 @@ xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
     register uint8x8_t in1,in2,out;
 
     for (end=region1+length; region1<end; region1+=8, region2+=8) {
-        in1  = vld1_u8((const uint8_t *)region1);
-        in2 = vld1_u8((const uint8_t *)region2);
+        in1  = vld1_u8((const uint8_t *)region2);
+        in2 = vld1_u8((const uint8_t *)region1);
         out = veor_u8(in1, in2);
         vst1_u8((uint8_t *)region1, out);
     }
