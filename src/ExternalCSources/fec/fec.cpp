@@ -473,10 +473,10 @@ static void mul_consti3(gf *dst,const gf *src,gf c, int sz) {
 static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
     // Consti10
-    if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
+    //if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
     //if (c != 0) mul_consti2(dst, src, c, sz); else memset(dst, 0, sz);
     //gf256_mul_mem(dst,src,c,sz);
-    mulrc256_flat_table(dst,src,c,sz);
+    //mulrc256_flat_table(dst,src,c,sz);
     const int sizeFast=sz - (sz % 8);
     const int sizeSlow= sz-sizeFast;
     if(sizeFast){
