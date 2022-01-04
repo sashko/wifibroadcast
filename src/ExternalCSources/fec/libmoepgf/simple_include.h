@@ -33,20 +33,20 @@
 
 
 static void test(){
-
-    const uint8_t buf1[10]{
-        0,1,2,3,4,5,6,7,8,9
+    static int X_SIZE=8;
+    const uint8_t buf1[X_SIZE]{
+        0,1,2,3,4,5,6,7
     };
-    uint8_t res1[10]{
-            0,1,2,3,4,5,6,7,8,9
+    uint8_t res1[X_SIZE]{
+            0,1,2,3,4,5,6,7
     };
-    uint8_t res2[10];
-    memcpy(res2,res1,10);
+    uint8_t res2[X_SIZE];
+    memcpy(res2,res1,X_SIZE);
 
-    xorr_scalar(res1,buf1,10);
-    xorr_neon_64(res2,buf1,10);
+    xorr_scalar(res1,buf1,X_SIZE);
+    xorr_neon_64(res2,buf1,X_SIZE);
 
-    for(int i=0;i<10;i++){
+    for(int i=0;i<X_SIZE;i++){
         assert(res1[i]==res2[i]);
     }
 
