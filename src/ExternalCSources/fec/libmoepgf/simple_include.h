@@ -31,9 +31,31 @@
 
 #include <iostream>
 
+
+static void test(){
+    const uint8_t buf1[10]{
+        0,1,2,3,4,5,6,7,8,9
+    };
+    uint8_t res1[10]{
+            0,1,2,3,4,5,6,7,8,9
+    };
+    uint8_t res2[10];
+    memcpy(res2,res1);
+
+    xorr_scalar(res1,buf1,10);
+    xorr_neon_64(res2,buf1,10);
+
+    for(int i=0;i<10;i++){
+        assert(res1[i]==res2[i]);
+    }
+
+}
+
+
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
+    test();
     // We can only do the fast algorithm on multiples of 8
     /*const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;

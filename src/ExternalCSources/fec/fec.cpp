@@ -1094,6 +1094,9 @@ test_gf()
         std::cerr<<"Okay "<<X_SIZE<<" all 0..255\n";
     }
 
+    auto buf=FUCK::createRandomDataBuffer(1024);
+
+
 
 
     std::cout<<"test done2\n";
