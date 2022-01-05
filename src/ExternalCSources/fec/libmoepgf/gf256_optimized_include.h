@@ -27,7 +27,7 @@
 #endif //__arm__
  */
 
-//#include "gf256_neon.h"
+#include "gf256_neon.h"
 //#include "gf256_avx2.h"
 
 #include <iostream>
