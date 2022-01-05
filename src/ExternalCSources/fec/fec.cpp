@@ -710,13 +710,6 @@ void fec_init(void)
  * few (typically, 4 or 8) that they will fit easily in the cache (even
  * in the L2 cache...)
  */
-/**
- * Consti10 time complexity
- * for "mul" part:
- * nrFecBlocks times we multiply a vector of size blockSize with a scalar
- * for "addmul" part:
- *
- */
 void fec_encode(unsigned int blockSize,
                 const gf **data_blocks,
                 unsigned int nrDataBlocks,
