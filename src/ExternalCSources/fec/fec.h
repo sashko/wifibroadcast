@@ -19,14 +19,29 @@ typedef unsigned char gf;
  */
 void fec_init(void);
 
-// don't bother to understand that c style crap, look at FEC.hpp
+/**
+ * @param blockSize size of each block (all blocks must have the same size)
+ * @param data_blocks array of pointers to the memory of the data blocks
+ * @param nrDataBlocks how many data blocks
+ * @param fec_blocks array of pointers to the memory of the fec blocks (generated)
+ * @param nrFecBlocks how many fec blocks to generate
+ */
 void fec_encode(unsigned int blockSize,
                 const gf **data_blocks,
                 unsigned int nrDataBlocks,
                 gf **fec_blocks,
                 unsigned int nrFecBlocks);
 
-// don't bother to understand that c style crap, look at FEC.hpp
+/**
+ *
+ * @param blockSize size of each block
+ * @param data_blocks array of pointers to the memory of the data blocks. Missing areas will be filled
+ * @param nr_data_blocks how many data blocks (available and missing)
+ * @param fec_blocks array of pointers to the memory of the fec blocks
+ * @param fec_block_nos indices of the received fec blocks
+ * @param erased_blocks indices of the erased / missing data blocks that will be reconstructed
+ * @param nr_fec_blocks how many data blocks are missing
+ */
 void fec_decode(unsigned int blockSize,
                 gf **data_blocks,
                 unsigned int nr_data_blocks,

@@ -999,16 +999,63 @@ namespace FUCK{
 }
 
 
-static void test(const int k,const int n,const int packetSize,const int nLostDataPackets,const int nLostFecPackets){
-    const int nFecPackets=n-k;
-    const auto dataPackets=FUCK::createRandomDataBuffers(k,packetSize);
-    const auto dataPacketsP=FUCK::convertToP(dataPackets);
-    //std::vector<std::vector<uint8_t>> fecPackets(nFecPackets,std::vector<uint8_t>(packetSize));
-    //auto fecPacketsP= FUCK::convertToP(fecPackets);
-
-    //fec_encode(packetSize,(const gf*)dataPacketsP.data(),dataPacketsP.size(),(gf*)fecPacketsP.data(),fecPacketsP.size());
+static void test_xxx(const int nDataPackets,const int nFecPackets,const int packetSize,const int nLostDataPackets,const int nLostFecPackets){
+    // sum of lost data and fec packets must be <= n of generated FEC packets, else not recoverable
+    assert(nLostDataPackets+nLostFecPackets<=nFecPackets);
+    // create our data packets
+    const auto dataPackets=FUCK::createRandomDataBuffers(nDataPackets,packetSize);
+    // allocate memory for the fec packets
+    std::vector<std::vector<uint8_t>> fecPackets(nFecPackets,std::vector<uint8_t>(packetSize));
+    // encode data packets, store in fec packets
+    // the "convert" is for c++ to c-style conversion
+    fec_encode(packetSize,(const gf**)FUCK::convertToP(dataPackets).data(),dataPackets.size(),(gf**)FUCK::convertToP(fecPackets).data(),fecPackets.size());
     //
+    // here we have to "emulate" receiving a specific amount of data and fec packets
+    //
+    const auto nReceivedDataPackets=nDataPackets-nLostDataPackets;
+    const auto nReceivedFecPackets=nFecPackets-nLostFecPackets;
+    // FEC will fill the not received data packets
+    std::vector<std::vector<uint8_t>> fullyReconstructedDataPackets(nDataPackets,std::vector<uint8_t>(packetSize));
+    // write as many data packets as we have "received"
+    for(int i=0;i<nReceivedDataPackets;i++){
+        memcpy(fullyReconstructedDataPackets[i].data(),dataPackets[i].data(),packetSize);
+    }
+    // mark the rest as missing
+    std::vector<unsigned int> erasedPacketsIndices;
+    for(int i=nReceivedDataPackets;i<nDataPackets;i++){
+        erasedPacketsIndices.push_back(i);
+    }
+
+    // and write the received FEC packets
+    std::vector<std::vector<uint8_t>> receivedFecPackets(nReceivedFecPackets,std::vector<uint8_t>(packetSize));
+    std::vector<unsigned int> receivedFecPacketsIndices;
+    for(int i=0;i<nReceivedFecPackets;i++){
+        memcpy(receivedFecPackets[i].data(),fecPackets[i].data(),packetSize);
+        receivedFecPacketsIndices.push_back(i);
+    }
+    // perform the (reconstructing) fec step
+    fec_decode(packetSize,
+               // data packets (missing will be filled)
+               (gf**)FUCK::convertToP2(fullyReconstructedDataPackets).data(),
+               // total amount of data packets that were encoded (missing will be filled)
+               (unsigned int)nDataPackets,
+               // received fec packets
+               (gf**)FUCK::convertToP2(receivedFecPackets).data(),
+               // indices of received fec packets
+               (const unsigned int*)receivedFecPacketsIndices.data(),
+               // indices of erased data packets
+               erasedPacketsIndices.data(),
+               // how many data packets are missing
+               erasedPacketsIndices.size());
+    // make sure everything was reconstructed properly
+    for(int i=0;i<nDataPackets;i++){
+        FUCK::assertVectorsEqual(dataPackets[i],fullyReconstructedDataPackets[i]);
+    }
 }
+
+
+
+
 
 
 // from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
@@ -1016,6 +1063,7 @@ void
 test_gf()
 {
     fec_init();
+    test_xxx(10,5,1024,2,3);
     //
     //
     int i ;
