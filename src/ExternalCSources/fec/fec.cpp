@@ -49,7 +49,7 @@
 #include <assert.h>
 #include "fec.h"
 //Consti10
-#include "libmoepgf/simple_include.h"
+#include "libmoepgf/gf256_optimized_include.h"
 #include "gf_simple/gf_simple.h"
 #include <vector>
 #include <iostream>
