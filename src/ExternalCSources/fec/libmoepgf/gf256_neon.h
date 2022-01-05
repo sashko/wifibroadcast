@@ -20,7 +20,7 @@ xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
 {
     std::cout<<"Xx neon"<<length<<" "<<(int)region1[0]<<":"<<(int)region2[0]<<"\n";
     assert(length % 8 ==0);
-    uint8_t *end;
+    /*uint8_t *end;
     register uint8x8_t in,out;
 
     for (end=region1+length; region1<end; region1+=8, region2+=8) {
@@ -28,8 +28,8 @@ xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
         out = vld1_u8((const uint8_t *)region2);
         out = veor_u8(in, out);
         vst1_u8((uint8_t *)region1, out);
-    }
-    /*uint8_t *end;
+    }*/
+    uint8_t *end;
     register uint64x1_t in, out;
 
     for (end=region1+length; region1<end; region1+=8, region2+=8) {
@@ -37,8 +37,8 @@ xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
         out = vld1_u64((const uint64_t *)region1);
         out = veor_u64(in, out);
         vst1_u64((uint64_t  *)region1, out);
-    }*/
-    std::cout<<"Yz neon\n";
+    }
+    std::cout<<"Yi neon\n";
 }
 
 void
