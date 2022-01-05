@@ -8,24 +8,39 @@
 #include <immintrin.h>
 #include "gf256tables285.h"
 #include <stdint.h>
+#include <iostream>
 
 // fastest option for x86 if AVX2 is supported
 
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
 
+//static inline bool is_aligned(const void * pointer, size_t byte_count)
+//{ return (uintptr_t)pointer % byte_count == 0; }
+
 void
 xorr_avx2(uint8_t *region1, const uint8_t *region2, size_t length)
 {
     assert(length % 32 ==0);
+    std::cout<<"xorr_avx2\n";
+    //assert(is_aligned(region1,32));
+    //assert(is_aligned(region2,32));
+    //std::cout<<""<<(int)region1[length]<<":"<<(int)region2[length]<<"\n";
+
     uint8_t *end;
     register __m256i in, out;
 
     for (end=region1+length; region1<end; region1+=32, region2+=32) {
-        in  = _mm256_load_si256((const __m256i *)region2);
-        out = _mm256_load_si256((const __m256i *)region1);
+        //std::cout<<"XXx\n";
+        /*in  = _mm256_load_si256((const __m256i*)region2);
+        out = _mm256_load_si256((const __m256i*)region1);
         out = _mm256_xor_si256(in, out);
-        _mm256_store_si256((__m256i *)region1, out);
+        _mm256_store_si256((__m256i *)region1, out);*/
+        in  = _mm256_loadu_si256((const __m256i*)region2);
+        out = _mm256_loadu_si256((const __m256i*)region1);
+        out = _mm256_xor_si256(in, out);
+        _mm256_storeu_si256((__m256i *)region1, out);
+        //std::cout<<"YY\n";
     }
 }
 
@@ -34,6 +49,7 @@ maddrc256_shuffle_avx2(uint8_t *region1, const uint8_t *region2,
                        uint8_t constant, size_t length)
 {
     assert(length % 32 ==0);
+    //std::cout<<"maddrc256_shuffle_avx2:"<<length<<" constant:"<<(int)constant<<" "<<(int)region1[0]<<":"<<(int)region2[0]<<"\n";
     uint8_t *end;
     register __m256i t1, t2, m1, m2, in1, in2, out, l, h;
     register __m128i bc;

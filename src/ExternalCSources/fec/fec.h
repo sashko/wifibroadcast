@@ -7,7 +7,9 @@
 
 //#define PROFILE
 
-typedef unsigned char gf;
+#include <stdint.h>
+
+typedef uint8_t gf;
 
 /*
  * create a new encoder, returning a descriptor. This contains k,n and

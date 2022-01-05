@@ -41,21 +41,6 @@ xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
     //std::cout<<"Yi neon\n";
 }
 
-void
-xorr_neon_128(uint8_t *region1, const uint8_t *region2, size_t length)
-{
-    assert(length % 16 ==0);
-    uint8_t *end;
-    register uint64x2_t in, out;
-
-    for (end=region1+length; region1<end; region1+=16, region2+=16) {
-        in  = vld1q_u64((const uint64_t *)region2);
-        out = vld1q_u64((const uint64_t *)region1);
-        out = veorq_u64(in, out);
-        vst1q_u64((uint64_t *)region1, out);
-    }
-}
-
 // Consti10 NOTE: only works when size % 8==0
 static void
 maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
