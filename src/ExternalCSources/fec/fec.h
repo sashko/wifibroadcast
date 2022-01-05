@@ -64,4 +64,40 @@ void printDetail(void);
 //}
 //#endif
 
+
+
+#include <vector>
+
+
+/**
+ * @param fragmentSize size of each fragment in this block
+ * @param primaryFragments list of pointers to memory for primary fragments
+ * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments)
+ * Using the data from @param primaryFragments constructs as many secondary fragments as @param secondaryFragments holds
+ */
+void fec_encode2(unsigned int fragmentSize,
+                const std::vector<const uint8_t*>& primaryFragments,
+                const std::vector<uint8_t*>& secondaryFragments);
+
+/**
+ * @param fragmentSize size of each fragment in this block
+ * @param primaryFragments list of pointers to memory for primary fragments. Must be same size as used for fec_encode()
+ * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments.
+ * Example: if @param indicesMissingPrimaryFragments contains 2, the 3rd primary fragment is missing
+ * @param secondaryFragmentsReceived list of pointers to memory for secondary fragments (fec fragments). Must not be same size as used for fec_encode(), only MUST contain "enough" secondary fragments
+ * @param indicesOfSecondaryFragmentsReceived list of the indices of secondaryFragments that are used to reconstruct missing primary fragments.
+ * Example: if @param indicesOfSecondaryFragmentsReceived contains {0,2}, the first secondary fragment has the index 0, and the second secondary fragment has the index 2
+ * When this call returns, all missing primary fragments (gaps) have been filled / reconstructed
+ */
+void fec_decode2(unsigned int fragmentSize,
+                const std::vector<uint8_t*>& primaryFragments,
+                const std::vector<unsigned int>& indicesMissingPrimaryFragments,
+                const std::vector<uint8_t*>& secondaryFragmentsReceived,
+                const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived);
+
+
+
+
+
+
 #endif //FEC_2_H
