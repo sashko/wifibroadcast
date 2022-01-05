@@ -1065,8 +1065,8 @@ void
 test_gf()
 {
     fec_init();
-    test_fec_encode_and_decode(10,5,1024,0,0);
-    test_fec_encode_and_decode(10,5,1024,1,0);
+    //test_fec_encode_and_decode(10,5,1024,0,0);
+    //test_fec_encode_and_decode(10,5,1024,1,0);
 
     //
     //
