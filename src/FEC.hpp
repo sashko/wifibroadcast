@@ -163,7 +163,7 @@ static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSeco
         fecDecode(FRAGMENT_SIZE, rxBlockBuffer, nPrimaryFragments, fragmentMap);
 
         for(unsigned int i=0;i<nPrimaryFragments;i++){
-            std::cout<<"Comparing fragment:"<<i<<"\n";
+            //std::cout<<"Comparing fragment:"<<i<<"\n";
             GenericHelper::assertArraysEqual(txBlockBuffer[i], rxBlockBuffer[i]);
         }
     }

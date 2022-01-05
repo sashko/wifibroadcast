@@ -355,13 +355,13 @@ static void addmul_consti(gf *dst,const gf *src, gf c, int sz) {
 static void addmul(gf *dst,const gf *src, gf c, int sz) {
     // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
     // Consti10
-    //if (c != 0) addmul1(dst, src, c, sz);
+    if (c != 0) addmul1(dst, src, c, sz);
     //if (c != 0) consti_addmul(dst, src, c, sz);
     //gf256_muladd_mem(dst,c,src,sz);
     //maddrc256_flat_table(dst,src,c,sz);
     //maddrc256_shuffle_neon_64(dst,src,c,sz);
     //maddrc256_flat_table(dst,src,c,sz);
-    gf256_madd_optimized(dst,src,c,sz);
+    //gf256_madd_optimized(dst,src,c,sz);
 }
 
 /*
@@ -464,11 +464,11 @@ static void mul_consti3(gf *dst,const gf *src,gf c, int sz) {
 static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
     // Consti10
-    //if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
+    if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
     //if (c != 0) mul_consti2(dst, src, c, sz); else memset(dst, 0, sz);
     //gf256_mul_mem(dst,src,c,sz);
     //mulrc256_flat_table(dst,src,c,sz);
-    gf256_mul_optimized(dst,src,c,sz);
+    //gf256_mul_optimized(dst,src,c,sz);
 }
 
 /*
@@ -1044,8 +1044,8 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
     //
     // here we have to "emulate" receiving a specific amount of data and fec packets
     //
-    const auto nReceivedDataPackets=nDataPackets-nLostDataPackets;
-    const auto nReceivedFecPackets=nLostDataPackets;
+    const int nReceivedDataPackets=nDataPackets-nLostDataPackets;
+    const int nReceivedFecPackets=nLostDataPackets;
     std::cout<<"N received data packets:"<<nReceivedDataPackets<<" N received FEC packets "<<nReceivedFecPackets<<"\n";
     // FEC will fill the not received data packets
     std::vector<std::vector<uint8_t>> fullyReconstructedDataPackets(nDataPackets,std::vector<uint8_t>(packetSize));
@@ -1069,13 +1069,15 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
         memcpy(receivedFecPackets[i].data(),fecPackets[i].data(),packetSize);
         receivedFecPacketsIndices.push_back(i);
         std::cout<<"received fecpi:"<<i<<"\n";
+        assert(receivedFecPackets[i].size()==packetSize);
     }
     assert(receivedFecPacketsIndices.size()==nReceivedFecPackets);
 
-    /*for(const auto idx:receivedFecPacketsIndices){
+    for(const auto& idx:receivedFecPacketsIndices){
         FUCK::assertVectorsEqual(fecPackets[idx],receivedFecPackets[idx]);
-        std::cout<<"Tx:"<<idx<<"\n";
-    }*/
+        std::cout<<"fec packet okay:"<<idx<<"\n";
+    }
+
 
     // perform the (reconstructing) fec step
     fec_decode2(packetSize,
@@ -1185,7 +1187,7 @@ test_gf()
             FUCK::assertVectorsEqual(res1,res2);
             //std::cerr<<"Okay "<<X_SIZE<<" *"<<i<<"\n";
         }
-        std::cerr<<"Okay "<<X_SIZE<<" all 0..255\n";
+        //std::cerr<<"Okay "<<X_SIZE<<" all 0..255\n";
     }
 
     for(i=0;i<256;i++){

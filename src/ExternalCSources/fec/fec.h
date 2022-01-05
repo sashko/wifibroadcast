@@ -42,7 +42,7 @@ void fec_encode(unsigned int blockSize,
  * @param fec_blocks array of pointers to the memory of the fec blocks
  * @param fec_block_nos indices of the received fec blocks
  * @param erased_blocks indices of the erased / missing data blocks that will be reconstructed
- * @param nr_fec_blocks how many data blocks are missing
+ * @param nr_fec_blocks ? - see below c++style documentation
  */
 void fec_decode(unsigned int blockSize,
                 gf **data_blocks,

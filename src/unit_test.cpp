@@ -292,6 +292,7 @@ int main(int argc, char *argv[]){
         if(test_mode==0 || test_mode==1){
             std::cout<<"Testing FEC\n";
             testFecCPlusPlusWrapperX();
+            return 0;
             const int N_PACKETS=1200;
             TestFEC::testNonce();
             // With these fec params "testWithoutPacketLoss" is not possible
