@@ -54,4 +54,7 @@ mulrc256_flat_table(uint8_t *region1, const uint8_t *region2,
     }
 }
 
+
+
+
 #endif //LIBMOEPGF_GF256_FLAT_TABLE_H

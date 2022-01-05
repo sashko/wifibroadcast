@@ -5,7 +5,8 @@
 #ifndef WIFIBROADCAST_SIMPLE_INCLUDE_H
 #define WIFIBROADCAST_SIMPLE_INCLUDE_H
 
-// selects the right methods depending on hardware availability
+// By including this file we get all the "galois field math" we need for our FEC implementation
+// The mul and addmul methods are highly optimized for each architecture (see Readme.md)
 
 #include "gf256_flat_table.h"
 
@@ -105,5 +106,12 @@ static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int
     }*/
 }
 
+static const uint8_t inverses[MOEPGF256_SIZE] = MOEPGF256_INV_TABLE;
+
+// for the inverse of a number we don't have a highly optimized method
+// since it is never done on big chunks of memory anyways
+static uint8_t gf256_inverse(uint8_t value){
+    return inverses[value];
+}
 
 #endif //WIFIBROADCAST_SIMPLE_INCLUDE_H

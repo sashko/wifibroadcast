@@ -1146,9 +1146,9 @@ test_gf()
         std::cerr<<"Okay "<<X_SIZE<<" all 0..255\n";
     }
 
-    auto buf=FUCK::createRandomDataBuffer(1024);
-
-
+    for(i=0;i<256;i++){
+        assert(gf256_inverse(i)==inverse[i]);
+    }
 
 
     std::cout<<"test done2\n";
