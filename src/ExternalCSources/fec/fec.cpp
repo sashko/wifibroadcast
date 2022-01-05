@@ -3,6 +3,7 @@
  * 980624
  * (C) 1997-98 Luigi Rizzo (luigi@iet.unipi.it)
  * (C) 2001 Alain Knaff (alain@knaff.lu)
+ * (C) 2022 Constantin Geier (optimize using libmoepgf source code)
  *
  * Portions derived from code by Phil Karn (karn@ka9q.ampr.org),
  * Robert Morelos-Zaragoza (robert@spectra.eng.hawaii.edu) and Hari

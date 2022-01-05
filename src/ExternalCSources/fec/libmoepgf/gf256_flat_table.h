@@ -8,7 +8,7 @@
 #include "gf256tables285.h"
 #include <stdint.h>
 
-// Slowest option, but compiles on any hardware
+// Slower, but compiles on any hardware
 
 static const uint8_t mult[MOEPGF256_SIZE][MOEPGF256_SIZE] = MOEPGF256_MUL_TABLE;
 
