@@ -35,10 +35,10 @@
 static void test(){
     static int X_SIZE=8;
     const uint8_t buf1[X_SIZE]{
-        0,1,2,3,4,5,6,7
+        18,1,2,3,4,5,6,7
     };
     uint8_t res1[X_SIZE]{
-            0,1,2,3,4,5,6,7
+            36,1,2,3,4,5,6,7
     };
     uint8_t res2[X_SIZE];
     memcpy(res2,res1,X_SIZE);
