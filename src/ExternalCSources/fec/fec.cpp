@@ -999,7 +999,7 @@ namespace FUCK{
 }
 
 
-static void test_xxx(const int nDataPackets,const int nFecPackets,const int packetSize,const int nLostDataPackets,const int nLostFecPackets){
+static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPackets, const int packetSize, const int nLostDataPackets, const int nLostFecPackets){
     // sum of lost data and fec packets must be <= n of generated FEC packets, else not recoverable
     assert(nLostDataPackets+nLostFecPackets<=nFecPackets);
     // create our data packets
@@ -1021,10 +1021,11 @@ static void test_xxx(const int nDataPackets,const int nFecPackets,const int pack
         memcpy(fullyReconstructedDataPackets[i].data(),dataPackets[i].data(),packetSize);
     }
     // mark the rest as missing
-    std::vector<unsigned int> erasedPacketsIndices;
+    std::vector<unsigned int> erasedDataPacketsIndices;
     for(int i=nReceivedDataPackets;i<nDataPackets;i++){
-        erasedPacketsIndices.push_back(i);
+        erasedDataPacketsIndices.push_back(i);
     }
+    assert(erasedDataPacketsIndices.size()==nLostDataPackets);
 
     // and write the received FEC packets
     std::vector<std::vector<uint8_t>> receivedFecPackets(nReceivedFecPackets,std::vector<uint8_t>(packetSize));
@@ -1044,13 +1045,14 @@ static void test_xxx(const int nDataPackets,const int nFecPackets,const int pack
                // indices of received fec packets
                (const unsigned int*)receivedFecPacketsIndices.data(),
                // indices of erased data packets
-               erasedPacketsIndices.data(),
+               erasedDataPacketsIndices.data(),
                // how many data packets are missing
-               erasedPacketsIndices.size());
+               nLostDataPackets);
     // make sure everything was reconstructed properly
     for(int i=0;i<nDataPackets;i++){
         FUCK::assertVectorsEqual(dataPackets[i],fullyReconstructedDataPackets[i]);
     }
+    std::cout<<"SUCCESS: N data packets:"<<nDataPackets<<" N fec packets:"<<nFecPackets<<" N lost data packets:"<<nLostDataPackets<<" N lost fec packets:"<<nLostFecPackets<<"\n";
 }
 
 
@@ -1063,7 +1065,9 @@ void
 test_gf()
 {
     fec_init();
-    test_xxx(10,5,1024,2,3);
+    test_fec_encode_and_decode(10,5,1024,0,0);
+    test_fec_encode_and_decode(10,5,1024,1,0);
+
     //
     //
     int i ;
