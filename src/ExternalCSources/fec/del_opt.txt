@@ -1,0 +1,311 @@
+/*
+ * Primitive polynomials - see Lin & Costello, Appendix A,
+ * and  Lee & Messerschmitt, p. 453.
+ */
+static char *allPp[] = {    /* GF_BITS	polynomial		*/
+        NULL,		    /*  0	no code			*/
+        NULL,		    /*  1	no code			*/
+        "111",		    /*  2	1+x+x^2			*/
+        "1101",		    /*  3	1+x+x^3			*/
+        "11001",		    /*  4	1+x+x^4			*/
+        "101001",		    /*  5	1+x^2+x^5		*/
+        "1100001",		    /*  6	1+x+x^6			*/
+        "10010001",		    /*  7	1 + x^3 + x^7		*/
+        "101110001",	    /*  8	1+x^2+x^3+x^4+x^8	*/
+        "1000100001",	    /*  9	1+x^4+x^9		*/
+        "10010000001",	    /* 10	1+x^3+x^10		*/
+        "101000000001",	    /* 11	1+x^2+x^11		*/
+        "1100101000001",	    /* 12	1+x+x^4+x^6+x^12	*/
+        "11011000000001",	    /* 13	1+x+x^3+x^4+x^13	*/
+        "110000100010001",	    /* 14	1+x+x^6+x^10+x^14	*/
+        "1100000000000001",	    /* 15	1+x+x^15		*/
+        "11010000000010001"	    /* 16	1+x+x^3+x^12+x^16	*/
+};
+
+
+/*
+ * To speed up computations, we have tables for logarithm, exponent
+ * and inverse of a number. If GF_BITS <= 8, we use a table for
+ * multiplication as well (it takes 64K, no big deal even on a PDA,
+ * especially because it can be pre-initialized an put into a ROM!),
+ * otherwhise we use a table of logarithms.
+ * In any case the macro gf_mul(x,y) takes care of multiplications.
+ */
+
+static gf gf_exp[2*GF_SIZE];	/* index->poly form conversion table	*/
+static int gf_log[GF_SIZE + 1];	/* Poly->index form conversion table	*/
+static gf inverse[GF_SIZE+1];	/* inverse of field elem.		*/
+/* inv[\alpha**i]=\alpha**(GF_SIZE-i-1)	*/
+
+/*
+ * modnn(x) computes x % GF_SIZE, where GF_SIZE is 2**GF_BITS - 1,
+ * without a slow divide.
+ */
+static inline gf
+modnn(int x)
+{
+    while (x >= GF_SIZE) {
+        x -= GF_SIZE;
+        x = (x >> GF_BITS) + (x & GF_SIZE);
+    }
+    return x;
+}
+
+/*
+ * Consti10: I think this is "galois field" multiplication or something, not "normal" multiplication
+ * gf_mul(x,y) multiplies two numbers. If GF_BITS<=8, it is much
+ * faster to use a multiplication table.
+ *
+ * USE_GF_MULC, GF_MULC0(c) and GF_ADDMULC(x) can be used when multiplying
+ * many numbers by the same constant. In this case the first
+ * call sets the constant, and others perform the multiplications.
+ * A value related to the multiplication is held in a local variable
+ * declared with USE_GF_MULC . See usage in addmul1().
+ */
+static gf gf_mul_table[(GF_SIZE + 1)*(GF_SIZE + 1)]
+#ifdef WINDOWS
+        __attribute__((aligned (16)))
+#else
+       // __attribute__((aligned (256)))
+#endif
+;
+
+#define gf_mul(x,y) gf_mul_table[(x<<8)+y]
+
+#define USE_GF_MULC gf * __gf_mulc_
+#define GF_MULC0(c) __gf_mulc_ = &gf_mul_table[(c)<<8]
+#define GF_ADDMULC(dst, x) dst ^= __gf_mulc_[x]
+#define GF_MULC(dst, x) dst = __gf_mulc_[x]
+
+static void
+init_mul_table(void)
+{
+    int i, j;
+    for (i=0; i< GF_SIZE+1; i++)
+        for (j=0; j< GF_SIZE+1; j++)
+            gf_mul_table[(i<<8)+j] = gf_exp[modnn(gf_log[i] + gf_log[j]) ] ;
+
+    for (j=0; j< GF_SIZE+1; j++)
+        gf_mul_table[j] = gf_mul_table[j<<8] = 0;
+}
+
+/*
+ * Generate GF(2**m) from the irreducible polynomial p(X) in p[0]..p[m]
+ * Lookup tables:
+ *     index->polynomial form		gf_exp[] contains j= \alpha^i;
+ *     polynomial form -> index form	gf_log[ j = \alpha^i ] = i
+ * \alpha=x is the primitive element of GF(2^m)
+ *
+ * For efficiency, gf_exp[] has size 2*GF_SIZE, so that a simple
+ * multiplication of two numbers can be resolved without calling modnn
+ */
+
+
+
+/*
+ * initialize the data structures used for computations in GF.
+ */
+static void
+generate_gf(void)
+{
+    int i;
+    gf mask;
+    char *Pp =  allPp[GF_BITS] ;
+
+    mask = 1;	/* x ** 0 = 1 */
+    gf_exp[GF_BITS] = 0; /* will be updated at the end of the 1st loop */
+    /*
+     * first, generate the (polynomial representation of) powers of \alpha,
+     * which are stored in gf_exp[i] = \alpha ** i .
+     * At the same time build gf_log[gf_exp[i]] = i .
+     * The first GF_BITS powers are simply bits shifted to the left.
+     */
+    for (i = 0; i < GF_BITS; i++, mask <<= 1 ) {
+        gf_exp[i] = mask;
+        gf_log[gf_exp[i]] = i;
+        /*
+         * If Pp[i] == 1 then \alpha ** i occurs in poly-repr
+         * gf_exp[GF_BITS] = \alpha ** GF_BITS
+         */
+        if ( Pp[i] == '1' )
+            gf_exp[GF_BITS] ^= mask;
+    }
+    /*
+     * now gf_exp[GF_BITS] = \alpha ** GF_BITS is complete, so can als
+     * compute its inverse.
+     */
+    gf_log[gf_exp[GF_BITS]] = GF_BITS;
+    /*
+     * Poly-repr of \alpha ** (i+1) is given by poly-repr of
+     * \alpha ** i shifted left one-bit and accounting for any
+     * \alpha ** GF_BITS term that may occur when poly-repr of
+     * \alpha ** i is shifted.
+     */
+    mask = 1 << (GF_BITS - 1 ) ;
+    for (i = GF_BITS + 1; i < GF_SIZE; i++) {
+        if (gf_exp[i - 1] >= mask)
+            gf_exp[i] = gf_exp[GF_BITS] ^ ((gf_exp[i - 1] ^ mask) << 1);
+        else
+            gf_exp[i] = gf_exp[i - 1] << 1;
+        gf_log[gf_exp[i]] = i;
+    }
+    /*
+     * log(0) is not defined, so use a special value
+     */
+    gf_log[0] =	GF_SIZE ;
+    /* set the extended gf_exp values for fast multiply */
+    for (i = 0 ; i < GF_SIZE ; i++)
+        gf_exp[i + GF_SIZE] = gf_exp[i] ;
+
+    /*
+     * again special cases. 0 has no inverse. This used to
+     * be initialized to GF_SIZE, but it should make no difference
+     * since noone is supposed to read from here.
+     */
+    inverse[0] = 0 ;
+    inverse[1] = 1;
+    for (i=2; i<=GF_SIZE; i++)
+        inverse[i] = gf_exp[GF_SIZE-gf_log[i]];
+}
+
+/*
+ * Various linear algebra operations that i use often.
+ */
+
+/*
+ * addmul() computes dst[] = dst[] + c * src[]
+ * This is used often, so better optimize it! Currently the loop is
+ * unrolled 16 times, a good value for 486 and pentium-class machines.
+ * The case c=0 is also optimized, whereas c=1 is not. These
+ * calls are unfrequent in my typical apps so I did not bother.
+ *
+ * Note that gcc on
+ */
+#if 0
+#define addmul(dst, src, c, sz) \
+    if (c != 0) addmul1(dst, src, c, sz)
+#endif
+
+
+// Consti10
+// #define UNROLL 16 /* 1, 4, 8, 16 */
+#define UNROLL CONSTI10_N_UNROLLS
+static void
+slow_addmul1(gf* dst,const gf* src, gf c, int sz)
+{
+    USE_GF_MULC ;
+    gf *lim = &dst[sz - UNROLL + 1] ;
+
+    GF_MULC0(c) ;
+
+#if (UNROLL > 1) /* unrolling by 8/16 is quite effective on the pentium */
+    for (; dst < lim ; dst += UNROLL, src += UNROLL ) {
+        GF_ADDMULC( dst[0] , src[0] );
+        GF_ADDMULC( dst[1] , src[1] );
+        GF_ADDMULC( dst[2] , src[2] );
+        GF_ADDMULC( dst[3] , src[3] );
+#if (UNROLL > 4)
+        GF_ADDMULC( dst[4] , src[4] );
+        GF_ADDMULC( dst[5] , src[5] );
+        GF_ADDMULC( dst[6] , src[6] );
+        GF_ADDMULC( dst[7] , src[7] );
+#endif
+#if (UNROLL > 8)
+        GF_ADDMULC( dst[8] , src[8] );
+        GF_ADDMULC( dst[9] , src[9] );
+        GF_ADDMULC( dst[10] , src[10] );
+        GF_ADDMULC( dst[11] , src[11] );
+        GF_ADDMULC( dst[12] , src[12] );
+        GF_ADDMULC( dst[13] , src[13] );
+        GF_ADDMULC( dst[14] , src[14] );
+        GF_ADDMULC( dst[15] , src[15] );
+#endif
+    }
+#endif
+    lim += UNROLL - 1 ;
+    for (; dst < lim; dst++, src++ )		/* final components */
+        GF_ADDMULC( *dst , *src );
+}
+
+# define addmul1 slow_addmul1
+
+
+static void addmul(gf *dst,const gf *src, gf c, int sz) {
+    // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
+    // Consti10
+    //if (c != 0) addmul1(dst, src, c, sz);
+    //if (c != 0) consti_addmul(dst, src, c, sz);
+    //gf256_muladd_mem(dst,c,src,sz);
+    //maddrc256_flat_table(dst,src,c,sz);
+    //maddrc256_shuffle_neon_64(dst,src,c,sz);
+    //maddrc256_flat_table(dst,src,c,sz);
+    gf256_madd_optimized(dst,src,c,sz);
+}
+
+/*
+ * mul() computes dst[] = c * src[]
+ * This is used often, so better optimize it! Currently the loop is
+ * unrolled 16 times, a good value for 486 and pentium-class machines.
+ * The case c=0 is also optimized, whereas c=1 is not. These
+ * calls are unfrequent in my typical apps so I did not bother.
+ *
+ * Note that gcc on
+ */
+#if 0
+#define mul(dst, src, c, sz) \
+    do { if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz); } while(0)
+#endif
+
+// Consti10
+// #define UNROLL 16 /* 1, 4, 8, 16 */
+#define UNROLL CONSTI10_N_UNROLLS
+static void
+slow_mul1(gf *dst,const gf *src, gf c,const int sz)
+{
+    USE_GF_MULC ;
+    gf *lim = &dst[sz - UNROLL + 1] ;
+
+    GF_MULC0(c) ;
+
+#if (UNROLL > 1) /* unrolling by 8/16 is quite effective on the pentium */
+    for (; dst < lim ; dst += UNROLL, src += UNROLL ) {
+        GF_MULC( dst[0] , src[0] );
+        GF_MULC( dst[1] , src[1] );
+        GF_MULC( dst[2] , src[2] );
+        GF_MULC( dst[3] , src[3] );
+#if (UNROLL > 4)
+        GF_MULC( dst[4] , src[4] );
+        GF_MULC( dst[5] , src[5] );
+        GF_MULC( dst[6] , src[6] );
+        GF_MULC( dst[7] , src[7] );
+#endif
+#if (UNROLL > 8)
+        GF_MULC( dst[8] , src[8] );
+        GF_MULC( dst[9] , src[9] );
+        GF_MULC( dst[10] , src[10] );
+        GF_MULC( dst[11] , src[11] );
+        GF_MULC( dst[12] , src[12] );
+        GF_MULC( dst[13] , src[13] );
+        GF_MULC( dst[14] , src[14] );
+        GF_MULC( dst[15] , src[15] );
+#endif
+    }
+#endif
+    lim += UNROLL - 1 ;
+    for (; dst < lim; dst++, src++ )		/* final components */
+        GF_MULC( *dst , *src );
+}
+
+# define mul1 slow_mul1
+
+
+
+static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
+    /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
+    // Consti10
+    //if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
+    //if (c != 0) mul_consti2(dst, src, c, sz); else memset(dst, 0, sz);
+    //gf256_mul_mem(dst,src,c,sz);
+    //mulrc256_flat_table(dst,src,c,sz);
+    gf256_mul_optimized(dst,src,c,sz);
+}
