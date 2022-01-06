@@ -343,14 +343,6 @@ slow_addmul1(gf* dst,const gf* src, gf c, int sz)
 
 # define addmul1 slow_addmul1
 
-__attribute__((optimize("unroll-loops")))
-static void addmul_consti(gf *dst,const gf *src, gf c, int sz) {
-    gf* mulTableOffset=&gf_mul_table[(c)<<8];
-    for(int i=0;i<sz;i++){
-        // NOTE: ^= is the "Bitwise XOR assignment" operator
-        dst[i] ^= mulTableOffset[src[i]];
-    }
-}
 
 static void addmul(gf *dst,const gf *src, gf c, int sz) {
     // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
@@ -420,45 +412,6 @@ slow_mul1(gf *dst,const gf *src, gf c,const int sz)
 
 # define mul1 slow_mul1
 
-static void mul_consti(gf *dst,const gf *src, gf c, int sz){
-    for(int i=0;i<sz;i++){
-        //dst[i]= gf_mul(src[i],c);
-        dst[i] = gal_mul(src[i],c);
-    }
-}
-
-__attribute__((optimize("unroll-loops")))
-static void mul_consti2(gf *dst,const gf *src,gf c, int sz) {
-    // since there are many multiplications of a (random) number with a fixed number (c),
-    // we can calculate the offset in the multiplication table for c at the beginning (once)
-    gf* mulTableOffset=&gf_mul_table[(c)<<8];
-    for(int i=0;i<sz;i++){
-        dst[i]=mulTableOffset[src[i]];
-    }
-}
-
-#define LOL_UNROLL 4
-
-static void mul_consti3(gf *dst,const gf *src,gf c, int sz) {
-    // since there are many multiplications of a (random) number with a fixed number (c),
-    // we can calculate the offset in the multiplication table for c at the beginning (once)
-    gf* mulTableOffset=&gf_mul_table[(c)<<8];
-    //for(int i=0;i<sz;i++){
-    //    dst[i]=mulTableOffset[src[i]];
-    //}
-    for(int i=0;i<sz;i+=4){
-        dst[i]=mulTableOffset[src[i]];
-        dst[i+1]=mulTableOffset[src[i+1]];
-        dst[i+2]=mulTableOffset[src[i+2]];
-        dst[i+3]=mulTableOffset[src[i+3]];
-        //
-    }
-    // do the rest if it was not a multiple of 4
-    int remaining=sz - (sz % 4);
-    for(int i=sz-remaining;i<sz;i++){
-        dst[i]=mulTableOffset[src[i]];
-    }
-}
 
 
 static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
