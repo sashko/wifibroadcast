@@ -47,7 +47,12 @@
 
 #include <assert.h>
 #include "fec.h"
-//Consti10
+/**
+ * Include our optimized GF256 math functions - since FEC mostly boils down to "Galois field" mul / madd on big memory chuncks
+ * this is the most straight forward optimization, and it really speeds up the code by a lot (see paper)
+ * The previos optimization by Alain Knaff used a lookup table. This optimization is still used as a backup, but faster options exists
+ * depending on the architecture the code is running on.
+ */
 #include "libmoepgf/gf256_optimized_include.h"
 #include "gf_simple/gf_simple.h"
 #include <vector>
@@ -85,27 +90,15 @@ u_long ticks[10];	/* vars for timekeeping */
 #define TOCK(x)
 #endif /* TEST */
 
-/*
- * You should not need to change anything beyond this point.
- * The first part of the file implements linear algebra in GF.
- *
- * gf is the type used to store an element of the Galois Field.
- * Must constain at least GF_BITS bits.
- *
- * Note: unsigned char will work up to GF(256) but int seems to run
- * faster on the Pentium. We use int whenever have to deal with an
- * index, since they are generally faster.
- */
-/*
- * AK: Udpcast only uses GF_BITS=8. Remove other possibilities
+
+/**
+ * Consti10 - the original implementation supported variable GF_BITS values. However, with the optimizations
+ * and the HW developments since 1997 it makes no sense to use anything lower than GF(2^8). And the optimizations by
+ * Alain Knaff made GF_BITS == 8 an requirement anyways
  */
 #if (GF_BITS != 8)
 #error "GF_BITS must be 8"
 #endif
-typedef unsigned char gf;
-
-#define	GF_SIZE ((1 << GF_BITS) - 1)	/* powers of \alpha */
-
 
 
 #define SWAP(a,b,t) {t tmp; tmp=a; a=b; b=tmp;}
@@ -741,8 +734,6 @@ void test_fec(){
 void
 test_gf()
 {
-    fprintf(stderr,"GF_SIZE is %d\n",GF_SIZE);
-
     std::cout<<"Testing gf256 mul operation\n";
     for(int size=0;size<2048;size++){
         std::cout<<"x"<<std::flush;
