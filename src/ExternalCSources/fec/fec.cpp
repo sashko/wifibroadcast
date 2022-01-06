@@ -355,13 +355,13 @@ static void addmul_consti(gf *dst,const gf *src, gf c, int sz) {
 static void addmul(gf *dst,const gf *src, gf c, int sz) {
     // fprintf(stderr, "Dst=%p Src=%p, gf=%02x sz=%d\n", dst, src, c, sz);
     // Consti10
-    if (c != 0) addmul1(dst, src, c, sz);
+    //if (c != 0) addmul1(dst, src, c, sz);
     //if (c != 0) consti_addmul(dst, src, c, sz);
     //gf256_muladd_mem(dst,c,src,sz);
     //maddrc256_flat_table(dst,src,c,sz);
     //maddrc256_shuffle_neon_64(dst,src,c,sz);
     //maddrc256_flat_table(dst,src,c,sz);
-    //gf256_madd_optimized(dst,src,c,sz);
+    gf256_madd_optimized(dst,src,c,sz);
 }
 
 /*
@@ -464,11 +464,11 @@ static void mul_consti3(gf *dst,const gf *src,gf c, int sz) {
 static inline void mul(gf *dst,const gf *src, gf c,const int sz) {
     /*fprintf(stderr, "%p = %02x * %p\n", dst, c, src);*/
     // Consti10
-    if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
+    //if (c != 0) mul1(dst, src, c, sz); else memset(dst, 0, sz);
     //if (c != 0) mul_consti2(dst, src, c, sz); else memset(dst, 0, sz);
     //gf256_mul_mem(dst,src,c,sz);
     //mulrc256_flat_table(dst,src,c,sz);
-    //gf256_mul_optimized(dst,src,c,sz);
+    gf256_mul_optimized(dst,src,c,sz);
 }
 
 /*
