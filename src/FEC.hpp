@@ -133,7 +133,6 @@ std::vector<unsigned int> fecDecode(unsigned int fragmentSize, std::vector<std::
 
 // randomly select a possible combination of received indices (either primary or secondary).
 static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSecondaryFragments){
-    fec_init();
     srand (time(NULL));
     constexpr auto FRAGMENT_SIZE=1446;
 
