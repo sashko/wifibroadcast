@@ -78,41 +78,8 @@ maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
     }
 }
 
-void
-mulrc256_shuffle_neon_64(uint8_t *region, uint8_t constant, size_t length)
-{
-    assert(length % 8 ==0);
-    uint8_t *end;
-    register uint8x8x2_t t1, t2;
-    register uint8x8_t m1, m2, in, out, l, h;
 
-    if (constant == 0) {
-        memset(region, 0, length);
-        return;
-    }
-
-    if (constant == 1)
-        return;
-
-    t1 = vld2_u8((const uint8_t *)tl[constant]);
-    t2 = vld2_u8((const uint8_t *)th[constant]);
-    m1 = vdup_n_u8(0x0f);
-    m2 = vdup_n_u8(0xf0);
-
-    for (end=region+length; region<end; region+=8) {
-        in = vld1_u8((const uint8_t *)region);
-        l = vand_u8(in, m1);
-        l = vtbl2_u8(t1, l);
-        h = vand_u8(in, m2);
-        h = vshr_n_u8(h, 4);
-        h = vtbl2_u8(t2, h);
-        out = veor_u8(h, l);
-        vst1_u8(region, out);
-    }
-}
-
-// Consti10 - same as above, but writes output into a different (output) memory region instead
-// of modifying the input memory region
+// Consti10 - modified to write output into a different memory region than input
 void
 mulrc256_shuffle_neon_64(uint8_t *region1,const uint8_t* region2, uint8_t constant, size_t length)
 {
