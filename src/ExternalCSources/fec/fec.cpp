@@ -513,7 +513,7 @@ invert_mat(gf *src, int k)
             c = gf256_inverse( c ) ;
             pivot_row[icol] = 1 ;
             for (ix = 0 ; ix < k ; ix++ )
-                pivot_row[ix] = gf_mul(c, pivot_row[ix] );
+                pivot_row[ix] = gf256_mul(c, pivot_row[ix] );
         }
         /*
          * from all rows, remove multiples of the selected row
@@ -1109,6 +1109,13 @@ test_gf()
     for(int i=0;i<256;i++){
         assert(gf256_inverse(i)==inverse[i]);
     }
+
+    for(int i=0;i<256;i++){
+        for(int j=0;j<256;j++){
+            assert(gf256_mul(i,j)== gf_mul(i,j));
+        }
+    }
+
 
 
     std::cout<<"test done2\n";

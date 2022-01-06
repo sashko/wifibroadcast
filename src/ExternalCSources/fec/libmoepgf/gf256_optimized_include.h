@@ -126,5 +126,11 @@ static uint8_t gf256_inverse(uint8_t value){
     return inverses[value];
 }
 
+static uint8_t gf256_mul(uint8_t x,uint8_t y){
+    uint8_t ret;
+    mulrc256_flat_table(&ret,&x,y,1);
+    return ret;
+}
+
 
 #endif //WIFIBROADCAST_SIMPLE_INCLUDE_H
