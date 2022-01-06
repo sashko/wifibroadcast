@@ -681,7 +681,7 @@ void fec_encode(unsigned int blockSize,
         return;
 
     for(row=0; row < nrFecBlocks; row++)
-        mul(fec_blocks[row], data_blocks[0], gf256_inverse(128 ^ row), blockSize);
+        gf256_mul_optimized(fec_blocks[row], data_blocks[0], gf256_inverse(128 ^ row), blockSize);
 
     for(col=129, blockNo=1; blockNo < nrDataBlocks; col++, blockNo ++) {
         for(row=0; row < nrFecBlocks; row++)
@@ -799,7 +799,7 @@ static inline void resolve(int blockSize,
     for(row = 0, ptr=0; row < nr_fec_blocks; row++) {
         int col;
         gf *target = data_blocks[erased_blocks[row]];
-        mul(target,fec_blocks[0],matrix[ptr++],blockSize);
+        gf256_mul_optimized(target,fec_blocks[0],matrix[ptr++],blockSize);
         for(col = 1; col < nr_fec_blocks;  col++,ptr++) {
             gf256_madd_optimized(target,fec_blocks[col],matrix[ptr],blockSize);
         }
