@@ -1,3 +1,4 @@
+// from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
 int i ;
     fprintf(stderr,"GF_SIZE is %d\n",GF_SIZE);
     /*

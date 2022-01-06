@@ -1116,7 +1116,7 @@ void test_fec(){
 
 
 
-// from https://github.com/wangyu-/UDPspeeder/blob/3375c6ac9d7de0540789483e964658746e245634/lib/fec.cpp
+
 void
 test_gf()
 {
