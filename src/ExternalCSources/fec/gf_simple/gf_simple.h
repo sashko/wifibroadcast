@@ -37,7 +37,7 @@ gal8 gal_mul(gal8 a, gal8 b)
 // Consti10
 // add and multiply 3 elements of GF(2^8)
 // return x + a*b
-gal8 gal_addmul(gal8 x,gal8 a,gal8 b){
+gal8 gal_madd(gal8 x,gal8 a,gal8 b){
     return gal_add(x, gal_mul(a,b));
 }
 
@@ -50,9 +50,9 @@ gal_mul_region(gf *dst,const gf *src, gf c,const int sz){
 }
 
 static void
-gal_addmul_region(gf *dst,const gf *src, gf c,const int sz){
+gal_madd_region(gf *dst,const gf *src, gf c,const int sz){
     for(int i=0;i<sz;i++){
-        dst[i]=gal_addmul(dst[i],src[i],c);
+        dst[i]=gal_madd(dst[i],src[i],c);
     }
 }
 

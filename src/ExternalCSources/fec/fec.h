@@ -54,7 +54,6 @@ void fec_decode(unsigned int blockSize,
 
 void fec_license(void);
 
-void test_gf();
 
 #ifdef PROFILE
 void printDetail(void);
@@ -95,9 +94,12 @@ void fec_decode2(unsigned int fragmentSize,
                 const std::vector<uint8_t*>& secondaryFragmentsReceived,
                 const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived);
 
+// Test the (optimized) galois field math
+void test_gf();
+void test_gf2();
 
-
-
+// Test the fec encoding & reconstructing step
+void test_fec();
 
 
 #endif //FEC_2_H

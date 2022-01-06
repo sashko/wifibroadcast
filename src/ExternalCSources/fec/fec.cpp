@@ -854,7 +854,6 @@ static inline void resolve(int blockSize,
 }
 
 void fec_decode(unsigned int blockSize,
-
                 gf **data_blocks,
                 unsigned int nr_data_blocks,
                 gf **fec_blocks,
@@ -980,14 +979,14 @@ namespace FUCK{
         }
         return buffers;
     }
-    static std::vector<const uint8_t*> convertToP(const std::vector<std::vector<uint8_t>> buffs){
+    static std::vector<const uint8_t*> convertToP(const std::vector<std::vector<uint8_t>>& buffs){
         std::vector<const uint8_t*> ret;
         for(int i=0;i<buffs.size();i++){
             ret.push_back(buffs[i].data());
         }
         return ret;
     }
-    static std::vector<uint8_t*> convertToP2(std::vector<std::vector<uint8_t>> buffs){
+    static std::vector<uint8_t*> convertToP2(std::vector<std::vector<uint8_t>>& buffs){
         std::vector<uint8_t*> ret;
         for(int i=0;i<buffs.size();i++){
             ret.push_back(buffs[i].data());
@@ -1046,7 +1045,7 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
     //
     const int nReceivedDataPackets=nDataPackets-nLostDataPackets;
     const int nReceivedFecPackets=nLostDataPackets;
-    std::cout<<"N received data packets:"<<nReceivedDataPackets<<" N received FEC packets "<<nReceivedFecPackets<<"\n";
+    //std::cout<<"N received data packets:"<<nReceivedDataPackets<<" N received FEC packets "<<nReceivedFecPackets<<"\n";
     // FEC will fill the not received data packets
     std::vector<std::vector<uint8_t>> fullyReconstructedDataPackets(nDataPackets,std::vector<uint8_t>(packetSize));
     // write as many data packets as we have "received"
@@ -1058,7 +1057,7 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
     std::vector<unsigned int> erasedDataPacketsIndices;
     for(int i=nReceivedDataPackets;i<nDataPackets;i++){
         erasedDataPacketsIndices.push_back(i);
-        std::cout<<"erased dpi:"<<i<<"\n";
+        //std::cout<<"erased dpi:"<<i<<"\n";
     }
     assert(erasedDataPacketsIndices.size()==nLostDataPackets);
 
@@ -1068,16 +1067,15 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
     for(int i=0;i<nReceivedFecPackets;i++){
         memcpy(receivedFecPackets[i].data(),fecPackets[i].data(),packetSize);
         receivedFecPacketsIndices.push_back(i);
-        std::cout<<"received fecpi:"<<i<<"\n";
+        //std::cout<<"received fecpi:"<<i<<"\n";
         assert(receivedFecPackets[i].size()==packetSize);
     }
     assert(receivedFecPacketsIndices.size()==nReceivedFecPackets);
 
     for(const auto& idx:receivedFecPacketsIndices){
         FUCK::assertVectorsEqual(fecPackets[idx],receivedFecPackets[idx]);
-        std::cout<<"fec packet okay:"<<idx<<"\n";
+        //std::cout<<"fec packet okay:"<<idx<<"\n";
     }
-
 
     // perform the (reconstructing) fec step
     fec_decode2(packetSize,
@@ -1093,13 +1091,28 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
     // make sure everything was reconstructed properly
     for(int i=0;i<nDataPackets;i++){
         FUCK::assertVectorsEqual(dataPackets[i],fullyReconstructedDataPackets[i]);
-        std::cout<<i<<"\n";
+        //std::cout<<i<<"\n";
     }
-    std::cout<<"SUCCESS: N data packets:"<<nDataPackets<<" N fec packets:"<<nFecPackets<<" N lost&reconstructed data packets:"<<nLostDataPackets<<"\n";
+    //std::cout<<"SUCCESS: N data packets:"<<nDataPackets<<" N fec packets:"<<nFecPackets<<" N lost&reconstructed data packets:"<<nLostDataPackets<<"\n";
 }
 
 
-
+void test_fec(){
+    fec_init();
+    std::cout<<"Testing FEC reconstruction:\n";
+    //test_fec_encode_and_decode(8,2,1024,0);
+    //test_fec_encode_and_decode(8,2,1024,1);
+    //test_fec_encode_and_decode(8,8,1024,2);
+    //test_fec_encode_and_decode(10,5,1024,1,0);
+    for(int packetSize=1;packetSize<2048;packetSize++){
+        test_fec_encode_and_decode(8,2,packetSize,1);
+        test_fec_encode_and_decode(8,2,packetSize,2);
+        test_fec_encode_and_decode(9,3,packetSize,1);
+        test_fec_encode_and_decode(9,3,packetSize,2);
+        test_fec_encode_and_decode(9,3,packetSize,3);
+    }
+    std::cout<<"Testing FEC reconstruction - all tests passed\n";
+}
 
 
 
@@ -1108,9 +1121,7 @@ void
 test_gf()
 {
     fec_init();
-    //test_fec_encode_and_decode(8,8,1024,2);
-    //test_fec_encode_and_decode(8,8,1024,2);
-    //test_fec_encode_and_decode(10,5,1024,1,0);
+    test_fec();
 
     //
     //
@@ -1160,7 +1171,7 @@ test_gf()
             for(int k=0;k<GF_SIZE;k++){
                 gf res=k;
                 addmul(&res,(const gf*)&i,j,1);
-                assert(res== gal_addmul(k,j,i));
+                assert(res== gal_madd(k,j,i));
             }
         }
     }
@@ -1173,22 +1184,36 @@ test_gf()
         std::cout<<"\n";
     }*/
 
-    for(int X_SIZE=1;X_SIZE<1466;X_SIZE++){
-        auto source=FUCK::createRandomDataBuffer(X_SIZE);
-        std::vector<uint8_t> res1(X_SIZE);
-        std::vector<uint8_t> res2(X_SIZE);
-        for(i=0;i<GF_SIZE;i++){
-            //slow_mul1(res1.data(),source.data(),i,X_SIZE);
-            //gal_mul_region(res2.data(),source.data(),i,X_SIZE);
-            slow_addmul1(res1.data(),source.data(),i,X_SIZE);
-            //maddrc256_flat_table(res2.data(),source.data(),i,X_SIZE);
-            //maddrc256_shuffle_neon_64(res2.data(),source.data(),i,X_SIZE);
-            gf256_madd_optimized(res2.data(),source.data(),i,X_SIZE);
+    std::cout<<"Testing gf256 mul operation\n";
+    for(int size=0;size<2048;size++){
+        std::cout<<"x"<<std::flush;
+        const auto source=FUCK::createRandomDataBuffer(size);
+        std::vector<uint8_t> res1(size);
+        std::vector<uint8_t> res2(size);
+        for(int constant=0;constant<255;constant++){
+            gal_mul_region(res1.data(),source.data(),constant,size);
+            gf256_mul_optimized(res2.data(),source.data(),constant,size);
             FUCK::assertVectorsEqual(res1,res2);
-            //std::cerr<<"Okay "<<X_SIZE<<" *"<<i<<"\n";
         }
-        //std::cerr<<"Okay "<<X_SIZE<<" all 0..255\n";
     }
+    std::cout<<" - success.\n";
+
+    std::cout<<"Testing gf256 madd operation\n";
+    for(int size=0;size<2048;size++){
+        std::cout<<"x"<<std::flush;
+        const auto source=FUCK::createRandomDataBuffer(size);
+        const auto source2=FUCK::createRandomDataBuffer(size);
+        for(int constant=0;constant<255;constant++){
+            // other than mul, madd actually also reads from the dst array
+            auto res1=source2;
+            auto res2=source2;
+            gal_madd_region(res1.data(),source.data(),constant,size);
+            gf256_madd_optimized(res2.data(),source.data(),constant,size);
+            FUCK::assertVectorsEqual(res1,res2);
+        }
+    }
+    std::cout<<" - success.\n";
+
 
     for(i=0;i<256;i++){
         assert(gf256_inverse(i)==inverse[i]);
