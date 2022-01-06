@@ -6,7 +6,7 @@
 #define WIFIBROADCAST_GAL_MATH_REFERENCE_H
 
 // from https://gist.github.com/meagtan/dc1adff8d84bb895891d8fd027ec9d8c
-// Seems to be compatible with the FEC implementation
+// This code exists to validate the (optimized) gf256 math operations at run time
 
 typedef unsigned char gal8; /* Galois field of order 2^8 */
 
