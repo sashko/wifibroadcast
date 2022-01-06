@@ -5,7 +5,7 @@ export VERSION COMMIT
 
 _LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium
 # WFB_VERSION is date and time and the last commit of this branch
-_CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'  #-mavx2 -faligned-new=256
+_CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'  -mavx2 -faligned-new=256
 #-mfpu=neon -march=armv7-a -marm
 # -faligned-new -mavx2
 

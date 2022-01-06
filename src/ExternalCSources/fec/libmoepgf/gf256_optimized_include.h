@@ -27,7 +27,7 @@
 #endif //__arm__
  */
 
-///#include "gf256_neon.h"
+#include "gf256_neon.h"
 //#include "gf256_avx2.h"
 
 #include <iostream>
@@ -62,23 +62,23 @@ static inline bool is_aligned(const void * pointer, size_t byte_count)
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
-    mulrc256_flat_table(dst,src,c,sz);
+    //mulrc256_flat_table(dst,src,c,sz);
     // We can only do the fast algorithm on multiples of 8
-    /*const int sizeSlow = sz % 8;
+    const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
         mulrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
+    }
     /*const bool aligned= is_aligned(dst,64) && is_aligned(src,64);
     if(!aligned){
         mulrc256_flat_table(dst,src,c,sz);
         std::cout<<"Not aligned\n";
         return;
-    }
-    const int sizeSlow = sz % 32;
+    }*/
+    /*const int sizeSlow = sz % 32;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
         mulrc256_shuffle_avx2_2(dst,src,c,sizeFast);
@@ -86,23 +86,22 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
     if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }*/
-
 }
 
 // computes dst[] = dst[] + c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
-    maddrc256_flat_table(dst,src,c,sz);
+    //maddrc256_flat_table(dst,src,c,sz);
     //std::cout<<"c:"<<(int)c<<" sz:"<<sz<<"\n";
     // We can only do the fast algorithm on multiples of 8
-    /*const int sizeSlow = sz % 8;
+    const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
         maddrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
+    }
     /*const bool aligned= is_aligned(dst,64) && is_aligned(src,64);
     if(!aligned){
         maddrc256_flat_table(dst,src,c,sz);
