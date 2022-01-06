@@ -239,22 +239,6 @@ invert_mat(gf *src, int k)
 }
 
 
-static int fec_initialized = 0 ;
-
-void fec_init(void)
-{
-    TICK(ticks[0]);
-    //generate_gf();
-    TOCK(ticks[0]);
-    DDB(fprintf(stderr, "generate_gf took %ldus\n", ticks[0]);)
-    TICK(ticks[0]);
-    //init_mul_table();
-    TOCK(ticks[0]);
-    DDB(fprintf(stderr, "init_mul_table took %ldus\n", ticks[0]);)
-    fec_initialized = 1 ;
-}
-
-
 /**
  * Simplified re-implementation of Fec-Bourbon
  *
@@ -360,7 +344,6 @@ void fec_encode(unsigned int blockSize,
     unsigned int blockNo; /* loop for block counter */
     unsigned int row, col;
 
-    assert(fec_initialized);
     assert(nrDataBlocks <= 128);
     assert(nrFecBlocks <= 128);
 
@@ -738,7 +721,6 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
 
 
 void test_fec(){
-    fec_init();
     std::cout<<"Testing FEC reconstruction:\n";
     //test_fec_encode_and_decode(8,2,1024,0);
     //test_fec_encode_and_decode(8,2,1024,1);
@@ -760,7 +742,6 @@ void test_fec(){
 void
 test_gf()
 {
-    fec_init();
     fprintf(stderr,"GF_SIZE is %d\n",GF_SIZE);
 
     std::cout<<"Testing gf256 mul operation\n";

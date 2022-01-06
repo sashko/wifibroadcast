@@ -11,15 +11,12 @@
 
 typedef uint8_t gf;
 
-/*
- * create a new encoder, returning a descriptor. This contains k,n and
- * the encoding matrix.
- * n is the number of data blocks + fec blocks (matrix height)
- * k is just the data blocks (matrix width)
- * NOTE: Since k,n are variable this call is still required to setup the lookup tables
- * But k,n don't have to be specified at creation time
+
+/**
+ * Consti10 - fec_init is not needed anymore - the gf256 values are precomputed and stored in the header(s) of optimized -
+ * and the block size / n data / n fec blocks is variable (note: for each sequence of blocks, the encode / decode params need to match though)
  */
-void fec_init(void);
+void fec_init(void){};
 
 /**
  * @param blockSize size of each block (all blocks must have the same size)
