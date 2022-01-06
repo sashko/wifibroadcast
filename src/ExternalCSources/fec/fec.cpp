@@ -1121,7 +1121,6 @@ void
 test_gf()
 {
     fec_init();
-    test_fec();
 
     std::cout<<"Testing gf256 mul operation\n";
     for(int size=0;size<2048;size++){
