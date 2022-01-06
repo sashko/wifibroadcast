@@ -55,8 +55,6 @@
 #include <vector>
 #include <iostream>
 
-#define CONSTI10_N_UNROLLS 16
-
 /*
  * stuff used for testing purposes only
  */
