@@ -1154,7 +1154,7 @@ test_gf()
     std::cout<<" - success.\n";
 
 
-    for(i=0;i<256;i++){
+    for(int i=0;i<256;i++){
         assert(gf256_inverse(i)==inverse[i]);
     }
 
