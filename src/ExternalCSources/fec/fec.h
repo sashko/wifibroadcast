@@ -16,7 +16,7 @@ typedef uint8_t gf;
  * Consti10 - fec_init is not needed anymore - the gf256 values are precomputed and stored in the header(s) of optimized -
  * and the block size / n data / n fec blocks is variable (note: for each sequence of blocks, the encode / decode params need to match though)
  */
-void fec_init(void){};
+//void fec_init(void);
 
 /**
  * @param blockSize size of each block (all blocks must have the same size)
