@@ -528,7 +528,7 @@ invert_mat(gf *src, int k)
                 if (ix != icol) {
                     c = p[icol] ;
                     p[icol] = 0 ;
-                    addmul(p, pivot_row, c, k );
+                    gf256_madd_optimized(p, pivot_row, c, k );
                 }
             }
         }
@@ -685,7 +685,7 @@ void fec_encode(unsigned int blockSize,
 
     for(col=129, blockNo=1; blockNo < nrDataBlocks; col++, blockNo ++) {
         for(row=0; row < nrFecBlocks; row++)
-            addmul(fec_blocks[row], data_blocks[blockNo],
+            gf256_madd_optimized(fec_blocks[row], data_blocks[blockNo],
                    gf256_inverse(row ^ col),
                    blockSize);
     }
@@ -718,7 +718,7 @@ static inline void reduce(unsigned int blockSize,
             int j;
             for(j=0; j < nr_fec_blocks; j++) {
                 int blno = fec_block_nos[j];
-                addmul(fec_blocks[j],src,gf256_inverse(blno^col^128),blockSize);
+                gf256_madd_optimized(fec_blocks[j],src,gf256_inverse(blno^col^128),blockSize);
             }
         }
     }
@@ -801,7 +801,7 @@ static inline void resolve(int blockSize,
         gf *target = data_blocks[erased_blocks[row]];
         mul(target,fec_blocks[0],matrix[ptr++],blockSize);
         for(col = 1; col < nr_fec_blocks;  col++,ptr++) {
-            addmul(target,fec_blocks[col],matrix[ptr],blockSize);
+            gf256_madd_optimized(target,fec_blocks[col],matrix[ptr],blockSize);
         }
     }
 }
