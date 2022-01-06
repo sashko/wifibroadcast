@@ -510,7 +510,7 @@ invert_mat(gf *src, int k)
              * fruitful, at least in the obvious ways (unrolling)
              */
             DEB( pivswaps++ ; )
-            c = inverse[ c ] ;
+            c = gf256_inverse( c ) ;
             pivot_row[icol] = 1 ;
             for (ix = 0 ; ix < k ; ix++ )
                 pivot_row[ix] = gf_mul(c, pivot_row[ix] );
@@ -681,12 +681,12 @@ void fec_encode(unsigned int blockSize,
         return;
 
     for(row=0; row < nrFecBlocks; row++)
-        mul(fec_blocks[row], data_blocks[0], inverse[128 ^ row], blockSize);
+        mul(fec_blocks[row], data_blocks[0], gf256_inverse(128 ^ row), blockSize);
 
     for(col=129, blockNo=1; blockNo < nrDataBlocks; col++, blockNo ++) {
         for(row=0; row < nrFecBlocks; row++)
             addmul(fec_blocks[row], data_blocks[blockNo],
-                   inverse[row ^ col],
+                   gf256_inverse(row ^ col),
                    blockSize);
     }
 }
@@ -718,7 +718,7 @@ static inline void reduce(unsigned int blockSize,
             int j;
             for(j=0; j < nr_fec_blocks; j++) {
                 int blno = fec_block_nos[j];
-                addmul(fec_blocks[j],src,inverse[blno^col^128],blockSize);
+                addmul(fec_blocks[j],src,gf256_inverse(blno^col^128),blockSize);
             }
         }
     }
@@ -769,7 +769,7 @@ static inline void resolve(int blockSize,
         /*assert(irow < fec_blocks+128);*/
         for(col = 0; col < nr_fec_blocks; col++, ptr++) {
             int icol = erased_blocks[col];
-            matrix[ptr] = inverse[irow ^ icol];
+            matrix[ptr] = gf256_inverse(irow ^ icol);
         }
     }
 
