@@ -60,8 +60,6 @@ void printDetail(void);
 //}
 //#endif
 
-
-
 #include <vector>
 
 

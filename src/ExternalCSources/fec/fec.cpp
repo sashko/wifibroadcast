@@ -37,7 +37,7 @@
 
 /*
  * The following parameter defines how many bits are used for
- * field elements. The code only supports 8
+ * field elements. The code only supports 8.
  */
 #define GF_BITS  8	/* code over GF(2^GF_BITS) - DO NOT CHANGE*/
 
@@ -48,9 +48,9 @@
 #include <assert.h>
 #include "fec.h"
 /**
- * Include our optimized GF256 math functions - since FEC mostly boils down to "Galois field" mul / madd on big memory chuncks
+ * Include our optimized GF256 math functions - since FEC mostly boils down to "Galois field" mul / madd on big memory blocks
  * this is the most straight forward optimization, and it really speeds up the code by a lot (see paper)
- * The previos optimization by Alain Knaff used a lookup table. This optimization is still used as a backup, but faster options exists
+ * The previous optimization by Alain Knaff used a lookup table. This optimization is still used as a backup, but faster options exists
  * depending on the architecture the code is running on.
  */
 #include "libmoepgf/gf256_optimized_include.h"
