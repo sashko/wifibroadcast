@@ -96,7 +96,6 @@ void fec_decode2(unsigned int fragmentSize,
 
 // Test the (optimized) galois field math
 void test_gf();
-void test_gf2();
 
 // Test the fec encoding & reconstructing step
 void test_fec();
