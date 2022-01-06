@@ -496,6 +496,7 @@ void fec_decode(unsigned int blockSize,
 #ifdef PROFILE
     end = rdtsc();
     resolveTime += end - begin;
+    printDetail();
 #endif
 }
 
