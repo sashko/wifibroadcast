@@ -37,11 +37,9 @@
 
 /*
  * The following parameter defines how many bits are used for
- * field elements. The code supports any value from 2 to 16
- * but fastest operation is achieved with 8 bit elements
- * This is the only parameter you may want to change.
+ * field elements. The code only supports 8
  */
-#define GF_BITS  8	/* code over GF(2**GF_BITS) - change to suit */
+#define GF_BITS  8	/* code over GF(2^GF_BITS) - DO NOT CHANGE*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -542,6 +540,7 @@ void fec_license(void)
             "980624\n"
             "(C) 1997-98 Luigi Rizzo (luigi@iet.unipi.it)\n"
             "(C) 2001 Alain Knaff (alain@knaff.lu)\n"
+            "(C) 2022 Constantin Geier (optimize using libmoepgf source code)\n"
             "\n"
             "Portions derived from code by Phil Karn (karn@ka9q.ampr.org),\n"
             "Robert Morelos-Zaragoza (robert@spectra.eng.hawaii.edu) and Hari\n"
