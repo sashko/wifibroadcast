@@ -98,11 +98,6 @@ mulrc256_shuffle_ssse3(uint8_t *region1,const uint8_t* region2, uint8_t constant
     }
 }
 
-/*void
-mulrc256_shuffle_ssse3_x(uint8_t *region1,const uint8_t* region2,uint8_t constant, size_t length){
-    memcpy(region1,region2,length);
-    mulrc256_shuffle_ssse3(region1,constant,length);
-}*/
 
 
 
