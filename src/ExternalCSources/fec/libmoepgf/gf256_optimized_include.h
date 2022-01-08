@@ -29,7 +29,7 @@
 
 //#include "gf256_neon.h"
 //#include "gf256_avx2.h"
-//#include "gf256_ssse3.h"
+#include "gf256_ssse3.h"
 
 #include <iostream>
 
@@ -63,7 +63,7 @@
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
-    mulrc256_flat_table(dst,src,c,sz);
+    //mulrc256_flat_table(dst,src,c,sz);
     // We can only do the fast algorithm on multiples of 8
     /*const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;
@@ -79,14 +79,14 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
         std::cout<<"Not aligned\n";
         return;
     }*/
-    /*const int sizeSlow = sz % 32;
+    const int sizeSlow = sz % 32;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
-        mulrc256_shuffle_avx2(dst,src,c,sizeFast);
+        mulrc256_shuffle_sse3_x(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
+    }
 }
 
 // computes dst[] = dst[] + c * src[]
