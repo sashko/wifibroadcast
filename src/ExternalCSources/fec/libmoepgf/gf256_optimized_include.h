@@ -17,20 +17,20 @@
 #include "alignment_check.h"
 
 /*#ifdef __arm__
-#define FEC_USE_ARM_NEON
+#define FEC_GF256_USE_ARM_NEON
 #endif
 #ifdef __x86_64__
-#define FEC_USE_X86_SSSE3
+#define FEC_GF256_USE_X86_SSSE3
 #endif*/
 
-#define FEC_USE_X86_SSSE3
+#define FEC_GF256_USE_X86_SSSE3
 
 // include the optimized methods if enabled
-#ifdef FEC_USE_ARM_NEON
+#ifdef FEC_GF256_USE_ARM_NEON
 #include "gf256_neon.h"
 #endif
 
-#ifdef FEC_USE_X86_SSSE3
+#ifdef FEC_GF256_USE_X86_SSSE3
 #include "gf256_ssse3.h"
 #endif
 
@@ -41,7 +41,7 @@
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
-#ifdef FEC_USE_X86_SSSE3
+#ifdef FEC_GF256_USE_X86_SSSE3
     const int sizeSlow = sz % 16;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
@@ -51,7 +51,7 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }
     //mulrc256_flat_table(dst,src,c,sz);
-#elif defined(FEC_USE_ARM_NEON)
+#elif defined(FEC_GF256_USE_ARM_NEON)
     const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
@@ -68,7 +68,7 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
 // computes dst[] = dst[] + c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
-#ifdef FEC_USE_X86_SSSE3
+#ifdef FEC_GF256_USE_X86_SSSE3
     const int sizeSlow = sz % 16;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
@@ -78,7 +78,7 @@ static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }
     //maddrc256_flat_table(dst,src,c,sz);
-#elif defined(FEC_USE_ARM_NEON)
+#elif defined(FEC_GF256_USE_ARM_NEON)
     const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
@@ -108,9 +108,9 @@ static uint8_t gf256_mul(uint8_t x,uint8_t y){
 }
 
 static void print_optimization_method(){
-#ifdef FEC_USE_X86_SSSE3
+#ifdef FEC_GF256_USE_X86_SSSE3
     std::cout<<"Using X86_SSSE3 optimization\n";
-#elif defined(FEC_USE_ARM_NEON)
+#elif defined(FEC_GF256_USE_ARM_NEON)
     std::cout<<"Using ARM_NEON optimization\n";
 #else
     std::cout<<"No optimization, using flat_table as fallback\n";
