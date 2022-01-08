@@ -18,6 +18,8 @@ static inline bool are_aligned(const void * pointer1,const void* pointer2,size_t
 { return is_aligned(pointer1,byte_count) && is_aligned(pointer2,byte_count);}
 
 
+// Not guaranteed that a value exists that has the proper alignment for both input arrays -
+// well i was able to fix it otherwise
 static inline int find_alignment(const uint8_t * pointer1,const uint8_t * pointer2, size_t byte_count){
     int ret=0;
     while (! ( is_aligned(&pointer1[ret],byte_count) && is_aligned(&pointer2[ret],byte_count) ) ) {
