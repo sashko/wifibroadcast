@@ -16,14 +16,14 @@
 #include "gf256_flat_table.h"
 #include "alignment_check.h"
 
-/*#ifdef __arm__
+#ifdef __arm__
 #define FEC_GF256_USE_ARM_NEON
 #endif
 #ifdef __x86_64__
 #define FEC_GF256_USE_X86_SSSE3
-#endif*/
+#endif
 
-#define FEC_GF256_USE_X86_SSSE3
+//#define FEC_GF256_USE_X86_SSSE3
 
 // include the optimized methods if enabled
 #ifdef FEC_GF256_USE_ARM_NEON
