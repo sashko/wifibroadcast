@@ -23,6 +23,8 @@
 #define FEC_USE_X86_SSSE3
 #endif*/
 
+#define FEC_USE_X86_SSSE3
+
 // include the optimized methods if enabled
 #ifdef FEC_USE_ARM_NEON
 #include "gf256_neon.h"
@@ -43,11 +45,12 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
     const int sizeSlow = sz % 16;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
-        mulrc256_shuffle_ssse3(dst,src,c,sizeFast);
+        mulrc256_shuffle_ssse3_x(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }
+    //mulrc256_flat_table(dst,src,c,sz);
 #elif defined(FEC_USE_ARM_NEON)
     const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;
@@ -66,15 +69,15 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
 // where '+', '*' are gf256 operations
 static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
 #ifdef FEC_USE_X86_SSSE3
-    /*const int sizeSlow = sz % 16;
+    const int sizeSlow = sz % 16;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
         maddrc256_shuffle_ssse3(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
-    maddrc256_flat_table(dst,src,c,sz);
+    }
+    //maddrc256_flat_table(dst,src,c,sz);
 #elif defined(FEC_USE_ARM_NEON)
     const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;
