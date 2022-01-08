@@ -88,7 +88,7 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
         //sizeFast=0;
     }
     if(sizeFast>0){
-        mulrc256_shuffle_sse3_x(dst,src,c,sizeFast);
+        mulrc256_shuffle_ssse3(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);

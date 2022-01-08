@@ -66,13 +66,13 @@ maddrc256_shuffle_ssse3(uint8_t *region1, const uint8_t *region2,
 }
 
 void
-mulrc256_shuffle_ssse3(uint8_t *region, uint8_t constant, size_t length)
+mulrc256_shuffle_ssse3(uint8_t *region,const uint8_t* region2, uint8_t constant, size_t length)
 {
     uint8_t *end;
     register __m128i t1, t2, m1, m2, in, out, l, h;
 
     if (constant == 0) {
-        memset(region, 0, length);
+        memset(region1, 0, length);
         return;
     }
 
@@ -84,22 +84,18 @@ mulrc256_shuffle_ssse3(uint8_t *region, uint8_t constant, size_t length)
     m1 = _mm_set1_epi8(0x0f);
     m2 = _mm_set1_epi8(0xf0);
 
-    for (end=region+length; region<end; region+=16) {
-        in = _mm_loadu_si128((const __m128i *)region);
+    for (end=region1+length; region1<end; region1+=16,region2+=16) {
+        in = _mm_loadu_si128((const __m128i *)region2);
         l = _mm_and_si128(in, m1);
         l = _mm_shuffle_epi8(t1, l);
         h = _mm_and_si128(in, m2);
         h = _mm_srli_epi64(h, 4);
         h = _mm_shuffle_epi8(t2, h);
         out = _mm_xor_si128(h, l);
-        _mm_storeu_si128((__m128i *)region, out);
+        _mm_storeu_si128((__m128i *)region1, out);
     }
 }
 
-void mulrc256_shuffle_sse3_x(uint8_t *region1,const uint8_t* region2,uint8_t constant, size_t length){
-    memcpy(region1,region2,length);
-    mulrc256_shuffle_ssse3(region1,constant,length);
-}
 
 
 
