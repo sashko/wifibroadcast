@@ -9,6 +9,7 @@
 // The mul and addmul methods are highly optimized for each architecture (see Readme.md)
 
 #include "gf256_flat_table.h"
+#include "alignment_check.h"
 
 /*#ifdef __x86_64__
 #include "gf256_avx2.h"
@@ -32,6 +33,7 @@
 #include "gf256_ssse3.h"
 
 #include <iostream>
+#include <cassert>
 
 
 /*static void test(){
@@ -56,10 +58,6 @@
 
 }*/
 
-//static inline bool is_aligned(const void * pointer, size_t byte_count)
-//{ return (uintptr_t)pointer % byte_count == 0; }
-
-
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
@@ -79,8 +77,16 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
         std::cout<<"Not aligned\n";
         return;
     }*/
-    const int sizeSlow = sz % 32;
-    const int sizeFast = sz - sizeSlow;
+    //assert(is_aligned(dst,16));
+    //assert(is_aligned(src,16));
+    //find_alignment(src,dst,16);
+    int sizeSlow = sz % 16;
+    int sizeFast = sz - sizeSlow;
+    if(!are_aligned(src,dst,16)){
+        //std::cout<<"Cannot do fast due to alignment\n";
+        //sizeSlow=sz;
+        //sizeFast=0;
+    }
     if(sizeFast>0){
         mulrc256_shuffle_sse3_x(dst,src,c,sizeFast);
     }
@@ -92,7 +98,7 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
 // computes dst[] = dst[] + c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
-    maddrc256_flat_table(dst,src,c,sz);
+    //maddrc256_flat_table(dst,src,c,sz);
     //std::cout<<"c:"<<(int)c<<" sz:"<<sz<<"\n";
     // We can only do the fast algorithm on multiples of 8
     /*const int sizeSlow = sz % 8;
@@ -109,14 +115,14 @@ static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int
         std::cout<<"Not aligned\n";
         return;
     }*/
-    /*const int sizeSlow = sz % 32;
+    const int sizeSlow = sz % 16;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
-        maddrc256_shuffle_avx2(dst,src,c,sizeFast);
+        maddrc256_shuffle_ssse3(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
+    }
 }
 
 static const uint8_t inverses[MOEPGF256_SIZE] = MOEPGF256_INV_TABLE;
