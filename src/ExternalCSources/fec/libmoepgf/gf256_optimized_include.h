@@ -36,28 +36,6 @@
 #include <cassert>
 
 
-/*static void test(){
-    static int X_SIZE=8;
-    const uint8_t buf1[X_SIZE]{
-        18,1,2,3,4,5,6,7
-    };
-    uint8_t res1[X_SIZE]{
-            36,1,2,3,4,5,6,7
-    };
-    uint8_t res2[X_SIZE];
-    memcpy(res2,res1,X_SIZE);
-
-    xorr_scalar(res1,buf1,X_SIZE);
-    xorr_neon_64(res2,buf1,X_SIZE);
-
-    for(int i=0;i<X_SIZE;i++){
-        assert(res1[i]==res2[i]);
-    }
-
-    std::cout<<"XXX\n";
-
-}*/
-
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
