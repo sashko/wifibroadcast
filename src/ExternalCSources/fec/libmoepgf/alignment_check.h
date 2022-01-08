@@ -29,4 +29,10 @@ static inline int find_alignment(const uint8_t * pointer1,const uint8_t * pointe
     return ret;
 }
 
+//if(!are_aligned(src,dst,16)){
+//std::cout<<"Cannot do fast due to alignment\n";
+//sizeSlow=sz;
+//sizeFast=0;
+//}
+
 #endif //WIFIBROADCAST_ALIGNMENT_CHECK_H

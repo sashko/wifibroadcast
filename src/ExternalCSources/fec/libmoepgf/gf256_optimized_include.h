@@ -82,11 +82,6 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
     //find_alignment(src,dst,16);
     int sizeSlow = sz % 16;
     int sizeFast = sz - sizeSlow;
-    if(!are_aligned(src,dst,16)){
-        //std::cout<<"Cannot do fast due to alignment\n";
-        //sizeSlow=sz;
-        //sizeFast=0;
-    }
     if(sizeFast>0){
         mulrc256_shuffle_ssse3(dst,src,c,sizeFast);
     }
