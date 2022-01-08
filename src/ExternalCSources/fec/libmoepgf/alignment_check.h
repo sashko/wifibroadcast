@@ -6,6 +6,8 @@
 #define WIFIBROADCAST_ALIGNMENT_CHECK_H
 
 // NEON / SSSE3 only work on aligned data ?!
+// THIS STUFF REALLY SUCKS -
+// WELL LOOKS AS IF USING "u" everywhere in ssse3 did the trick
 
 #include <iostream>
 
