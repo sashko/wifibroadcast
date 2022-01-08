@@ -50,7 +50,6 @@ static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int 
     if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }
-    //mulrc256_flat_table(dst,src,c,sz);
 #elif defined(FEC_GF256_USE_ARM_NEON)
     const int sizeSlow = sz % 8;
     const int sizeFast = sz - sizeSlow;
