@@ -8,7 +8,6 @@
 #include <immintrin.h>
 #include "gf256tables285.h"
 #include <stdint.h>
-#include <iostream>
 
 // also fast on x86
 

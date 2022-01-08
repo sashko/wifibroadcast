@@ -714,6 +714,7 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
 
 
 void test_fec(){
+    print_optimization_method();
     std::cout<<"Testing FEC reconstruction:\n";
     //test_fec_encode_and_decode(8,2,1024,0);
     //test_fec_encode_and_decode(8,2,1024,1);
@@ -735,6 +736,7 @@ void test_fec(){
 void
 test_gf()
 {
+    print_optimization_method();
     std::cout<<"Testing gf256 mul operation\n";
     for(int size=0;size<2048;size++){
         std::cout<<"x"<<std::flush;

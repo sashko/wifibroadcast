@@ -1,36 +1,36 @@
 //
 // Created by consti10 on 04.01.22.
 //
+// By including this file we get all the "(fast) galois field math" we need for our FEC implementation
+// The mul and addmul methods are highly optimized for each architecture (see Readme.md)
+// NOTE: Since the optimized methods only work on memory chuncks that are multiple of X,
+// the slow method is still needed on them - but only performed on "a couple of bytes" so not much of an issue
+// Also NOTE:
+// I assume that every ARM platform has NEON support and every
+// X86 platform has SSSE3 support
 
 #ifndef WIFIBROADCAST_SIMPLE_INCLUDE_H
 #define WIFIBROADCAST_SIMPLE_INCLUDE_H
 
-// By including this file we get all the "galois field math" we need for our FEC implementation
-// The mul and addmul methods are highly optimized for each architecture (see Readme.md)
-
+// we always use the flat table - either as fallback or for chunks not of size X
 #include "gf256_flat_table.h"
 #include "alignment_check.h"
 
-/*#ifdef __x86_64__
-#include "gf256_avx2.h"
-#endif //__x86_64__
-
-#ifdef __arm__
-#include "gf256_neon.h"
-#endif //__arm__*/
-
-/*
+/*#ifdef __arm__
+#define FEC_USE_ARM_NEON
+#endif
 #ifdef __x86_64__
+#define FEC_USE_X86_SSSE3
+#endif*/
 
-#endif //__x86_64__
+// include the optimized methods if enabled
+#ifdef FEC_USE_ARM_NEON
+#include "gf256_neon.h"
+#endif
 
-#ifdef __arm__
-#endif //__arm__
- */
-
-//#include "gf256_neon.h"
-//#include "gf256_avx2.h"
+#ifdef FEC_USE_X86_SSSE3
 #include "gf256_ssse3.h"
+#endif
 
 #include <iostream>
 #include <cassert>
@@ -39,63 +39,54 @@
 // computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
-    //mulrc256_flat_table(dst,src,c,sz);
-    // We can only do the fast algorithm on multiples of 8
-    /*const int sizeSlow = sz % 8;
+#ifdef FEC_USE_X86_SSSE3
+    const int sizeSlow = sz % 16;
     const int sizeFast = sz - sizeSlow;
-    if(sizeFast>0){
-        mulrc256_shuffle_neon_64(dst,src,c,sizeFast);
-    }
-    if(sizeSlow>0){
-        mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
-    /*const bool aligned= is_aligned(dst,64) && is_aligned(src,64);
-    if(!aligned){
-        mulrc256_flat_table(dst,src,c,sz);
-        std::cout<<"Not aligned\n";
-        return;
-    }*/
-    //assert(is_aligned(dst,16));
-    //assert(is_aligned(src,16));
-    //find_alignment(src,dst,16);
-    int sizeSlow = sz % 16;
-    int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
         mulrc256_shuffle_ssse3(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
     }
+#elif defined(FEC_USE_ARM_NEON)
+    const int sizeSlow = sz % 8;
+    const int sizeFast = sz - sizeSlow;
+    if(sizeFast>0){
+        mulrc256_shuffle_neon_64(dst,src,c,sizeFast);
+    }
+    if(sizeSlow>0){
+        mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    }
+#else
+    mulrc256_flat_table(dst,src,c,sz);
+#endif
 }
 
 // computes dst[] = dst[] + c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_madd_optimized(uint8_t* dst,const uint8_t* src, gf c,const int sz){
-    //maddrc256_flat_table(dst,src,c,sz);
-    //std::cout<<"c:"<<(int)c<<" sz:"<<sz<<"\n";
-    // We can only do the fast algorithm on multiples of 8
-    /*const int sizeSlow = sz % 8;
-    const int sizeFast = sz - sizeSlow;
-    if(sizeFast>0){
-        maddrc256_shuffle_neon_64(dst,src,c,sizeFast);
-    }
-    if(sizeSlow>0){
-        maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
-    }*/
-    /*const bool aligned= is_aligned(dst,64) && is_aligned(src,64);
-    if(!aligned){
-        maddrc256_flat_table(dst,src,c,sz);
-        std::cout<<"Not aligned\n";
-        return;
-    }*/
-    const int sizeSlow = sz % 16;
+#ifdef FEC_USE_X86_SSSE3
+    /*const int sizeSlow = sz % 16;
     const int sizeFast = sz - sizeSlow;
     if(sizeFast>0){
         maddrc256_shuffle_ssse3(dst,src,c,sizeFast);
     }
     if(sizeSlow>0){
         maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    }*/
+    maddrc256_flat_table(dst,src,c,sz);
+#elif defined(FEC_USE_ARM_NEON)
+    const int sizeSlow = sz % 8;
+    const int sizeFast = sz - sizeSlow;
+    if(sizeFast>0){
+        maddrc256_shuffle_neon_64(dst,src,c,sizeFast);
     }
+    if(sizeSlow>0){
+        maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    }
+#else
+    maddrc256_flat_table(dst,src,c,sz);
+#endif
 }
 
 static const uint8_t inverses[MOEPGF256_SIZE] = MOEPGF256_INV_TABLE;
@@ -113,5 +104,14 @@ static uint8_t gf256_mul(uint8_t x,uint8_t y){
     return ret;
 }
 
+static void print_optimization_method(){
+#ifdef FEC_USE_X86_SSSE3
+    std::cout<<"Using X86_SSSE3 optimization\n";
+#elif defined(FEC_USE_ARM_NEON)
+    std::cout<<"Using ARM_NEON optimization\n";
+#else
+    std::cout<<"No optimization, using flat_table as fallback\n";
+#endif
+}
 
 #endif //WIFIBROADCAST_SIMPLE_INCLUDE_H
