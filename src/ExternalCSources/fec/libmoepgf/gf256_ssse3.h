@@ -18,6 +18,7 @@ static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
 void
 xorr_sse2(uint8_t *region1, const uint8_t *region2, size_t length)
 {
+    assert(length % 16 ==0);
     uint8_t *end;
     register __m128i in, out;
 
@@ -33,6 +34,7 @@ void
 maddrc256_shuffle_ssse3(uint8_t *region1, const uint8_t *region2,
                         uint8_t constant, size_t length)
 {
+    assert(length % 16 ==0);
     uint8_t *end;
     register __m128i t1, t2, m1, m2, in1, in2, out, l, h;
 
