@@ -66,7 +66,7 @@ maddrc256_shuffle_ssse3(uint8_t *region1, const uint8_t *region2,
 }
 
 void
-mulrc256_shuffle_ssse3(uint8_t *region,const uint8_t* region2, uint8_t constant, size_t length)
+mulrc256_shuffle_ssse3(uint8_t *region1,const uint8_t* region2, uint8_t constant, size_t length)
 {
     uint8_t *end;
     register __m128i t1, t2, m1, m2, in, out, l, h;
