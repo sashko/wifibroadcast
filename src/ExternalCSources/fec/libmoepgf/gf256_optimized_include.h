@@ -9,8 +9,8 @@
 // I assume that every ARM platform has NEON support and every
 // X86 platform has SSSE3 support
 
-#ifndef WIFIBROADCAST_SIMPLE_INCLUDE_H
-#define WIFIBROADCAST_SIMPLE_INCLUDE_H
+#ifndef WIFIBROADCAST_GF256_SIMPLE_INCLUDE_H
+#define WIFIBROADCAST_GF256_SIMPLE_INCLUDE_H
 
 // we always use the flat table - either as fallback or for chunks not of size X
 #include "gf256_flat_table.h"
@@ -117,4 +117,4 @@ static void print_optimization_method(){
 #endif
 }
 
-#endif //WIFIBROADCAST_SIMPLE_INCLUDE_H
+#endif //WIFIBROADCAST_GF256_SIMPLE_INCLUDE_H
