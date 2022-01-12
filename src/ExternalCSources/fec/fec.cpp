@@ -743,7 +743,17 @@ void
 test_gf()
 {
     gf256_print_optimization_method();
-    std::cout<<"Testing gf256 mul operation\n";
+    std::cout<<"Testing mul of 2 values\n";
+    for(int i=0;i<256;i++){
+        for(int j=0;j<256;j++){
+            auto res1= gf256_mul(i,j);
+            auto res2= gal_mul(i,j);
+            assert(res1==res2);
+        }
+    }
+    std::cout<<" - success.\n";
+
+    std::cout<<"Testing gf256 mul operation (array)\n";
     for(int size=0;size<2048;size++){
         std::cout<<"x"<<std::flush;
         const auto source=FUCK::createRandomDataBuffer(size);
@@ -757,7 +767,7 @@ test_gf()
     }
     std::cout<<" - success.\n";
 
-    std::cout<<"Testing gf256 madd operation\n";
+    std::cout<<"Testing gf256 madd operation (array)\n";
     for(int size=0;size<2048;size++){
         std::cout<<"x"<<std::flush;
         const auto source=FUCK::createRandomDataBuffer(size);
