@@ -53,7 +53,7 @@
  * The previous optimization by Alain Knaff used a lookup table. This optimization is still used as a backup, but faster options exists
  * depending on the architecture the code is running on.
  */
-#include "libmoepgf/gf256_optimized_include.h"
+#include "gf_optimized//gf256_optimized_include.h"
 #include "gf_simple/gf_simple.h"
 #include <vector>
 #include <iostream>

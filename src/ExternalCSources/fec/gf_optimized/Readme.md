@@ -1,6 +1,6 @@
 All this code was taken from https://github.com/moepinet/libmoepgf \
 Since we only need gf256 for this FEC implementation (and also only need the "shuffle" implementations when optimized, since they are generally the fastest), 
-I decided to just copy the right methods from the repository above.
+I decided to just copy the right methods from the repository above in a header-only style.
 NOTE: the optimized methods generally require a multiple of 8 or 16 bytes. The pattern when optimized is generally the same (mul,addmul):
 1) use the fastest implementation for as many bytes as there are multiples of (8/16/32 depending on arch)
 2) use the slow (table) implementation for the rest of the bytes

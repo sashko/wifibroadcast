@@ -19,7 +19,7 @@ src/ExternalCSources/radiotap/%.o: src/ExternalCSources/radiotap/%.c src/Externa
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # compile the (general) fec part
-src/ExternalCSources/fec/%.o: src/ExternalCSources/fec/%.cpp src/ExternalCSources/fec/*.h src/ExternalCSources/fec/libmoepgf/*.h
+src/ExternalCSources/fec/%.o: src/ExternalCSources/fec/%.cpp src/ExternalCSources/fec/*.h src/ExternalCSources/fec/gf_optimized
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # the c++ part
