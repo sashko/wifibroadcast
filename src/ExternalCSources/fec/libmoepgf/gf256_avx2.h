@@ -14,6 +14,7 @@
 // NOTE - I ended up not using the AVX2 code for the following reasons:
 // 1) since working on 32 bytes, the alignment issue is even more apparent
 // 2) ssse3 is already "fast enough" and supported on pretty much any platform (other than AVX2)
+// If you want to, add and test the code here ;)
 
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;

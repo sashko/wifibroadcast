@@ -8,6 +8,7 @@
 // NEON / SSSE3 only work on aligned data ?!
 // THIS STUFF REALLY SUCKS -
 // WELL LOOKS AS IF USING "u" everywhere in ssse3 did the trick
+// NOTE: This file is now obsolete, but I keep it in here in case someone wants to add AVX2 ;)
 
 #include <iostream>
 

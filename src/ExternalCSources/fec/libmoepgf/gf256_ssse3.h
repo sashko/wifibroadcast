@@ -9,7 +9,8 @@
 #include "gf256tables285.h"
 #include <stdint.h>
 
-// also fast on x86
+// also fast on x86 - and supported on many more platforms than AVX2.
+// AVX2 'could' beat ssse3, but for my personal use case this difference didn't justify making the optimization even more complex
 
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
