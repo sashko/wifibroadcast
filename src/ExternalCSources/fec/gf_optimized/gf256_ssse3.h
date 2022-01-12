@@ -11,6 +11,8 @@
 
 // also fast on x86 - and supported on many more platforms than AVX2.
 // AVX2 'could' beat ssse3, but for my personal use case this difference didn't justify making the optimization even more complex
+// Regarding alignment: I modified the code to use "u" (unaligned) instructions everyhwere, so alignment doesn't matter anymore
+// It used to be different in the original impl.
 
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;

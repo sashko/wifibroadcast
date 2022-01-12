@@ -11,6 +11,8 @@
 #include <iostream>
 
 // Fastest if NEON is supported
+// Regrading alignment: https://developer.arm.com/documentation/ddi0344/f/Cihejdic
+// I think neon by default doesn't care about alignment, only if the alignment is explicitly specified it needs to match
 
 static const uint8_t tl[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_LOW_TABLE;
 static const uint8_t th[MOEPGF256_SIZE][16] = MOEPGF256_SHUFFLE_HIGH_TABLE;
