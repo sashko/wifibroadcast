@@ -49,7 +49,7 @@
 #include "fec.h"
 /**
  * Include our optimized GF256 math functions - since FEC mostly boils down to "Galois field" mul / madd on big memory blocks
- * this is the most straight forward optimization, and it really speeds up the code by a lot (see paper)
+ * this is the most straight forward optimization, and it really speeds up the code by a lot (see paper and my benchmark results)
  * The previous optimization by Alain Knaff used a lookup table. This optimization is still used as a backup, but faster options exists
  * depending on the architecture the code is running on.
  */
