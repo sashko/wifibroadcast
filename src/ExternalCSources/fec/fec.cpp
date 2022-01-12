@@ -631,9 +631,11 @@ void fec_decode2(unsigned int fragmentSize,
     for(const auto& idx:indicesMissingPrimaryFragments){
         assert(idx<primaryFragments.size());
     }
-    for(const auto& idx:indicesOfSecondaryFragmentsReceived){
-        assert(idx<secondaryFragmentsReceived.size());
-    }
+    //This assertion is not always true - as an example,you might have gotten FEC secondary packets 0 and 4, but these 2 are enough to perform the fec step.
+    //Then packet index 0 is inside @param secondaryFragmentsReceived at position 0, but packet index 4 at position 1
+    //for(const auto& idx:indicesOfSecondaryFragmentsReceived){
+    //    assert(idx<secondaryFragmentsReceived.size());
+    //}
     assert(indicesMissingPrimaryFragments.size() <= indicesOfSecondaryFragmentsReceived.size());
     assert(indicesMissingPrimaryFragments.size() == secondaryFragmentsReceived.size());
     assert(secondaryFragmentsReceived.size() == indicesOfSecondaryFragmentsReceived.size());
@@ -642,8 +644,12 @@ void fec_decode2(unsigned int fragmentSize,
 }
 
 
-
-
+/**
+ * @param nDataPackets n of data packets to create
+ * @param nFecPackets n of fec packets to create
+ * @param packetSize size of each data packet
+ * @param nLostDataPackets how many data packets were "lost" and need to be recovered by fec step.
+ */
 static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPackets, const int packetSize, const int nLostDataPackets){
     // sum of lost data and fec packets must be <= n of generated FEC packets, else not recoverable
     assert(nLostDataPackets<=nFecPackets);
@@ -714,7 +720,7 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
 
 
 void test_fec(){
-    print_optimization_method();
+    gf256_print_optimization_method();
     std::cout<<"Testing FEC reconstruction:\n";
     //test_fec_encode_and_decode(8,2,1024,0);
     //test_fec_encode_and_decode(8,2,1024,1);
@@ -727,7 +733,7 @@ void test_fec(){
         test_fec_encode_and_decode(9,3,packetSize,2);
         test_fec_encode_and_decode(9,3,packetSize,3);
     }
-    std::cout<<"Testing FEC reconstruction - all tests passed\n";
+    std::cout<<"TEST_FEC passed\n";
 }
 
 
@@ -736,7 +742,7 @@ void test_fec(){
 void
 test_gf()
 {
-    print_optimization_method();
+    gf256_print_optimization_method();
     std::cout<<"Testing gf256 mul operation\n";
     for(int size=0;size<2048;size++){
         std::cout<<"x"<<std::flush;
@@ -766,20 +772,5 @@ test_gf()
         }
     }
     std::cout<<" - success.\n";
-
-    /*for(int i=0;i<256;i++){
-        assert(gf256_inverse(i)==inverse[i]);
-    }
-
-    for(int i=0;i<256;i++){
-        for(int j=0;j<256;j++){
-            assert(gf256_mul(i,j)== gf_mul(i,j));
-        }
-    }*/
-
-
-
-    std::cout<<"test done2\n";
-
-
+    std::cout<<"TEST_GF passed\n";
 }

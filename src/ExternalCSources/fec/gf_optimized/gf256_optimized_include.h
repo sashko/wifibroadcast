@@ -106,7 +106,7 @@ static uint8_t gf256_mul(uint8_t x,uint8_t y){
     return ret;
 }
 
-static void print_optimization_method(){
+static void gf256_print_optimization_method(){
 #ifdef FEC_GF256_USE_X86_SSSE3
     std::cout<<"Using X86_SSSE3 optimization\n";
 #elif defined(FEC_GF256_USE_ARM_NEON)
