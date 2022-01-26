@@ -567,6 +567,9 @@ void fec_license(void)
     exit(0);
 }
 
+// C++ code
+#include <algorithm>
+
 namespace FUCK{
     static void fillBufferWithRandomData(std::vector<uint8_t>& data){
         const std::size_t size=data.size();
@@ -595,39 +598,36 @@ namespace FUCK{
         }
         return buffers;
     }
-    static std::vector<const uint8_t*> convertToP(const std::vector<std::vector<uint8_t>>& buffs){
+    template<typename Container>
+    static std::vector<const uint8_t*> convertToP(const std::vector<Container>& buffs){
         std::vector<const uint8_t*> ret;
-        for(int i=0;i<buffs.size();i++){
-            ret.push_back(buffs[i].data());
+        for(const auto& buf:buffs){
+            ret.push_back(buf.data());
         }
         return ret;
     }
-    static std::vector<uint8_t*> convertToP2(std::vector<std::vector<uint8_t>>& buffs){
+    template<typename Container>
+    static std::vector<uint8_t*> convertToP(std::vector<Container>& buffs){
         std::vector<uint8_t*> ret;
-        for(int i=0;i<buffs.size();i++){
-            ret.push_back(buffs[i].data());
+        for(auto& buf:buffs){
+            ret.push_back(buf.data());
         }
         return ret;
     }
 }
 
 
-
+// see header for documentation
 void fec_encode2(unsigned int fragmentSize,
                 const std::vector<const uint8_t*>& primaryFragments,
                 const std::vector<uint8_t*>& secondaryFragments){
     fec_encode(fragmentSize, (const gf**)primaryFragments.data(), primaryFragments.size(), (gf**)secondaryFragments.data(), secondaryFragments.size());
 }
-
 void fec_decode2(unsigned int fragmentSize,
                 const std::vector<uint8_t*>& primaryFragments,
                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
                 const std::vector<uint8_t*>& secondaryFragmentsReceived,
                 const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived){
-    //std::cout<<"primaryFragmentsS:"<<primaryFragments.size()<<"\n";
-    //std::cout<<"indicesMissingPrimaryFragments:"<<StringHelper::vectorAsString(indicesMissingPrimaryFragments)<<"\n";
-    //std::cout<<"secondaryFragmentsS:"<<secondaryFragments.size()<<"\n";
-    //std::cout << "indicesOfSecondaryFragments:" << StringHelper::vectorAsString(indicesOfSecondaryFragments) << "\n";
     for(const auto& idx:indicesMissingPrimaryFragments){
         assert(idx<primaryFragments.size());
     }
@@ -643,72 +643,99 @@ void fec_decode2(unsigned int fragmentSize,
                (unsigned int*)indicesOfSecondaryFragmentsReceived.data(), (unsigned int*)indicesMissingPrimaryFragments.data(), indicesMissingPrimaryFragments.size());
 }
 
+// see header for documentation
+template <class Container1,class Container2>
+void fec_encode3(unsigned int fragmentSize,const std::vector<Container1>& primaryFragments,
+                 std::vector<Container2>& secondaryFragments){
+    fec_encode2(fragmentSize,FUCK::convertToP(primaryFragments),FUCK::convertToP(secondaryFragments));
+}
+template <class Container1,class Container2>
+void fec_decode3(unsigned int fragmentSize,
+                 std::vector<Container1>& primaryFragments,
+                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
+                 std::vector<Container2>& secondaryFragmentsReceived,
+                 const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived){
+    fec_decode2(fragmentSize,FUCK::convertToP(primaryFragments),indicesMissingPrimaryFragments,
+                FUCK::convertToP(secondaryFragmentsReceived),indicesOfSecondaryFragmentsReceived);
+}
+
+static void lolol(){
+    const std::vector<std::vector<uint8_t>> dataP;
+    std::vector<std::vector<uint8_t>> fecP;
+    fec_encode3(10,dataP,fecP);
+}
 
 /**
- * @param nDataPackets n of data packets to create
+ * Testing the fec encoding and decoding is quite difficult due to the many permutations of either losing data packets,
+ * fec packets, or both. This test works as follows:
+ * 1) Use the data packets to create @param nFecPackets fec protection packets
+ * 2) go through @param receivedDataOrFecPacketsIndices. Write received data and/or fec packets.
+ * 3) perform the reconstruction step
+ * 4) make sure that after the reconstruction process the content of the data packets matches the input data packets contents.
+ * @param dataPackets the data packets whose content will be used to perform the test
  * @param nFecPackets n of fec packets to create
- * @param packetSize size of each data packet
- * @param nLostDataPackets how many data packets were "lost" and need to be recovered by fec step.
+ * @param receivedDataOrFecPacketsIndices indices of received data and fec packets. Note that the valid range for these indices starts at 0 and
+ * ends at nDataPackets+nFecPackets. E.g the FEC packet indices don't start at 0, like in the c-style code
  */
-static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPackets, const int packetSize, const int nLostDataPackets){
+static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>>& dataPackets, const int nFecPackets,
+                                       const std::vector<int>& receivedDataOrFecPacketsIndices){
+    const int nDataPackets=dataPackets.size();
+    const int packetSize=dataPackets.at(0).size();
+    // all data packets need to have the same size
+    for(const auto& packet:dataPackets){
+        assert(packetSize==packet.size());
+    }
+    // we need enough received data and fec packet indices
+    // else it is not recoverable
+    assert(receivedDataOrFecPacketsIndices.size()>=nDataPackets);
+    // check the indices were not messed up
+    for(const auto& idx:receivedDataOrFecPacketsIndices){
+        assert(idx<dataPackets.size()+nFecPackets);
+    }
     // sum of lost data and fec packets must be <= n of generated FEC packets, else not recoverable
-    assert(nLostDataPackets<=nFecPackets);
-    // create our data packets
-    const auto dataPackets=FUCK::createRandomDataBuffers(nDataPackets,packetSize);
-    assert(dataPackets.size()==nDataPackets);
+    //const int nLostDataAndFecPackets=lostDataPacketsIndices.size();
+    //assert(nLostDataAndFecPackets<=nFecPackets);
     // allocate memory for the fec packets
     std::vector<std::vector<uint8_t>> fecPackets(nFecPackets,std::vector<uint8_t>(packetSize));
     assert(fecPackets.size()==nFecPackets);
     // encode data packets, store in fec packets
     // the "convert" is for c++ to c-style conversion
-    fec_encode2(packetSize,FUCK::convertToP(dataPackets),FUCK::convertToP2(fecPackets));
-    //
-    // here we have to "emulate" receiving a specific amount of data and fec packets
-    //
-    const int nReceivedDataPackets=nDataPackets-nLostDataPackets;
-    const int nReceivedFecPackets=nLostDataPackets;
-    //std::cout<<"N received data packets:"<<nReceivedDataPackets<<" N received FEC packets "<<nReceivedFecPackets<<"\n";
+    //fec_encode2(packetSize,FUCK::convertToP(dataPackets),FUCK::convertToP(fecPackets));
+    fec_encode3(packetSize,dataPackets,fecPackets);
     // FEC will fill the not received data packets
     std::vector<std::vector<uint8_t>> fullyReconstructedDataPackets(nDataPackets,std::vector<uint8_t>(packetSize));
+    std::vector<unsigned int> erasedDataPacketsIndices;
     // write as many data packets as we have "received"
-    for(int i=0;i<nReceivedDataPackets;i++){
-        memcpy(fullyReconstructedDataPackets[i].data(),dataPackets[i].data(),packetSize);
+    // and  mark the rest as missing
+    for(int i=0;i<nDataPackets;i++){
+        const bool received=std::find(receivedDataOrFecPacketsIndices.begin(),receivedDataOrFecPacketsIndices.end(),i) != receivedDataOrFecPacketsIndices.end();
+        if(received){
+            memcpy(fullyReconstructedDataPackets[i].data(),dataPackets[i].data(),packetSize);
+        }else{
+            erasedDataPacketsIndices.push_back(i);
+        }
     }
     assert(fullyReconstructedDataPackets.size()==nDataPackets);
-    // mark the rest as missing
-    std::vector<unsigned int> erasedDataPacketsIndices;
-    for(int i=nReceivedDataPackets;i<nDataPackets;i++){
-        erasedDataPacketsIndices.push_back(i);
-        //std::cout<<"erased dpi:"<<i<<"\n";
-    }
-    assert(erasedDataPacketsIndices.size()==nLostDataPackets);
-
-    // and write the received FEC packets
-    std::vector<std::vector<uint8_t>> receivedFecPackets(nReceivedFecPackets,std::vector<uint8_t>(packetSize));
+    // Write the "received" FEC packets and store their indices for later
+    std::vector<std::vector<uint8_t>> receivedFecPackets;
     std::vector<unsigned int> receivedFecPacketsIndices;
-    for(int i=0;i<nReceivedFecPackets;i++){
-        memcpy(receivedFecPackets[i].data(),fecPackets[i].data(),packetSize);
-        receivedFecPacketsIndices.push_back(i);
-        //std::cout<<"received fecpi:"<<i<<"\n";
-        assert(receivedFecPackets[i].size()==packetSize);
+    for(int i=nDataPackets;i<nDataPackets+nFecPackets;i++){
+        const bool received=std::find(receivedDataOrFecPacketsIndices.begin(),receivedDataOrFecPacketsIndices.end(),i) != receivedDataOrFecPacketsIndices.end();
+        if(received){
+            const int fecIdx=i-nDataPackets;
+            receivedFecPackets.push_back(fecPackets[fecIdx]);
+            receivedFecPacketsIndices.push_back(fecIdx);
+        }
     }
-    assert(receivedFecPacketsIndices.size()==nReceivedFecPackets);
-
-    for(const auto& idx:receivedFecPacketsIndices){
-        FUCK::assertVectorsEqual(fecPackets[idx],receivedFecPackets[idx]);
-        //std::cout<<"fec packet okay:"<<idx<<"\n";
-    }
-
     // perform the (reconstructing) fec step
-    fec_decode2(packetSize,
+    fec_decode3(packetSize,
                 // data packets (missing will be filled)
-                FUCK::convertToP2(fullyReconstructedDataPackets),
+               fullyReconstructedDataPackets,
                 erasedDataPacketsIndices,
                 // fec packets (used for reconstruction)
-                FUCK::convertToP2(receivedFecPackets),
+                receivedFecPackets,
                 receivedFecPacketsIndices
                 );
-
 
     // make sure everything was reconstructed properly
     for(int i=0;i<nDataPackets;i++){
@@ -718,6 +745,26 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
     //std::cout<<"SUCCESS: N data packets:"<<nDataPackets<<" N fec packets:"<<nFecPackets<<" N lost&reconstructed data packets:"<<nLostDataPackets<<"\n";
 }
 
+/**
+ * @param nDataPackets n of data packets to create
+ * @param nFecPackets n of fec packets to create
+ * @param packetSize size of each data packet
+ * @param nLostDataPackets how many data packets were "lost" and need to be recovered by fec step.
+ */
+static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPackets, const int packetSize, const int nLostDataPackets){
+    // create our data packets
+    const auto dataPackets=FUCK::createRandomDataBuffers(nDataPackets,packetSize);
+    assert(dataPackets.size()==nDataPackets);
+    // build the indices list
+    std::vector<int> dataOrFecPacketIndices;
+    for(int i=0;i<nDataPackets-nLostDataPackets;i++){
+        dataOrFecPacketIndices.push_back(i);
+    }
+    for(int i=nDataPackets;i<nDataPackets+nLostDataPackets;i++){
+        dataOrFecPacketIndices.push_back(i);
+    }
+    test_fec_encode_and_decode(dataPackets,nFecPackets,dataOrFecPacketIndices);
+}
 
 void test_fec(){
     gf256_print_optimization_method();

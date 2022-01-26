@@ -56,12 +56,9 @@ void fec_license(void);
 void printDetail(void);
 #endif
 
-//#ifdef __cplusplus
-//}
-//#endif
-
+// C++ code
 #include <vector>
-
+#include <array>
 
 /**
  * @param fragmentSize size of each fragment in this block
@@ -88,6 +85,20 @@ void fec_decode2(unsigned int fragmentSize,
                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
                 const std::vector<uint8_t*>& secondaryFragmentsReceived,
                 const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived);
+
+
+// these methods just wrap the methods above for commonly used data representations
+template <class Container1,class Container2>
+void fec_encode3(unsigned int fragmentSize,const std::vector<const Container1>& primaryFragments,
+                 std::vector<Container2>& secondaryFragments);
+
+template <class Container1,class Container2>
+void fec_decode3(unsigned int fragmentSize,
+                 std::vector<Container1>& primaryFragments,
+                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
+                 std::vector<Container2>& secondaryFragmentsReceived,
+                 const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived);
+
 
 // Test the (optimized) galois field math
 void test_gf();
