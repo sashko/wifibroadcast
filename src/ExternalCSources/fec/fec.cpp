@@ -692,15 +692,10 @@ static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>>& 
     for(const auto& idx:receivedDataOrFecPacketsIndices){
         assert(idx<dataPackets.size()+nFecPackets);
     }
-    // sum of lost data and fec packets must be <= n of generated FEC packets, else not recoverable
-    //const int nLostDataAndFecPackets=lostDataPacketsIndices.size();
-    //assert(nLostDataAndFecPackets<=nFecPackets);
     // allocate memory for the fec packets
     std::vector<std::vector<uint8_t>> fecPackets(nFecPackets,std::vector<uint8_t>(packetSize));
     assert(fecPackets.size()==nFecPackets);
     // encode data packets, store in fec packets
-    // the "convert" is for c++ to c-style conversion
-    //fec_encode2(packetSize,FUCK::convertToP(dataPackets),FUCK::convertToP(fecPackets));
     fec_encode3(packetSize,dataPackets,fecPackets);
     // FEC will fill the not received data packets
     std::vector<std::vector<uint8_t>> fullyReconstructedDataPackets(nDataPackets,std::vector<uint8_t>(packetSize));
@@ -708,7 +703,8 @@ static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>>& 
     // write as many data packets as we have "received"
     // and  mark the rest as missing
     for(int i=0;i<nDataPackets;i++){
-        const bool received=std::find(receivedDataOrFecPacketsIndices.begin(),receivedDataOrFecPacketsIndices.end(),i) != receivedDataOrFecPacketsIndices.end();
+        const bool received=std::find(receivedDataOrFecPacketsIndices.begin(),receivedDataOrFecPacketsIndices.end(),i) !=
+                receivedDataOrFecPacketsIndices.end();
         if(received){
             memcpy(fullyReconstructedDataPackets[i].data(),dataPackets[i].data(),packetSize);
         }else{
@@ -736,7 +732,6 @@ static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>>& 
                 receivedFecPackets,
                 receivedFecPacketsIndices
                 );
-
     // make sure everything was reconstructed properly
     for(int i=0;i<nDataPackets;i++){
         FUCK::assertVectorsEqual(dataPackets[i],fullyReconstructedDataPackets[i]);
@@ -756,14 +751,14 @@ static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPac
     const auto dataPackets=FUCK::createRandomDataBuffers(nDataPackets,packetSize);
     assert(dataPackets.size()==nDataPackets);
     // build the indices list
-    std::vector<int> dataOrFecPacketIndices;
+    std::vector<int> receivedDataOrFecPacketIndices;
     for(int i=0;i<nDataPackets-nLostDataPackets;i++){
-        dataOrFecPacketIndices.push_back(i);
+        receivedDataOrFecPacketIndices.push_back(i);
     }
     for(int i=nDataPackets;i<nDataPackets+nLostDataPackets;i++){
-        dataOrFecPacketIndices.push_back(i);
+        receivedDataOrFecPacketIndices.push_back(i);
     }
-    test_fec_encode_and_decode(dataPackets,nFecPackets,dataOrFecPacketIndices);
+    test_fec_encode_and_decode(dataPackets,nFecPackets,receivedDataOrFecPacketIndices);
 }
 
 void test_fec(){
@@ -784,11 +779,7 @@ void test_fec(){
 }
 
 
-
-
-void
-test_gf()
-{
+void test_gf(){
     gf256_print_optimization_method();
     std::cout<<"Testing mul of 2 values\n";
     for(int i=0;i<256;i++){
