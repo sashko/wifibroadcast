@@ -5,7 +5,18 @@ export VERSION COMMIT
 
 _LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium
 # WFB_VERSION is date and time and the last commit of this branch
-_CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"' -mfpu=neon -march=armv7-a -marm
+_CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'
+
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+ifeq ($(uname_S),Linux)
+	uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
+	ifeq ($(uname_M),x86_64)
+		_CFLAGS += -mavx2 -faligned-new=256
+	else ifeq ($(uname_M),armv7l)
+ 		_CFLAGS += -mfpu=neon -march=armv7-a -marm
+	endif
+endif
+
 #-mavx2 -faligned-new=256
 #-mfpu=neon -march=armv7-a -marm
 # -faligned-new -mavx2
@@ -54,8 +65,8 @@ clean:
 # experimental
 .PHONY: install
 install:
-	cp -f wfb_tx wfb_rx benchmark udp_generator_validator unit_test wfb_keygen $(TARGET_DIR)/usr/bin/
+	cp -f wfb_tx wfb_rx benchmark udp_generator_validator unit_test wfb_keygen $(TARGET_DIR)/usr/local/bin/
 
 .PHONY: uninstall
 uninstall:
-	rm -f $(TARGET_DIR)/usr/bin/wfb_tx
+	rm -f $(TARGET_DIR)/usr/local/bin/wfb_*
