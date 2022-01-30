@@ -70,8 +70,24 @@ public:
     void writeStats(const Data& data){
         // Perhaps RADIO_PORT==0 means video and so on
         // TODO write to udp port or shared memory or ...
-        if(RADIO_PORT==0){
+        if(RADIO_PORT==56){
             // open video stats shm and write data there or something similar
+        
+            struct sockaddr_in si_other_rssi;
+            int s_rssi, slen_rssi = sizeof(si_other_rssi);
+            si_other_rssi.sin_family = AF_INET;
+            si_other_rssi.sin_port = htons(50000);
+            si_other_rssi.sin_addr.s_addr = inet_addr("127.0.0.1");
+            memset(si_other_rssi.sin_zero, '\0', sizeof(si_other_rssi.sin_zero));
+
+            if ((s_rssi = socket(PF_INET, SOCK_DGRAM, 0)) == -1) {
+            std::cout << "ERROR: Could not create UDP socket!" << std::endl;
+            }
+
+            if (sendto(s_rssi, &data, sizeof(data), 0, (struct sockaddr*)&si_other_rssi, slen_rssi) == -1) {
+                std::cout << "ERROR: Could not send RSSI data!" << std::endl;
+            }
+            close(s_rssi);
         }
     }
 };
