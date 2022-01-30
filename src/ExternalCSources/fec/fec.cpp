@@ -567,7 +567,7 @@ void fec_license(void)
     exit(0);
 }
 
-// C++ code
+// ---------------------------------- C++ code ------------------------------------------------------------
 #include <algorithm>
 
 namespace FUCK{

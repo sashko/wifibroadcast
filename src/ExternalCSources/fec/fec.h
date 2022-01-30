@@ -56,7 +56,7 @@ void fec_license(void);
 void printDetail(void);
 #endif
 
-// C++ code
+// ---------------------------------- C++ code ------------------------------------------------------------
 #include <vector>
 #include <array>
 
