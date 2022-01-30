@@ -614,6 +614,58 @@ namespace FUCK{
         }
         return ret;
     }
+    // create a indices list for the decodeable case of loosing @param nDroppedDataPackets
+    // aka this method first takes (nDataPackets-nDroppedDataPackets) data packets
+    // then takes as many fec packets as were lost
+    static std::vector<int> createDecodeableIndexList(const int nDataPackets, const int nFecPackets, const int nDroppedDataPackets){
+        assert(nFecPackets>=nDroppedDataPackets);
+        const int nReceivedDataPackets=nDataPackets-nDroppedDataPackets;
+        std::vector<int> indices;
+        for(int i=0;i<nReceivedDataPackets;i++){
+            indices.push_back(i);
+        }
+        for(int i=nDataPackets;i<nDataPackets+nDroppedDataPackets;i++){
+            indices.push_back(i);
+        }
+        return indices;
+    }
+    // calculate binomial coefficient
+    // taken from https://www.tutorialspoint.com/binomial-coefficient-in-cplusplus
+    static int binomialCoefficients(int n, int k) {
+        if (k == 0 || k == n) return 1;
+        return binomialCoefficients(n - 1, k - 1) + binomialCoefficients(n - 1, k);
+    }
+    // code taken from https://www.geeksforgeeks.org/make-combinations-size-k/
+    // slightly modified to fit my needs
+    void makeCombiUtil(std::vector<std::vector<int>>& ans,std::vector<int>& tmp, int n, int left, int k){
+        if (k == 0) {
+            ans.push_back(tmp);
+            return;
+        }
+        for (int i = left; i <= n; ++i){
+            tmp.push_back(i);
+            makeCombiUtil(ans, tmp, n, i + 1, k - 1);
+            tmp.pop_back();
+        }
+    }
+    // create all combinations of size k of numbers
+    // from [0..n[
+    std::vector<std::vector<int> > makeCombi(int n, int k){
+        std::vector<std::vector<int>> ans;
+        std::vector<int> tmp;
+        makeCombiUtil(ans, tmp, n-1, 0, k);
+        return ans;
+    }
+    // create all permutations of recoverable scenarios of received data and fec packets
+    // returns as many lists of indices as there are permutations
+    static std::vector<std::vector<int>> createAllDecodablePermutations(const int nDataPackets,const int nFecPackets){
+        // The task is as following: given the set I is all the indices from 0...(nDataPackets+nFecPackets-1)
+        // Create all permutations of taking nDatapackets indices from this list
+        const int nDataAndFecPackets=nDataPackets+nFecPackets;
+        auto result= makeCombi(nDataAndFecPackets,nDataPackets);
+        assert(result.size()==binomialCoefficients(nDataAndFecPackets,nDataPackets));
+        return result;
+    }
 }
 
 
@@ -659,11 +711,6 @@ void fec_decode3(unsigned int fragmentSize,
                 FUCK::convertToP(secondaryFragmentsReceived),indicesOfSecondaryFragmentsReceived);
 }
 
-static void lolol(){
-    const std::vector<std::vector<uint8_t>> dataP;
-    std::vector<std::vector<uint8_t>> fecP;
-    fec_encode3(10,dataP,fecP);
-}
 
 /**
  * Testing the fec encoding and decoding is quite difficult due to the many permutations of either losing data packets,
@@ -675,7 +722,7 @@ static void lolol(){
  * @param dataPackets the data packets whose content will be used to perform the test
  * @param nFecPackets n of fec packets to create
  * @param receivedDataOrFecPacketsIndices indices of received data and fec packets. Note that the valid range for these indices starts at 0 and
- * ends at nDataPackets+nFecPackets. E.g the FEC packet indices don't start at 0, like in the c-style code
+ * ends at (nDataPackets+nFecPackets-1). E.g the FEC packet indices don't start at 0, like in the c-style code.
  */
 static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>>& dataPackets, const int nFecPackets,
                                        const std::vector<int>& receivedDataOrFecPacketsIndices){
@@ -741,40 +788,49 @@ static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>>& 
 }
 
 /**
- * @param nDataPackets n of data packets to create
- * @param nFecPackets n of fec packets to create
- * @param packetSize size of each data packet
- * @param nLostDataPackets how many data packets were "lost" and need to be recovered by fec step.
+ * This test doesn't test all permutations, but rather drops @param nLostDataPackets data packets
+ * and then receives exactly this many FEC packets
  */
-static void test_fec_encode_and_decode(const int nDataPackets, const int nFecPackets, const int packetSize, const int nLostDataPackets){
+static void test_fec_encode_and_decode_simple(const int nDataPackets, const int nFecPackets, const int packetSize, const int nLostDataPackets){
     // create our data packets
     const auto dataPackets=FUCK::createRandomDataBuffers(nDataPackets,packetSize);
     assert(dataPackets.size()==nDataPackets);
-    // build the indices list
-    std::vector<int> receivedDataOrFecPacketIndices;
-    for(int i=0;i<nDataPackets-nLostDataPackets;i++){
-        receivedDataOrFecPacketIndices.push_back(i);
+    const auto indices=FUCK::createDecodeableIndexList(nDataPackets,nFecPackets,nLostDataPackets);
+    assert(indices.size()==nDataPackets);
+    test_fec_encode_and_decode(dataPackets,nFecPackets,indices);
+}
+/**
+ * Test all permutations of received data and FEC packets that are still recoverable
+ */
+static void test_fec_encode_and_decode_all_permutations(const int nDataPackets,const int nFecPackets,const int packetSize){
+    // create our data packets
+    const auto dataPackets=FUCK::createRandomDataBuffers(nDataPackets,packetSize);
+    assert(dataPackets.size()==nDataPackets);
+    // build the indices lists
+    const auto permutations=FUCK::createAllDecodablePermutations(nDataPackets,nFecPackets);
+    for(const auto& permutation:permutations){
+        test_fec_encode_and_decode(dataPackets,nFecPackets,permutation);
     }
-    for(int i=nDataPackets;i<nDataPackets+nLostDataPackets;i++){
-        receivedDataOrFecPacketIndices.push_back(i);
-    }
-    test_fec_encode_and_decode(dataPackets,nFecPackets,receivedDataOrFecPacketIndices);
 }
 
 void test_fec(){
     gf256_print_optimization_method();
     std::cout<<"Testing FEC reconstruction:\n";
-    //test_fec_encode_and_decode(8,2,1024,0);
-    //test_fec_encode_and_decode(8,2,1024,1);
-    //test_fec_encode_and_decode(8,8,1024,2);
-    //test_fec_encode_and_decode(10,5,1024,1,0);
+    // test all packet sizes from [1,2048] with fec 8:2 and 9:3
     for(int packetSize=1;packetSize<2048;packetSize++){
-        test_fec_encode_and_decode(8,2,packetSize,1);
-        test_fec_encode_and_decode(8,2,packetSize,2);
-        test_fec_encode_and_decode(9,3,packetSize,1);
-        test_fec_encode_and_decode(9,3,packetSize,2);
-        test_fec_encode_and_decode(9,3,packetSize,3);
+        test_fec_encode_and_decode_simple(8,2,packetSize,1);
+        test_fec_encode_and_decode_simple(8,2,packetSize,2);
+        test_fec_encode_and_decode_simple(9,3,packetSize,1);
+        test_fec_encode_and_decode_simple(9,3,packetSize,2);
+        test_fec_encode_and_decode_simple(9,3,packetSize,3);
     }
+    // for a couple of fec k,n values,perform the test with all permutations
+    test_fec_encode_and_decode_all_permutations(2,1,1024);
+    test_fec_encode_and_decode_all_permutations(3,1,1024);
+    test_fec_encode_and_decode_all_permutations(8,4,1024);
+    test_fec_encode_and_decode_all_permutations(8,6,1024);
+    test_fec_encode_and_decode_all_permutations(8,8,1024);
+    test_fec_encode_and_decode_all_permutations(12,8,1024);
     std::cout<<"TEST_FEC passed\n";
 }
 
