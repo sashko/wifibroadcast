@@ -32,7 +32,7 @@ xorr_avx2(uint8_t *region1, const uint8_t *region2, size_t length)
     //std::cout<<""<<(int)region1[length]<<":"<<(int)region2[length]<<"\n";
 
     uint8_t *end;
-    register __m256i in, out;
+    __m256i in, out;
 
     for (end=region1+length; region1<end; region1+=32, region2+=32) {
         std::cout<<"XXx\n";
@@ -57,8 +57,8 @@ maddrc256_shuffle_avx2(uint8_t *region1, const uint8_t *region2,
     //assert(is_aligned(region1,32));
     //assert(is_aligned(region2,32));
     uint8_t *end;
-    register __m256i t1, t2, m1, m2, in1, in2, out, l, h;
-    register __m128i bc;
+    __m256i t1, t2, m1, m2, in1, in2, out, l, h;
+    __m128i bc;
 
     if (constant == 0)
         return;
@@ -96,8 +96,8 @@ mulrc256_shuffle_avx2(uint8_t *region1,const uint8_t * region2,uint8_t constant,
     //assert(is_aligned(region1,32));
     //assert(is_aligned(region2,32));
     uint8_t *end;
-    register __m256i t1, t2, m1, m2, in, out, l, h;
-    register __m128i bc;
+    __m256i t1, t2, m1, m2, in, out, l, h;
+    __m128i bc;
 
     if (constant == 0) {
         memset(region1, 0, length);

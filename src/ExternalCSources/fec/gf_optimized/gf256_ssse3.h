@@ -22,7 +22,7 @@ xorr_sse2(uint8_t *region1, const uint8_t *region2, size_t length)
 {
     assert(length % 16 ==0);
     uint8_t *end;
-    register __m128i in, out;
+    __m128i in, out;
 
     for (end=region1+length; region1<end; region1+=16, region2+=16) {
         in  = _mm_loadu_si128((const __m128i *)region2);
@@ -38,7 +38,7 @@ maddrc256_shuffle_ssse3(uint8_t *region1, const uint8_t *region2,
 {
     assert(length % 16 ==0);
     uint8_t *end;
-    register __m128i t1, t2, m1, m2, in1, in2, out, l, h;
+    __m128i t1, t2, m1, m2, in1, in2, out, l, h;
 
     if (constant == 0)
         return;
@@ -72,7 +72,7 @@ mulrc256_shuffle_ssse3(uint8_t *region1,const uint8_t* region2, uint8_t constant
 {
     assert(length % 16 ==0);
     uint8_t *end;
-    register __m128i t1, t2, m1, m2, in, out, l, h;
+    __m128i t1, t2, m1, m2, in, out, l, h;
 
     if (constant == 0) {
         memset(region1, 0, length);

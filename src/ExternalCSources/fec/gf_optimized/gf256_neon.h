@@ -23,7 +23,7 @@ xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
     //std::cout<<"Xx neon"<<length<<" "<<(int)region1[0]<<":"<<(int)region2[0]<<"\n";
     assert(length % 8 ==0);
     uint8_t *end;
-    register uint8x8_t in,out;
+    uint8x8_t in,out;
 
     for (end=region1+length; region1<end; region1+=8, region2+=8) {
         in  = vld1_u8((const uint8_t *)region1);
@@ -32,7 +32,7 @@ xorr_neon_64(uint8_t *region1, const uint8_t *region2, size_t length)
         vst1_u8((uint8_t *)region1, out);
     }
     /*uint8_t *end;
-    register uint64x1_t in, out;
+    uint64x1_t in, out;
 
     for (end=region1+length; region1<end; region1+=8, region2+=8) {
         in  = vld1_u64((const uint64_t *)region2);
@@ -50,8 +50,8 @@ maddrc256_shuffle_neon_64(uint8_t *region1, const uint8_t *region2,
 {
     assert(length % 8 ==0);
     uint8_t *end;
-    register uint8x8x2_t t1, t2;
-    register uint8x8_t m1, m2, in1, in2, out, l, h;
+    uint8x8x2_t t1, t2;
+    uint8x8_t m1, m2, in1, in2, out, l, h;
 
     if (constant == 0)
         return;
@@ -87,8 +87,8 @@ mulrc256_shuffle_neon_64(uint8_t *region1,const uint8_t* region2, uint8_t consta
 {
     assert(length % 8 ==0);
     uint8_t *end;
-    register uint8x8x2_t t1, t2;
-    register uint8x8_t m1, m2, in, out, l, h;
+    uint8x8x2_t t1, t2;
+    uint8x8_t m1, m2, in, out, l, h;
 
     if (constant == 0) {
         memset(region1, 0, length);
