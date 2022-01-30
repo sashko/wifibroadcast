@@ -55,8 +55,6 @@
  */
 #include "gf_optimized//gf256_optimized_include.h"
 #include "gf_simple/gf_simple.h"
-#include <vector>
-#include <iostream>
 
 /*
  * stuff used for testing purposes only
@@ -569,6 +567,8 @@ void fec_license(void)
 
 // ---------------------------------- C++ code ------------------------------------------------------------
 #include <algorithm>
+#include <vector>
+#include <iostream>
 
 namespace FUCK{
     static void fillBufferWithRandomData(std::vector<uint8_t>& data){
