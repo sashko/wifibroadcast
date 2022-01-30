@@ -7,6 +7,7 @@ _LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium
 # WFB_VERSION is date and time and the last commit of this branch
 _CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'
 
+# depending on the architecture we need the right flags for optimzed fec encoding/decoding
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 ifeq ($(uname_S),Linux)
 	uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
