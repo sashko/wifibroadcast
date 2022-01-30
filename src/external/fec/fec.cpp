@@ -811,6 +811,7 @@ static void test_fec_encode_and_decode_all_permutations(const int nDataPackets,c
     for(const auto& permutation:permutations){
         test_fec_encode_and_decode(dataPackets,nFecPackets,permutation);
     }
+    std::cout<<"Tested all permutations for k:"<<nDataPackets<<" n:"<<nFecPackets<<"\n";
 }
 
 void test_fec(){
