@@ -7,7 +7,7 @@ _LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium
 # WFB_VERSION is date and time and the last commit of this branch
 _CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'
 
-# depending on the architecture we need the right flags for optimzed fec encoding/decoding
+# depending on the architecture we need the right flags for optimized fec encoding/decoding
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 ifeq ($(uname_S),Linux)
 	uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
@@ -17,10 +17,6 @@ ifeq ($(uname_S),Linux)
  		_CFLAGS += -mfpu=neon -march=armv7-a -marm
 	endif
 endif
-
-#-mavx2 -faligned-new=256
-#-mfpu=neon -march=armv7-a -marm
-# -faligned-new -mavx2
 
 all_bin: wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_validator
 all: all_bin gs.key
