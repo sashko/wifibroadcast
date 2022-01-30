@@ -7,6 +7,8 @@ The sources from "zfec" are not used anymore (https://github.com/tahoe-lafs/zfec
 The fec stuff was copied from
 https://github.com/OpenHD/Open.HD/blob/8f7be98a3b7c97f325ae655256c81bea09199834/wifibroadcast-base/fec.c
 and the syntax was improved slightly (make const when dealing with buffers data is not written to)
-
 The "radiotap stuff" comes from https://github.com/radiotap/radiotap-library
+
+30.Jan 2021:
+Optimized the FEC encode/decode using NEON and SSSE3
 
