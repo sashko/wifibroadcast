@@ -47,7 +47,7 @@ void WBReceiver::dump_stats() {
     const auto count_fragments_recovered= mFECDDecoder ? mFECDDecoder->count_fragments_recovered : 0;
     // first forward to OpenHD
     openHdStatisticsWriter.writeStats({
-        count_p_all, count_p_decryption_err, count_p_decryption_ok, count_fragments_recovered, count_blocks_lost, count_p_bad, rssiForWifiCard
+        options.radio_port,count_p_all, count_p_decryption_err, count_p_decryption_ok, count_fragments_recovered, count_blocks_lost, count_p_bad, rssiForWifiCard
     });
     //timestamp in ms
     const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();

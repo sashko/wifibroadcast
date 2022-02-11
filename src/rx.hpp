@@ -70,7 +70,7 @@ private:
     // encryption stats
     uint64_t count_p_decryption_err=0;
     uint64_t count_p_decryption_ok=0;
-    OpenHDStatisticsWriter openHdStatisticsWriter{options.radio_port};
+    OpenHDStatisticsWriter openHdStatisticsWriter;
     //We know that once we get the first session key packet
     bool IS_FEC_ENABLED=false;
     // On the rx, either one of those two is active at the same time. NOTE: nullptr until the first session key packet

@@ -46,10 +46,11 @@ public:
 
 class OpenHDStatisticsWriter{
 public:
-    // the unique stream ID this processes statistics for
-    const uint8_t RADIO_PORT;
+    //const uint8_t RADIO_PORT;
     // Forwarded data
     struct Data{
+        // the unique stream ID this data refers to
+        uint8_t radio_port=0;
         // all these values are absolute (like done previously in OpenHD)
         // all received packets
         uint64_t count_p_all=0;
@@ -70,7 +71,7 @@ public:
     void writeStats(const Data& data){
         // Perhaps RADIO_PORT==0 means video and so on
         // TODO write to udp port or shared memory or ...
-        if(RADIO_PORT==56){
+        //if(RADIO_PORT==56){
             // open video stats shm and write data there or something similar
         
             struct sockaddr_in si_other_rssi;
@@ -88,7 +89,7 @@ public:
                 std::cout << "ERROR: Could not send RSSI data!" << std::endl;
             }
             close(s_rssi);
-        }
+        //}
     }
 };
 
