@@ -55,8 +55,8 @@ class WBReceiver{
 public:
     typedef std::function<void(const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
     /**
-     * This class processes the received wifi data (decryption and FEC)
-     * and forwards it via a callback.
+     * This class processes the received wifi raw wifi data
+     * (aggregation, FEC decoding) and forwards it via the callback.
      * Each instance has to be assigned with a Unique ID (same id as the corresponding tx instance).
      * @param options1 the options for this instance (some options - so to say - come from the tx instance)
      * @param callback Callback that is called with the decoded data, can be null for debugging.
