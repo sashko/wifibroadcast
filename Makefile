@@ -31,7 +31,7 @@ src/external/fec/%.o: src/external/fec/%.cpp src/external/fec/*.h src/external/f
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # the c++ part
-src/%.o: src/%.cpp src/*.hpp
+src/%.o: src/%.cpp
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 wfb_rx: src/rx.o src/external/radiotap/radiotap.o src/external/fec/fec.o
