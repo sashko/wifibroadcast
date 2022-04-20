@@ -43,8 +43,12 @@ static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD=4;
 
 struct ROptions{
     uint8_t radio_port=0;
+    // The wlan adapters to listen on
+    std::vector<std::string> rxInterfaces;
     //std::string keypair="gs.key"; //default filename
     std::optional<std::string> keypair=std::nullopt;
+    // allows setting the log intervall
+    std::chrono::milliseconds log_interval;
 };
 
 class WBReceiver{
@@ -63,6 +67,12 @@ public:
     // dump statistics
     void dump_stats();
     const ROptions& options;
+    /**
+     * Process incoming data packets as long as nothing goes wrong (nothing should go wrong as long
+     * as the computer does not crash or the wifi card disconnects).
+     * NOTE: This class won't receive any messages until loop() is called
+     */
+    void loop();
 private:
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     Decryptor mDecryptor;
@@ -85,6 +95,7 @@ private:
     //Ieee80211HeaderSeqNrCounter mSeqNrCounter;
     // Callback that is called with the decoded data
     const OUTPUT_DATA_CALLBACK mOutputDataCallback;
+    std::unique_ptr<MultiRxPcapReceiver> receiver;
 public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
     // time between <packet arrives at pcap processing queue> <<->> <packet is pulled out of pcap by RX>

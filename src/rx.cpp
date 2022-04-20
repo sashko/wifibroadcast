@@ -18,7 +18,6 @@ int main(int argc, char *const *argv) {
     ROptions options{};
     int client_udp_port=5600;
     std::string client_addr="127.0.0.1";// default to localhost
-    std::chrono::milliseconds log_interval{1000};
 
     while ((opt = getopt(argc, argv, "K:c:u:r:l:n:k:")) != -1) {
         switch (opt) {
@@ -35,7 +34,7 @@ int main(int argc, char *const *argv) {
                 options.radio_port = std::stoi(optarg);
                 break;
             case 'l':
-                log_interval = std::chrono::milliseconds(std::stoi(optarg));
+                optons.log_interval = std::chrono::milliseconds(std::stoi(optarg));
                 break;
             case 'k':
             case 'n':
@@ -64,9 +63,9 @@ int main(int argc, char *const *argv) {
 
     //testLol();
 
-    std::vector<std::string> rxInterfaces;
+    options.rxInterfaces.resize(nRxInterfaces)
     for (int i = 0; i < nRxInterfaces; i++) {
-        rxInterfaces.emplace_back(argv[optind + i]);
+        rxInterfaces[i]=argv[optind + i]);
     }
     try {
         SocketHelper::UDPForwarder udpForwarder(client_addr,client_udp_port);

@@ -38,8 +38,16 @@ mDecryptor(options.keypair),
 mOutputDataCallback(callback)//,
 //mUDPForwarder(options.client_addr,options.client_udp_port)
 {
+    receiver=std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces,options.radio_port,options1.log_interval,
+                                          notstd::bind_front(&WBReceiver::processPacket, this),
+                                          notstd::bind_front(&WBReceiver::dump_stats, this));
     std::cout<<"WFB-RX RADIO_PORT:"<<(int)options.radio_port<<"\n";
 }
+
+void WBReceiver::loop() {
+    receiver->loop();
+}
+
 
 void WBReceiver::dump_stats() {
     const auto count_blocks_total=mFECDDecoder ? mFECDDecoder->count_blocks_total :0;
