@@ -56,12 +56,16 @@ struct Options{
 };
 enum FEC_VARIABLE_INPUT_TYPE{none,h264,h265};
 
-// WBTransmitter uses an UDP port as input for the data stream
-// Each input UDP port has to be assigned with a Unique ID to differentiate between streams on the RX
-// It does all the FEC encoding & encryption for this stream, then uses PcapTransmitter to inject the generated packets
-// FEC can be either enabled or disabled.
 class WBTransmitter {
 public:
+    /**
+     * Each instance has to be assigned with a Unique ID to differentiate between streams on the RX
+     * It does all the FEC encoding & encryption for this stream, then uses PcapTransmitter to inject the generated packets
+     * FEC can be either enabled or disabled.
+     * When run as an executable from the command line, a UDPReceiver is created for forwarding data to an instance of this class.
+     * @param radiotapHeader the radiotap header that is used for injecting, contains configurable data like the mcs index.
+     * @param options1 options for this instance, some of them are forwarded to the receiver instance.
+     */
     WBTransmitter(RadiotapHeader radiotapHeader,const Options& options1);
     ~WBTransmitter();
     /**
