@@ -45,9 +45,10 @@ struct ROptions{
     uint8_t radio_port=0;
     // The wlan adapters to listen on
     std::vector<std::string> rxInterfaces;
-    //std::string keypair="gs.key"; //default filename
+    // file for encryptor
+    // make optional for ease of use - with no keypair given the default "seed" is used
     std::optional<std::string> keypair=std::nullopt;
-    // allows setting the log intervall
+    // allows setting the log interval
     std::chrono::milliseconds log_interval;
 };
 

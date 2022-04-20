@@ -47,7 +47,6 @@ struct TOptions{
     uint8_t radio_port = 1;
     // file for encryptor
     // make optional for ease of use - with no keypair given the default "seed" is used
-    // std::string keypair="drone.key";
     std::optional<std::string> keypair=std::nullopt;
     // wlan interface to send packets with
     std::string wlan;
