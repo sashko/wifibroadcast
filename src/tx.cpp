@@ -16,7 +16,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "tx.hpp"
+#include "tx.h"
 #include "HelperSources/SchedulingHelper.hpp"
 #include "HelperSources/RTPHelper.hpp"
 #include <cstdio>
@@ -68,14 +68,22 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const Options& option
         mFecEncoder->outputDataCallback=notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
         sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK=FECEncoder::calculateN(kMax,options.fec_percentage);
     }
-    mInputSocket= SocketHelper::openUdpSocketForReceiving(options.udp_port);
-    fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s\n", options.udp_port,options.radio_port,options.wlan.c_str());
+    fprintf(stderr, "WB-TX assigned ID %d assigned WLAN %s\n",options.radio_port,options.wlan.c_str());
     // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
     sessionKeyPacket.IS_FEC_ENABLED=!IS_FEC_DISABLED;
+    logAliveThread=std::make_unique<std::thread>([this](){
+        logAlive();
+        std::this_thread::sleep_for(LOG_INTERVAL);
+    });
+    std::cout<<"Sending Session key on startup\n";
+    for(int i=0;i<5;i++){
+        sendSessionKey();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 }
 
 WBTransmitter::~WBTransmitter() {
-    close(mInputSocket);
+
 }
 
 
@@ -113,8 +121,24 @@ void WBTransmitter::sendSessionKey() {
     sendPacket({(uint8_t *)&sessionKeyPacket, WBSessionKeyPacket::SIZE_BYTES});
 }
 
-void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
+void WBTransmitter::logAlive(){
+    const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
+    std::cout << runTimeMs << "\tTX " << nInputPackets << ":" << nInjectedPackets << "\n";
+}
+
+void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
     //std::cout << "WBTransmitter::send_packet\n";
+    if(size<=0 || size>FEC_MAX_PAYLOAD_SIZE){
+        std::cout<<"Fed packet with incompatible size:"<<size<<"\n";
+        return;
+    }
+    const auto cur_ts=std::chrono::steady_clock::now();
+    // send session key in SESSION_KEY_ANNOUNCE_DELTA intervals
+    if ((cur_ts >= session_key_announce_ts) ) {
+        // Announce session key
+        sendSessionKey();
+        session_key_announce_ts = cur_ts + SESSION_KEY_ANNOUNCE_DELTA;
+    }
     // this calls a callback internally
     if(IS_FEC_DISABLED){
         mFecDisabledEncoder->encodePacket(buf,size);
@@ -138,9 +162,10 @@ void WBTransmitter::processInputPacket(const uint8_t *buf, size_t size) {
             sendSessionKey();
         }
     }
+    nInputPackets++;
 }
 
-void WBTransmitter::loop() {
+/*void WBTransmitter::loop() {
     constexpr auto MAX_UDP_PAYLOAD_SIZE=65507;
     // If we'd use a smaller buffer, in case the user doesn't respect the max packet size, the OS will silently drop all bytes exceeding FEC_MAX_PAYLOAD_BYTES.
     // This way we can throw an error in case the above happens.
@@ -149,7 +174,7 @@ void WBTransmitter::loop() {
     std::chrono::steady_clock::time_point log_ts{};
     // send the key a couple of times on startup to increase the likeliness it is received
     bool firstTime=true;
-    SocketHelper::setSocketReceiveTimeout(mInputSocket,LOG_INTERVAL);
+    //SocketHelper::setSocketReceiveTimeout(mInputSocket,LOG_INTERVAL);
     for(;;){
         // send the session key a couple of times on startup
         if(firstTime){
@@ -159,19 +184,13 @@ void WBTransmitter::loop() {
             }
             firstTime=false;
         }
-
         // we set the timeout earlier when creating the socket
         const ssize_t message_length = recvfrom(mInputSocket, buf.data(),buf.size(), 0, nullptr, nullptr);
-        if(std::chrono::steady_clock::now()>=log_ts){
-            const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
-            std::cout<<runTimeMs<<"\tTX "<<nPacketsFromUdpPort<<":"<<nInjectedPackets<<"\n";
-            log_ts= std::chrono::steady_clock::now() + WBTransmitter::LOG_INTERVAL;
-        }
         if(message_length>0){
             if(message_length>FEC_MAX_PAYLOAD_SIZE){
                 throw std::runtime_error(StringFormat::convert("Error: This link doesn't support payload exceeding %d", FEC_MAX_PAYLOAD_SIZE));
             }
-            nPacketsFromUdpPort++;
+            nInputPackets++;
             const auto cur_ts=std::chrono::steady_clock::now();
             // send session key in SESSION_KEY_ANNOUNCE_DELTA intervals
             if ((cur_ts >= session_key_announce_ts) ) {
@@ -179,7 +198,7 @@ void WBTransmitter::loop() {
                 sendSessionKey();
                 session_key_announce_ts = cur_ts + SESSION_KEY_ANNOUNCE_DELTA;
             }
-            processInputPacket(buf.data(), message_length);
+            feedPacket(buf.data(), message_length);
         }else{
             if(errno==EAGAIN || errno==EWOULDBLOCK){
                 // timeout
@@ -192,12 +211,13 @@ void WBTransmitter::loop() {
             throw std::runtime_error(StringFormat::convert("recvfrom error: %s", strerror(errno)));
         }
     }
-}
-
+}*/
 
 int main(int argc, char *const *argv) {
     int opt;
     Options options{};
+    // input UDP port
+    int udp_port = 5600;
 
     RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, 1};
 
@@ -221,7 +241,7 @@ int main(int argc, char *const *argv) {
                 options.fec_percentage=std::stoi(optarg);
                 break;
             case 'u':
-                options.udp_port = std::stoi(optarg);
+                udp_port = std::stoi(optarg);
                 break;
             case 'r':
                 options.radio_port = std::stoi(optarg);
@@ -251,7 +271,7 @@ int main(int argc, char *const *argv) {
                         argv[0]);
                 fprintf(stderr,
                         "Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d \n",
-                        "none", std::get<int>(options.fec_k), options.fec_percentage, options.udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index);
+                        "none", std::get<int>(options.fec_k), options.fec_percentage, udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index);
                 fprintf(stderr, "Radio MTU: %lu\n", (unsigned long) FEC_MAX_PAYLOAD_SIZE);
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
@@ -297,7 +317,10 @@ int main(int argc, char *const *argv) {
     try {
         std::shared_ptr<WBTransmitter> t = std::make_shared<WBTransmitter>(
                 radiotapHeader,options);
-        t->loop();
+        SocketHelper::UDPReceiver udpReceiver(SocketHelper::ADDRESS_LOCALHOST,udp_port,[t](const uint8_t* payload,const std::size_t payloadSize){
+            t->feedPacket(payload,payloadSize);
+        });
+        udpReceiver.start();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());
         exit(1);

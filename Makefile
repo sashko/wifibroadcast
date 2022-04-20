@@ -3,7 +3,7 @@ COMMIT ?= $(shell git rev-parse HEAD)
 
 export VERSION COMMIT
 
-_LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium
+_LDFLAGS := $(LDFLAGS) -lrt -lpcap -lsodium -lpthread
 # WFB_VERSION is date and time and the last commit of this branch
 _CFLAGS := $(CFLAGS)  -O2 -DWFB_VERSION='"$(VERSION)-$(shell /bin/bash -c '_tmp=$(COMMIT); echo $${_tmp::8}')"'
 
@@ -31,7 +31,7 @@ src/external/fec/%.o: src/external/fec/%.cpp src/external/fec/*.h src/external/f
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # the c++ part
-src/%.o: src/%.cpp src/*.hpp
+src/%.o: src/%.cpp
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 wfb_rx: src/rx.o src/external/radiotap/radiotap.o src/external/fec/fec.o

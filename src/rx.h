@@ -41,17 +41,21 @@ static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD=4;
 
 struct Options{
     uint8_t radio_port=0;
-    int client_udp_port=5600;
-    std::string client_addr="127.0.0.1";// default to localhost
     //std::string keypair="gs.key"; //default filename
     std::optional<std::string> keypair=std::nullopt;
 };
 
-// This class processes the received wifi data (decryption and FEC)
-// and forwards it via UDP.
 class WBReceiver{
 public:
-    explicit WBReceiver(const Options& options1);
+    typedef std::function<void(const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
+    /**
+     * This class processes the received wifi data (decryption and FEC)
+     * and forwards it via a callback.
+     * Each instance has to be assigned with a Unique ID (same id as the corresponding tx instance).
+     * @param options1 the options for this instance (some options - so to say - come from the tx instance)
+     * @param callback Callback that is called with the decoded data, can be null for debugging.
+     */
+    explicit WBReceiver(const Options& options1,OUTPUT_DATA_CALLBACK callback);
     ~WBReceiver()=default;
     void processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
     // dump statistics
@@ -61,7 +65,7 @@ private:
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     Decryptor mDecryptor;
     // this one is used to forward packets
-    SocketHelper::UDPForwarder mUDPForwarder;
+    //SocketHelper::UDPForwarder mUDPForwarder;
     std::array<RSSIForWifiCard,MAX_RX_INTERFACES> rssiForWifiCard;
     // n of all received packets, absolute
     uint64_t count_p_all=0;
@@ -77,6 +81,8 @@ private:
     std::unique_ptr<FECDecoder> mFECDDecoder=nullptr;
     std::unique_ptr<FECDisabledDecoder> mFECDisabledDecoder=nullptr;
     //Ieee80211HeaderSeqNrCounter mSeqNrCounter;
+    // Callback that is called with the decoded data
+    const OUTPUT_DATA_CALLBACK mOutputDataCallback;
 public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
     // time between <packet arrives at pcap processing queue> <<->> <packet is pulled out of pcap by RX>

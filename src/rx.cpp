@@ -17,7 +17,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 #include "RawReceiver.hpp"
-#include "rx.hpp"
+#include "rx.h"
 #include "wifibroadcast.hpp"
 #include "HelperSources/SchedulingHelper.hpp"
 #include <cassert>
@@ -32,12 +32,13 @@
 #include <sstream>
 
 
-WBReceiver::WBReceiver(const Options& options1) :
+WBReceiver::WBReceiver(const Options& options1,OUTPUT_DATA_CALLBACK callback) :
 options(options1),
 mDecryptor(options.keypair),
-mUDPForwarder(options.client_addr,options.client_udp_port)
+mOutputDataCallback(callback)//,
+//mUDPForwarder(options.client_addr,options.client_udp_port)
 {
-    std::cout<<"WFB-RX UDP_PORT:"<<options.client_udp_port<<" RADIO_PORT:"<<(int)options.radio_port<<"\n";
+    std::cout<<"WFB-RX RADIO_PORT:"<<(int)options.radio_port<<"\n";
 }
 
 void WBReceiver::dump_stats() {
@@ -150,7 +151,12 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
             count_p_decryption_ok++;
             IS_FEC_ENABLED=sessionKeyPacket.IS_FEC_ENABLED;
             auto callback=[this](const uint8_t * payload,std::size_t payloadSize){
-                this->mUDPForwarder.forwardPacketViaUDP(payload,payloadSize);
+                if(mOutputDataCallback!= nullptr){
+                    mOutputDataCallback(payload,payloadSize);
+                }else{
+                    std::cerr<<"No data callback registered\n";
+                }
+                //this->mUDPForwarder.forwardPacketViaUDP(payload,payloadSize);
                 //this->forwardPacketViaUDP(payload,payloadSize);
             };
             if(IS_FEC_ENABLED){
@@ -225,6 +231,8 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
 int main(int argc, char *const *argv) {
     int opt;
     Options options{};
+    int client_udp_port=5600;
+    std::string client_addr="127.0.0.1";// default to localhost
     std::chrono::milliseconds log_interval{1000};
 
     while ((opt = getopt(argc, argv, "K:c:u:r:l:n:k:")) != -1) {
@@ -233,10 +241,10 @@ int main(int argc, char *const *argv) {
                 options.keypair = optarg;
                 break;
             case 'c':
-                options.client_addr = std::string(optarg);
+                client_addr = std::string(optarg);
                 break;
             case 'u':
-                options.client_udp_port = std::stoi(optarg);
+                client_udp_port = std::stoi(optarg);
                 break;
             case 'r':
                 options.radio_port = std::stoi(optarg);
@@ -254,7 +262,7 @@ int main(int argc, char *const *argv) {
                         "Local receiver: %s [-K rx_key] [-c client_addr] [-u udp_client_port] [-r radio_port] [-l log_interval(ms)] interface1 [interface2] ...\n",
                         argv[0]);
                 fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d, log_interval=%d \n",
-                        "none",options.client_addr.c_str(), options.client_udp_port, options.radio_port,
+                        "none",client_addr.c_str(), client_udp_port, options.radio_port,
                         (int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count());
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
@@ -276,7 +284,10 @@ int main(int argc, char *const *argv) {
         rxInterfaces.emplace_back(argv[optind + i]);
     }
     try {
-        std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(options);
+        SocketHelper::UDPForwarder udpForwarder(client_addr,client_udp_port);
+        std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(options,[udpForwarder](const uint8_t* payload,const std::size_t payloadSize){
+            udpForwarder.forwardPacketViaUDP(payload,payloadSize);
+        });
         MultiRxPcapReceiver receiver(rxInterfaces,options.radio_port,log_interval,
                                      notstd::bind_front(&WBReceiver::processPacket, agg.get()),
                                      notstd::bind_front(&WBReceiver::dump_stats, agg.get()));
