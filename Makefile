@@ -23,11 +23,11 @@ all: all_bin gs.key
 
 # Just compile everything as c++ code
 # compile radiotap
-src/external/radiotap/%.o: src/external/radiotap/%.c src/external/radiotap/*.h
+src/external/radiotap/radiotap.o: src/external/radiotap/radiotap.c src/external/radiotap/*.h
 	$(CC) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # compile the (general) fec part
-src/external/fec/%.o: src/external/fec/%.cpp src/external/fec/*.h src/external/fec/gf_optimized
+src/external/fec/fec.o: src/external/fec/fec.cpp src/external/fec/*.h src/external/fec/gf_optimized/*.h src/external/fec/gf_simple/*.h
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
 # the c++ part
