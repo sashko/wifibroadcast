@@ -18,6 +18,7 @@
 #include <chrono>
 #include <optional>
 #include <poll.h>
+#include <pcap.h>
 
 // This is a single header-only file you can use to build your own wifibroadcast link
 // It doesn't specify if / what FEC to use and so on
