@@ -29,12 +29,10 @@ include_directories(${PCAP_INCLUDE_DIR})
 
 SET(USED_LIBS wifibroadcast radiotap fec ${PCAP_LIBRARY} ${sodium_LIBRARY_RELEASE})
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -mavx2 -faligned-new=256")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -mavx2 -faligned-new=256")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 # ----------------------------------
 
-SET(USED_LIBS wifibroadcast)
-
-add_executable(lol src/lol.cpp)
-target_link_libraries(lol ${USED_LIBS})
+add_executable(wfb_tx src/tx.cpp)
+target_link_libraries(wfb_tx  ${USED_LIBS})

@@ -20,7 +20,7 @@
 
 int main(int argc, char *const *argv) {
     int opt;
-    Options options{};
+    TOptions options{};
     // input UDP port
     int udp_port = 5600;
 

@@ -15,7 +15,7 @@
 
 int main(int argc, char *const *argv) {
     int opt;
-    Options options{};
+    ROptions options{};
     int client_udp_port=5600;
     std::string client_addr="127.0.0.1";// default to localhost
     std::chrono::milliseconds log_interval{1000};
