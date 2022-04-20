@@ -305,6 +305,7 @@ namespace SocketHelper{
                 std::cout<<"Error binding Port; "<<client_udp_port;
                 return;
             }
+            std::cout<<"UDPReceiver created with "<<client_addr<<":"<<client_udp_port<<"\n";
         }
         void start(){
             const auto buff=std::make_unique<std::array<uint8_t,UDP_PACKET_MAX_SIZE>>();

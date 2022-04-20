@@ -271,7 +271,7 @@ int main(int argc, char *const *argv) {
                         argv[0]);
                 fprintf(stderr,
                         "Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d \n",
-                        "none", std::get<int>(options.fec_k), options.fec_percentage, options.udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index);
+                        "none", std::get<int>(options.fec_k), options.fec_percentage, udp_port, options.radio_port, wifiParams.bandwidth, wifiParams.short_gi ? "short" : "long", wifiParams.stbc, wifiParams.ldpc, wifiParams.mcs_index);
                 fprintf(stderr, "Radio MTU: %lu\n", (unsigned long) FEC_MAX_PAYLOAD_SIZE);
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
@@ -317,7 +317,7 @@ int main(int argc, char *const *argv) {
     try {
         std::shared_ptr<WBTransmitter> t = std::make_shared<WBTransmitter>(
                 radiotapHeader,options);
-        SocketHelper::UDPReceiver udpReceiver(SocketHelper::ADDRESS_LOCALHOST,options.udp_port,[t](const uint8_t* payload,const std::size_t payloadSize){
+        SocketHelper::UDPReceiver udpReceiver(SocketHelper::ADDRESS_LOCALHOST,udp_port,[t](const uint8_t* payload,const std::size_t payloadSize){
             t->feedPacket(payload,payloadSize);
         });
         udpReceiver.start();

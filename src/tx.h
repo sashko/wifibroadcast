@@ -38,6 +38,8 @@
 #include <variant>
 #include <thread>
 
+// Note: The UDP port is missing as an option here, since it is not an option for WFBTransmitter anymore.
+// Only an option when you run this program via the command line.
 struct Options{
     // the radio port is what is used as an index to multiplex multiple streams (telemetry,video,...)
     // into the one wfb stream
@@ -62,8 +64,13 @@ class WBTransmitter {
 public:
     WBTransmitter(RadiotapHeader radiotapHeader,const Options& options1);
     ~WBTransmitter();
-    // feed a new packet to this instance.
-    // Depending on the selected mode, this might add FEC packets or similar.
+    /**
+     * feed a new packet to this instance.
+     * Depending on the selected mode, this might add FEC packets or similar.
+     * If the packet size exceeds the max packet size, the packet is dropped.
+     * @param buf packet data buffer
+     * @param size packet data buffer size
+     */
     void feedPacket(const uint8_t *buf, size_t size);
 private:
     const Options& options;
