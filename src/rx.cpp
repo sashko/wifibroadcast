@@ -17,7 +17,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 #include "RawReceiver.hpp"
-#include "rx.hpp"
+#include "rx.h"
 #include "wifibroadcast.hpp"
 #include "HelperSources/SchedulingHelper.hpp"
 #include <cassert>
