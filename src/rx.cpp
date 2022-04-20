@@ -34,7 +34,7 @@ int main(int argc, char *const *argv) {
                 options.radio_port = std::stoi(optarg);
                 break;
             case 'l':
-                optons.log_interval = std::chrono::milliseconds(std::stoi(optarg));
+                options.log_interval = std::chrono::milliseconds(std::stoi(optarg));
                 break;
             case 'k':
             case 'n':
@@ -47,7 +47,7 @@ int main(int argc, char *const *argv) {
                         argv[0]);
                 fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d, log_interval=%d \n",
                         "none",client_addr.c_str(), client_udp_port, options.radio_port,
-                        (int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count());
+                        (int)std::chrono::duration_cast<std::chrono::milliseconds>(options.log_interval).count());
                 fprintf(stderr, "WFB version "
                 WFB_VERSION
                 "\n");
@@ -63,19 +63,16 @@ int main(int argc, char *const *argv) {
 
     //testLol();
 
-    options.rxInterfaces.resize(nRxInterfaces)
+    options.rxInterfaces.resize(nRxInterfaces);
     for (int i = 0; i < nRxInterfaces; i++) {
-        rxInterfaces[i]=argv[optind + i]);
+        options.rxInterfaces[i]=std::string(argv[optind + i]);
     }
     try {
         SocketHelper::UDPForwarder udpForwarder(client_addr,client_udp_port);
-        std::shared_ptr<WBReceiver> agg=std::make_shared<WBReceiver>(options,[udpForwarder](const uint8_t* payload,const std::size_t payloadSize){
+        std::shared_ptr<WBReceiver> receiver=std::make_shared<WBReceiver>(options, [udpForwarder](const uint8_t* payload, const std::size_t payloadSize){
             udpForwarder.forwardPacketViaUDP(payload,payloadSize);
         });
-        MultiRxPcapReceiver receiver(rxInterfaces,options.radio_port,log_interval,
-                                     notstd::bind_front(&WBReceiver::processPacket, agg.get()),
-                                     notstd::bind_front(&WBReceiver::dump_stats, agg.get()));
-        receiver.loop();
+        receiver->loop();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());
         exit(1);
