@@ -2,12 +2,12 @@
 
 add_library( radiotap
         SHARED
-        ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
+        ${CMAKE_CURRENT_LIST_DIR}/external/radiotap/radiotap.c
         )
 
 add_library( fec
         SHARED
-        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/external/fec/fec.cpp
         )
 
 add_library( wifibroadcast
