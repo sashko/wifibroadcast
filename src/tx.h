@@ -36,6 +36,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <variant>
+#include <thread>
 
 struct Options{
     // the radio port is what is used as an index to multiplex multiple streams (telemetry,video,...)
@@ -73,6 +74,8 @@ private:
     void sendFecPrimaryOrSecondaryFragment(const uint64_t nonce, const uint8_t* payload,const size_t payloadSize);
     // send packet by prefixing data with the current IEE and Radiotap header
     void sendPacket(const AbstractWBPacket& abstractWbPacket);
+    // print some simple debug information. Called in regular intervals by the logAliveThread
+    void logAlive();
     // this one is used for injecting packets
     PcapTransmitter mPcapTransmitter;
     //RawSocketTransmitter mPcapTransmitter;
@@ -86,7 +89,9 @@ private:
     const RadiotapHeader mRadiotapHeader;
     uint16_t ieee80211_seq=0;
     // statistics for console
-    int64_t nPacketsFromUdpPort=0;
+    // n of packets fed to the instance
+    int64_t nInputPackets=0;
+    // n of actually injected packets
     int64_t nInjectedPackets=0;
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     static constexpr const std::chrono::nanoseconds LOG_INTERVAL=std::chrono::milliseconds(1000);
@@ -98,6 +103,7 @@ private:
     // On the tx, either one of those two is active at the same time
     std::unique_ptr<FECEncoder> mFecEncoder=nullptr;
     std::unique_ptr<FECDisabledEncoder> mFecDisabledEncoder=nullptr;
+    std::unique_ptr<std::thread> logAliveThread;
 public:
     // run as long as nothing goes completely wrong
     void loop();

@@ -72,6 +72,10 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const Options& option
     fprintf(stderr, "WB-TX Listen on UDP Port %d assigned ID %d assigned WLAN %s\n", options.udp_port,options.radio_port,options.wlan.c_str());
     // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
     sessionKeyPacket.IS_FEC_ENABLED=!IS_FEC_DISABLED;
+    logAliveThread=std::make_unique<std::thread>([this](){
+        logAlive();
+        std::this_thread::sleep_for(LOG_INTERVAL);
+    });
 }
 
 WBTransmitter::~WBTransmitter() {
@@ -164,14 +168,14 @@ void WBTransmitter::loop() {
         const ssize_t message_length = recvfrom(mInputSocket, buf.data(),buf.size(), 0, nullptr, nullptr);
         if(std::chrono::steady_clock::now()>=log_ts){
             const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
-            std::cout<<runTimeMs<<"\tTX "<<nPacketsFromUdpPort<<":"<<nInjectedPackets<<"\n";
+            std::cout << runTimeMs << "\tTX " << nInputPackets << ":" << nInjectedPackets << "\n";
             log_ts= std::chrono::steady_clock::now() + WBTransmitter::LOG_INTERVAL;
         }
         if(message_length>0){
             if(message_length>FEC_MAX_PAYLOAD_SIZE){
                 throw std::runtime_error(StringFormat::convert("Error: This link doesn't support payload exceeding %d", FEC_MAX_PAYLOAD_SIZE));
             }
-            nPacketsFromUdpPort++;
+            nInputPackets++;
             const auto cur_ts=std::chrono::steady_clock::now();
             // send session key in SESSION_KEY_ANNOUNCE_DELTA intervals
             if ((cur_ts >= session_key_announce_ts) ) {
@@ -194,6 +198,10 @@ void WBTransmitter::loop() {
     }
 }
 
+void WBTransmitter::logAlive(){
+    const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
+    std::cout << runTimeMs << "\tTX " << nInputPackets << ":" << nInjectedPackets << "\n";
+}
 
 int main(int argc, char *const *argv) {
     int opt;
