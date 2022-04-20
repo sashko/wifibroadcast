@@ -51,6 +51,7 @@ public:
     /**
      * This class processes the received wifi data (decryption and FEC)
      * and forwards it via a callback.
+     * Each instance has to be assigned with a Unique ID (same id as the corresponding tx instance).
      * @param options1 the options for this instance (some options - so to say - come from the tx instance)
      * @param callback Callback that is called with the decoded data, can be null for debugging.
      */
