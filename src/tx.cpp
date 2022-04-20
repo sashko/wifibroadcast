@@ -163,14 +163,8 @@ void WBTransmitter::loop() {
             }
             firstTime=false;
         }
-
         // we set the timeout earlier when creating the socket
         const ssize_t message_length = recvfrom(mInputSocket, buf.data(),buf.size(), 0, nullptr, nullptr);
-        if(std::chrono::steady_clock::now()>=log_ts){
-            const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
-            std::cout << runTimeMs << "\tTX " << nInputPackets << ":" << nInjectedPackets << "\n";
-            log_ts= std::chrono::steady_clock::now() + WBTransmitter::LOG_INTERVAL;
-        }
         if(message_length>0){
             if(message_length>FEC_MAX_PAYLOAD_SIZE){
                 throw std::runtime_error(StringFormat::convert("Error: This link doesn't support payload exceeding %d", FEC_MAX_PAYLOAD_SIZE));
