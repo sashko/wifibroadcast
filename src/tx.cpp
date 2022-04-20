@@ -121,6 +121,11 @@ void WBTransmitter::sendSessionKey() {
     sendPacket({(uint8_t *)&sessionKeyPacket, WBSessionKeyPacket::SIZE_BYTES});
 }
 
+void WBTransmitter::logAlive(){
+    const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
+    std::cout << runTimeMs << "\tTX " << nInputPackets << ":" << nInjectedPackets << "\n";
+}
+
 void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
     //std::cout << "WBTransmitter::send_packet\n";
     if(size<=0 || size>FEC_MAX_PAYLOAD_SIZE){
@@ -207,11 +212,6 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
         }
     }
 }*/
-
-void WBTransmitter::logAlive(){
-    const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
-    std::cout << runTimeMs << "\tTX " << nInputPackets << ":" << nInjectedPackets << "\n";
-}
 
 int main(int argc, char *const *argv) {
     int opt;
