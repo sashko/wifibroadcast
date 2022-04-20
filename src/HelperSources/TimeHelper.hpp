@@ -65,7 +65,7 @@ private:
     // do not forget the braces to initialize with 0
     T sum{};
     long nSamples=0;
-    T min=std::numeric_limits<T>::max();
+    T min{};
     T max{};
 public:
     BaseAvgCalculator(){reset();};
@@ -106,11 +106,11 @@ public:
         sum={};
         nSamples=0;
         // Workaround for std::numeric_limits returning 0 for std::chrono::nanoseconds
-        if constexpr (std::is_same_v<T,std::chrono::nanoseconds>){
+        /*if constexpr (std::is_same_v<T,std::chrono::nanoseconds>){
             min=std::chrono::nanoseconds::max();
         }else{
             min=std::numeric_limits<T>::max();
-        }
+        }*/
         max={};
     }
     // Merges two AvgCalculator(s) that hold the same types of samples together

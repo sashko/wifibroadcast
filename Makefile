@@ -18,7 +18,7 @@ ifeq ($(uname_S),Linux)
 	endif
 endif
 
-all_bin: wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_validator
+all_bin: wfb_rx wfb_tx #wfb_keygen unit_test benchmark udp_generator_validator
 all: all_bin gs.key
 
 # Just compile everything as c++ code
@@ -40,17 +40,24 @@ wfb_rx: src/rx.o src/WBReceiver.o src/external/radiotap/radiotap.o src/external/
 wfb_tx: src/tx.o src/WBTransmitter.o src/external/radiotap/radiotap.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-unit_test: src/unit_test.o src/external/fec/fec.o
-	$(CXX) -o $@ $^ $(_LDFLAGS)
+#wfb_rx: src/rx.cpp src/WBReceiver.cpp src/external/radiotap/radiotap.o src/external/fec/fec.o
+ #	$(CXX) -o $@ $^ $(_LDFLAGS)
+ #
+ #wfb_tx: src/tx.cpp src/WBTransmitter.cpp src/external/radiotap/radiotap.o src/external/fec/fec.o
+ #	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-benchmark: src/benchmark.o src/external/fec/fec.o
-	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-udp_generator_validator: src/udp_generator_validator.o
-	$(CXX) -o $@ $^ $(_LDFLAGS)
+#unit_test: src/unit_test.o src/external/fec/fec.o
+#	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-wfb_keygen: src/keygen.o
-	$(CC) -o $@ $^ $(_LDFLAGS)
+#benchmark: src/benchmark.o src/external/fec/fec.o
+#	$(CXX) -o $@ $^ $(_LDFLAGS)
+
+#udp_generator_validator: src/udp_generator_validator.o
+#	$(CXX) -o $@ $^ $(_LDFLAGS)
+
+#wfb_keygen: src/keygen.o
+#	$(CC) -o $@ $^ $(_LDFLAGS)
 
 gs.key: wfb_keygen
 	@if ! [ -f gs.key ]; then ./wfb_keygen; fi

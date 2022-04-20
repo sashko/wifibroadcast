@@ -34,6 +34,7 @@
 #include <cassert>
 #include <functional>
 #include <thread>
+#include <algorithm>
 #include "StringHelper.hpp"
 
 // Generic "Helper" code that does not depend on anything else other than the std libraries
