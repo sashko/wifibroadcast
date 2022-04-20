@@ -41,13 +41,6 @@ wfb_rx: src/rx.o src/WBReceiver.o src/external/radiotap/radiotap.o src/external/
 wfb_tx: src/tx.o src/WBTransmitter.o src/external/radiotap/radiotap.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-#wfb_rx: src/rx.cpp src/WBReceiver.cpp src/external/radiotap/radiotap.o src/external/fec/fec.o
- #	$(CXX) -o $@ $^ $(_LDFLAGS)
- #
- #wfb_tx: src/tx.cpp src/WBTransmitter.cpp src/external/radiotap/radiotap.o src/external/fec/fec.o
- #	$(CXX) -o $@ $^ $(_LDFLAGS)
-
-
 unit_test: src/unit_test.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
