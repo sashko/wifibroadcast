@@ -18,7 +18,7 @@ ifeq ($(uname_S),Linux)
 	endif
 endif
 
-all_bin: wfb_rx wfb_tx #wfb_keygen unit_test benchmark udp_generator_validator
+all_bin: wfb_rx wfb_tx lol #wfb_keygen unit_test benchmark udp_generator_validator
 all: all_bin gs.key
 
 # Just compile everything as c++ code
@@ -38,6 +38,9 @@ wfb_rx: src/rx.o src/WBReceiver.o src/external/radiotap/radiotap.o src/external/
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
 wfb_tx: src/tx.o src/WBTransmitter.o src/external/radiotap/radiotap.o src/external/fec/fec.o
+	$(CXX) -o $@ $^ $(_LDFLAGS)
+
+lol: src/lol.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
 #wfb_rx: src/rx.cpp src/WBReceiver.cpp src/external/radiotap/radiotap.o src/external/fec/fec.o

@@ -7,6 +7,8 @@
 
 #include <string>
 #include <sstream>
+#include <array>
+#include <vector>
 
 class StringHelper{
 public:
