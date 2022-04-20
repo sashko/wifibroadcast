@@ -8,6 +8,6 @@
 
 int main(int argc, char *const *argv) {
 
-    WBReceiver wbReceiver()
+    WBReceiver wbReceiver(ROptions{}, nullptr);
     return 0;
 }
