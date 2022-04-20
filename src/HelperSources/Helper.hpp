@@ -5,6 +5,8 @@
 #ifndef WIFIBROADCAST_HELPER_H
 #define WIFIBROADCAST_HELPER_H
 
+#include "StringHelper.hpp"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>
@@ -35,7 +37,7 @@
 #include <functional>
 #include <thread>
 #include <algorithm>
-#include "StringHelper.hpp"
+#include <thread>
 
 // Generic "Helper" code that does not depend on anything else other than the std libraries
 
@@ -326,10 +328,20 @@ namespace SocketHelper{
             receiving= false;
             close(mSocket);
         }
+        void runInBackground(){
+            receiverThread=std::thread([this](){
+                start();
+            });
+        }
+        void stopBackground(){
+            stop();
+            receiverThread.join();
+        }
     private:
         const OUTPUT_DATA_CALLBACK mCb;
         bool receiving=true;
         int mSocket;
+        std::thread receiverThread;
     };
 }
 

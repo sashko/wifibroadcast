@@ -30,5 +30,7 @@ include_directories(${PCAP_INCLUDE_DIR})
 
 SET(WB_TARGET_LINK_LIBRARIES wifibroadcast radiotap fec ${PCAP_LIBRARY} ${sodium_LIBRARY_RELEASE})
 
+include_directories(${CMAKE_CURRENT_LIST_DIR}/src/HelperSources)
+
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -mavx2 -faligned-new=256")
 # ----------------------------------

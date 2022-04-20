@@ -1,4 +1,5 @@
-
+#ifndef CONSTI10_WIFIBROADCAST_WB_RECEIVER_H
+#define CONSTI10_WIFIBROADCAST_WB_RECEIVER_H
 //
 // Copyright (C) 2017, 2018 Vasily Evseenko <svpcom@p2ptech.org>
 // 2020 Constantin Geier
@@ -117,3 +118,5 @@ public:
     // run as long as nothing goes completely wrong
     //void loop();
 };
+
+#endif //CONSTI10_WIFIBROADCAST_WB_RECEIVER_H
