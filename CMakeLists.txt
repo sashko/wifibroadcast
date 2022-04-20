@@ -36,5 +36,5 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 
 SET(USED_LIBS wifibroadcast)
 
-add_executable(wfb_tx src/tx.cpp)
-target_link_libraries(wfb_tx ${USED_LIBS})
+add_executable(lol src/lol.cpp)
+target_link_libraries(lol ${USED_LIBS})

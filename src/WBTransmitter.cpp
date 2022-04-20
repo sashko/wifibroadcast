@@ -35,7 +35,7 @@
 #include <vector>
 #include <thread>
 
-static FEC_VARIABLE_INPUT_TYPE convert(const Options& options){
+static FEC_VARIABLE_INPUT_TYPE convert(const TOptions& options){
     if(options.fec_k.index()==0)return FEC_VARIABLE_INPUT_TYPE::none;
     const std::string tmp=std::get<std::string>(options.fec_k);
     std::cout<<"Lol ("<<tmp<<")\n";
@@ -47,7 +47,7 @@ static FEC_VARIABLE_INPUT_TYPE convert(const Options& options){
     assert(false);
 }
 
-WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const Options& options1) :
+WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& options1) :
         options(options1),
         mPcapTransmitter(options.wlan),
         mEncryptor(options.keypair),

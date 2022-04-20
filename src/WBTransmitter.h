@@ -40,7 +40,7 @@
 
 // Note: The UDP port is missing as an option here, since it is not an option for WFBTransmitter anymore.
 // Only an option when you run this program via the command line.
-struct Options{
+struct TOptions{
     // the radio port is what is used as an index to multiplex multiple streams (telemetry,video,...)
     // into the one wfb stream
     uint8_t radio_port = 1;
@@ -66,7 +66,7 @@ public:
      * @param radiotapHeader the radiotap header that is used for injecting, contains configurable data like the mcs index.
      * @param options1 options for this instance, some of them are forwarded to the receiver instance.
      */
-    WBTransmitter(RadiotapHeader radiotapHeader,const Options& options1);
+    WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& options1);
     ~WBTransmitter();
     /**
      * feed a new packet to this instance.
@@ -77,7 +77,7 @@ public:
      */
     void feedPacket(const uint8_t *buf, size_t size);
 private:
-    const Options& options;
+    const TOptions& options;
     // send the current session key via WIFI (located in mEncryptor)
     void sendSessionKey();
     // for the FEC encoder

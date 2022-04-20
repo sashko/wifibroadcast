@@ -39,7 +39,7 @@
 static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD=4;
 //
 
-struct Options{
+struct ROptions{
     uint8_t radio_port=0;
     //std::string keypair="gs.key"; //default filename
     std::optional<std::string> keypair=std::nullopt;
@@ -55,12 +55,12 @@ public:
      * @param options1 the options for this instance (some options - so to say - come from the tx instance)
      * @param callback Callback that is called with the decoded data, can be null for debugging.
      */
-    explicit WBReceiver(const Options& options1,OUTPUT_DATA_CALLBACK callback);
+    explicit WBReceiver(const ROptions& options1,OUTPUT_DATA_CALLBACK callback);
     ~WBReceiver()=default;
     void processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
     // dump statistics
     void dump_stats();
-    const Options& options;
+    const ROptions& options;
 private:
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     Decryptor mDecryptor;

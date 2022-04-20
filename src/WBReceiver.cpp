@@ -32,7 +32,7 @@
 #include <sstream>
 
 
-WBReceiver::WBReceiver(const Options& options1,OUTPUT_DATA_CALLBACK callback) :
+WBReceiver::WBReceiver(const ROptions& options1,OUTPUT_DATA_CALLBACK callback) :
 options(options1),
 mDecryptor(options.keypair),
 mOutputDataCallback(callback)//,
