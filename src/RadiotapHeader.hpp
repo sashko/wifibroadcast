@@ -160,7 +160,7 @@ static_assert(sizeof(RadiotapHeaderWithTxFlagsAndMCS) == RadiotapHeader::SIZE_BY
 
 
 namespace RadiotapHelper{
-    std::string toStringRadiotapFlags(uint8_t flags){
+    static std::string toStringRadiotapFlags(uint8_t flags){
         std::stringstream ss;
         ss<<"All IEEE80211_RADIOTAP flags: [";
         if(flags & IEEE80211_RADIOTAP_F_CFP){
@@ -188,7 +188,7 @@ namespace RadiotapHelper{
         return ss.str();
     }
     // http://www.radiotap.org/fields/Channel.html
-    std::string toStringRadiotapChannel(uint16_t frequency,uint16_t flags){
+    static std::string toStringRadiotapChannel(uint16_t frequency,uint16_t flags){
         std::stringstream ss;
         ss<<"All Radiotap channel values: [";
         ss<<"Frequency["<<(int)frequency<<"],";
@@ -217,7 +217,7 @@ namespace RadiotapHelper{
         return ss.str();
     }
     //http://www.radiotap.org/fields/RX%20flags.html
-    std::string toStringRadiotapRXFlags(uint16_t rxFlags){
+    static std::string toStringRadiotapRXFlags(uint16_t rxFlags){
         std::stringstream ss;
         ss<<"All IEEE80211_RADIOTAP_RX_FLAGS values: [";
         if(rxFlags &  IEEE80211_RADIOTAP_F_RX_BADPLCP) {
@@ -386,7 +386,7 @@ namespace OldRadiotapHeaders{
 
 // this is what's used in
 //https://github.com/OpenHD/Open.HD/blob/master/wifibroadcast-rc-Ath9k/rctx.cpp
-    std::array<uint8_t,RadiotapHeader::SIZE_BYTES> radiotap_rc_ath9k={
+    static std::array<uint8_t,RadiotapHeader::SIZE_BYTES> radiotap_rc_ath9k={
             0, // <-- radiotap version      (0x00)
             0, // <-- radiotap version      (0x00)
 

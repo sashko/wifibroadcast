@@ -110,5 +110,8 @@ static constexpr const auto WB_FRAME_MAX_PAYLOAD=(PCAP_MAX_PACKET_SIZE - Radiota
 // comment this for a release
 //#define ENABLE_ADVANCED_DEBUGGING
 
+#ifndef WFB_VERSION
+#define WFB_VERSION "Unknown"
+#endif
 
 #endif //__WIFIBROADCAST_HPP__

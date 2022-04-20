@@ -127,7 +127,7 @@ static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,const int nSeco
 }
 
 // Note: This test will take quite a long time ! (or rather ages :) when trying to do all possible combinations. )
-void testFecCPlusPlusWrapperX(){
+static void testFecCPlusPlusWrapperX(){
     std::cout<<"testFecCPlusPlusWrapper Begin\n";
     //constexpr auto MAX_N_P_F=128;
     //constexpr auto MAX_N_S_F=128;

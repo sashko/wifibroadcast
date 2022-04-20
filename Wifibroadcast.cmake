@@ -12,8 +12,8 @@ add_library( fec
 
 add_library( wifibroadcast
         SHARED
-        ${CMAKE_CURRENT_LIST_DIR}/src/rx.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/tx.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/WBReceiver.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/WBTransmitter.cpp
         )
 
 target_link_libraries( wifibroadcast radiotap fec)

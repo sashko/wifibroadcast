@@ -34,10 +34,10 @@ src/external/fec/%.o: src/external/fec/%.cpp src/external/fec/*.h src/external/f
 src/%.o: src/%.cpp
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
-wfb_rx: src/rx.o src/external/radiotap/radiotap.o src/external/fec/fec.o
+wfb_rx: src/WBReceiver.o src/external/radiotap/radiotap.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-wfb_tx: src/tx.o src/external/radiotap/radiotap.o src/external/fec/fec.o
+wfb_tx: src/WBTransmitter.o src/external/radiotap/radiotap.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
 unit_test: src/unit_test.o src/external/fec/fec.o

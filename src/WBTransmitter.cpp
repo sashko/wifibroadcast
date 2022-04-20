@@ -16,7 +16,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "tx.h"
+#include "WBTransmitter.h"
 #include "HelperSources/SchedulingHelper.hpp"
 #include "HelperSources/RTPHelper.hpp"
 #include <cstdio>

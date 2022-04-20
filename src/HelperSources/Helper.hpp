@@ -67,17 +67,17 @@ namespace GenericHelper{
         }
     }
     // Create a buffer filled with random data of size sizeByes
-    std::vector<uint8_t> createRandomDataBuffer(const ssize_t sizeBytes){
+    static std::vector<uint8_t> createRandomDataBuffer(const ssize_t sizeBytes){
         std::vector<uint8_t> buf(sizeBytes);
         fillBufferWithRandomData(buf);
         return buf;
     }
     // same as above but return shared ptr
-    std::shared_ptr<std::vector<uint8_t>> createRandomDataBuffer2(const ssize_t sizeBytes){
+    static std::shared_ptr<std::vector<uint8_t>> createRandomDataBuffer2(const ssize_t sizeBytes){
         return std::make_shared<std::vector<uint8_t>>(createRandomDataBuffer(sizeBytes));
     }
     // Create a buffer filled with random data where size is chosen Randomly between [minSizeB,...,maxSizeB]
-    std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB,const ssize_t maxSizeB){
+    static std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB,const ssize_t maxSizeB){
         // https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
         const auto sizeBytes = rand()%(maxSizeB-minSizeB + 1) + minSizeB;
         assert(sizeBytes<=maxSizeB);
@@ -88,7 +88,7 @@ namespace GenericHelper{
         return createRandomDataBuffer(sizeBytes);
     }
     // create n random data buffers with size [minSizeB,...,maxSizeB]
-    std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t nBuffers, const std::size_t minSizeB, const std::size_t maxSizeB){
+    static std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t nBuffers, const std::size_t minSizeB, const std::size_t maxSizeB){
         assert(minSizeB >= 0);
         std::vector<std::vector<uint8_t>> buffers;
         for(std::size_t i=0;i<nBuffers;i++){
@@ -104,20 +104,20 @@ namespace GenericHelper{
         }
         return ret;
     }
-    bool compareVectors(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
+    static bool compareVectors(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
         if(sb.size()!=rb.size()){
             return false;
         }
         const int result=memcmp (sb.data(),rb.data(),sb.size());
         return result==0;
     }
-    void assertVectorsEqual(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
+    static void assertVectorsEqual(const std::vector<uint8_t>& sb,const std::vector<uint8_t>& rb){
         assert(sb.size()==rb.size());
         const int result=memcmp (sb.data(),rb.data(),sb.size());
         assert(result==0);
     }
     template<std::size_t S>
-    void assertArraysEqual(const std::array<uint8_t,S>& sb,const std::array<uint8_t,S>& rb){
+    static void assertArraysEqual(const std::array<uint8_t,S>& sb,const std::array<uint8_t,S>& rb){
         const int result=memcmp (sb.data(),rb.data(),sb.size());
         if(result!=0){
             //std::cout<<"Data1:"<<StringHelper::arrayAsString(sb)<<"\n";
@@ -128,7 +128,7 @@ namespace GenericHelper{
     /**
      * take @param nElements random elements from @param values, without duplicates
      */
-    std::vector<unsigned int> takeNRandomElements(std::vector<unsigned int> values, const std::size_t nElements){
+    static std::vector<unsigned int> takeNRandomElements(std::vector<unsigned int> values, const std::size_t nElements){
         assert(nElements<=values.size());
         std::vector<unsigned int> ret;
         for(std::size_t i=0;i<nElements;i++){
@@ -140,7 +140,7 @@ namespace GenericHelper{
         std::sort(ret.begin(),ret.end());
         return ret;
     }
-    std::vector<unsigned int> createIndices(const std::size_t nIndices){
+    static std::vector<unsigned int> createIndices(const std::size_t nIndices){
         std::vector<unsigned int> ret(nIndices);
         for(std::size_t i=0;i<ret.size();i++){
             ret[i]=i;
@@ -180,22 +180,22 @@ namespace GenericHelper{
         return indicesMissing;
     }
     using namespace std::chrono;
-    constexpr nanoseconds timevalToDuration(timeval tv){
+    static constexpr nanoseconds timevalToDuration(timeval tv){
         auto duration = seconds{tv.tv_sec}
                         + microseconds {tv.tv_usec};
         return duration_cast<nanoseconds>(duration);
     }
-    constexpr time_point<system_clock, nanoseconds>
+    static constexpr time_point<system_clock, nanoseconds>
     timevalToTimePointSystemClock(timeval tv){
         return time_point<system_clock, nanoseconds>{
                 duration_cast<system_clock::duration>(timevalToDuration(tv))};
     }
-    constexpr time_point<steady_clock, nanoseconds>
+    static constexpr time_point<steady_clock, nanoseconds>
     timevalToTimePointSteadyClock(timeval tv){
         return time_point<steady_clock, nanoseconds>{
                 duration_cast<steady_clock::duration>(timevalToDuration(tv))};
     }
-    constexpr timeval durationToTimeval(nanoseconds dur){
+    static constexpr timeval durationToTimeval(nanoseconds dur){
         const auto secs = duration_cast<seconds>(dur);
         dur -= secs;
         const auto us=duration_cast<microseconds>(dur);
