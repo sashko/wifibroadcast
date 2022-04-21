@@ -8,6 +8,7 @@
 
 #include "HelperSources/RandomBufferPot.hpp"
 #include "HelperSources/Helper.hpp"
+#include "HelperSources/SocketHelper.hpp"
 #include <cassert>
 #include <cstdio>
 #include <cinttypes>

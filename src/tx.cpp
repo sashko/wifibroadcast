@@ -1,6 +1,7 @@
 #include "WBTransmitter.h"
 #include "HelperSources/SchedulingHelper.hpp"
 #include "HelperSources/RTPHelper.hpp"
+#include "HelperSources/SocketHelper.hpp"
 #include <cstdio>
 #include <sys/types.h>
 #include <sys/stat.h>
