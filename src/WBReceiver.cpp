@@ -35,8 +35,7 @@
 WBReceiver::WBReceiver(const ROptions& options1,OUTPUT_DATA_CALLBACK callback) :
 options(options1),
 mDecryptor(options.keypair),
-mOutputDataCallback(callback)//,
-//mUDPForwarder(options.client_addr,options.client_udp_port)
+mOutputDataCallback(callback)
 {
     receiver=std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces,options.radio_port,options1.log_interval,
                                           notstd::bind_front(&WBReceiver::processPacket, this),
@@ -164,18 +163,12 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
                 }else{
                     std::cerr<<"No data callback registered\n";
                 }
-                //this->mUDPForwarder.forwardPacketViaUDP(payload,payloadSize);
-                //this->forwardPacketViaUDP(payload,payloadSize);
             };
             if(IS_FEC_ENABLED){
                 mFECDDecoder=std::make_unique<FECDecoder>((unsigned int)sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
-                //mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::forwardPacketViaUDP,this);
-                //mFECDDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&SocketHelper::UDPForwarder::forwardPacketViaUDP, mUDPForwarder);
                 mFECDDecoder->mSendDecodedPayloadCallback=callback;
             }else{
                 mFECDisabledDecoder=std::make_unique<FECDisabledDecoder>();
-                //mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&WBReceiver::forwardPacketViaUDP,this);
-                //mFECDisabledDecoder->mSendDecodedPayloadCallback=notstd::bind_front(&SocketHelper::UDPForwarder::forwardPacketViaUDP, mUDPForwarder);
                 mFECDDecoder->mSendDecodedPayloadCallback=callback;
             }
         } else {

@@ -77,8 +77,6 @@ public:
 private:
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     Decryptor mDecryptor;
-    // this one is used to forward packets
-    //SocketHelper::UDPForwarder mUDPForwarder;
     std::array<RSSIForWifiCard,MAX_RX_INTERFACES> rssiForWifiCard;
     // n of all received packets, absolute
     uint64_t count_p_all=0;
