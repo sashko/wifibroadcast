@@ -25,11 +25,11 @@
 #include <chrono>
 #include <sstream>
 
-#include "wifibroadcast.hpp"
-#include "FECEnabled.hpp"
+#include "../src/wifibroadcast.hpp"
+#include "../src/FECEnabled.hpp"
 
-#include "HelperSources/Helper.hpp"
-#include "Encryption.hpp"
+#include "../src/HelperSources/Helper.hpp"
+#include "../src/Encryption.hpp"
 
 // Simple unit testing for the FEC lib that doesn't require wifi cards
 

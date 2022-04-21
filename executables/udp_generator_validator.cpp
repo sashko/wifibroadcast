@@ -6,9 +6,9 @@
 // when run as creator, creates deterministic packets and forwards them as udp packets
 // when run as validator, validates these (deterministic) packets
 
-#include "HelperSources/RandomBufferPot.hpp"
-#include "HelperSources/Helper.hpp"
-#include "HelperSources/SocketHelper.hpp"
+#include "../src/HelperSources/RandomBufferPot.hpp"
+#include "../src/HelperSources/Helper.hpp"
+#include "../src/HelperSources/SocketHelper.hpp"
 #include <cassert>
 #include <cstdio>
 #include <cinttypes>
@@ -19,7 +19,6 @@
 #include <chrono>
 #include <sstream>
 #include <thread>
-
 
 
 // the content of each packet is simple -

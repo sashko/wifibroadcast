@@ -34,30 +34,32 @@ src/external/fec/fec.o: src/external/fec/fec.cpp src/external/fec/*.h src/extern
 # the c++ part
 src/%.o: src/%.cpp
 	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
+executables/%.o: executables/%.cpp
+	$(CXX) $(_CFLAGS) -std=c++17 -c -o $@ $<
 
-wfb_rx: src/rx.o src/WBReceiver.o src/external/radiotap/radiotap.o src/external/fec/fec.o
+wfb_rx: executables/rx.o src/WBReceiver.o src/external/radiotap/radiotap.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-wfb_tx: src/tx.o src/WBTransmitter.o src/external/radiotap/radiotap.o src/external/fec/fec.o
+wfb_tx: executables/tx.o src/WBTransmitter.o src/external/radiotap/radiotap.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-unit_test: src/unit_test.o src/external/fec/fec.o
+unit_test: executables/unit_test.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-benchmark: src/benchmark.o src/external/fec/fec.o
+benchmark: executables/benchmark.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-udp_generator_validator: src/udp_generator_validator.o
+udp_generator_validator: executables/udp_generator_validator.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
-wfb_keygen: src/keygen.o
+wfb_keygen: executables/keygen.o
 	$(CC) -o $@ $^ $(_LDFLAGS)
 
 gs.key: wfb_keygen
 	@if ! [ -f gs.key ]; then ./wfb_keygen; fi
 
 clean:
-	rm -rf env wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_validator src/*.o src/external/fec/*.o src/external/radiotap/*.o
+	rm -rf env wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_validator src/*.o src/external/fec/*.o src/external/radiotap/*.o src/executables/*.o
 
 
 # experimental

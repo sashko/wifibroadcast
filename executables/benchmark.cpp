@@ -16,10 +16,11 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "HelperSources/SchedulingHelper.hpp"
-#include "FECEnabled.hpp"
-#include "Encryption.hpp"
-#include "HelperSources/RandomBufferPot.hpp"
+#include "../src/HelperSources/SchedulingHelper.hpp"
+#include "../src/FECEnabled.hpp"
+#include "../src/Encryption.hpp"
+#include "../src/HelperSources/RandomBufferPot.hpp"
+#include "../src/HelperSources/Benchmark.hpp"
 #include <cassert>
 #include <cstdio>
 #include <cinttypes>
@@ -30,7 +31,6 @@
 #include <chrono>
 #include <sstream>
 #include <list>
-#include "HelperSources/Benchmark.hpp"
 
 // Test the FEC encoding / decoding performance (throughput) of this system
 // Basically measures the throughput of encoding,decoding or en&decoding FEC packets on one CPU core

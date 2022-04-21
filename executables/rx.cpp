@@ -1,7 +1,6 @@
-#include "RawReceiver.hpp"
-#include "WBReceiver.h"
-#include "wifibroadcast.hpp"
-#include "HelperSources/SchedulingHelper.hpp"
+#include "../src/WBReceiver.h"
+#include "../src/HelperSources/SocketHelper.hpp"
+#include "../src/HelperSources/SchedulingHelper.hpp"
 #include <cassert>
 #include <cstdio>
 #include <cinttypes>
