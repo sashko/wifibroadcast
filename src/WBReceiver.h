@@ -23,7 +23,7 @@
 #include "HelperSources/Helper.hpp"
 #include "OpenHDStatisticsWriter.hpp"
 #include "HelperSources/TimeHelper.hpp"
-//#include "RawReceiver.hpp"
+#include "RawReceiver.hpp"
 
 #include <unordered_map>
 #include <cstdint>
