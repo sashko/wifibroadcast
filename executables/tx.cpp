@@ -125,7 +125,7 @@ int main(int argc, char *const *argv) {
         SocketHelper::UDPReceiver udpReceiver(SocketHelper::ADDRESS_LOCALHOST,udp_port,[t](const uint8_t* payload,const std::size_t payloadSize){
             t->feedPacket(payload,payloadSize);
         });
-        udpReceiver.start();
+        udpReceiver.loopUntilError();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());
         exit(1);

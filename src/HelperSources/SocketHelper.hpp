@@ -36,7 +36,6 @@
 #include <functional>
 #include <thread>
 #include <algorithm>
-#include <thread>
 
 namespace SocketHelper{
     static const std::string ADDRESS_LOCALHOST="127.0.0.1";
@@ -123,13 +122,13 @@ namespace SocketHelper{
         typedef std::function<void(const uint8_t* payload,const std::size_t payloadSize)> OUTPUT_DATA_CALLBACK;
         static constexpr const size_t UDP_PACKET_MAX_SIZE=65507;
         /**
-         * Receive data from socket and forward it via callback until stop() is called
+         * Receive data from socket and forward it via callback until stopLooping() is called
          */
         explicit UDPReceiver(std::string client_addr,int client_udp_port,OUTPUT_DATA_CALLBACK cb):mCb(cb){
             mSocket=SocketHelper::openUdpSocketForReceiving(client_udp_port);
             std::cout<<"UDPReceiver created with "<<client_addr<<":"<<client_udp_port<<"\n";
         }
-        void start(){
+        void loopUntilError(){
             const auto buff=std::make_unique<std::array<uint8_t,UDP_PACKET_MAX_SIZE>>();
             sockaddr_in source;
             socklen_t sourceLen= sizeof(sockaddr_in);
@@ -143,17 +142,17 @@ namespace SocketHelper{
                 }
             }
         }
-        void stop(){
+        void stopLooping(){
             receiving= false;
             close(mSocket);
         }
         void runInBackground(){
             receiverThread=std::thread([this](){
-                start();
+                loopUntilError();
             });
         }
         void stopBackground(){
-            stop();
+            stopLooping();
             receiverThread.join();
         }
     private:

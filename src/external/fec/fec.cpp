@@ -722,7 +722,7 @@ void fec_decode3(unsigned int fragmentSize,
  * @param dataPackets the data packets whose content will be used to perform the test
  * @param nFecPackets n of fec packets to create
  * @param receivedDataOrFecPacketsIndices indices of received data and fec packets. Note that the valid range for these indices starts at 0 and
- * ends at (nDataPackets+nFecPackets-1). E.g the FEC packet indices don't start at 0, like in the c-style code.
+ * ends at (nDataPackets+nFecPackets-1). E.g the FEC packet indices don't loopUntilError at 0, like in the c-style code.
  */
 static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>>& dataPackets, const int nFecPackets,
                                        const std::vector<int>& receivedDataOrFecPacketsIndices){

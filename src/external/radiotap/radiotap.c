@@ -68,7 +68,7 @@ static const struct ieee80211_radiotap_namespace radiotap_ns = {
  * checking for a good 0 return code.  Then loop calling
  * __ieee80211_radiotap_iterator_next()... it returns either 0,
  * -ENOENT if there are no more args to parse, or -EINVAL if there is a problem.
- * The iterator's @this_arg member points to the start of the argument
+ * The iterator's @this_arg member points to the loopUntilError of the argument
  * associated with the current argument index that is present, which can be
  * found in the iterator's @this_arg_index member.  This arg index corresponds
  * to the IEEE80211_RADIOTAP_... defines.

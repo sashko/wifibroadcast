@@ -229,9 +229,9 @@ int main(int argc, char *const *argv) {
         };
 
         static SocketHelper::UDPReceiver receiver{SocketHelper::ADDRESS_LOCALHOST,options.udp_port,cb};
-        signal(SIGTERM, [](int sig){receiver.stop();});
+        signal(SIGTERM, [](int sig){ receiver.stopLooping();});
         // run until ctr+x
-        receiver.start();
+        receiver.loopUntilError();
     }
 
     return 0;

@@ -19,7 +19,7 @@ ifeq ($(uname_S),Linux)
 	endif
 endif
 
-all_bin: wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_validator
+all_bin: wfb_rx wfb_tx wfb_keygen unit_test benchmark udp_generator_validator socket_helper_test
 all: all_bin gs.key
 
 # Just compile everything as c++ code
@@ -50,6 +50,9 @@ benchmark: executables/benchmark.o src/external/fec/fec.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
 udp_generator_validator: executables/udp_generator_validator.o
+	$(CXX) -o $@ $^ $(_LDFLAGS)
+
+socket_helper_test: executables/socket_helper_test.o
 	$(CXX) -o $@ $^ $(_LDFLAGS)
 
 wfb_keygen: executables/keygen.o
