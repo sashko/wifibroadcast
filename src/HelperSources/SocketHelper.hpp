@@ -5,6 +5,7 @@
 #ifndef WIFIBROADCAST_SOCKETHELPER_HPP
 #define WIFIBROADCAST_SOCKETHELPER_HPP
 
+#include "Helper.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>
