@@ -24,6 +24,7 @@ int main(int argc, char *const *argv) {
         nForwardedBytes+=data.size();
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    receiver.stopBackground();
     std::cout<<"N sent bytes:"<<nForwardedBytes<<" Received:"<<nReceivedBytes<<"\n";
     return 0;
 }
