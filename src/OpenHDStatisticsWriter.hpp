@@ -12,6 +12,13 @@
 // TODO what happens here has to be decided yet
 // write the fec decoding stats (and optionally RSSI ) for each rx stream
 
+// Since some tx/rx instances might run in their own processes, we decided that each
+// instance sends its statistics in raw form to a specific udp port (localhost)
+// This data can then be picked up by the centralized mavlink service, packed into mavlink
+// and forwarded as needed.
+// The UDP port all instances broadcast their messages to.
+static constexpr auto OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT=50000;
+
 // Stores the min, max and average of the rssi values reported for this wifi card
 // Doesn't differentiate from which antenna the rssi value came
 //https://www.radiotap.org/fields/Antenna%20signal.html
@@ -47,7 +54,7 @@ public:
 
 class OpenHDStatisticsWriter{
 private:
-    SocketHelper::UDPForwarder forwarder{"127.0.0.1", 50000};
+    SocketHelper::UDPForwarder forwarder{SocketHelper::ADDRESS_LOCALHOST, OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT};
 public:
     // Forwarded data
     struct Data{
