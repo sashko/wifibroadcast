@@ -164,7 +164,7 @@ namespace SocketHelper{
         const OUTPUT_DATA_CALLBACK mCb;
         bool receiving=true;
         int mSocket;
-        std::unique_ptr<std::thread> receiverThread;
+        std::unique_ptr<std::thread> receiverThread= nullptr;
     };
 }
 
