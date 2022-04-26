@@ -147,19 +147,24 @@ namespace SocketHelper{
             close(mSocket);
         }
         void runInBackground(){
-            receiverThread=std::thread([this](){
+            if(receiverThread){
+                std::cerr<<"Receiver thread is already running or has not been properly stopped\n";
+                return;
+            }
+            receiverThread=std::make_unique<std::thread>([this](){
                 loopUntilError();
             });
         }
         void stopBackground(){
             stopLooping();
-            receiverThread.join();
+            receiverThread->join();
+            receiverThread=nullptr;
         }
     private:
         const OUTPUT_DATA_CALLBACK mCb;
         bool receiving=true;
         int mSocket;
-        std::thread receiverThread;
+        std::unique_ptr<std::thread> receiverThread;
     };
 }
 
