@@ -36,6 +36,7 @@
 #include <functional>
 #include <thread>
 #include <algorithm>
+#include <atomic>
 
 namespace SocketHelper{
     static const std::string ADDRESS_LOCALHOST="127.0.0.1";
@@ -69,6 +70,21 @@ namespace SocketHelper{
             //throw std::runtime_error(StringFormat::convert("Error setting reuse on socket %d: %s",port, strerror(errno)));
             // don't crash here
             std::cerr<<"Cannot set socket reuse\n";
+        }
+    }
+    // increase the receive size, needed for high bandwidth
+    static void increaseSocketRecvBuffer(int sockfd,const int wantedSize){
+        int recvBufferSize=0;
+        socklen_t len=sizeof(recvBufferSize);
+        getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, &len);
+        std::cout<<"Default socket recv buffer is "<<StringHelper::memorySizeReadable(recvBufferSize);
+        if(wantedSize>recvBufferSize){
+            recvBufferSize=wantedSize;
+            if(setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize,len)) {
+                std::cout<<"Cannot increase buffer size to "<<StringHelper::memorySizeReadable(wantedSize);
+            }
+            getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, &len);
+            std::cout<<"Wanted "<<StringHelper::memorySizeReadable(wantedSize)<<" Set "<<StringHelper::memorySizeReadable(recvBufferSize);
         }
     }
     // Open the specified port for udp receiving
@@ -129,14 +145,16 @@ namespace SocketHelper{
          */
         explicit UDPReceiver(std::string client_addr,int client_udp_port,OUTPUT_DATA_CALLBACK cb):mCb(cb){
             mSocket=SocketHelper::openUdpSocketForReceiving(client_udp_port);
+            //increaseSocketRecvBuffer(mSocket,1024*1024);
             std::cout<<"UDPReceiver created with "<<client_addr<<":"<<client_udp_port<<"\n";
         }
         void loopUntilError(){
             const auto buff=std::make_unique<std::array<uint8_t,UDP_PACKET_MAX_SIZE>>();
-            sockaddr_in source;
-            socklen_t sourceLen= sizeof(sockaddr_in);
+            //sockaddr_in source;
+            //socklen_t sourceLen= sizeof(sockaddr_in);
             while (receiving) {
-                const ssize_t message_length = recvfrom(mSocket,buff->data(),UDP_PACKET_MAX_SIZE, MSG_WAITALL,(sockaddr*)&source,&sourceLen);
+                //const ssize_t message_length = recvfrom(mSocket,buff->data(),UDP_PACKET_MAX_SIZE, MSG_WAITALL,(sockaddr*)&source,&sourceLen);
+                const ssize_t message_length = recv(mSocket,buff->data(),buff->size(), MSG_WAITALL);
                 if (message_length > 0) {
                     mCb(buff->data(), (size_t)message_length);
                 }else{
