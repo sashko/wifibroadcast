@@ -77,16 +77,12 @@ namespace SocketHelper{
     static int openUdpSocketForReceiving(const int port){
         int fd=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket %d: %s",port, strerror(errno)));
-        int enable = 1;
-        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){
-            //throw std::runtime_error(StringFormat::convert("Error setting reuse on socket %d: %s",port, strerror(errno)));
-            // don't crash here
-            std::cout<<"Cannot set socket reuse\n";
-        }
+        setSocketReuse(fd);
         struct sockaddr_in saddr{};
         bzero((char *) &saddr, sizeof(saddr));
         saddr.sin_family = AF_INET;
-        saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        //saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        inet_aton("127.0.0.1", (in_addr*)&saddr.sin_addr.s_addr);
         saddr.sin_port = htons((unsigned short)port);
         if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0){
             throw std::runtime_error(StringFormat::convert("Bind error on socket %d: %s",port, strerror(errno)));

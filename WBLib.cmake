@@ -12,6 +12,7 @@ add_library( radiotap
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 add_library( fec
         SHARED
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
