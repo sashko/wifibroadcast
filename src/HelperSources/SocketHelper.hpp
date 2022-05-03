@@ -39,20 +39,37 @@
 
 namespace SocketHelper{
     static const std::string ADDRESS_LOCALHOST="127.0.0.1";
-    static int openUdpSocketForSendingData(const std::string &client_addr, int client_port) {
-        struct sockaddr_in saddr;
-        int fd = socket(AF_INET, SOCK_DGRAM, 0);
-        if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
-
-        bzero((char *) &saddr, sizeof(saddr));
-        saddr.sin_family = AF_INET;
-        saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
-        saddr.sin_port = htons((unsigned short) client_port);
-
-        if (connect(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
-            throw std::runtime_error(StringFormat::convert("Connect error: %s", strerror(errno)));
+    // returns the current socket receive timeout
+    static std::chrono::nanoseconds getCurrentSocketReceiveTimeout(int socketFd){
+        timeval tv{};
+        socklen_t len=sizeof(tv);
+        auto res=getsockopt(socketFd,SOL_SOCKET,SO_RCVTIMEO,&tv,&len);
+        assert(res==0);
+        assert(len==sizeof(tv));
+        return GenericHelper::timevalToDuration(tv);
+    }
+    // set the receive timeout on the socket
+    // throws runtime exception if this step fails (should never fail on linux)
+    static void setSocketReceiveTimeout(int socketFd,const std::chrono::nanoseconds timeout){
+        const auto currentTimeout=getCurrentSocketReceiveTimeout(socketFd);
+        if(currentTimeout!=timeout){
+            //std::cout<<"Changing timeout\n";
+            auto tv=GenericHelper::durationToTimeval(timeout);
+            if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+                throw std::runtime_error(StringFormat::convert("Cannot set socket timeout %d",timeout.count()));
+                //std::cout<<"Cannot set socket timeout "<<timeout.count()<<"\n";
+            }
         }
-        return fd;
+    }
+    // Set the reuse flag on the socket, so it doesn't care if there is a broken down process
+    // still on the socket or not.
+    static void setSocketReuse(int sockfd){
+        int enable = 1;
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0){
+            //throw std::runtime_error(StringFormat::convert("Error setting reuse on socket %d: %s",port, strerror(errno)));
+            // don't crash here
+            std::cerr<<"Cannot set socket reuse\n";
+        }
     }
     // Open the specified port for udp receiving
     // sets SO_REUSEADDR to true if possible
@@ -76,34 +93,19 @@ namespace SocketHelper{
         }
         return fd;
     }
-    // returns the current socket receive timeout
-    static std::chrono::nanoseconds getCurrentSocketReceiveTimeout(int socketFd){
-        timeval tv{};
-        socklen_t len=sizeof(tv);
-        auto res=getsockopt(socketFd,SOL_SOCKET,SO_RCVTIMEO,&tv,&len);
-        assert(res==0);
-        assert(len==sizeof(tv));
-        return GenericHelper::timevalToDuration(tv);
-    }
-    // set the receive timeout on the socket
-    // throws runtime exception if this step fails (should never fail on linux)
-    static void setSocketReceiveTimeout(int socketFd,const std::chrono::nanoseconds timeout){
-        const auto currentTimeout=getCurrentSocketReceiveTimeout(socketFd);
-        if(currentTimeout!=timeout){
-            //std::cout<<"Changing timeout\n";
-            auto tv=GenericHelper::durationToTimeval(timeout);
-            if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
-                throw std::runtime_error(StringFormat::convert("Cannot set socket timeout %d",timeout.count()));
-                //std::cout<<"Cannot set socket timeout "<<timeout.count()<<"\n";
-            }
-        }
-    }
     // Wrapper around an UDP port you can send data to
     // opens port on construction, closes port on destruction
     class UDPForwarder{
     public:
-        explicit UDPForwarder(std::string client_addr,int client_udp_port){
-            sockfd = SocketHelper::openUdpSocketForSendingData(client_addr, client_udp_port);
+        explicit UDPForwarder(std::string client_addr,int client_udp_port):client_addr(client_addr),client_udp_port(client_udp_port){
+            sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+            if (sockfd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
+            //setup the destination
+            bzero((char *) &saddr, sizeof(saddr));
+            saddr.sin_family = AF_INET;
+            //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
+            inet_aton(client_addr.c_str(), (in_addr*)&saddr.sin_addr.s_addr);
+            saddr.sin_port = htons((unsigned short)client_udp_port);
             std::cout<<"UDPForwarder::configured for "<<client_addr<<" "<<client_udp_port<<"\n";
         }
         ~UDPForwarder(){
@@ -111,9 +113,14 @@ namespace SocketHelper{
         }
         void forwardPacketViaUDP(const uint8_t *packet,const std::size_t packetSize)const{
             //std::cout<<"Send"<<packetSize<<"\n";
-            send(sockfd,packet,packetSize, MSG_DONTWAIT);
+            //send(sockfd,packet,packetSize, MSG_DONTWAIT);
+            sendto(sockfd,packet,packetSize,0,(const struct sockaddr*) &saddr,
+                   sizeof(saddr));
         }
     private:
+        const std::string client_addr;
+        const int client_udp_port;
+        struct sockaddr_in saddr;
         int sockfd;
     };
 
@@ -141,6 +148,7 @@ namespace SocketHelper{
                     receiving= false;
                 }
             }
+            std::cout<<"UDP end\n";
         }
         void stopLooping(){
             receiving= false;
@@ -155,7 +163,11 @@ namespace SocketHelper{
         }
         void stopBackground(){
             stopLooping();
-            receiverThread->join();
+            std::cout<<"XX\n";
+            if(receiverThread && receiverThread->joinable()){
+                receiverThread->join();
+            }
+            std::cout<<"YY\n";
             receiverThread=nullptr;
         }
     private:

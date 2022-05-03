@@ -8,7 +8,7 @@
 
 int main(int argc, char *const *argv) {
 
-    static constexpr auto XPORT=6123;
+    static constexpr auto XPORT=5600;
     std::size_t nReceivedBytes=0;
     SocketHelper::UDPReceiver receiver(SocketHelper::ADDRESS_LOCALHOST,XPORT,[&nReceivedBytes](const uint8_t* payload,const std::size_t payloadSize){
         std::cout<<"Got data\n";
@@ -24,6 +24,7 @@ int main(int argc, char *const *argv) {
         nForwardedBytes+=data.size();
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::cout<<"Test end\n";
     receiver.stopBackground();
     std::cout<<"N sent bytes:"<<nForwardedBytes<<" Received:"<<nReceivedBytes<<"\n";
     return 0;
