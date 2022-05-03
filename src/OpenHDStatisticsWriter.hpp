@@ -6,7 +6,6 @@
 #define WIFIBROADCAST_OPENHDSTATISTICSWRITER_H
 
 #include <cstdint>
-#include "wifibroadcast.hpp"
 #include "HelperSources/SocketHelper.hpp"
 
 // TODO what happens here has to be decided yet

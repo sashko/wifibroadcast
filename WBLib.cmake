@@ -3,6 +3,7 @@
 # which can then be used to integrate wifibroadcast into your project
 
 cmake_minimum_required(VERSION 3.16.3)
+set(CMAKE_CXX_STANDARD 17)
 
 # Build and include wifibroadcast
 # ----------------------------------
