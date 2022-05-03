@@ -1,3 +1,3 @@
 # bin/bash
 
-apt -y install libpcap-dev || exit 1
+apt -y install libpcap-dev libsodium-dev || exit 1
