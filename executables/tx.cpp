@@ -1,6 +1,7 @@
 #include "../src/WBTransmitter.h"
 #include "../src/HelperSources/SocketHelper.hpp"
 #include "../src/HelperSources/SchedulingHelper.hpp"
+#include "../src/UDPWfibroadcastWrapper.hpp"
 #include <cstdio>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -120,12 +121,8 @@ int main(int argc, char *const *argv) {
     }
 
     try {
-        std::shared_ptr<WBTransmitter> t = std::make_shared<WBTransmitter>(
-                radiotapHeader,options);
-        SocketHelper::UDPReceiver udpReceiver(SocketHelper::ADDRESS_LOCALHOST,udp_port,[t](const uint8_t* payload,const std::size_t payloadSize){
-            t->feedPacket(payload,payloadSize);
-        });
-        udpReceiver.loopUntilError();
+        UDPWBTransmitter udpwbTransmitter{radiotapHeader,options,SocketHelper::ADDRESS_LOCALHOST,udp_port};
+        udpwbTransmitter.loopUntilError();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());
         exit(1);

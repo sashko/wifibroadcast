@@ -12,6 +12,8 @@
 #include <chrono>
 #include <sstream>
 
+#include "../src/UDPWfibroadcastWrapper.hpp"
+
 int main(int argc, char *const *argv) {
     int opt;
     ROptions options{};
@@ -67,11 +69,8 @@ int main(int argc, char *const *argv) {
         options.rxInterfaces[i]=std::string(argv[optind + i]);
     }
     try {
-        SocketHelper::UDPForwarder udpForwarder(client_addr,client_udp_port);
-        std::shared_ptr<WBReceiver> receiver=std::make_shared<WBReceiver>(options, [udpForwarder](const uint8_t* payload, const std::size_t payloadSize){
-            udpForwarder.forwardPacketViaUDP(payload,payloadSize);
-        });
-        receiver->loop();
+        UDPWBReceiver udpwbReceiver{options,client_addr,client_udp_port};
+        udpwbReceiver.loopUntilError();
     } catch (std::runtime_error &e) {
         fprintf(stderr, "Error: %s\n", e.what());
         exit(1);
