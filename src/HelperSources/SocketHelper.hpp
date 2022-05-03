@@ -151,9 +151,7 @@ namespace SocketHelper{
                 std::cerr<<"Receiver thread is already running or has not been properly stopped\n";
                 return;
             }
-            receiverThread=std::make_unique<std::thread>([this](){
-                loopUntilError();
-            });
+            receiverThread=std::make_unique<std::thread>(&UDPReceiver::loopUntilError, this);
         }
         void stopBackground(){
             stopLooping();

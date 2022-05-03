@@ -2,9 +2,9 @@
 // Created by consti10 on 21.04.22.
 //
 
-#include "../src/HelperSources/SocketHelper.hpp"
 #include <thread>
 #include <chrono>
+#include "SocketHelper.hpp"
 
 int main(int argc, char *const *argv) {
 
