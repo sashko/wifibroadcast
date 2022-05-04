@@ -5,6 +5,10 @@
 cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_CXX_STANDARD 17)
 
+if(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
+    return()
+endif()
+
 # Build and include wifibroadcast
 # ----------------------------------
 add_library( radiotap
@@ -34,6 +38,8 @@ SET(WB_TARGET_LINK_LIBRARIES wifibroadcast radiotap fec ${PCAP_LIBRARY} ${sodium
 SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/src/HelperSources)
+
+SET(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -mavx2 -faligned-new=256")
 # ----------------------------------
