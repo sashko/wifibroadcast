@@ -31,6 +31,7 @@ include_directories(${sodium_INCLUDE_DIR})
 include_directories(${PCAP_INCLUDE_DIR})
 
 SET(WB_TARGET_LINK_LIBRARIES wifibroadcast radiotap fec ${PCAP_LIBRARY} ${sodium_LIBRARY_RELEASE})
+SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/src/HelperSources)
 

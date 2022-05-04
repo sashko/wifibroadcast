@@ -5,10 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(WBLib.cmake)
 
-add_executable(wfb_tx executables/tx.cpp)
+add_executable(wfb_tx executables/wfb_tx.cpp)
 target_link_libraries(wfb_tx  ${WB_TARGET_LINK_LIBRARIES})
 
-add_executable(wfb_rx executables/rx.cpp)
+add_executable(wfb_rx executables/wfb_rx.cpp)
 target_link_libraries(wfb_rx  ${WB_TARGET_LINK_LIBRARIES})
 
 add_executable(benchmark executables/benchmark.cpp)
