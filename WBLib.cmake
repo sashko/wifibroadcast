@@ -6,6 +6,13 @@ cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_CXX_STANDARD 17)
 
 if(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
+    message(STATUS "WIFIBROADCAST_LIBRARIES_ALREADY_BUILD")
+    return()
+endif()
+
+find_library(RADIOTAP_LIB radiotap)
+if(RADIOTAP_LIB)
+    message(STATUS "radiotap already here")
     return()
 endif()
 
