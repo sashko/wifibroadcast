@@ -10,6 +10,7 @@
 #include "HelperSources/SocketHelper.hpp"
 
 #include <memory>
+#include <thread>
 
 // Convenient methods to create WB transmitter / receiver with UDP as input/output
 // Used for wfb_tx / wfb_rx executables and OpenHD
@@ -23,8 +24,18 @@ public:
             wbTransmitter->feedPacket(payload,payloadSize);
         });
     }
+    /**
+     * Loop until an error occurs.
+     * Blocks the calling thread.
+     */
     void loopUntilError(){
         udpReceiver->loopUntilError();
+    }
+    /**
+     * Start looping in the background, creates a new thread.
+     */
+    void runInBackground(){
+        udpReceiver->runInBackground();
     }
 private:
     std::unique_ptr<WBTransmitter> wbTransmitter;
@@ -39,12 +50,22 @@ public:
             udpForwarder->forwardPacketViaUDP(payload,payloadSize);
         });
     }
+    /**
+     * Loop until an error occurs. Blocks the calling thread.
+     */
     void loopUntilError(){
         wbReceiver->loop();
+    }
+    /**
+     * Start looping in the background, creates a new thread.
+     */
+    void runInBackground(){
+        backgroundThread=std::make_unique<std::thread>(&UDPWBReceiver::loopUntilError, this);
     }
 private:
     std::unique_ptr<WBReceiver> wbReceiver;
     std::unique_ptr<SocketHelper::UDPForwarder> udpForwarder;
+    std::unique_ptr<std::thread> backgroundThread;
 };
 
 #endif //WIFIBROADCAST_UDPWFIBROADCASTWRAPPER_HPP
