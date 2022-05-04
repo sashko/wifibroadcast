@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
-#include <assert.h>
 
 namespace SchedulingHelper{
     static void printCurrentThreadPriority(const std::string name){
@@ -25,7 +24,9 @@ namespace SchedulingHelper{
         int policy;
         sched_param param;
         auto result= pthread_getschedparam(self,&policy,&param);
-        assert(result==0);
+        if(result!=0){
+            std::cerr<<"Cannot get thread scheduling policy\n";
+        }
         std::cout<<name<<" has policy "<<policy<<" and priority "<<param.sched_priority<<"\n";
     }
 
