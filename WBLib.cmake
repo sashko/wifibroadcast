@@ -11,7 +11,6 @@ set(CMAKE_CXX_STANDARD 17)
 #    return()
 #endif()
 if (TARGET wifibroadcast)
-    # Do something when target found
     message(STATUS "WIFIBROADCAST_LIBRARIES_ALREADY_BUILD")
     return()
 endif()
