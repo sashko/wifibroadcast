@@ -16,27 +16,31 @@ if (TARGET wifibroadcast)
     return()
 endif()
 
-find_library(RADIOTAP_LIB radiotap)
-if(RADIOTAP_LIB)
-    message(STATUS "radiotap already here")
+find_library(WIFIBROADCAST_LIB wifibroadcast)
+if(WIFIBROADCAST_LIB)
+    message(STATUS "wifibroadcast already here")
     return()
 endif()
 
 # Build and include wifibroadcast
 # ----------------------------------
-add_library( radiotap
-        SHARED
-        ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
-        )
+#add_library( radiotap
+#        SHARED
+#        ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
+#        )
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-add_library( fec
-        SHARED
-        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
-        )
+#add_library( fec
+#        SHARED
+#        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
+#        )
 
 add_library( wifibroadcast
         SHARED
+        # radiotap and fec
+        ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
+        # the couple of non-header-only files for wifibroadcast
         ${CMAKE_CURRENT_LIST_DIR}/src/WBReceiver.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBTransmitter.cpp
         )
@@ -44,10 +48,16 @@ add_library( wifibroadcast
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/FindPCAP.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/FindSodium.cmake)
 
-include_directories(${sodium_INCLUDE_DIR})
-include_directories(${PCAP_INCLUDE_DIR})
+target_include_directories(wifibroadcast PUBLIC ${sodium_INCLUDE_DIR})
+target_include_directories(wifibroadcast PUBLIC ${PCAP_INCLUDE_DIR})
+#include_directories(${sodium_INCLUDE_DIR})
+#include_directories(${PCAP_INCLUDE_DIR})
 
-SET(WB_TARGET_LINK_LIBRARIES wifibroadcast radiotap fec ${PCAP_LIBRARY} ${sodium_LIBRARY_RELEASE})
+target_link_libraries(wifibroadcast PUBLIC ${PCAP_LIBRARY})
+target_link_libraries(wifibroadcast PUBLIC ${sodium_LIBRARY_RELEASE})
+
+#SET(WB_TARGET_LINK_LIBRARIES wifibroadcast radiotap fec ${PCAP_LIBRARY} ${sodium_LIBRARY_RELEASE})
+SET(WB_TARGET_LINK_LIBRARIES wifibroadcast)
 SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/src/HelperSources)
