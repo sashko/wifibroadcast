@@ -166,6 +166,8 @@ namespace SocketHelper{
         }
         void stopLooping(){
             receiving= false;
+            // from https://github.com/mavlink/MAVSDK/blob/main/src/mavsdk/core/udp_connection.cpp#L102
+            shutdown(mSocket, SHUT_RDWR);
             close(mSocket);
         }
         void runInBackground(){
