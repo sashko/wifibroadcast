@@ -5,7 +5,13 @@
 cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_CXX_STANDARD 17)
 
-if(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
+#if(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
+#if(get_property(source_list GLOBAL PROPERTY source_list_property))
+#    message(STATUS "WIFIBROADCAST_LIBRARIES_ALREADY_BUILD")
+#    return()
+#endif()
+if (TARGET wifibroadcast)
+    # Do something when target found
     message(STATUS "WIFIBROADCAST_LIBRARIES_ALREADY_BUILD")
     return()
 endif()
@@ -46,7 +52,8 @@ SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/src/HelperSources)
 
-SET(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
+#SET(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
+#set_property(GLOBAL PROPERTY WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -mavx2 -faligned-new=256")
 # ----------------------------------
