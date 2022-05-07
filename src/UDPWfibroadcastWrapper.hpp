@@ -20,7 +20,7 @@ public:
     UDPWBTransmitter(RadiotapHeader radiotapHeader,const TOptions& options1,std::string client_addr,int client_udp_port){
         wbTransmitter=std::make_unique<WBTransmitter>(
                 radiotapHeader,options1);
-        udpReceiver=std::make_unique<SocketHelper::UDPReceiver>(SocketHelper::ADDRESS_LOCALHOST,client_udp_port,[this](const uint8_t* payload,const std::size_t payloadSize){
+        udpReceiver=std::make_unique<SocketHelper::UDPReceiver>(client_addr,client_udp_port,[this](const uint8_t* payload,const std::size_t payloadSize){
             wbTransmitter->feedPacket(payload,payloadSize);
         });
     }
