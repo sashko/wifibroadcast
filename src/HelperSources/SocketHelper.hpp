@@ -19,6 +19,7 @@
 #include <ctime>
 #include <sys/mman.h>
 #include <string>
+#include <utility>
 #include <vector>
 #include <chrono>
 #include <cstdarg>
@@ -143,7 +144,7 @@ namespace SocketHelper{
         /**
          * Receive data from socket and forward it via callback until stopLooping() is called
          */
-        explicit UDPReceiver(std::string client_addr,int client_udp_port,OUTPUT_DATA_CALLBACK cb):mCb(cb){
+        explicit UDPReceiver(std::string client_addr,int client_udp_port,OUTPUT_DATA_CALLBACK cb):mCb(std::move(cb)){
             mSocket=SocketHelper::openUdpSocketForReceiving(client_udp_port);
             //increaseSocketRecvBuffer(mSocket,1024*1024);
             std::cout<<"UDPReceiver created with "<<client_addr<<":"<<client_udp_port<<"\n";
@@ -158,6 +159,8 @@ namespace SocketHelper{
                 if (message_length > 0) {
                     mCb(buff->data(), (size_t)message_length);
                 }else{
+                    // this can also come from the shutdown, in which case it is not an error.
+                    // But this way we break out of the loop.
                     std::cout<<"ERROR got message length of:"<<message_length<<"\n";
                     receiving= false;
                 }
@@ -179,11 +182,9 @@ namespace SocketHelper{
         }
         void stopBackground(){
             stopLooping();
-            std::cout<<"XX\n";
             if(receiverThread && receiverThread->joinable()){
                 receiverThread->join();
             }
-            std::cout<<"YY\n";
             receiverThread=nullptr;
         }
     private:

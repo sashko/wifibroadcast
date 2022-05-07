@@ -198,7 +198,11 @@ public:
         close(fd);
         pcap_close(ppcap);
     }
-    // loop receiving data from this interface until no more data is available
+    /**
+     * Process data packets on this wifi interface until no more data is available.
+     * Returns when no more data is available.
+     * @return the n of packets polled until no more data was available.
+     */
     int loop_iter() {
         // loop while incoming queue is not empty
         int nPacketsPolledUntilQueueWasEmpty=0;
@@ -224,13 +228,12 @@ public:
         }
         return nPacketsPolledUntilQueueWasEmpty;
     }
-
     int getfd() const { return fd; }
-
 public:
     // name of the wlan
     const std::string WLAN_NAME;
-    // the wifi interface this receiver listens on (not the radio port)
+    // index of the wifi interface this receiver listens on (not the radio port)
+    // used to differentiate data coming from the different usb wifi card's in the callback.
     const int WLAN_IDX;
     // the radio port it filters pacp packets for
     const int RADIO_PORT;
