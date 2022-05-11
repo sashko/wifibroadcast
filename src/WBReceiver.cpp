@@ -30,12 +30,13 @@
 #include <string>
 #include <chrono>
 #include <sstream>
+#include <utility>
 
 
 WBReceiver::WBReceiver(const ROptions& options1,OUTPUT_DATA_CALLBACK callback) :
 options(options1),
 mDecryptor(options.keypair),
-mOutputDataCallback(callback)
+mOutputDataCallback(std::move(callback))
 {
     receiver=std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces,options.radio_port,options1.log_interval,
                                           notstd::bind_front(&WBReceiver::processPacket, this),
