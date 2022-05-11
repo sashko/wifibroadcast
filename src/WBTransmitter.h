@@ -81,7 +81,7 @@ private:
     // send the current session key via WIFI (located in mEncryptor)
     void sendSessionKey();
     // for the FEC encoder
-    void sendFecPrimaryOrSecondaryFragment(const uint64_t nonce, const uint8_t* payload,const size_t payloadSize);
+    void sendFecPrimaryOrSecondaryFragment(uint64_t nonce, const uint8_t* payload,size_t payloadSize);
     // send packet by prefixing data with the current IEE and Radiotap header
     void sendPacket(const AbstractWBPacket& abstractWbPacket);
     // print some simple debug information. Called in regular intervals by the logAliveThread
@@ -112,10 +112,8 @@ private:
     // On the tx, either one of those two is active at the same time
     std::unique_ptr<FECEncoder> mFecEncoder=nullptr;
     std::unique_ptr<FECDisabledEncoder> mFecDisabledEncoder=nullptr;
+    bool keepLogAliveThreadRunning;
     std::unique_ptr<std::thread> logAliveThread;
-public:
-    // run as long as nothing goes completely wrong
-    //void loop();
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_TRANSMITTER_H

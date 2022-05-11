@@ -71,9 +71,12 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& optio
     fprintf(stderr, "WB-TX assigned ID %d assigned WLAN %s\n",options.radio_port,options.wlan.c_str());
     // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
     sessionKeyPacket.IS_FEC_ENABLED=!IS_FEC_DISABLED;
+    keepLogAliveThreadRunning= true;
     logAliveThread=std::make_unique<std::thread>([this](){
-        logAlive();
-        std::this_thread::sleep_for(LOG_INTERVAL);
+        while (keepLogAliveThreadRunning){
+            logAlive();
+            std::this_thread::sleep_for(LOG_INTERVAL);
+        }
     });
     std::cout<<"Sending Session key on startup\n";
     for(int i=0;i<5;i++){
@@ -83,7 +86,10 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& optio
 }
 
 WBTransmitter::~WBTransmitter() {
-
+    keepLogAliveThreadRunning= false;
+    if(logAliveThread->joinable()){
+        logAliveThread->join();
+    }
 }
 
 
@@ -164,53 +170,5 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
     }
     nInputPackets++;
 }
-
-/*void WBTransmitter::loop() {
-    constexpr auto MAX_UDP_PAYLOAD_SIZE=65507;
-    // If we'd use a smaller buffer, in case the user doesn't respect the max packet size, the OS will silently drop all bytes exceeding FEC_MAX_PAYLOAD_BYTES.
-    // This way we can throw an error in case the above happens.
-    std::array<uint8_t,MAX_UDP_PAYLOAD_SIZE> buf{};
-    std::chrono::steady_clock::time_point session_key_announce_ts{};
-    std::chrono::steady_clock::time_point log_ts{};
-    // send the key a couple of times on startup to increase the likeliness it is received
-    bool firstTime=true;
-    //SocketHelper::setSocketReceiveTimeout(mInputSocket,LOG_INTERVAL);
-    for(;;){
-        // send the session key a couple of times on startup
-        if(firstTime){
-            for(int i=0;i<5;i++){
-                sendSessionKey();
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
-            firstTime=false;
-        }
-        // we set the timeout earlier when creating the socket
-        const ssize_t message_length = recvfrom(mInputSocket, buf.data(),buf.size(), 0, nullptr, nullptr);
-        if(message_length>0){
-            if(message_length>FEC_MAX_PAYLOAD_SIZE){
-                throw std::runtime_error(StringFormat::convert("Error: This link doesn't support payload exceeding %d", FEC_MAX_PAYLOAD_SIZE));
-            }
-            nInputPackets++;
-            const auto cur_ts=std::chrono::steady_clock::now();
-            // send session key in SESSION_KEY_ANNOUNCE_DELTA intervals
-            if ((cur_ts >= session_key_announce_ts) ) {
-                // Announce session key
-                sendSessionKey();
-                session_key_announce_ts = cur_ts + SESSION_KEY_ANNOUNCE_DELTA;
-            }
-            feedPacket(buf.data(), message_length);
-        }else{
-            if(errno==EAGAIN || errno==EWOULDBLOCK){
-                // timeout
-                continue;
-            }
-            if (errno == EINTR){
-                std::cout<<"Got EINTR"<<"\n";
-                continue;
-            }
-            throw std::runtime_error(StringFormat::convert("recvfrom error: %s", strerror(errno)));
-        }
-    }
-}*/
 
 
