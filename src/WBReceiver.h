@@ -49,7 +49,7 @@ struct ROptions{
     // make optional for ease of use - with no keypair given the default "seed" is used
     std::optional<std::string> keypair=std::nullopt;
     // allows setting the log interval
-    std::chrono::milliseconds log_interval;
+    std::chrono::milliseconds log_interval=std::chrono::seconds(1);
 };
 
 class WBReceiver{
