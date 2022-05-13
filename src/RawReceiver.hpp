@@ -292,7 +292,7 @@ public:
         std::chrono::steady_clock::time_point log_send_ts{};
         for (;;) {
             auto cur_ts=std::chrono::steady_clock::now();
-            const int timeoutMS=std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
+            const int timeoutMS=(int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
             int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(),timeoutMS);
 
             if (rc < 0) {
