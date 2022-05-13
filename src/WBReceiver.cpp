@@ -68,7 +68,7 @@ void WBReceiver::dump_stats() {
     }
     std::stringstream ss;
 
-    ss << runTime << "\tPKT" << count_p_all << "\tRport " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
+    ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
        ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
 
     std::cout<<ss.str()<<"\n";
