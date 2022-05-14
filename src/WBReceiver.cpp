@@ -38,6 +38,7 @@ options(options1),
 mDecryptor(options.keypair),
 mOutputDataCallback(std::move(callback))
 {
+    std::cout<<"WFB_VERSION:"<<WFB_VERSION<<"\n";
     receiver=std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces,options.radio_port,options1.log_interval,
                                           notstd::bind_front(&WBReceiver::processPacket, this),
                                           notstd::bind_front(&WBReceiver::dump_stats, this));

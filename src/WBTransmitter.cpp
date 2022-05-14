@@ -57,6 +57,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& optio
         // FEC is variable if k is an string
         IS_FEC_VARIABLE(options.fec_k.index() == 1),
         fecVariableInputType(convert(options1)){
+    std::cout<<"WFB_VERSION:"<<WFB_VERSION<<"\n";
     mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
     if(IS_FEC_DISABLED){
         mFecDisabledEncoder=std::make_unique<FECDisabledEncoder>();
