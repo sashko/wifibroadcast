@@ -4,7 +4,7 @@
 
 #include <thread>
 #include <chrono>
-#include "SocketHelper.hpp"
+#include "../src/HelperSources/SocketHelper.hpp"
 
 int main(int argc, char *const *argv) {
 

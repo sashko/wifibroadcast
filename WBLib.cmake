@@ -15,11 +15,11 @@ if (TARGET wifibroadcast)
     return()
 endif()
 
-find_library(WIFIBROADCAST_LIB wifibroadcast)
-if(WIFIBROADCAST_LIB)
-    message(STATUS "wifibroadcast already here")
-    return()
-endif()
+#find_library(WIFIBROADCAST_LIB wifibroadcast)
+#if(WIFIBROADCAST_LIB)
+#    message(STATUS "wifibroadcast already here")
+#    return()
+#endif()
 
 # Build and include wifibroadcast
 # ----------------------------------
@@ -35,7 +35,7 @@ endif()
 #        )
 
 # Well, let's just build everything together
-add_library( wifibroadcast
+add_library(wifibroadcast
         SHARED
         # radiotap and fec
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
