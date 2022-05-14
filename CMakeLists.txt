@@ -24,10 +24,8 @@ add_executable(unit_test executables/unit_test.cpp)
 target_link_libraries(unit_test  ${WB_TARGET_LINK_LIBRARIES})
 
 # wtf ??!!
-find_package(Threads REQUIRED)
 add_executable(socket_helper_test executables/socket_helper_test.cpp)
 target_link_libraries(socket_helper_test ${WB_TARGET_LINK_LIBRARIES})
-target_link_libraries(socket_helper_test Threads::Threads)
 
 install(TARGETS wifibroadcast DESTINATION lib)
 #install(TARGETS wfb_tx DESTINATION bin)

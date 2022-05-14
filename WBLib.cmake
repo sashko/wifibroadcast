@@ -36,7 +36,7 @@ endif()
 
 # Well, let's just build everything together
 add_library(wifibroadcast
-        SHARED
+        STATIC
         # radiotap and fec
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
@@ -66,6 +66,10 @@ target_include_directories(wifibroadcast PUBLIC ${sodium_INCLUDE_DIR})
 target_include_directories(wifibroadcast PUBLIC ${PCAP_INCLUDE_DIR})
 target_link_libraries(wifibroadcast PUBLIC ${PCAP_LIBRARY})
 target_link_libraries(wifibroadcast PUBLIC ${sodium_LIBRARY_RELEASE})
+
+# for some reason, we also need to manually link pthread
+find_package(Threads REQUIRED)
+target_link_libraries(wifibroadcast PUBLIC Threads::Threads)
 
 SET(WB_TARGET_LINK_LIBRARIES wifibroadcast)
 SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
