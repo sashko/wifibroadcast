@@ -94,7 +94,7 @@ public:
         nReceivedPackets++;
         auto delta=seqNr-lastReceivedSequenceNr;
         if(delta<=0){
-            std::cout<<"ERROR got packet nr:"<<seqNr<<"after packet nr:"<<lastReceivedSequenceNr<<"\n";
+            std::cerr<<"ERROR got packet nr:"<<seqNr<<"after packet nr:"<<lastReceivedSequenceNr<<"\n";
             return;
         }
         if(delta>1){
@@ -161,9 +161,7 @@ int main(int argc, char *const *argv) {
     std::cout<<"UDP port: "<<options.udp_port<<"\n";
     std::cout<<"UDP host: "<<options.udp_host<<"\n";
 
-    //RandomBufferPot randomBufferPot{10,100};
     randomBufferPot=std::make_unique<RandomBufferPot>(1000,options.PACKET_SIZE);
-
 
     const auto deltaBetweenPackets=std::chrono::nanoseconds((1000*1000*1000)/options.wanted_packets_per_second);
     auto lastLog=std::chrono::steady_clock::now();
