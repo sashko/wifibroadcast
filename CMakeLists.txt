@@ -3,7 +3,6 @@ project(Wifibroadcast)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include(version.cmake)
 include(WBLib.cmake)
 
 add_executable(wfb_tx executables/wfb_tx.cpp)
