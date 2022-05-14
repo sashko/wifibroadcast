@@ -55,8 +55,6 @@ check_cxx_compiler_flag("-mfpu=neon" COMPILER_SUPPORTS_NEON)
 if(COMPILER_SUPPORTS_NEON)
     target_compile_options(wifibroadcast PRIVATE ${WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_ARM})
 endif()
-
-#target_compile_options(wifibroadcast PRIVATE ${WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_X86})
 ## FEC Optimizations end ---------------------------------
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/FindPCAP.cmake)
