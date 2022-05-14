@@ -67,7 +67,7 @@ namespace TestPacket{
     //
     static TestPacketHeader getTestPacketHeader(const std::vector<uint8_t>& data){
         assert(data.size()>=sizeof(TestPacketHeader));
-        TestPacketHeader ret;
+        TestPacketHeader ret{};
         std::memcpy(&ret.seqNr,data.data(),sizeof(ret.seqNr));
         //std::memcpy(&ret.ts,data.data()+sizeof(ret.seqNr),sizeof(ret.ts));
         ret.seqNr= ntohl(ret.seqNr);
