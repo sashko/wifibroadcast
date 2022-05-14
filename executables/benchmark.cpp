@@ -173,7 +173,7 @@ void benchmark_decode(const Options& options){
 int main(int argc, char *const *argv) {
     int opt;
     Options options{};
-
+    print_optimization_method();
     SchedulingHelper::setThreadParamsMaxRealtime();
     SchedulingHelper::printCurrentThreadPriority("TEST_MAIN");
     SchedulingHelper::printCurrentThreadSchedulingPolicy("TEST_MAIN");
