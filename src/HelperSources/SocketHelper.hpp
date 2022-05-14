@@ -112,7 +112,12 @@ namespace SocketHelper{
     public:
         explicit UDPForwarder(std::string client_addr,int client_udp_port):client_addr(client_addr),client_udp_port(client_udp_port){
             sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-            if (sockfd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
+            if (sockfd < 0){
+                std::stringstream message;
+                message<<"Error opening socket:"<<strerror(errno)<<"\n";
+                std::cerr<<message.str();
+                throw std::runtime_error(message.str());
+            }
             //setup the destination
             bzero((char *) &saddr, sizeof(saddr));
             saddr.sin_family = AF_INET;
