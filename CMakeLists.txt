@@ -27,13 +27,15 @@ target_link_libraries(unit_test  ${WB_TARGET_LINK_LIBRARIES})
 add_executable(socket_helper_test executables/socket_helper_test.cpp)
 target_link_libraries(socket_helper_test ${WB_TARGET_LINK_LIBRARIES})
 
-install(TARGETS wifibroadcast DESTINATION lib)
-#install(TARGETS wfb_tx DESTINATION bin)
-#install(TARGETS wfb_rx DESTINATION bin)
-#install(TARGETS wfb_keygen DESTINATION bin)
-#install(TARGETS benchmark DESTINATION bin)
-#install(TARGETS udp_generator_validator DESTINATION bin)
-#install(TARGETS unit_test DESTINATION bin)
-#install(TARGETS socket_helper_test DESTINATION bin)
+# When it is a static library, we don't need to install it.
+# But if it is a shared library, we need to install it.
+#install(TARGETS wifibroadcast DESTINATION lib)
+install(TARGETS wfb_tx DESTINATION bin)
+install(TARGETS wfb_rx DESTINATION bin)
+install(TARGETS wfb_keygen DESTINATION bin)
+install(TARGETS benchmark DESTINATION bin)
+install(TARGETS udp_generator_validator DESTINATION bin)
+install(TARGETS unit_test DESTINATION bin)
+install(TARGETS socket_helper_test DESTINATION bin)
 
 
