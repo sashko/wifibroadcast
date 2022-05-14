@@ -18,3 +18,10 @@ jobs:
       - name: Build
         run: |
           ./build_cmake.sh
+      - name: Test generate keys
+        run: |
+          ./build/wfb_keygen
+      - name: Unit test
+        run: |
+          ./build/unit_test
+

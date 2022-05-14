@@ -11,8 +11,8 @@ target_link_libraries(wfb_tx  ${WB_TARGET_LINK_LIBRARIES})
 add_executable(wfb_rx executables/wfb_rx.cpp)
 target_link_libraries(wfb_rx  ${WB_TARGET_LINK_LIBRARIES})
 
-#add_executable(wfb_keygen executables/wfb_keygen.c)
-#target_link_libraries(wfb_keygen  ${WB_TARGET_LINK_LIBRARIES})
+add_executable(wfb_keygen executables/wfb_keygen.c)
+target_link_libraries(wfb_keygen  ${WB_TARGET_LINK_LIBRARIES})
 
 add_executable(benchmark executables/benchmark.cpp)
 target_link_libraries(benchmark  ${WB_TARGET_LINK_LIBRARIES})
