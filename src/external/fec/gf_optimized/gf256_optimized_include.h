@@ -18,10 +18,16 @@
 
 /*#ifdef __arm__
 #define FEC_GF256_USE_ARM_NEON
-#endif
-#ifdef __x86_64__
-#define FEC_GF256_USE_X86_SSSE3
 #endif*/
+//#ifdef __x86_64__
+//#define FEC_GF256_USE_X86_SSSE3
+//#endif
+#ifdef __ARM_NEON__
+#define FEC_GF256_USE_ARM_NEON
+#endif
+#ifdef __SSE3__
+#define FEC_GF256_USE_X86_SSSE3
+#endif
 
 //#define FEC_GF256_USE_X86_SSSE3
 
@@ -112,7 +118,7 @@ static void gf256_print_optimization_method(){
 #elif defined(FEC_GF256_USE_ARM_NEON)
     std::cout<<"Using ARM_NEON optimization\n";
 #else
-    std::cout<<"No optimization, using flat_table as fallback\n";
+    std::cout<<"WARNING No optimization, using flat_table as fallback\n";
 #endif
 }
 
