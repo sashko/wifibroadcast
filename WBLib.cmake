@@ -34,6 +34,7 @@ endif()
 #        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
 #        )
 
+# Well, let's just build everything together
 add_library( wifibroadcast
         SHARED
         # radiotap and fec
@@ -57,25 +58,18 @@ if(COMPILER_SUPPORTS_NEON)
 endif()
 ## FEC Optimizations end ---------------------------------
 
+# We need pcap and libsodium to build wifibroadcast
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/FindPCAP.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/FindSodium.cmake)
 
 target_include_directories(wifibroadcast PUBLIC ${sodium_INCLUDE_DIR})
 target_include_directories(wifibroadcast PUBLIC ${PCAP_INCLUDE_DIR})
-#include_directories(${sodium_INCLUDE_DIR})
-#include_directories(${PCAP_INCLUDE_DIR})
-
 target_link_libraries(wifibroadcast PUBLIC ${PCAP_LIBRARY})
 target_link_libraries(wifibroadcast PUBLIC ${sodium_LIBRARY_RELEASE})
 
-#SET(WB_TARGET_LINK_LIBRARIES wifibroadcast radiotap fec ${PCAP_LIBRARY} ${sodium_LIBRARY_RELEASE})
 SET(WB_TARGET_LINK_LIBRARIES wifibroadcast)
 SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/src/HelperSources)
 
-#SET(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
-#set_property(GLOBAL PROPERTY WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
-
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -mavx2 -faligned-new=256")
 # ----------------------------------
