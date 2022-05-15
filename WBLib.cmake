@@ -36,7 +36,7 @@ endif()
 
 # Well, let's just build everything together
 add_library(wifibroadcast
-        SHARED
+        STATIC
         # radiotap and fec
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
