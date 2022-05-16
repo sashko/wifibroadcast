@@ -37,7 +37,7 @@ public:
     void runInBackground(){
         udpReceiver->runInBackground();
     }
-    std::string createDebug()const{
+    [[nodiscard]] std::string createDebug()const{
         return wbTransmitter->createDebugState();
     }
 private:
@@ -65,7 +65,7 @@ public:
     void runInBackground(){
         backgroundThread=std::make_unique<std::thread>(&UDPWBReceiver::loopUntilError, this);
     }
-    std::string createDebug()const{
+    [[nodiscard]] std::string createDebug()const{
         return wbReceiver->createDebugState();
     }
 private:
