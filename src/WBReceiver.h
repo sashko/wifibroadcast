@@ -74,11 +74,13 @@ public:
     /**
      * Process incoming data packets as long as nothing goes wrong (nothing should go wrong as long
      * as the computer does not crash or the wifi card disconnects).
-     * NOTE: This class won't receive any messages until loop() is called
+     * NOTE: This class won't be able to receive any wifi packages until loop() is called.
      */
     void loop();
     /**
      * Create a verbose string that gives debugging information about the current state of this wb receiver.
+     * Since this one only reads, it is safe to call from any thread.
+     * Note that this one doesn't print to stdout.
      * @return a string without null terminator.
      */
     [[nodiscard]] std::string createDebugState()const;
