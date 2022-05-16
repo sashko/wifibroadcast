@@ -81,6 +81,7 @@ public:
     void feedPacket(const uint8_t *buf, size_t size);
     /**
     * Create a verbose string that gives debugging information about the current state of this wb receiver.
+     * Since this one only reads, it is safe to call from any thread.
     * @return a string without null terminator.
     */
     [[nodiscard]] std::string createDebugState()const;

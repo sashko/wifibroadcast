@@ -48,8 +48,11 @@ struct ROptions{
     // file for encryptor
     // make optional for ease of use - with no keypair given the default "seed" is used
     std::optional<std::string> keypair=std::nullopt;
-    // allows setting the log interval
+    // allows setting the log interval.
     std::chrono::milliseconds log_interval=std::chrono::seconds(1);
+	// Print log messages about the current status in regular intervals to stdout.
+	// However, in OpenHD, it is more verbose to log all the tx/rx instances together.
+	bool enableLogAlive=true;
 };
 
 class WBReceiver{
