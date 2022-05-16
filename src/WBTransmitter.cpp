@@ -128,9 +128,15 @@ void WBTransmitter::sendSessionKey() {
     sendPacket({(uint8_t *)&sessionKeyPacket, WBSessionKeyPacket::SIZE_BYTES});
 }
 
-void WBTransmitter::logAlive(){
+std::string WBTransmitter::createDebugState()const {
     const auto runTimeMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
-    std::cout << runTimeMs << "\tTX " << nInputPackets << ":" << nInjectedPackets << "\n";
+    std::stringstream ss;
+    ss<< runTimeMs << "\tTX " << nInputPackets << ":" << nInjectedPackets << "\n";
+    return ss.str();
+}
+
+void WBTransmitter::logAlive() const{
+    std::cout << createDebugState();
 }
 
 void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
@@ -172,8 +178,5 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
     nInputPackets++;
 }
 
-std::string WBTransmitter::createDebugState()const {
-    return std::string();
-}
 
 

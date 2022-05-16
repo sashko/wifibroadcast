@@ -49,6 +49,9 @@ void WBReceiver::loop() {
     receiver->loop();
 }
 
+std::string WBReceiver::createDebugState()const {
+    return std::string();
+}
 
 void WBReceiver::dump_stats() {
     const auto count_blocks_total=mFECDDecoder ? mFECDDecoder->count_blocks_total :0;
@@ -68,7 +71,6 @@ void WBReceiver::dump_stats() {
         wifiCard.reset();
     }
     std::stringstream ss;
-
     ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
        ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
 
@@ -229,8 +231,4 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         count_p_bad += 1;
         return;
     }
-}
-
-std::string WBReceiver::createDebugState()const {
-    return std::string();
 }

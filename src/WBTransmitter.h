@@ -80,7 +80,7 @@ public:
     * Create a verbose string that gives debugging information about the current state of this wb receiver.
     * @return a string without null terminator.
     */
-    std::string createDebugState()const;
+    [[nodiscard]] std::string createDebugState()const;
 private:
     const TOptions& options;
     // send the current session key via WIFI (located in mEncryptor)
@@ -90,7 +90,7 @@ private:
     // send packet by prefixing data with the current IEE and Radiotap header
     void sendPacket(const AbstractWBPacket& abstractWbPacket);
     // print some simple debug information. Called in regular intervals by the logAliveThread
-    void logAlive();
+    void logAlive() const;
     // this one is used for injecting packets
     PcapTransmitter mPcapTransmitter;
     //RawSocketTransmitter mPcapTransmitter;
