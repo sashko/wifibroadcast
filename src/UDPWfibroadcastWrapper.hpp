@@ -17,7 +17,7 @@
 
 class UDPWBTransmitter{
 public:
-    UDPWBTransmitter(RadiotapHeader radiotapHeader,const TOptions& options1,std::string client_addr,int client_udp_port){
+    UDPWBTransmitter(RadiotapHeader radiotapHeader,const TOptions& options1,const std::string& client_addr,int client_udp_port){
         wbTransmitter=std::make_unique<WBTransmitter>(
                 radiotapHeader,options1);
         udpReceiver=std::make_unique<SocketHelper::UDPReceiver>(client_addr,client_udp_port,[this](const uint8_t* payload,const std::size_t payloadSize){

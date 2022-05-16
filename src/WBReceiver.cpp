@@ -42,7 +42,7 @@ mOutputDataCallback(std::move(callback))
     receiver=std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces,options.radio_port,options1.log_interval,
                                           notstd::bind_front(&WBReceiver::processPacket, this),
                                           notstd::bind_front(&WBReceiver::dump_stats, this));
-    std::cout<<"WFB-RX RADIO_PORT:"<<(int)options.radio_port<<"\n";
+  std::cout<<"WFB-RX RADIO_PORT:"<<(int)options.radio_port<<"Logging enabled:"<<(options.enableLogAlive ? "Y":"N")<<"\n";
 }
 
 void WBReceiver::loop() {

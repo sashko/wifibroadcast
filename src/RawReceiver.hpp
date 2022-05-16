@@ -264,10 +264,10 @@ public:
      * @param log_interval the log callback is called in the interval specified by @param log_interval
      * @param flush_interval the flush callback is called every time no data has been received for more than @param flush_interval milliseconds
      */
-    explicit MultiRxPcapReceiver(const std::vector<std::string> rxInterfaces1,const int radio_port,const std::chrono::milliseconds log_interval,
+    explicit MultiRxPcapReceiver(std::vector<std::string> rxInterfaces1,const int radio_port,const std::chrono::milliseconds log_interval,
                                  PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback,GENERIC_CALLBACK logCallback):
-            rxInterfaces(rxInterfaces1), radio_port(radio_port), log_interval(log_interval), mCallbackData(std::move(dataCallback)), mCallbackLog(std::move(logCallback)){
-        const int N_RECEIVERS = rxInterfaces.size();
+            rxInterfaces(std::move(rxInterfaces1)), radio_port(radio_port), log_interval(log_interval), mCallbackData(std::move(dataCallback)), mCallbackLog(std::move(logCallback)){
+        const auto N_RECEIVERS = rxInterfaces.size();
         mReceivers.resize(N_RECEIVERS);
         mReceiverFDs.resize(N_RECEIVERS);
         memset(mReceiverFDs.data(), '\0', mReceiverFDs.size()*sizeof(pollfd));
@@ -294,6 +294,7 @@ public:
             auto cur_ts=std::chrono::steady_clock::now();
             const int timeoutMS=(int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
             int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(),timeoutMS);
+			std::cout<<"End poll\n";
 
             if (rc < 0) {
                 if (errno == EINTR || errno == EAGAIN) continue;

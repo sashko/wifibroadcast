@@ -65,12 +65,14 @@ public:
      * @param options1 the options for this instance (some options - so to say - come from the tx instance)
      * @param callback Callback that is called with the decoded data, can be null for debugging.
      */
-    explicit WBReceiver(const ROptions& options1,OUTPUT_DATA_CALLBACK callback);
-    ~WBReceiver()=default;
+    WBReceiver(const ROptions& options1,OUTPUT_DATA_CALLBACK callback);
+  	//WBReceiver(const WBReceiver&) = delete;
+  	//WBReceiver& operator=(const WBReceiver&) = delete;
+    //~WBReceiver()=default;
     void processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
     // dump statistics
     void dump_stats();
-    const ROptions& options;
+    const ROptions options;
     /**
      * Process incoming data packets as long as nothing goes wrong (nothing should go wrong as long
      * as the computer does not crash or the wifi card disconnects).
@@ -84,6 +86,7 @@ public:
      * @return a string without null terminator.
      */
     [[nodiscard]] std::string createDebugState()const;
+	void lula();
 private:
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     Decryptor mDecryptor;
