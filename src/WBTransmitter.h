@@ -53,6 +53,9 @@ struct TOptions{
     // either fixed or variable. If int==fixed, if string==variable but hook needs to be added (currently only hooked h264 and h265)
     std::variant<int,std::string> fec_k=8;
     int fec_percentage=50;
+	// Print log messages about the current status in regular intervals to stdout.
+	// However, in OpenHD, it is more verbose to log all the tx/rx instances together.
+	bool enableLogAlive= true;
 };
 enum FEC_VARIABLE_INPUT_TYPE{none,h264,h265};
 
@@ -108,7 +111,7 @@ private:
     int64_t nInjectedPackets=0;
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point session_key_announce_ts{};
-    static constexpr const std::chrono::nanoseconds LOG_INTERVAL=std::chrono::milliseconds(1000);
+    static constexpr const std::chrono::nanoseconds LOG_INTERVAL=std::chrono::seconds (1);
     Chronometer pcapInjectionTime{"PcapInjectionTime"};
     WBSessionKeyPacket sessionKeyPacket;
     const bool IS_FEC_DISABLED;

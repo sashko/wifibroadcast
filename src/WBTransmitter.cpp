@@ -72,13 +72,15 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& optio
     fprintf(stderr, "WB-TX assigned ID %d assigned WLAN %s\n",options.radio_port,options.wlan.c_str());
     // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
     sessionKeyPacket.IS_FEC_ENABLED=!IS_FEC_DISABLED;
-    keepLogAliveThreadRunning= true;
-    logAliveThread=std::make_unique<std::thread>([this](){
-        while (keepLogAliveThreadRunning){
-            logAlive();
-            std::this_thread::sleep_for(LOG_INTERVAL);
-        }
-    });
+	if(options.enableLogAlive){
+	  keepLogAliveThreadRunning= true;
+	  logAliveThread=std::make_unique<std::thread>([this](){
+		while (keepLogAliveThreadRunning){
+		  logAlive();
+		  std::this_thread::sleep_for(LOG_INTERVAL);
+		}
+	  });
+	}
     std::cout<<"Sending Session key on startup\n";
     for(int i=0;i<5;i++){
         sendSessionKey();
@@ -88,7 +90,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& optio
 
 WBTransmitter::~WBTransmitter() {
     keepLogAliveThreadRunning= false;
-    if(logAliveThread->joinable()){
+    if(logAliveThread && logAliveThread->joinable()){
         logAliveThread->join();
     }
 }
