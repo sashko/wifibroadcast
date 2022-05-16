@@ -86,7 +86,6 @@ public:
      * @return a string without null terminator.
      */
     [[nodiscard]] std::string createDebugState()const;
-	void lula();
 private:
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     Decryptor mDecryptor;

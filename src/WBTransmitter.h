@@ -87,7 +87,7 @@ public:
     */
     [[nodiscard]] std::string createDebugState()const;
 private:
-    const TOptions& options;
+    const TOptions options;
     // send the current session key via WIFI (located in mEncryptor)
     void sendSessionKey();
     // for the FEC encoder
