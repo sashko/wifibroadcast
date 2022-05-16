@@ -59,6 +59,7 @@ std::string WBReceiver::createDebugState()const {
     std::stringstream ss;
     ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
        ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
+	ss<<"\n";
     return ss.str();
 }
 
