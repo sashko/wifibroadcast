@@ -294,7 +294,7 @@ public:
             auto cur_ts=std::chrono::steady_clock::now();
             const int timeoutMS=(int)std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
             int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(),timeoutMS);
-			std::cout<<"End poll\n";
+			//std::cout<<"End poll\n";
 
             if (rc < 0) {
                 if (errno == EINTR || errno == EAGAIN) continue;
