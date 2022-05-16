@@ -59,7 +59,6 @@ std::string WBReceiver::createDebugState()const {
     std::stringstream ss;
     ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
        ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
-
     return ss.str();
 }
 
@@ -74,17 +73,19 @@ void WBReceiver::dump_stats() {
     });
     //timestamp in ms
     const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
-    for(auto& wifiCard : rssiForWifiCard){
-        // no new rssi values for this card since the last call
-        if(wifiCard.count_all==0)continue;
-        std::cout<<"RSSI Count|Min|Max|Avg:\t"<<(int)wifiCard.count_all<<":"<<(int)wifiCard.rssi_min<<":"<<(int)wifiCard.rssi_max<<":"<<(int)wifiCard.getAverage()<<"\n";
-        wifiCard.reset();
-    }
-    std::stringstream ss;
-    ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
-       ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
+	if(options.enableLogAlive){
+	  for(auto& wifiCard : rssiForWifiCard){
+		// no new rssi values for this card since the last call
+		if(wifiCard.count_all==0)continue;
+		std::cout<<"RSSI Count|Min|Max|Avg:\t"<<(int)wifiCard.count_all<<":"<<(int)wifiCard.rssi_min<<":"<<(int)wifiCard.rssi_max<<":"<<(int)wifiCard.getAverage()<<"\n";
+		wifiCard.reset();
+	  }
+	  std::stringstream ss;
+	  ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
+		 ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
 
-    std::cout<<ss.str()<<"\n";
+	  std::cout<<ss.str()<<"\n";
+	}
     // it is actually much more understandable when I use the absolute values for the logging
 #ifdef ENABLE_ADVANCED_DEBUGGING
     std::cout<<"avgPcapToApplicationLatency: "<<avgPcapToApplicationLatency.getAvgReadable()<<"\n";
