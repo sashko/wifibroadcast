@@ -37,6 +37,9 @@ public:
     void runInBackground(){
         udpReceiver->runInBackground();
     }
+    std::string createDebug()const{
+        return "TODO";
+    }
 private:
     std::unique_ptr<WBTransmitter> wbTransmitter;
     std::unique_ptr<SocketHelper::UDPReceiver> udpReceiver;
@@ -61,6 +64,9 @@ public:
      */
     void runInBackground(){
         backgroundThread=std::make_unique<std::thread>(&UDPWBReceiver::loopUntilError, this);
+    }
+    std::string createDebug()const{
+        return "TODO";
     }
 private:
     std::unique_ptr<WBReceiver> wbReceiver;
