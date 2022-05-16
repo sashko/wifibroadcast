@@ -74,6 +74,11 @@ public:
      * NOTE: This class won't receive any messages until loop() is called
      */
     void loop();
+    /**
+     * Create a verbose string that gives debugging information about the current state of this wb receiver.
+     * @return a string without null terminator.
+     */
+    std::string createDebugState()const;
 private:
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     Decryptor mDecryptor;

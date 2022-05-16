@@ -172,4 +172,8 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
     nInputPackets++;
 }
 
+std::string WBTransmitter::createDebugState()const {
+    return std::string();
+}
+
 

@@ -38,7 +38,7 @@ public:
         udpReceiver->runInBackground();
     }
     std::string createDebug()const{
-        return "TODO";
+        return wbTransmitter->createDebugState();
     }
 private:
     std::unique_ptr<WBTransmitter> wbTransmitter;
@@ -66,7 +66,7 @@ public:
         backgroundThread=std::make_unique<std::thread>(&UDPWBReceiver::loopUntilError, this);
     }
     std::string createDebug()const{
-        return "TODO";
+        return wbReceiver->createDebugState();
     }
 private:
     std::unique_ptr<WBReceiver> wbReceiver;

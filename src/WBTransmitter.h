@@ -76,6 +76,11 @@ public:
      * @param size packet data buffer size
      */
     void feedPacket(const uint8_t *buf, size_t size);
+    /**
+    * Create a verbose string that gives debugging information about the current state of this wb receiver.
+    * @return a string without null terminator.
+    */
+    std::string createDebugState()const;
 private:
     const TOptions& options;
     // send the current session key via WIFI (located in mEncryptor)

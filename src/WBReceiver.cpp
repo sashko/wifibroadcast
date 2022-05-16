@@ -230,3 +230,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr& hdr, c
         return;
     }
 }
+
+std::string WBReceiver::createDebugState()const {
+    return std::string();
+}
