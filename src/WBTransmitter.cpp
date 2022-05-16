@@ -126,7 +126,9 @@ void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce, cons
 }
 
 void WBTransmitter::sendSessionKey() {
-    std::cout << "sendSessionKey()\n";
+	if(options.enableLogAlive){
+	  std::cout << "sendSessionKey()\n";
+	}
     sendPacket({(uint8_t *)&sessionKeyPacket, WBSessionKeyPacket::SIZE_BYTES});
 }
 
