@@ -3,7 +3,7 @@
 *.pyc
 dist/
 deb_dist/
-cmake-build-debug/
+cmake-build-createDebug/
 env/
 _trial_temp/
 wfb_rx
