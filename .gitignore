@@ -4,6 +4,7 @@
 dist/
 deb_dist/
 cmake-build-createDebug/
+cmake-build-debug
 env/
 _trial_temp/
 wfb_rx
