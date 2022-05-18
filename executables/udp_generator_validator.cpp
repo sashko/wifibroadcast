@@ -181,7 +181,6 @@ static void loopUntilDone(const Options& options){
 
 	  bool valid=TestPacket::checkPayloadMatches(receivedPacket,*validPacket.get());
 
-
 	  if(valid){
 		nValidPackets++;
 	  }else{
