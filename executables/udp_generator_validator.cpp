@@ -44,8 +44,6 @@ struct Options{
 using SEQUENCE_NUMBER=uint32_t;
 using TIMESTAMP=uint64_t;
 
-Options options{};
-
 // the content of each packet is simple -
 // the sequence number appended by some random data depending on the sequence number
 namespace TestPacket{
@@ -123,10 +121,105 @@ private:
 static std::unique_ptr<RandomBufferPot> randomBufferPot= nullptr;
 
 
+static void loopUntilDone(const Options& options){
+  const float wantedBitRate_MBits=(float)(options.PACKET_SIZE*options.wanted_packets_per_second*8.0f/1024.0f/1024.0f);
+  std::cout<<"PACKET_SIZE: "<<options.PACKET_SIZE<<"\n";
+  std::cout<<"wanted_packets_per_second: "<<options.wanted_packets_per_second<<"\n";
+  std::cout<<"wanted Bitrate: "<<wantedBitRate_MBits<<"MBit/s"<<"\n";
+  std::cout<<"Generator: "<<(options.generator ? "yes":"no")<<"\n";
+  std::cout<<"UDP port: "<<options.udp_port<<"\n";
+  std::cout<<"UDP host: "<<options.udp_host<<"\n";
+
+  randomBufferPot=std::make_unique<RandomBufferPot>(1000,options.PACKET_SIZE);
+
+  const auto deltaBetweenPackets=std::chrono::nanoseconds((1000*1000*1000)/options.wanted_packets_per_second);
+  auto lastLog=std::chrono::steady_clock::now();
+
+  if(options.generator){
+	static bool quit=false;
+	const auto startTime=std::chrono::steady_clock::now();
+	signal(SIGTERM, [](int sig){quit=true;});
+	uint32_t seqNr=0;
+	SocketHelper::UDPForwarder forwarder(options.udp_host,options.udp_port);
+	auto before=std::chrono::steady_clock::now();
+	while (!quit){
+	  const auto packet= randomBufferPot->getBuffer(seqNr);
+	  TestPacket::writeTestPacketHeader(*packet.get(),{seqNr,0});
+
+	  forwarder.forwardPacketViaUDP(packet->data(),packet->size());
+	  // keep logging to a minimum for fast testing
+	  if(options.wanted_packets_per_second<10){
+		std::cout<<"Sent packet:"<<seqNr<<"\n";
+	  }else{
+		if(std::chrono::steady_clock::now()-lastLog>std::chrono::seconds(1)){
+		  std::cout<<"Sent packets:"<<seqNr<<"\n";
+		  lastLog=std::chrono::steady_clock::now();
+		}
+	  }
+	  seqNr++;
+	  //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	  while (std::chrono::steady_clock::now()-before<deltaBetweenPackets){
+		// busy wait
+	  }
+	  before=std::chrono::steady_clock::now();
+	  if((std::chrono::steady_clock::now()-startTime)>options.runTimeSeconds){
+		quit=true;
+	  }
+	}
+  }else{
+	static int nValidPackets=0;
+	static int nInvalidPackets=0;
+	static auto lastLog=std::chrono::steady_clock::now();
+	static SequenceNumberDebugger sequenceNumberDebugger{};
+
+	const auto cb=[](const uint8_t* payload,const std::size_t payloadSize)mutable {
+
+	  const auto receivedPacket=std::vector<uint8_t>(payload,payload+payloadSize);
+
+	  const auto info=TestPacket::getTestPacketHeader(receivedPacket);
+	  sequenceNumberDebugger.sequenceNumber(info.seqNr);
+
+	  auto validPacket=randomBufferPot->getBuffer(info.seqNr);
+	  TestPacket::writeTestPacketHeader(*validPacket.get(),{info.seqNr,0});
+
+	  bool valid=TestPacket::checkPayloadMatches(receivedPacket,*validPacket.get());
+
+
+	  if(valid){
+		nValidPackets++;
+	  }else{
+		nInvalidPackets++;
+		std::cout<<"Packet nr:"<< info.seqNr<<"is invalid."<<" N packets V,INV:"<<nValidPackets<<","<<nInvalidPackets<<"\n";
+	  }
+	  auto delta=std::chrono::steady_clock::now()-lastLog;
+	  if(delta>std::chrono::milliseconds (500)){
+		//std::cout<<"Packet nr:"<< info.seqNr<<"Valid:"<<(valid ? "y":"n")<<" N packets V,INV:"<<nValidPackets<<","<<nInvalidPackets<<"\n";
+		sequenceNumberDebugger.debug(true);
+		lastLog=std::chrono::steady_clock::now();
+	  }
+	};
+
+	static SocketHelper::UDPReceiver receiver{SocketHelper::ADDRESS_LOCALHOST,options.udp_port,cb};
+	static bool quit=false;
+	signal(SIGTERM, [](int sig){ quit= true;});
+	const auto startTime=std::chrono::steady_clock::now();
+	// run until ctr+x or time has elapsed
+	receiver.runInBackground();
+	// keep the thread alive until either ctr+x is pressed or we run out of time.
+	while (!quit) {
+	  std::this_thread::sleep_for(std::chrono::seconds(1));
+	  if ((std::chrono::steady_clock::now() - startTime) > options.runTimeSeconds) {
+		quit = true;
+	  }
+	}
+	receiver.stopBackground();
+  }
+}
+
 
 int main(int argc, char *const *argv) {
     int opt;
-
+	Options options;
     while ((opt = getopt(argc, argv, "s:v:u:b:h:p:")) != -1) {
         switch (opt) {
             case 's':
@@ -155,98 +248,7 @@ int main(int argc, char *const *argv) {
         std::cout<<"Error min packet size is "<<sizeof(SEQUENCE_NUMBER)<<" bytes\n";
         return 0;
     }
-    const float wantedBitRate_MBits=options.PACKET_SIZE*options.wanted_packets_per_second*8.0f/1024.0f/1024.0f;
-    std::cout<<"PACKET_SIZE: "<<options.PACKET_SIZE<<"\n";
-    std::cout<<"wanted_packets_per_second: "<<options.wanted_packets_per_second<<"\n";
-    std::cout<<"wanted Bitrate: "<<wantedBitRate_MBits<<"MBit/s"<<"\n";
-    std::cout<<"Generator: "<<(options.generator ? "yes":"no")<<"\n";
-    std::cout<<"UDP port: "<<options.udp_port<<"\n";
-    std::cout<<"UDP host: "<<options.udp_host<<"\n";
-
-    randomBufferPot=std::make_unique<RandomBufferPot>(1000,options.PACKET_SIZE);
-
-    const auto deltaBetweenPackets=std::chrono::nanoseconds((1000*1000*1000)/options.wanted_packets_per_second);
-    auto lastLog=std::chrono::steady_clock::now();
-
-    if(options.generator){
-        static bool quit=false;
-		const auto startTime=std::chrono::steady_clock::now();
-        signal(SIGTERM, [](int sig){quit=true;});
-        uint32_t seqNr=0;
-        SocketHelper::UDPForwarder forwarder(options.udp_host,options.udp_port);
-        auto before=std::chrono::steady_clock::now();
-        while (!quit){
-            const auto packet= randomBufferPot->getBuffer(seqNr);
-            TestPacket::writeTestPacketHeader(*packet.get(),{seqNr,0});
-
-            forwarder.forwardPacketViaUDP(packet->data(),packet->size());
-            // keep logging to a minimum for fast testing
-            if(options.wanted_packets_per_second<10){
-                std::cout<<"Sent packet:"<<seqNr<<"\n";
-            }else{
-                if(std::chrono::steady_clock::now()-lastLog>std::chrono::seconds(1)){
-                    std::cout<<"Sent packets:"<<seqNr<<"\n";
-                    lastLog=std::chrono::steady_clock::now();
-                }
-            }
-            seqNr++;
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            while (std::chrono::steady_clock::now()-before<deltaBetweenPackets){
-                // busy wait
-            }
-            before=std::chrono::steady_clock::now();
-			if((std::chrono::steady_clock::now()-startTime)>options.runTimeSeconds){
-			  quit=true;
-			}
-        }
-    }else{
-        static int nValidPackets=0;
-        static int nInvalidPackets=0;
-        static auto lastLog=std::chrono::steady_clock::now();
-        static SequenceNumberDebugger sequenceNumberDebugger{};
-
-        const auto cb=[](const uint8_t* payload,const std::size_t payloadSize)mutable {
-
-            const auto receivedPacket=std::vector<uint8_t>(payload,payload+payloadSize);
-
-            const auto info=TestPacket::getTestPacketHeader(receivedPacket);
-            sequenceNumberDebugger.sequenceNumber(info.seqNr);
-
-            auto validPacket=randomBufferPot->getBuffer(info.seqNr);
-            TestPacket::writeTestPacketHeader(*validPacket.get(),{info.seqNr,0});
-
-            bool valid=TestPacket::checkPayloadMatches(receivedPacket,*validPacket.get());
-
-
-            if(valid){
-                nValidPackets++;
-            }else{
-                nInvalidPackets++;
-                std::cout<<"Packet nr:"<< info.seqNr<<"is invalid."<<" N packets V,INV:"<<nValidPackets<<","<<nInvalidPackets<<"\n";
-            }
-            auto delta=std::chrono::steady_clock::now()-lastLog;
-            if(delta>std::chrono::milliseconds (500)){
-                //std::cout<<"Packet nr:"<< info.seqNr<<"Valid:"<<(valid ? "y":"n")<<" N packets V,INV:"<<nValidPackets<<","<<nInvalidPackets<<"\n";
-                sequenceNumberDebugger.debug(true);
-                lastLog=std::chrono::steady_clock::now();
-            }
-        };
-
-        static SocketHelper::UDPReceiver receiver{SocketHelper::ADDRESS_LOCALHOST,options.udp_port,cb};
-	  	static bool quit=false;
-	  	signal(SIGTERM, [](int sig){ quit= true;});
-		const auto startTime=std::chrono::steady_clock::now();
-		// run until ctr+x or time has elapsed
-		receiver.runInBackground();
-		// keep the thread alive until either ctr+x is pressed or we run out of time.
-	  	while (!quit) {
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-			if ((std::chrono::steady_clock::now() - startTime) > options.runTimeSeconds) {
-			  quit = true;
-			}
-		}
-		receiver.stopBackground();
-    }
+  	loopUntilDone(options);
     return 0;
 }
 
