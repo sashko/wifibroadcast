@@ -22,12 +22,6 @@
 #include <thread>
 
 
-/*static bool quit = false;
-static void sigterm_handler(int sig) {
-    fprintf(stderr, "signal %d\n", sig);
-    quit = true;
-}*/
-
 struct Options{
     // size of each packet
     int PACKET_SIZE=1446;
@@ -126,6 +120,7 @@ static void loopUntilDone(const Options& options){
   std::cout<<"Generator: "<<(options.generator ? "yes":"no")<<"\n";
   std::cout<<"UDP port: "<<options.udp_port<<"\n";
   std::cout<<"UDP host: "<<options.udp_host<<"\n";
+  std::cout<<"Run time (s): "<<options.runTimeSeconds.count()<<"\n";
 
   const auto randomBufferPot=std::make_unique<RandomBufferPot>(1000,options.PACKET_SIZE);
 
@@ -216,7 +211,7 @@ static void loopUntilDone(const Options& options){
 int main(int argc, char *const *argv) {
     int opt;
 	Options options;
-    while ((opt = getopt(argc, argv, "s:v:u:b:h:p:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:vu:b:h:p:t:")) != -1) {
         switch (opt) {
             case 's':
                 options.PACKET_SIZE = atoi(optarg);
@@ -233,6 +228,9 @@ int main(int argc, char *const *argv) {
             case 'h':
                 options.udp_host=std::string(optarg);
                 break;
+		  	case 't':
+				options.runTimeSeconds=std::chrono::seconds(std::atoi(optarg));
+				break;
             default: /* '?' */
             show_usage:
                 std::cout<<"Usage: [-s=packet size in bytes,default:"<<options.PACKET_SIZE<<"] [-v validate packets (else generate packets)] [-u udp port,default:"<<options.udp_port<<
