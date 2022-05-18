@@ -118,9 +118,6 @@ private:
 };
 
 
-static std::unique_ptr<RandomBufferPot> randomBufferPot= nullptr;
-
-
 static void loopUntilDone(const Options& options){
   const float wantedBitRate_MBits=(float)(options.PACKET_SIZE*options.wanted_packets_per_second*8.0f/1024.0f/1024.0f);
   std::cout<<"PACKET_SIZE: "<<options.PACKET_SIZE<<"\n";
@@ -130,7 +127,7 @@ static void loopUntilDone(const Options& options){
   std::cout<<"UDP port: "<<options.udp_port<<"\n";
   std::cout<<"UDP host: "<<options.udp_host<<"\n";
 
-  randomBufferPot=std::make_unique<RandomBufferPot>(1000,options.PACKET_SIZE);
+  const auto randomBufferPot=std::make_unique<RandomBufferPot>(1000,options.PACKET_SIZE);
 
   const auto deltaBetweenPackets=std::chrono::nanoseconds((1000*1000*1000)/options.wanted_packets_per_second);
   auto lastLog=std::chrono::steady_clock::now();
@@ -172,7 +169,7 @@ static void loopUntilDone(const Options& options){
 	static auto lastLog=std::chrono::steady_clock::now();
 	static SequenceNumberDebugger sequenceNumberDebugger{};
 
-	const auto cb=[](const uint8_t* payload,const std::size_t payloadSize)mutable {
+	const auto cb=[&randomBufferPot](const uint8_t* payload,const std::size_t payloadSize)mutable {
 
 	  const auto receivedPacket=std::vector<uint8_t>(payload,payload+payloadSize);
 
