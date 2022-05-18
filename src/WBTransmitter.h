@@ -70,6 +70,8 @@ public:
      * @param options1 options for this instance, some of them are forwarded to the receiver instance.
      */
     WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& options1);
+    WBTransmitter(const  WBTransmitter&) = delete;
+  	WBTransmitter& operator=(const  WBTransmitter&) = delete;
     ~WBTransmitter();
     /**
      * feed a new packet to this instance.
