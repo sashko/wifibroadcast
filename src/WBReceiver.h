@@ -66,8 +66,8 @@ public:
      * @param callback Callback that is called with the decoded data, can be null for debugging.
      */
     WBReceiver(const ROptions& options1,OUTPUT_DATA_CALLBACK callback);
-  	//WBReceiver(const WBReceiver&) = delete;
-  	//WBReceiver& operator=(const WBReceiver&) = delete;
+  	WBReceiver(const WBReceiver&) = delete;
+  	WBReceiver& operator=(const WBReceiver&) = delete;
     //~WBReceiver()=default;
     void processPacket(uint8_t wlan_idx,const pcap_pkthdr& hdr,const uint8_t* pkt);
     // dump statistics
