@@ -4,7 +4,8 @@
 
 // testing utility
 // when run as creator, creates deterministic packets and forwards them as udp packets
-// when run as validator, validates these (deterministic) packets
+// when run as validator, receives UDP packets (from a creator instance) and
+// validates these (deterministic) packets
 
 #include "../src/HelperSources/RandomBufferPot.hpp"
 #include "../src/HelperSources/Helper.hpp"
@@ -21,9 +22,6 @@
 #include <thread>
 
 
-// the content of each packet is simple -
-// the sequence number appended by some random data depending on the sequence number
-
 /*static bool quit = false;
 static void sigterm_handler(int sig) {
     fprintf(stderr, "signal %d\n", sig);
@@ -38,6 +36,9 @@ struct Options{
     bool generator=true; // else validator
     int udp_port=5600; // port to send data to (generator) or listen on (validator)
     std::string udp_host=SocketHelper::ADDRESS_LOCALHOST;
+	// How long you want this program to run, it will terminate after the specified time.
+	// You can also always manually terminate with crt+x
+	std::chrono::seconds runTimeSeconds=std::chrono::seconds(10);
 };
 
 using SEQUENCE_NUMBER=uint32_t;
@@ -45,7 +46,8 @@ using TIMESTAMP=uint64_t;
 
 Options options{};
 
-
+// the content of each packet is simple -
+// the sequence number appended by some random data depending on the sequence number
 namespace TestPacket{
     // each test packet has the following layout:
     // 4 bytes (uint32_t) sequence number
@@ -168,6 +170,7 @@ int main(int argc, char *const *argv) {
 
     if(options.generator){
         static bool quit=false;
+		const auto startTime=std::chrono::steady_clock::now();
         signal(SIGTERM, [](int sig){quit=true;});
         uint32_t seqNr=0;
         SocketHelper::UDPForwarder forwarder(options.udp_host,options.udp_port);
@@ -192,6 +195,9 @@ int main(int argc, char *const *argv) {
                 // busy wait
             }
             before=std::chrono::steady_clock::now();
+			if((std::chrono::steady_clock::now()-startTime)>options.runTimeSeconds){
+			  quit=true;
+			}
         }
     }else{
         static int nValidPackets=0;
@@ -227,11 +233,20 @@ int main(int argc, char *const *argv) {
         };
 
         static SocketHelper::UDPReceiver receiver{SocketHelper::ADDRESS_LOCALHOST,options.udp_port,cb};
-        signal(SIGTERM, [](int sig){ receiver.stopLooping();});
-        // run until ctr+x
-        receiver.loopUntilError();
+	  	static bool quit=false;
+	  	signal(SIGTERM, [](int sig){ quit= true;});
+		const auto startTime=std::chrono::steady_clock::now();
+		// run until ctr+x or time has elapsed
+		receiver.runInBackground();
+		// keep the thread alive until either ctr+x is pressed or we run out of time.
+	  	while (!quit) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			if ((std::chrono::steady_clock::now() - startTime) > options.runTimeSeconds) {
+			  quit = true;
+			}
+		}
+		receiver.stopBackground();
     }
-
     return 0;
 }
 
