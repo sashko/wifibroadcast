@@ -7,6 +7,8 @@
 // when run as validator, receives UDP packets (from a creator instance) and
 // validates these (deterministic) packets
 
+#include "../src/HelperSources/SequenceNumberDebugger.hpp"
+
 #include "../src/HelperSources/RandomBufferPot.hpp"
 #include "../src/HelperSources/Helper.hpp"
 #include "../src/HelperSources/SocketHelper.hpp"
@@ -32,7 +34,7 @@ struct Options{
     std::string udp_host=SocketHelper::ADDRESS_LOCALHOST;
 	// How long you want this program to run, it will terminate after the specified time.
 	// You can also always manually terminate with crt+x
-	std::chrono::seconds runTimeSeconds=std::chrono::seconds(10);
+	std::chrono::seconds runTimeSeconds=std::chrono::seconds(30);
 };
 
 using SEQUENCE_NUMBER=uint32_t;
@@ -77,38 +79,6 @@ namespace TestPacket{
         const int result=memcmp (&sb.data()[sizeof(TestPacketHeader)],&rb.data()[sizeof(TestPacketHeader)],sb.size()-sizeof(TestPacketHeader));
         return result==0;
     }
-};
-
-class SequenceNumberDebugger{
-public:
-    SequenceNumberDebugger(){
-        gapsBetweenLostPackets.reserve(1000);
-    }
-    void sequenceNumber(const int64_t seqNr){
-        nReceivedPackets++;
-        auto delta=seqNr-lastReceivedSequenceNr;
-        if(delta<=0){
-            std::cerr<<"ERROR got packet nr:"<<seqNr<<"after packet nr:"<<lastReceivedSequenceNr<<"\n";
-            return;
-        }
-        if(delta>1){
-            nLostPackets+=delta-1;
-            gapsBetweenLostPackets.push_back(delta);
-        }
-        lastReceivedSequenceNr=seqNr;
-    }
-    void debug(bool clear){
-        std::cout<<"N packets received:"<<nReceivedPackets<<"\tlost:"<<nLostPackets<<"\n";
-        std::cout<<"Packet gaps:"<<StringHelper::vectorAsString(gapsBetweenLostPackets)<<"\n";
-        if(clear){
-            gapsBetweenLostPackets.resize(0);
-        }
-    }
-private:
-    std::int64_t lastReceivedSequenceNr=-1;
-    std::int64_t nReceivedPackets=0;
-    std::int64_t nLostPackets=0;
-    std::vector<int64_t> gapsBetweenLostPackets;
 };
 
 
