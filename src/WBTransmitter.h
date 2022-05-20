@@ -125,6 +125,9 @@ private:
     std::unique_ptr<FECEncoder> mFecEncoder=nullptr;
     std::unique_ptr<FECDisabledEncoder> mFecDisabledEncoder=nullptr;
     bool keepLogAliveThreadRunning;
+	// this threads only purpose is to print statistics (if enabled).
+	// since when no messages come in, no methods of this class are called,
+	// so we cannot do any automatic logging in fixed intervalls.
     std::unique_ptr<std::thread> logAliveThread;
 };
 
