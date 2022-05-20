@@ -77,6 +77,7 @@ public:
      * Process incoming data packets as long as nothing goes wrong (nothing should go wrong as long
      * as the computer does not crash or the wifi card disconnects).
      * NOTE: This class won't be able to receive any wifi packages until loop() is called.
+     * NOTE: This blocks the calling thread (never returns unless error).
      */
     void loop();
     /**
