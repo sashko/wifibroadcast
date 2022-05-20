@@ -84,7 +84,7 @@ public:
      * Create a verbose string that gives debugging information about the current state of this wb receiver.
      * Since this one only reads, it is safe to call from any thread.
      * Note that this one doesn't print to stdout.
-     * @return a string without null terminator.
+     * @return a string without new line at the end.
      */
     [[nodiscard]] std::string createDebugState()const;
 private:
