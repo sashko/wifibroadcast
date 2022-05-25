@@ -118,7 +118,7 @@ namespace SocketHelper{
                 std::cerr<<message.str();
                 throw std::runtime_error(message.str());
             }
-            //setup the destination
+            //set up the destination
             bzero((char *) &saddr, sizeof(saddr));
             saddr.sin_family = AF_INET;
             //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
@@ -126,6 +126,8 @@ namespace SocketHelper{
             saddr.sin_port = htons((unsigned short)client_udp_port);
             std::cout<<"UDPForwarder::configured for "<<client_addr<<" "<<client_udp_port<<"\n";
         }
+		UDPForwarder(const  UDPForwarder&) = delete;
+		UDPForwarder& operator=(const  UDPForwarder&) = delete;
         ~UDPForwarder(){
             close(sockfd);
         }
