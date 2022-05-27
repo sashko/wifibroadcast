@@ -110,7 +110,8 @@ namespace SocketHelper{
     // opens port on construction, closes port on destruction
     class UDPForwarder{
     public:
-        explicit UDPForwarder(std::string client_addr,int client_udp_port):client_addr(client_addr),client_udp_port(client_udp_port){
+        explicit UDPForwarder(std::string client_addr,int client_udp_port):
+		client_addr(std::move(client_addr)),client_udp_port(client_udp_port){
             sockfd = socket(AF_INET, SOCK_DGRAM, 0);
             if (sockfd < 0){
                 std::stringstream message;
@@ -140,7 +141,7 @@ namespace SocketHelper{
     private:
         const std::string client_addr;
         const int client_udp_port;
-        struct sockaddr_in saddr;
+        struct sockaddr_in saddr{};
         int sockfd;
     };
 
