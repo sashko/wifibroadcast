@@ -99,12 +99,12 @@ class UDPWBReceiver {
 	//udpForwarders.erase(std::find_if(udpForwarders.begin(),udpForwarders.end(), [&client_addr,&client_udp_port](const auto& udpForwarder) {
 	//  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
 	//}));
-	for(const auto& udpForwarder:udpForwarders){
+	/*for(const auto& udpForwarder:udpForwarders){
 	  if(udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port){
 		std::cout<<"UDPWBReceiver: removing:"<<client_addr<<":"<<client_udp_port<<"\n";
 		udpForwarders.remove(udpForwarder);
 	  }
-	}
+	}*/
   }
   [[nodiscard]] std::string createDebug() const {
 	return wbReceiver->createDebugState();
