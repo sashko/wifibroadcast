@@ -89,6 +89,7 @@ class UDPWBReceiver {
 		return;
 	  }
 	}
+	std::cout<<"UDPWBReceiver: add forwarding to:"<<client_addr<<":"<<client_udp_port<<"\n";
 	udpForwarders.emplace_back(std::make_unique<SocketHelper::UDPForwarder>(client_addr, client_udp_port));
   }
   /**
