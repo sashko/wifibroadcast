@@ -1,5 +1,6 @@
 //
 // Created by consti10 on 20.04.22.
+// This one just exists to test the compilation with cmake,nothing else.
 //
 
 #include "../src/HelperSources/Helper.hpp"

@@ -53,6 +53,9 @@ struct TOptions{
     // either fixed or variable. If int==fixed, if string==variable but hook needs to be added (currently only hooked h264 and h265)
     std::variant<int,std::string> fec_k=8;
     int fec_percentage=50;
+	// Print log messages about the current status in regular intervals to stdout.
+	// However, in OpenHD, it is more verbose to log all the tx/rx instances together.
+	bool enableLogAlive= true;
 };
 enum FEC_VARIABLE_INPUT_TYPE{none,h264,h265};
 
@@ -67,6 +70,8 @@ public:
      * @param options1 options for this instance, some of them are forwarded to the receiver instance.
      */
     WBTransmitter(RadiotapHeader radiotapHeader,const TOptions& options1);
+    WBTransmitter(const  WBTransmitter&) = delete;
+  	WBTransmitter& operator=(const  WBTransmitter&) = delete;
     ~WBTransmitter();
     /**
      * feed a new packet to this instance.
@@ -76,16 +81,23 @@ public:
      * @param size packet data buffer size
      */
     void feedPacket(const uint8_t *buf, size_t size);
+    /**
+    * Create a verbose string that gives debugging information about the current state of this wb receiver.
+     * Since this one only reads, it is safe to call from any thread.
+     * Note that this one doesn't print to stdout.
+    * @return a string without new line at the end.
+    */
+    [[nodiscard]] std::string createDebugState()const;
 private:
-    const TOptions& options;
+    const TOptions options;
     // send the current session key via WIFI (located in mEncryptor)
     void sendSessionKey();
     // for the FEC encoder
-    void sendFecPrimaryOrSecondaryFragment(const uint64_t nonce, const uint8_t* payload,const size_t payloadSize);
+    void sendFecPrimaryOrSecondaryFragment(uint64_t nonce, const uint8_t* payload,size_t payloadSize);
     // send packet by prefixing data with the current IEE and Radiotap header
     void sendPacket(const AbstractWBPacket& abstractWbPacket);
     // print some simple debug information. Called in regular intervals by the logAliveThread
-    void logAlive();
+    void logAlive() const;
     // this one is used for injecting packets
     PcapTransmitter mPcapTransmitter;
     //RawSocketTransmitter mPcapTransmitter;
@@ -103,7 +115,7 @@ private:
     int64_t nInjectedPackets=0;
     const std::chrono::steady_clock::time_point INIT_TIME=std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point session_key_announce_ts{};
-    static constexpr const std::chrono::nanoseconds LOG_INTERVAL=std::chrono::milliseconds(1000);
+    static constexpr const std::chrono::nanoseconds LOG_INTERVAL=std::chrono::seconds (1);
     Chronometer pcapInjectionTime{"PcapInjectionTime"};
     WBSessionKeyPacket sessionKeyPacket;
     const bool IS_FEC_DISABLED;
@@ -112,10 +124,11 @@ private:
     // On the tx, either one of those two is active at the same time
     std::unique_ptr<FECEncoder> mFecEncoder=nullptr;
     std::unique_ptr<FECDisabledEncoder> mFecDisabledEncoder=nullptr;
+    bool keepLogAliveThreadRunning;
+	// this threads only purpose is to print statistics (if enabled).
+	// since when no messages come in, no methods of this class are called,
+	// so we cannot do any automatic logging in fixed intervalls.
     std::unique_ptr<std::thread> logAliveThread;
-public:
-    // run as long as nothing goes completely wrong
-    //void loop();
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_TRANSMITTER_H

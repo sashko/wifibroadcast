@@ -814,6 +814,10 @@ static void test_fec_encode_and_decode_all_permutations(const int nDataPackets,c
     std::cout<<"Tested all permutations for k:"<<nDataPackets<<" n:"<<nFecPackets<<"\n";
 }
 
+void print_optimization_method(){
+    gf256_print_optimization_method();
+}
+
 void test_fec(){
     gf256_print_optimization_method();
     std::cout<<"Testing FEC reconstruction:\n";

@@ -99,6 +99,8 @@ void fec_decode3(unsigned int fragmentSize,
                  std::vector<Container2>& secondaryFragmentsReceived,
                  const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived);
 
+// print the underlying optimization method
+void print_optimization_method();
 
 // Test the (optimized) galois field math
 void test_gf();

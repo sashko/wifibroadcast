@@ -18,8 +18,6 @@ namespace SemiRandomBuffers{
      * Each of the generated buffers contains different data than the previous generated one (by a almost 100% chance)
      */
     static std::vector<std::shared_ptr<std::vector<uint8_t>>> createSemiRandomBuffers(const std::size_t nBuffers,const std::size_t bufferSize){
-        // NOTE for some reason the following code does not what I'd expect:
-        //std::vector<std::shared_ptr<std::vector<uint8_t>>> ret(nBuffers,std::make_shared<std::vector<uint8_t>>(bufferSize));
         std::vector<std::shared_ptr<std::vector<uint8_t>>> ret(nBuffers);
         for(int i=0;i<ret.size();i++){
             ret[i]=std::make_shared<std::vector<uint8_t>>(bufferSize);
@@ -37,22 +35,6 @@ namespace SemiRandomBuffers{
                 value=distrib(random_engine);
             }
         }
-        /*for(int i=0;i<ret.size();i++){
-            for(int j=0;j<ret.size();j++){
-                if(i!=j){
-                    //std::cout<<"x"<<i<<","<<j<<"\n";
-                    auto buf1=ret[i];
-                    auto buf2=ret[j];
-                    //std::cout<<StringHelper::vectorAsString(*buf1.get())<<"\n";
-                    //std::cout<<StringHelper::vectorAsString(*buf2.get())<<"\n";
-                    assert(GenericHelper::compareVectors(*buf1.get(),*buf2.get())==false);
-                }
-            }
-        }*/
-        /*for(int i=0;i<ret.size();i++){
-            auto buf1=ret[i];
-            std::cout<<StringHelper::vectorAsString(*buf1.get())<<"\n";
-        }*/
         return ret;
     }
     // same as above, but different return type

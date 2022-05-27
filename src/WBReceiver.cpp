@@ -30,23 +30,38 @@
 #include <string>
 #include <chrono>
 #include <sstream>
+#include <utility>
 
 
 WBReceiver::WBReceiver(const ROptions& options1,OUTPUT_DATA_CALLBACK callback) :
 options(options1),
 mDecryptor(options.keypair),
-mOutputDataCallback(callback)
+mOutputDataCallback(std::move(callback))
 {
+    std::cout<<"WFB_VERSION:"<<WFB_VERSION<<"\n";
     receiver=std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces,options.radio_port,options1.log_interval,
                                           notstd::bind_front(&WBReceiver::processPacket, this),
                                           notstd::bind_front(&WBReceiver::dump_stats, this));
-    std::cout<<"WFB-RX RADIO_PORT:"<<(int)options.radio_port<<"\n";
+  std::cout<<"WFB-RX RADIO_PORT:"<<(int)options.radio_port<<"Logging enabled:"<<(options.enableLogAlive ? "Y":"N")<<"\n";
 }
 
 void WBReceiver::loop() {
     receiver->loop();
 }
 
+std::string WBReceiver::createDebugState()const {
+    const auto count_blocks_total=mFECDDecoder ? mFECDDecoder->count_blocks_total :0;
+    const auto count_blocks_lost=mFECDDecoder ? mFECDDecoder->count_blocks_lost :0;
+    const auto count_blocks_recovered=mFECDDecoder ? mFECDDecoder->count_blocks_recovered : 0;
+    const auto count_fragments_recovered= mFECDDecoder ? mFECDDecoder->count_fragments_recovered : 0;
+    //timestamp in ms
+    const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
+    std::stringstream ss;
+    ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
+       ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
+	ss<<"\n";
+    return ss.str();
+}
 
 void WBReceiver::dump_stats() {
     const auto count_blocks_total=mFECDDecoder ? mFECDDecoder->count_blocks_total :0;
@@ -59,18 +74,19 @@ void WBReceiver::dump_stats() {
     });
     //timestamp in ms
     const uint64_t runTime=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-INIT_TIME).count();
-    for(auto& wifiCard : rssiForWifiCard){
-        // no new rssi values for this card since the last call
-        if(wifiCard.count_all==0)continue;
-        std::cout<<"RSSI Count|Min|Max|Avg:\t"<<(int)wifiCard.count_all<<":"<<(int)wifiCard.rssi_min<<":"<<(int)wifiCard.rssi_max<<":"<<(int)wifiCard.getAverage()<<"\n";
-        wifiCard.reset();
-    }
-    std::stringstream ss;
+	if(options.enableLogAlive){
+	  for(auto& wifiCard : rssiForWifiCard){
+		// no new rssi values for this card since the last call
+		if(wifiCard.count_all==0)continue;
+		std::cout<<"RSSI Count|Min|Max|Avg:\t"<<(int)wifiCard.count_all<<":"<<(int)wifiCard.rssi_min<<":"<<(int)wifiCard.rssi_max<<":"<<(int)wifiCard.getAverage()<<"\n";
+		wifiCard.reset();
+	  }
+	  std::stringstream ss;
+	  ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
+		 ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
 
-    ss << runTime << "\tPKT" << count_p_all << "\tRport " << +options.radio_port << " Decryption(OK:" << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
-       ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered << " recP:" << count_fragments_recovered << ")";
-
-    std::cout<<ss.str()<<"\n";
+	  std::cout<<ss.str()<<"\n";
+	}
     // it is actually much more understandable when I use the absolute values for the logging
 #ifdef ENABLE_ADVANCED_DEBUGGING
     std::cout<<"avgPcapToApplicationLatency: "<<avgPcapToApplicationLatency.getAvgReadable()<<"\n";

@@ -19,6 +19,7 @@
 #include <ctime>
 #include <sys/mman.h>
 #include <string>
+#include <utility>
 #include <vector>
 #include <chrono>
 #include <cstdarg>
@@ -109,10 +110,16 @@ namespace SocketHelper{
     // opens port on construction, closes port on destruction
     class UDPForwarder{
     public:
-        explicit UDPForwarder(std::string client_addr,int client_udp_port):client_addr(client_addr),client_udp_port(client_udp_port){
+        explicit UDPForwarder(std::string client_addr,int client_udp_port):
+		client_addr(std::move(client_addr)),client_udp_port(client_udp_port){
             sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-            if (sockfd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket: %s", strerror(errno)));
-            //setup the destination
+            if (sockfd < 0){
+                std::stringstream message;
+                message<<"Error opening socket:"<<strerror(errno)<<"\n";
+                std::cerr<<message.str();
+                throw std::runtime_error(message.str());
+            }
+            //set up the destination
             bzero((char *) &saddr, sizeof(saddr));
             saddr.sin_family = AF_INET;
             //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
@@ -120,6 +127,8 @@ namespace SocketHelper{
             saddr.sin_port = htons((unsigned short)client_udp_port);
             std::cout<<"UDPForwarder::configured for "<<client_addr<<" "<<client_udp_port<<"\n";
         }
+		UDPForwarder(const  UDPForwarder&) = delete;
+		UDPForwarder& operator=(const  UDPForwarder&) = delete;
         ~UDPForwarder(){
             close(sockfd);
         }
@@ -132,7 +141,7 @@ namespace SocketHelper{
     private:
         const std::string client_addr;
         const int client_udp_port;
-        struct sockaddr_in saddr;
+        struct sockaddr_in saddr{};
         int sockfd;
     };
 
@@ -143,7 +152,7 @@ namespace SocketHelper{
         /**
          * Receive data from socket and forward it via callback until stopLooping() is called
          */
-        explicit UDPReceiver(std::string client_addr,int client_udp_port,OUTPUT_DATA_CALLBACK cb):mCb(cb){
+        explicit UDPReceiver(std::string client_addr,int client_udp_port,OUTPUT_DATA_CALLBACK cb):mCb(std::move(cb)){
             mSocket=SocketHelper::openUdpSocketForReceiving(client_udp_port);
             //increaseSocketRecvBuffer(mSocket,1024*1024);
             std::cout<<"UDPReceiver created with "<<client_addr<<":"<<client_udp_port<<"\n";
@@ -158,6 +167,8 @@ namespace SocketHelper{
                 if (message_length > 0) {
                     mCb(buff->data(), (size_t)message_length);
                 }else{
+                    // this can also come from the shutdown, in which case it is not an error.
+                    // But this way we break out of the loop.
                     std::cout<<"ERROR got message length of:"<<message_length<<"\n";
                     receiving= false;
                 }
@@ -166,6 +177,8 @@ namespace SocketHelper{
         }
         void stopLooping(){
             receiving= false;
+            // from https://github.com/mavlink/MAVSDK/blob/main/src/mavsdk/core/udp_connection.cpp#L102
+            shutdown(mSocket, SHUT_RDWR);
             close(mSocket);
         }
         void runInBackground(){
@@ -177,11 +190,9 @@ namespace SocketHelper{
         }
         void stopBackground(){
             stopLooping();
-            std::cout<<"XX\n";
             if(receiverThread && receiverThread->joinable()){
                 receiverThread->join();
             }
-            std::cout<<"YY\n";
             receiverThread=nullptr;
         }
     private:
