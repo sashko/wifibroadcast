@@ -18,7 +18,7 @@ int main(int argc, char *const *argv) {
 
     SocketHelper::UDPForwarder forwarder(SocketHelper::ADDRESS_LOCALHOST,XPORT);
     std::vector<uint8_t> data(100);
-    int nForwardedBytes;
+    std::size_t nForwardedBytes=0;
     for(int i=0;i<100;i++){
         forwarder.forwardPacketViaUDP(data.data(),data.size());
         nForwardedBytes+=data.size();
