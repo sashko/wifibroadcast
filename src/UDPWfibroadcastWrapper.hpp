@@ -13,6 +13,7 @@
 #include <thread>
 #include <mutex>
 #include <utility>
+#include <list>
 
 // Convenient methods to create WB transmitter / receiver with UDP as input/output
 // Used for wfb_tx / wfb_rx executables and OpenHD
@@ -81,6 +82,13 @@ class UDPWBReceiver {
    */
   void addForwarder(std::string client_addr, int client_udp_port) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
+	// check if we already forward data to this addr::port tuple
+	for(const auto& udpForwarder:udpForwarders){
+	  if(udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port){
+		std::cout<<"UDPWBReceiver: already forwarding to:"<<client_addr<<":"<<client_udp_port<<"\n";
+		return;
+	  }
+	}
 	udpForwarders.emplace_back(std::make_unique<SocketHelper::UDPForwarder>(client_addr, client_udp_port));
   }
   /**
@@ -88,7 +96,15 @@ class UDPWBReceiver {
    */
   void removeForwarder(std::string client_addr, int client_udp_port) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
-	//TODO implement
+	//udpForwarders.erase(std::find_if(udpForwarders.begin(),udpForwarders.end(), [&client_addr,&client_udp_port](const auto& udpForwarder) {
+	//  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
+	//}));
+	for(const auto& udpForwarder:udpForwarders){
+	  if(udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port){
+		std::cout<<"UDPWBReceiver: removing:"<<client_addr<<":"<<client_udp_port<<"\n";
+		udpForwarders.remove(udpForwarder);
+	  }
+	}
   }
   [[nodiscard]] std::string createDebug() const {
 	return wbReceiver->createDebugState();
@@ -102,7 +118,7 @@ class UDPWBReceiver {
 	}
   }
   // list of host::port tuples where we send the data to.
-  std::vector<std::unique_ptr<SocketHelper::UDPForwarder>> udpForwarders;
+  std::list<std::unique_ptr<SocketHelper::UDPForwarder>> udpForwarders;
   // modifying the list of forwarders must be thread-safe
   std::mutex udpForwardersLock;
   std::unique_ptr<WBReceiver> wbReceiver;

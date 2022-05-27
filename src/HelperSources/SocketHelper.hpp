@@ -140,10 +140,11 @@ class UDPForwarder {
 		   sizeof(saddr));
   }
  private:
-  const std::string client_addr;
-  const int client_udp_port;
   struct sockaddr_in saddr{};
   int sockfd;
+ public:
+  const std::string client_addr;
+  const int client_udp_port;
 };
 
 class UDPReceiver {
