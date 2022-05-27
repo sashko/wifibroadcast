@@ -113,7 +113,7 @@ class UDPWBReceiver {
   // forwards the data to all registered udp forwarder instances.
   void onNewData(const uint8_t *payload, const std::size_t payloadSize) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
-	for (auto &udpForwarder: udpForwarders) {
+	for (const auto &udpForwarder: udpForwarders) {
 	  udpForwarder->forwardPacketViaUDP(payload, payloadSize);
 	}
   }
