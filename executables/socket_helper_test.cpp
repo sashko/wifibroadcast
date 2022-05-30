@@ -6,6 +6,8 @@
 #include <chrono>
 #include "../src/HelperSources/SocketHelper.hpp"
 
+#include "../src/UDPWfibroadcastWrapper.hpp"
+
 static void test_send_and_receive(){
   static constexpr auto XPORT=5600;
   std::size_t nReceivedBytes=0;
@@ -33,8 +35,26 @@ static void test_send_and_receive(){
   }
 }
 
+// Here we have a simple test for adding and removing new forwarding IP addresses.
+static void test_add_and_remove_forwarder(){
+  UDPWBReceiver udpWbReceiver{ROptions{},"192.168.0.0",5600};
+  udpWbReceiver.addForwarder("192.168.0.0",5600);
+  if(udpWbReceiver.getForwarders().size()!=1){
+	throw std::runtime_error("Should not contain duplicates\n");
+  }
+  udpWbReceiver.addForwarder("192.168.0.1",5600);
+  if(udpWbReceiver.getForwarders().size()!=2){
+	throw std::runtime_error("Should have 2 forwarders\n");
+  }
+  udpWbReceiver.removeForwarder("192.168.0.1",5600);
+  if(udpWbReceiver.getForwarders().size()!=1){
+	throw std::runtime_error("Should not contain duplicates\n");
+  }
+}
+
 int main(int argc, char *const *argv) {
 
     test_send_and_receive();
+	test_add_and_remove_forwarder();
     return 0;
 }

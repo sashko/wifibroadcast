@@ -105,6 +105,9 @@ class UDPWBReceiver {
   [[nodiscard]] std::string createDebug() const {
 	return wbReceiver->createDebugState();
   }
+  std::list<std::unique_ptr<SocketHelper::UDPForwarder>>& getForwarders(){
+	return udpForwarders;
+  }
  private:
   // forwards the data to all registered udp forwarder instances.
   void onNewData(const uint8_t *payload, const std::size_t payloadSize) {
