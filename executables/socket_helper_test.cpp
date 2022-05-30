@@ -17,12 +17,15 @@ static void test_send_and_receive(){
   receiver.runInBackground();
   // wait a bit to account for OS delay
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  SocketHelper::UDPForwarder forwarder(SocketHelper::ADDRESS_LOCALHOST,XPORT);
-  std::vector<uint8_t> data(100);
+  //SocketHelper::UDPForwarder forwarder(SocketHelper::ADDRESS_LOCALHOST,XPORT);
+  SocketHelper::UDPMultiForwarder forwarder{};
+  forwarder.addForwarder(SocketHelper::ADDRESS_LOCALHOST,XPORT);
+  std::vector<uint8_t> data(1024);
   std::size_t nForwardedBytes=0;
   for(int i=0;i<100;i++){
 	forwarder.forwardPacketViaUDP(data.data(),data.size());
 	nForwardedBytes+=data.size();
+	std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
   // wait a bit to account for OS delays
   std::this_thread::sleep_for(std::chrono::seconds(1));
