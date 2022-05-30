@@ -157,7 +157,7 @@ class UDPMultiForwarder{
   /**
   * Start forwarding data to another IP::Port tuple
   */
-  void addForwarder(std::string client_addr, int client_udp_port) {
+  void addForwarder(const std::string& client_addr, int client_udp_port) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
 	// check if we already forward data to this IP::Port tuple
 	for(const auto& udpForwarder:udpForwarders){
@@ -173,7 +173,7 @@ class UDPMultiForwarder{
   * Remove an already existing udp forwarding instance.
   * Do nothing if such an instance is not found.
   */
-  void removeForwarder(std::string client_addr, int client_udp_port) {
+  void removeForwarder(const std::string& client_addr, int client_udp_port) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
 	udpForwarders.erase(std::find_if(udpForwarders.begin(),udpForwarders.end(), [&client_addr,&client_udp_port](const auto& udpForwarder) {
 	  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
