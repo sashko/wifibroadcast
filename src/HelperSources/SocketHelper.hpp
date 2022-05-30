@@ -179,6 +179,9 @@ class UDPMultiForwarder{
 	  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
 	}));
   }
+  /**
+   * Forward data to all added IP::Port tuples via UDP
+   */
   void forwardPacketViaUDP(const uint8_t *packet, const std::size_t packetSize){
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
 	for (const auto &udpForwarder: udpForwarders) {
