@@ -93,19 +93,14 @@ class UDPWBReceiver {
 	udpForwarders.emplace_back(std::make_unique<SocketHelper::UDPForwarder>(client_addr, client_udp_port));
   }
   /**
-   * Remove an alredy existing udp forwarding instance.
+   * Remove an already existing udp forwarding instance.
+   * Do nothing if such an instance is not found.
    */
   void removeForwarder(std::string client_addr, int client_udp_port) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
-	//udpForwarders.erase(std::find_if(udpForwarders.begin(),udpForwarders.end(), [&client_addr,&client_udp_port](const auto& udpForwarder) {
-	//  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
-	//}));
-	/*for(const auto& udpForwarder:udpForwarders){
-	  if(udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port){
-		std::cout<<"UDPWBReceiver: removing:"<<client_addr<<":"<<client_udp_port<<"\n";
-		udpForwarders.remove(udpForwarder);
-	  }
-	}*/
+	udpForwarders.erase(std::find_if(udpForwarders.begin(),udpForwarders.end(), [&client_addr,&client_udp_port](const auto& udpForwarder) {
+	  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
+	}));
   }
   [[nodiscard]] std::string createDebug() const {
 	return wbReceiver->createDebugState();
