@@ -6,7 +6,6 @@
 #include <chrono>
 #include "../src/HelperSources/SocketHelper.hpp"
 
-#include "../src/UDPWfibroadcastWrapper.hpp"
 
 static void test_send_and_receive(){
   static constexpr auto XPORT=5600;
@@ -36,19 +35,25 @@ static void test_send_and_receive(){
 }
 
 // Here we have a simple test for adding and removing new forwarding IP addresses.
+// (UDPMultiForwarder)
 static void test_add_and_remove_forwarder(){
-  UDPWBReceiver udpWbReceiver{ROptions{},"192.168.0.0",5600};
-  udpWbReceiver.addForwarder("192.168.0.0",5600);
-  if(udpWbReceiver.getForwarders().size()!=1){
+  SocketHelper::UDPMultiForwarder udpMultiForwarder{};
+  udpMultiForwarder.addForwarder("192.168.0.0",5600);
+  udpMultiForwarder.addForwarder("192.168.0.0",5600);
+  if(udpMultiForwarder.getForwarders().size()!=1){
 	throw std::runtime_error("Should not contain duplicates\n");
   }
-  udpWbReceiver.addForwarder("192.168.0.1",5600);
-  if(udpWbReceiver.getForwarders().size()!=2){
+  udpMultiForwarder.addForwarder("192.168.0.1",5600);
+  if(udpMultiForwarder.getForwarders().size()!=2){
 	throw std::runtime_error("Should have 2 forwarders\n");
   }
-  udpWbReceiver.removeForwarder("192.168.0.1",5600);
-  if(udpWbReceiver.getForwarders().size()!=1){
-	throw std::runtime_error("Should not contain duplicates\n");
+  udpMultiForwarder.removeForwarder("192.168.0.1",5600);
+  if(udpMultiForwarder.getForwarders().size()!=1){
+	throw std::runtime_error("Should have 1 forwarder\n");
+  }
+  udpMultiForwarder.removeForwarder("192.168.0.0",5600);
+  if(!udpMultiForwarder.getForwarders().empty()){
+	throw std::runtime_error("Should have 0 forwarder\n");
   }
 }
 

@@ -38,6 +38,8 @@
 #include <thread>
 #include <algorithm>
 #include <atomic>
+#include <list>
+#include <mutex>
 
 namespace SocketHelper {
 static const std::string ADDRESS_LOCALHOST = "127.0.0.1";
@@ -146,6 +148,53 @@ class UDPForwarder {
   const std::string client_addr;
   const int client_udp_port;
 };
+
+/**
+ * Similar to UDP forwarder, but allows forwarding the same data to 0 or more IP::Port tuples
+ */
+class UDPMultiForwarder{
+ public:
+  /**
+  * Start forwarding data to another IP::Port tuple
+  */
+  void addForwarder(std::string client_addr, int client_udp_port) {
+	std::lock_guard<std::mutex> guard(udpForwardersLock);
+	// check if we already forward data to this IP::Port tuple
+	for(const auto& udpForwarder:udpForwarders){
+	  if(udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port){
+		std::cout<<"UDPMultiForwarder: already forwarding to:"<<client_addr<<":"<<client_udp_port<<"\n";
+		return;
+	  }
+	}
+	std::cout<<"UDPMultiForwarder: add forwarding to:"<<client_addr<<":"<<client_udp_port<<"\n";
+	udpForwarders.emplace_back(std::make_unique<SocketHelper::UDPForwarder>(client_addr, client_udp_port));
+  }
+  /**
+  * Remove an already existing udp forwarding instance.
+  * Do nothing if such an instance is not found.
+  */
+  void removeForwarder(std::string client_addr, int client_udp_port) {
+	std::lock_guard<std::mutex> guard(udpForwardersLock);
+	udpForwarders.erase(std::find_if(udpForwarders.begin(),udpForwarders.end(), [&client_addr,&client_udp_port](const auto& udpForwarder) {
+	  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
+	}));
+  }
+  void forwardPacketViaUDP(const uint8_t *packet, const std::size_t packetSize){
+	std::lock_guard<std::mutex> guard(udpForwardersLock);
+	for (const auto &udpForwarder: udpForwarders) {
+	  udpForwarder->forwardPacketViaUDP(packet,packetSize);
+	}
+  }
+  [[nodiscard]] const std::list<std::unique_ptr<SocketHelper::UDPForwarder>>& getForwarders()const{
+	return udpForwarders;
+  }
+ private:
+  // list of host::port tuples where we send the data to.
+  std::list<std::unique_ptr<SocketHelper::UDPForwarder>> udpForwarders;
+  // modifying the list of forwarders must be thread-safe
+  std::mutex udpForwardersLock;
+};
+
 
 class UDPReceiver {
  public:

@@ -60,6 +60,7 @@ class UDPWBTransmitter {
 class UDPWBReceiver {
  public:
   UDPWBReceiver(const ROptions &options1, std::string client_addr, int client_udp_port) {
+	udpMultiForwarder=std::make_unique<SocketHelper::UDPMultiForwarder>();
 	addForwarder(std::move(client_addr), client_udp_port);
 	wbReceiver = std::make_unique<WBReceiver>(options1, [this](const uint8_t *payload, const std::size_t payloadSize) {
 	  onNewData(payload, payloadSize);
@@ -77,49 +78,21 @@ class UDPWBReceiver {
   void runInBackground() {
 	backgroundThread = std::make_unique<std::thread>(&UDPWBReceiver::loopUntilError, this);
   }
-  /**
-   * Add another UDP forwarding instance.
-   */
   void addForwarder(std::string client_addr, int client_udp_port) {
-	std::lock_guard<std::mutex> guard(udpForwardersLock);
-	// check if we already forward data to this addr::port tuple
-	for(const auto& udpForwarder:udpForwarders){
-	  if(udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port){
-		std::cout<<"UDPWBReceiver: already forwarding to:"<<client_addr<<":"<<client_udp_port<<"\n";
-		return;
-	  }
-	}
-	std::cout<<"UDPWBReceiver: add forwarding to:"<<client_addr<<":"<<client_udp_port<<"\n";
-	udpForwarders.emplace_back(std::make_unique<SocketHelper::UDPForwarder>(client_addr, client_udp_port));
+	udpMultiForwarder->addForwarder(client_addr,client_udp_port);
   }
-  /**
-   * Remove an already existing udp forwarding instance.
-   * Do nothing if such an instance is not found.
-   */
   void removeForwarder(std::string client_addr, int client_udp_port) {
-	std::lock_guard<std::mutex> guard(udpForwardersLock);
-	udpForwarders.erase(std::find_if(udpForwarders.begin(),udpForwarders.end(), [&client_addr,&client_udp_port](const auto& udpForwarder) {
-	  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
-	}));
+	udpMultiForwarder->removeForwarder(client_addr,client_udp_port);
   }
   [[nodiscard]] std::string createDebug() const {
 	return wbReceiver->createDebugState();
   }
-  std::list<std::unique_ptr<SocketHelper::UDPForwarder>>& getForwarders(){
-	return udpForwarders;
-  }
  private:
   // forwards the data to all registered udp forwarder instances.
   void onNewData(const uint8_t *payload, const std::size_t payloadSize) {
-	std::lock_guard<std::mutex> guard(udpForwardersLock);
-	for (const auto &udpForwarder: udpForwarders) {
-	  udpForwarder->forwardPacketViaUDP(payload, payloadSize);
-	}
+	udpMultiForwarder->forwardPacketViaUDP(payload,payloadSize);
   }
-  // list of host::port tuples where we send the data to.
-  std::list<std::unique_ptr<SocketHelper::UDPForwarder>> udpForwarders;
-  // modifying the list of forwarders must be thread-safe
-  std::mutex udpForwardersLock;
+  std::unique_ptr<SocketHelper::UDPMultiForwarder> udpMultiForwarder;
   std::unique_ptr<WBReceiver> wbReceiver;
   std::unique_ptr<std::thread> backgroundThread;
 };
