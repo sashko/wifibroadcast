@@ -88,8 +88,8 @@ class WBTransmitter {
   * @return a string without new line at the end.
   */
   [[nodiscard]] std::string createDebugState() const;
- private:
   const TOptions options;
+ private:
   // send the current session key via WIFI (located in mEncryptor)
   void sendSessionKey();
   // for the FEC encoder

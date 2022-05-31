@@ -68,7 +68,6 @@ class WBReceiver {
   WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK callback);
   WBReceiver(const WBReceiver &) = delete;
   WBReceiver &operator=(const WBReceiver &) = delete;
-  //~WBReceiver()=default;
   void processPacket(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
   // dump statistics
   void dump_stats();
