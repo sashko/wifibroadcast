@@ -32,6 +32,7 @@
 #include <memory>
 #include <string>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <thread>
 
@@ -47,8 +48,8 @@ static FEC_VARIABLE_INPUT_TYPE convert(const TOptions &options) {
   assert(false);
 }
 
-WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, const TOptions &options1) :
-	options(options1),
+WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, TOptions options1) :
+	options(std::move(options1)),
 	mPcapTransmitter(options.wlan),
 	mEncryptor(options.keypair),
 	mRadiotapHeader(radiotapHeader),
@@ -56,7 +57,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, const TOptions &opti
 	IS_FEC_DISABLED(options.fec_k.index() == 0 && std::get<int>(options.fec_k) == 0),
 	// FEC is variable if k is an string
 	IS_FEC_VARIABLE(options.fec_k.index() == 1),
-	fecVariableInputType(convert(options1)) {
+	fecVariableInputType(convert(options)) {
   std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";
   mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (IS_FEC_DISABLED) {

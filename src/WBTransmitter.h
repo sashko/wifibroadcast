@@ -69,7 +69,7 @@ class WBTransmitter {
    * @param radiotapHeader the radiotap header that is used for injecting, contains configurable data like the mcs index.
    * @param options1 options for this instance, some of them are forwarded to the receiver instance.
    */
-  WBTransmitter(RadiotapHeader radiotapHeader, const TOptions &options1);
+  WBTransmitter(RadiotapHeader radiotapHeader, TOptions options1);
   WBTransmitter(const WBTransmitter &) = delete;
   WBTransmitter &operator=(const WBTransmitter &) = delete;
   ~WBTransmitter();
