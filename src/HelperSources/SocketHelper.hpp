@@ -152,43 +152,46 @@ class UDPForwarder {
 /**
  * Similar to UDP forwarder, but allows forwarding the same data to 0 or more IP::Port tuples
  */
-class UDPMultiForwarder{
+class UDPMultiForwarder {
  public:
   /**
   * Start forwarding data to another IP::Port tuple
   */
-  void addForwarder(const std::string& client_addr, int client_udp_port) {
+  void addForwarder(const std::string &client_addr, int client_udp_port) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
 	// check if we already forward data to this IP::Port tuple
-	for(const auto& udpForwarder:udpForwarders){
-	  if(udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port){
-		std::cout<<"UDPMultiForwarder: already forwarding to:"<<client_addr<<":"<<client_udp_port<<"\n";
+	for (const auto &udpForwarder: udpForwarders) {
+	  if (udpForwarder->client_addr == client_addr && udpForwarder->client_udp_port == client_udp_port) {
+		std::cout << "UDPMultiForwarder: already forwarding to:" << client_addr << ":" << client_udp_port << "\n";
 		return;
 	  }
 	}
-	std::cout<<"UDPMultiForwarder: add forwarding to:"<<client_addr<<":"<<client_udp_port<<"\n";
+	std::cout << "UDPMultiForwarder: add forwarding to:" << client_addr << ":" << client_udp_port << "\n";
 	udpForwarders.emplace_back(std::make_unique<SocketHelper::UDPForwarder>(client_addr, client_udp_port));
   }
   /**
   * Remove an already existing udp forwarding instance.
   * Do nothing if such an instance is not found.
   */
-  void removeForwarder(const std::string& client_addr, int client_udp_port) {
+  void removeForwarder(const std::string &client_addr, int client_udp_port) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
-	udpForwarders.erase(std::find_if(udpForwarders.begin(),udpForwarders.end(), [&client_addr,&client_udp_port](const auto& udpForwarder) {
-	  return udpForwarder->client_addr==client_addr && udpForwarder->client_udp_port==client_udp_port;
-	}));
+	udpForwarders.erase(std::find_if(udpForwarders.begin(),
+									 udpForwarders.end(),
+									 [&client_addr, &client_udp_port](const auto &udpForwarder) {
+									   return udpForwarder->client_addr == client_addr
+										   && udpForwarder->client_udp_port == client_udp_port;
+									 }));
   }
   /**
    * Forward data to all added IP::Port tuples via UDP
    */
-  void forwardPacketViaUDP(const uint8_t *packet, const std::size_t packetSize){
+  void forwardPacketViaUDP(const uint8_t *packet, const std::size_t packetSize) {
 	std::lock_guard<std::mutex> guard(udpForwardersLock);
 	for (const auto &udpForwarder: udpForwarders) {
-	  udpForwarder->forwardPacketViaUDP(packet,packetSize);
+	  udpForwarder->forwardPacketViaUDP(packet, packetSize);
 	}
   }
-  [[nodiscard]] const std::list<std::unique_ptr<SocketHelper::UDPForwarder>>& getForwarders()const{
+  [[nodiscard]] const std::list<std::unique_ptr<SocketHelper::UDPForwarder>> &getForwarders() const {
 	return udpForwarders;
   }
  private:
@@ -197,7 +200,6 @@ class UDPMultiForwarder{
   // modifying the list of forwarders must be thread-safe
   std::mutex udpForwardersLock;
 };
-
 
 class UDPReceiver {
  public:
