@@ -32,8 +32,8 @@
 #include <sstream>
 #include <utility>
 
-WBReceiver::WBReceiver(const ROptions &options1, OUTPUT_DATA_CALLBACK callback) :
-	options(options1),
+WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK callback) :
+	options(std::move(options1)),
 	mDecryptor(options.keypair),
 	mOutputDataCallback(std::move(callback)) {
   std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";

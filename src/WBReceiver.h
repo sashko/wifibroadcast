@@ -65,7 +65,7 @@ class WBReceiver {
    * @param options1 the options for this instance (some options - so to say - come from the tx instance)
    * @param callback Callback that is called with the decoded data, can be null for debugging.
    */
-  WBReceiver(const ROptions &options1, OUTPUT_DATA_CALLBACK callback);
+  WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK callback);
   WBReceiver(const WBReceiver &) = delete;
   WBReceiver &operator=(const WBReceiver &) = delete;
   //~WBReceiver()=default;
