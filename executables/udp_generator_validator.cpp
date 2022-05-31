@@ -142,9 +142,9 @@ static void loopUntilDone(const Options& options){
 	  sequenceNumberDebugger.sequenceNumber(info.seqNr);
 
 	  auto validPacket=randomBufferPot->getBuffer(info.seqNr);
-	  TestPacket::writeTestPacketHeader(*validPacket.get(),{info.seqNr,0});
+	  TestPacket::writeTestPacketHeader(*validPacket,{info.seqNr,0});
 
-	  bool valid=TestPacket::checkPayloadMatches(receivedPacket,*validPacket.get());
+	  bool valid=TestPacket::checkPayloadMatches(receivedPacket,*validPacket);
 
 	  if(valid){
 		nValidPackets++;
