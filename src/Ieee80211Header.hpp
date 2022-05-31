@@ -89,8 +89,8 @@ class Ieee80211Header {
   void setSequenceControl(const SequenceControl &sequenceControl) {
 	memcpy(&data[FRAME_SEQ_LB], (void *)&sequenceControl, sizeof(SequenceControl));
   };
-  SequenceControl getSequenceControl() const {
-	SequenceControl ret;
+  [[nodiscard]] SequenceControl getSequenceControl() const {
+	SequenceControl ret{};
 	memcpy(&ret, &data[FRAME_SEQ_LB], sizeof(SequenceControl));
 	return ret;
   }
