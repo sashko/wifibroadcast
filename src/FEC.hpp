@@ -36,14 +36,14 @@
  */
 template<std::size_t S>
 void fecEncode(unsigned int fragmentSize,
-			   std::vector<std::array<uint8_t, S>> &blockBuffer,
-			   unsigned int nPrimaryFragments,
-			   unsigned int nSecondaryFragments) {
+               std::vector<std::array<uint8_t, S>> &blockBuffer,
+               unsigned int nPrimaryFragments,
+               unsigned int nSecondaryFragments) {
   assert(fragmentSize <= S);
   assert(nPrimaryFragments + nSecondaryFragments <= blockBuffer.size());
   auto primaryFragmentsP = GenericHelper::convertToP_const(blockBuffer, 0, nPrimaryFragments);
   auto secondaryFragmentsP =
-	  GenericHelper::convertToP(blockBuffer, nPrimaryFragments, blockBuffer.size() - nPrimaryFragments);
+      GenericHelper::convertToP(blockBuffer, nPrimaryFragments, blockBuffer.size() - nPrimaryFragments);
   secondaryFragmentsP.resize(nSecondaryFragments);
   //const auto before=std::chrono::steady_clock::now();
   fec_encode2(fragmentSize, primaryFragmentsP, secondaryFragmentsP);
@@ -63,29 +63,29 @@ enum FragmentStatus { UNAVAILABLE = 0, AVAILABLE = 1 };
  */
 template<std::size_t S>
 std::vector<unsigned int> fecDecode(unsigned int fragmentSize,
-									std::vector<std::array<uint8_t, S>> &blockBuffer,
-									const unsigned int nPrimaryFragments,
-									const std::vector<FragmentStatus> &fragmentStatusList) {
+                                    std::vector<std::array<uint8_t, S>> &blockBuffer,
+                                    const unsigned int nPrimaryFragments,
+                                    const std::vector<FragmentStatus> &fragmentStatusList) {
   assert(fragmentSize <= S);
   assert(fragmentStatusList.size() <= blockBuffer.size());
   assert(fragmentStatusList.size() == blockBuffer.size());
   std::vector<unsigned int> indicesMissingPrimaryFragments;
   std::vector<uint8_t *> primaryFragmentP(nPrimaryFragments);
   for (unsigned int idx = 0; idx < nPrimaryFragments; idx++) {
-	if (fragmentStatusList[idx] == UNAVAILABLE) {
-	  indicesMissingPrimaryFragments.push_back(idx);
-	}
-	primaryFragmentP[idx] = blockBuffer[idx].data();
+    if (fragmentStatusList[idx] == UNAVAILABLE) {
+      indicesMissingPrimaryFragments.push_back(idx);
+    }
+    primaryFragmentP[idx] = blockBuffer[idx].data();
   }
   // find enough secondary fragments
   std::vector<uint8_t *> secondaryFragmentP;
   std::vector<unsigned int> secondaryFragmentIndices;
   for (int i = 0; i < fragmentStatusList.size() - nPrimaryFragments; i++) {
-	const auto idx = nPrimaryFragments + i;
-	if (fragmentStatusList[idx] == AVAILABLE) {
-	  secondaryFragmentP.push_back(blockBuffer[idx].data());
-	  secondaryFragmentIndices.push_back(i);
-	}
+    const auto idx = nPrimaryFragments + i;
+    if (fragmentStatusList[idx] == AVAILABLE) {
+      secondaryFragmentP.push_back(blockBuffer[idx].data());
+      secondaryFragmentIndices.push_back(i);
+    }
   }
   // make sure we got enough secondary fragments
   assert(secondaryFragmentP.size() >= indicesMissingPrimaryFragments.size());
@@ -93,10 +93,10 @@ std::vector<unsigned int> fecDecode(unsigned int fragmentSize,
   assert(indicesMissingPrimaryFragments.size() == secondaryFragmentP.size());
   // do fec step
   fec_decode2(fragmentSize,
-			  primaryFragmentP,
-			  indicesMissingPrimaryFragments,
-			  secondaryFragmentP,
-			  secondaryFragmentIndices);
+              primaryFragmentP,
+              indicesMissingPrimaryFragments,
+              secondaryFragmentP,
+              secondaryFragmentIndices);
   return indicesMissingPrimaryFragments;
 }
 
@@ -107,34 +107,34 @@ static void testFecCPlusPlusWrapperY(const int nPrimaryFragments, const int nSec
 
   auto txBlockBuffer = GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments + nSecondaryFragments);
   std::cout << "XSelected nPrimaryFragments:" << nPrimaryFragments << " nSecondaryFragments:" << nSecondaryFragments
-			<< "\n";
+            << "\n";
 
   fecEncode(FRAGMENT_SIZE, txBlockBuffer, nPrimaryFragments, nSecondaryFragments);
   std::cout << "Encode done\n";
 
   for (int test = 0; test < 100; test++) {
-	// takes nPrimaryFragments random (possible) indices without duplicates
-	// NOTE: Perhaps you could calculate all possible permutations, but these would be quite a lot.
-	// Therefore, I just use n random selections of received indices
-	auto receivedFragmentIndices = GenericHelper::takeNRandomElements(
-		GenericHelper::createIndices(nPrimaryFragments + nSecondaryFragments),
-		nPrimaryFragments);
-	assert(receivedFragmentIndices.size() == nPrimaryFragments);
-	std::cout << "(Emulated) receivedFragmentIndices" << StringHelper::vectorAsString(receivedFragmentIndices) << "\n";
+    // takes nPrimaryFragments random (possible) indices without duplicates
+    // NOTE: Perhaps you could calculate all possible permutations, but these would be quite a lot.
+    // Therefore, I just use n random selections of received indices
+    auto receivedFragmentIndices = GenericHelper::takeNRandomElements(
+        GenericHelper::createIndices(nPrimaryFragments + nSecondaryFragments),
+        nPrimaryFragments);
+    assert(receivedFragmentIndices.size() == nPrimaryFragments);
+    std::cout << "(Emulated) receivedFragmentIndices" << StringHelper::vectorAsString(receivedFragmentIndices) << "\n";
 
-	auto rxBlockBuffer = std::vector<std::array<uint8_t, FRAGMENT_SIZE>>(nPrimaryFragments + nSecondaryFragments);
-	std::vector<FragmentStatus> fragmentMap(nPrimaryFragments + nSecondaryFragments, FragmentStatus::UNAVAILABLE);
-	for (const auto idx: receivedFragmentIndices) {
-	  rxBlockBuffer[idx] = txBlockBuffer[idx];
-	  fragmentMap[idx] = FragmentStatus::AVAILABLE;
-	}
+    auto rxBlockBuffer = std::vector<std::array<uint8_t, FRAGMENT_SIZE>>(nPrimaryFragments + nSecondaryFragments);
+    std::vector<FragmentStatus> fragmentMap(nPrimaryFragments + nSecondaryFragments, FragmentStatus::UNAVAILABLE);
+    for (const auto idx: receivedFragmentIndices) {
+      rxBlockBuffer[idx] = txBlockBuffer[idx];
+      fragmentMap[idx] = FragmentStatus::AVAILABLE;
+    }
 
-	fecDecode(FRAGMENT_SIZE, rxBlockBuffer, nPrimaryFragments, fragmentMap);
+    fecDecode(FRAGMENT_SIZE, rxBlockBuffer, nPrimaryFragments, fragmentMap);
 
-	for (unsigned int i = 0; i < nPrimaryFragments; i++) {
-	  //std::cout<<"Comparing fragment:"<<i<<"\n";
-	  GenericHelper::assertArraysEqual(txBlockBuffer[i], rxBlockBuffer[i]);
-	}
+    for (unsigned int i = 0; i < nPrimaryFragments; i++) {
+      //std::cout<<"Comparing fragment:"<<i<<"\n";
+      GenericHelper::assertArraysEqual(txBlockBuffer[i], rxBlockBuffer[i]);
+    }
   }
 }
 
@@ -147,9 +147,9 @@ static void testFecCPlusPlusWrapperX() {
   constexpr auto MAX_N_P_F = 32;
   constexpr auto MAX_N_S_F = 32;
   for (int nPrimaryFragments = 1; nPrimaryFragments < MAX_N_P_F; nPrimaryFragments++) {
-	for (int nSecondaryFragments = 0; nSecondaryFragments < MAX_N_S_F; nSecondaryFragments++) {
-	  testFecCPlusPlusWrapperY(nPrimaryFragments, nSecondaryFragments);
-	}
+    for (int nSecondaryFragments = 0; nSecondaryFragments < MAX_N_S_F; nSecondaryFragments++) {
+      testFecCPlusPlusWrapperY(nPrimaryFragments, nSecondaryFragments);
+    }
   }
   std::cout << "testFecCPlusPlusWrapper End\n";
 }

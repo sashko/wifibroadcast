@@ -16,35 +16,35 @@
 class SequenceNumberDebugger {
  public:
   SequenceNumberDebugger() {
-	gapsBetweenLostPackets.reserve(1000);
+    gapsBetweenLostPackets.reserve(1000);
   }
   /**
    * Call when a new squence number is received
    * @param seqNr the received sequence number.
    */
   void sequenceNumber(const int64_t seqNr) {
-	nReceivedPackets++;
-	auto delta = seqNr - lastReceivedSequenceNr;
-	if (delta <= 0) {
-	  std::cerr << "ERROR got packet nr:" << seqNr << "after packet nr:" << lastReceivedSequenceNr << "\n";
-	  return;
-	}
-	if (delta > 1) {
-	  nLostPackets += delta - 1;
-	  gapsBetweenLostPackets.push_back(delta);
-	}
-	lastReceivedSequenceNr = seqNr;
+    nReceivedPackets++;
+    auto delta = seqNr - lastReceivedSequenceNr;
+    if (delta <= 0) {
+      std::cerr << "ERROR got packet nr:" << seqNr << "after packet nr:" << lastReceivedSequenceNr << "\n";
+      return;
+    }
+    if (delta > 1) {
+      nLostPackets += delta - 1;
+      gapsBetweenLostPackets.push_back(delta);
+    }
+    lastReceivedSequenceNr = seqNr;
   }
   /**
    * Log information about the lost packets and gaps between them.
    * @param clear clear the already accumulated data.
    */
   void debug(bool clear) {
-	std::cout << "N packets received:" << nReceivedPackets << "\tlost:" << nLostPackets << "\n";
-	std::cout << "Packet gaps:" << StringHelper::vectorAsString(gapsBetweenLostPackets) << "\n";
-	if (clear) {
-	  gapsBetweenLostPackets.resize(0);
-	}
+    std::cout << "N packets received:" << nReceivedPackets << "\tlost:" << nLostPackets << "\n";
+    std::cout << "Packet gaps:" << StringHelper::vectorAsString(gapsBetweenLostPackets) << "\n";
+    if (clear) {
+      gapsBetweenLostPackets.resize(0);
+    }
   }
  private:
   std::int64_t lastReceivedSequenceNr = -1;

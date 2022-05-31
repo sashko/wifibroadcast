@@ -74,57 +74,57 @@ static_assert(sizeof(fu_header_h265_t) == 1);
 // returns true if the FEC encoder shall end the block with this packet
 static bool h264_end_block(const uint8_t *payload, const std::size_t payloadSize) {
   if (payloadSize < RTP_HEADER_SIZE + sizeof(H264::nalu_header_t)) {
-	std::cerr << "Got packet that cannot be rtp h264\n";
-	return false;
+    std::cerr << "Got packet that cannot be rtp h264\n";
+    return false;
   }
-  const H264::nalu_header_t &naluHeader = *(H264::nalu_header_t *)(&payload[RTP_HEADER_SIZE]);
+  const H264::nalu_header_t &naluHeader = *(H264::nalu_header_t *) (&payload[RTP_HEADER_SIZE]);
   if (naluHeader.type == 28) {// fragmented nalu
-	if (payloadSize < RTP_HEADER_SIZE + sizeof(H264::nalu_header_t) + sizeof(H264::fu_header_t)) {
-	  std::cerr << "Got invalid h264 rtp fu packet\n";
-	  return false;
-	}
-	//std::cout<<"Got fragmented NALU\n";
-	const H264::fu_header_t &fuHeader = *(H264::fu_header_t *)&payload[RTP_HEADER_SIZE + sizeof(H264::nalu_header_t)];
-	if (fuHeader.e) {
-	  //std::cout<<"Got end of fragmented NALU\n";
-	  // end of fu-a
-	  return true;
-	} else {
-	  //std::cout<<"Got start or middle of fragmented NALU\n";
-	  return false;
-	}
+    if (payloadSize < RTP_HEADER_SIZE + sizeof(H264::nalu_header_t) + sizeof(H264::fu_header_t)) {
+      std::cerr << "Got invalid h264 rtp fu packet\n";
+      return false;
+    }
+    //std::cout<<"Got fragmented NALU\n";
+    const H264::fu_header_t &fuHeader = *(H264::fu_header_t *) &payload[RTP_HEADER_SIZE + sizeof(H264::nalu_header_t)];
+    if (fuHeader.e) {
+      //std::cout<<"Got end of fragmented NALU\n";
+      // end of fu-a
+      return true;
+    } else {
+      //std::cout<<"Got start or middle of fragmented NALU\n";
+      return false;
+    }
   } else if (naluHeader.type > 0 && naluHeader.type < 24) {//full nalu
-	//std::cout<<"Got full NALU\n";
-	return true;
+    //std::cout<<"Got full NALU\n";
+    return true;
   } else {
-	std::cerr << "Unknown rtp h264 packet\n";
-	return true;
+    std::cerr << "Unknown rtp h264 packet\n";
+    return true;
   }
 }
 static bool h265_end_block(const uint8_t *payload, const std::size_t payloadSize) {
   if (payloadSize < RTP_HEADER_SIZE + sizeof(H265::nal_unit_header_h265_t)) {
-	std::cerr << "Got packet that cannot be rtp h265\n";
-	return false;
+    std::cerr << "Got packet that cannot be rtp h265\n";
+    return false;
   }
-  const H265::nal_unit_header_h265_t &naluHeader = *(H265::nal_unit_header_h265_t *)(&payload[RTP_HEADER_SIZE]);
+  const H265::nal_unit_header_h265_t &naluHeader = *(H265::nal_unit_header_h265_t *) (&payload[RTP_HEADER_SIZE]);
   if (naluHeader.type == 49) {
-	if (payloadSize < RTP_HEADER_SIZE + sizeof(H265::nal_unit_header_h265_t) + sizeof(H265::fu_header_h265_t)) {
-	  std::cerr << "Got invalid h265 rtp fu packet\n";
-	  return false;
-	}
-	const H265::fu_header_h265_t
-		&fuHeader = *(H265::fu_header_h265_t *)&payload[RTP_HEADER_SIZE + sizeof(H265::nal_unit_header_h265_t)];
-	if (fuHeader.e) {
-	  //std::cout<<"Got end of fragmented NALU\n";
-	  // end of fu-a
-	  return true;
-	} else {
-	  //std::cout<<"Got start or middle of fragmented NALU\n";
-	  return false;
-	}
+    if (payloadSize < RTP_HEADER_SIZE + sizeof(H265::nal_unit_header_h265_t) + sizeof(H265::fu_header_h265_t)) {
+      std::cerr << "Got invalid h265 rtp fu packet\n";
+      return false;
+    }
+    const H265::fu_header_h265_t
+        &fuHeader = *(H265::fu_header_h265_t *) &payload[RTP_HEADER_SIZE + sizeof(H265::nal_unit_header_h265_t)];
+    if (fuHeader.e) {
+      //std::cout<<"Got end of fragmented NALU\n";
+      // end of fu-a
+      return true;
+    } else {
+      //std::cout<<"Got start or middle of fragmented NALU\n";
+      return false;
+    }
   } else {
-	//std::cout<<"Got h265 nalu that is not a fragmentation unit\n";
-	return true;
+    //std::cout<<"Got h265 nalu that is not a fragmentation unit\n";
+    return true;
   }
 }
 static bool mjpeg_end_block(const uint8_t *payload, const std::size_t payloadSize) {

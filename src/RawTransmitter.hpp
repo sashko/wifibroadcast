@@ -32,13 +32,13 @@ class AbstractWBPacket {
  public:
   // constructor for packet without header (or the header is already merged into payload)
   AbstractWBPacket(const uint8_t *payload, const std::size_t payloadSize) :
-	  customHeader(nullptr), customHeaderSize(0), payload(payload), payloadSize(payloadSize) {};
+      customHeader(nullptr), customHeaderSize(0), payload(payload), payloadSize(payloadSize) {};
   // constructor for packet with header and payload at different memory locations
   AbstractWBPacket(const uint8_t *customHeader,
-				   const std::size_t customHeaderSize,
-				   const uint8_t *payload,
-				   const std::size_t payloadSize) :
-	  customHeader(customHeader), customHeaderSize(customHeaderSize), payload(payload), payloadSize(payloadSize) {};
+                   const std::size_t customHeaderSize,
+                   const uint8_t *payload,
+                   const std::size_t payloadSize) :
+      customHeader(customHeader), customHeaderSize(customHeaderSize), payload(payload), payloadSize(payloadSize) {};
   AbstractWBPacket(AbstractWBPacket &) = delete;
   AbstractWBPacket(AbstractWBPacket &&) = delete;
  public:
@@ -57,8 +57,8 @@ namespace RawTransmitterHelper {
 // [RadiotapHeader | Ieee80211Header | customHeader (if not size 0) | payload (if not size 0)]
 static std::vector<uint8_t>
 createRadiotapPacket(const RadiotapHeader &radiotapHeader,
-					 const Ieee80211Header &ieee80211Header,
-					 const AbstractWBPacket &abstractWbPacket) {
+                     const Ieee80211Header &ieee80211Header,
+                     const AbstractWBPacket &abstractWbPacket) {
   const auto customHeaderAndPayloadSize = abstractWbPacket.customHeaderSize + abstractWbPacket.payloadSize;
   std::vector<uint8_t> packet(radiotapHeader.getSize() + ieee80211Header.getSize() + customHeaderAndPayloadSize);
   uint8_t *p = packet.data();
@@ -69,20 +69,20 @@ createRadiotapPacket(const RadiotapHeader &radiotapHeader,
   memcpy(p, ieee80211Header.getData(), ieee80211Header.getSize());
   p += ieee80211Header.getSize();
   if (abstractWbPacket.customHeaderSize > 0) {
-	// customHeader
-	memcpy(p, abstractWbPacket.customHeader, abstractWbPacket.customHeaderSize);
-	p += abstractWbPacket.customHeaderSize;
+    // customHeader
+    memcpy(p, abstractWbPacket.customHeader, abstractWbPacket.customHeaderSize);
+    p += abstractWbPacket.customHeaderSize;
   }
   if (abstractWbPacket.payloadSize > 0) {
-	// payload
-	memcpy(p, abstractWbPacket.payload, abstractWbPacket.payloadSize);
+    // payload
+    memcpy(p, abstractWbPacket.payload, abstractWbPacket.payloadSize);
   }
   return packet;
 }
 // throw runtime exception if injecting pcap packet goes wrong (should never happen)
 static void injectPacket(pcap_t *pcap, const std::vector<uint8_t> &packetData) {
-  if (pcap_inject(pcap, packetData.data(), packetData.size()) != (int)packetData.size()) {
-	throw std::runtime_error(StringFormat::convert("Unable to inject packet %s", pcap_geterr(pcap)));
+  if (pcap_inject(pcap, packetData.data(), packetData.size()) != (int) packetData.size()) {
+    throw std::runtime_error(StringFormat::convert("Unable to inject packet %s", pcap_geterr(pcap)));
   }
 }
 // copy paste from svpcom
@@ -90,7 +90,7 @@ static pcap_t *openTxWithPcap(const std::string &wlan) {
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_t *p = pcap_create(wlan.c_str(), errbuf);
   if (p == nullptr) {
-	throw std::runtime_error(StringFormat::convert("Unable to open interface %s in pcap: %s", wlan.c_str(), errbuf));
+    throw std::runtime_error(StringFormat::convert("Unable to open interface %s in pcap: %s", wlan.c_str(), errbuf));
   }
   if (pcap_set_snaplen(p, 4096) != 0) throw std::runtime_error("set_snaplen failed");
   if (pcap_set_promisc(p, 1) != 0) throw std::runtime_error("set_promisc failed");
@@ -100,8 +100,8 @@ static pcap_t *openTxWithPcap(const std::string &wlan) {
   // hm don't think it is needed on tx
   //better not enable stuff that is not needed if(pcap_set_immediate_mode(p,true)!=0)throw std::runtime_error(StringFormat::convert("pcap_set_immediate_mode failed: %s", pcap_geterr(p)));
   if (pcap_activate(p) != 0)
-	throw std::runtime_error(StringFormat::convert("pcap_activate failed: %s",
-												   pcap_geterr(p)));
+    throw std::runtime_error(StringFormat::convert("pcap_activate failed: %s",
+                                                   pcap_geterr(p)));
   //if (pcap_setnonblock(p, 1, errbuf) != 0) throw runtime_error(string_format("set_nonblock failed: %s", errbuf));
   return p;
 }
@@ -114,8 +114,8 @@ class IRawPacketInjector {
    * @return time it took to inject the packet
    */
   virtual std::chrono::steady_clock::duration injectPacket(const RadiotapHeader &radiotapHeader,
-														   const Ieee80211Header &ieee80211Header,
-														   const AbstractWBPacket &abstractWbPacket) const = 0;
+                                                           const Ieee80211Header &ieee80211Header,
+                                                           const AbstractWBPacket &abstractWbPacket) const = 0;
 };
 
 // Pcap Transmitter injects packets into the wifi adapter using pcap
@@ -124,26 +124,26 @@ class IRawPacketInjector {
 class PcapTransmitter : public IRawPacketInjector {
  public:
   explicit PcapTransmitter(const std::string &wlan) {
-	ppcap = RawTransmitterHelper::openTxWithPcap(wlan);
+    ppcap = RawTransmitterHelper::openTxWithPcap(wlan);
   }
   ~PcapTransmitter() {
-	pcap_close(ppcap);
+    pcap_close(ppcap);
   }
   // inject packet by prefixing wifibroadcast packet with the IEE and Radiotap header
   // return: time it took to inject the packet.If the injection time is absurdly high, you might want to do something about it
   std::chrono::steady_clock::duration injectPacket(const RadiotapHeader &radiotapHeader,
-												   const Ieee80211Header &ieee80211Header,
-												   const AbstractWBPacket &abstractWbPacket) const {
-	const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
-	const auto before = std::chrono::steady_clock::now();
-	RawTransmitterHelper::injectPacket(ppcap, packet);
-	return std::chrono::steady_clock::now() - before;
+                                                   const Ieee80211Header &ieee80211Header,
+                                                   const AbstractWBPacket &abstractWbPacket) const {
+    const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
+    const auto before = std::chrono::steady_clock::now();
+    RawTransmitterHelper::injectPacket(ppcap, packet);
+    return std::chrono::steady_clock::now() - before;
   }
   void injectControllFrame(const RadiotapHeader &radiotapHeader, const std::vector<uint8_t> &iee80211ControllHeader) {
-	std::vector<uint8_t> packet(radiotapHeader.getSize() + iee80211ControllHeader.size());
-	memcpy(packet.data(), &radiotapHeader, RadiotapHeader::SIZE_BYTES);
-	memcpy(&packet[RadiotapHeader::SIZE_BYTES], iee80211ControllHeader.data(), iee80211ControllHeader.size());
-	RawTransmitterHelper::injectPacket(ppcap, packet);
+    std::vector<uint8_t> packet(radiotapHeader.getSize() + iee80211ControllHeader.size());
+    memcpy(packet.data(), &radiotapHeader, RadiotapHeader::SIZE_BYTES);
+    memcpy(&packet[RadiotapHeader::SIZE_BYTES], iee80211ControllHeader.data(), iee80211ControllHeader.size());
+    RawTransmitterHelper::injectPacket(ppcap, packet);
   }
  private:
   pcap_t *ppcap;
@@ -155,66 +155,66 @@ class PcapTransmitter : public IRawPacketInjector {
 class RawSocketTransmitter : public IRawPacketInjector {
  public:
   explicit RawSocketTransmitter(const std::string &wlan) {
-	sockFd = openWifiInterfaceAsTxRawSocket(wlan);
+    sockFd = openWifiInterfaceAsTxRawSocket(wlan);
   }
   ~RawSocketTransmitter() {
-	close(sockFd);
+    close(sockFd);
   }
   // inject packet by prefixing wifibroadcast packet with the IEE and Radiotap header
   // return: time it took to inject the packet.If the injection time is absurdly high, you might want to do something about it
   std::chrono::steady_clock::duration injectPacket(const RadiotapHeader &radiotapHeader,
-												   const Ieee80211Header &ieee80211Header,
-												   const AbstractWBPacket &abstractWbPacket) const {
-	const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
-	const auto before = std::chrono::steady_clock::now();
-	if (write(sockFd, packet.data(), packet.size()) != packet.size()) {
-	  throw std::runtime_error(StringFormat::convert("Unable to inject packet (raw sock) %s", strerror(errno)));
-	}
-	return std::chrono::steady_clock::now() - before;
+                                                   const Ieee80211Header &ieee80211Header,
+                                                   const AbstractWBPacket &abstractWbPacket) const {
+    const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
+    const auto before = std::chrono::steady_clock::now();
+    if (write(sockFd, packet.data(), packet.size()) != packet.size()) {
+      throw std::runtime_error(StringFormat::convert("Unable to inject packet (raw sock) %s", strerror(errno)));
+    }
+    return std::chrono::steady_clock::now() - before;
   }
   // taken from https://github.com/OpenHD/Open.HD/blob/2.0/wifibroadcast-base/tx_rawsock.c#L86
   // open wifi interface using a socket (somehow this works ?!)
   static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
-	struct sockaddr_ll ll_addr{};
-	struct ifreq ifr{};
-	int sock = socket(AF_PACKET, SOCK_RAW, 0);
-	if (sock == -1) {
-	  throw std::runtime_error(StringFormat::convert("Socket failed %s %s", wifi.c_str(), strerror(errno)));
-	}
+    struct sockaddr_ll ll_addr{};
+    struct ifreq ifr{};
+    int sock = socket(AF_PACKET, SOCK_RAW, 0);
+    if (sock == -1) {
+      throw std::runtime_error(StringFormat::convert("Socket failed %s %s", wifi.c_str(), strerror(errno)));
+    }
 
-	ll_addr.sll_family = AF_PACKET;
-	ll_addr.sll_protocol = 0;
-	ll_addr.sll_halen = ETH_ALEN;
+    ll_addr.sll_family = AF_PACKET;
+    ll_addr.sll_protocol = 0;
+    ll_addr.sll_halen = ETH_ALEN;
 
-	strncpy(ifr.ifr_name, wifi.c_str(), IFNAMSIZ);
+    strncpy(ifr.ifr_name, wifi.c_str(), IFNAMSIZ);
 
-	if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
-	  throw std::runtime_error(StringFormat::convert("ioctl(SIOCGIFINDEX) failed\n"));
-	}
+    if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
+      throw std::runtime_error(StringFormat::convert("ioctl(SIOCGIFINDEX) failed\n"));
+    }
 
-	ll_addr.sll_ifindex = ifr.ifr_ifindex;
+    ll_addr.sll_ifindex = ifr.ifr_ifindex;
 
-	if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
-	  throw std::runtime_error(StringFormat::convert("ioctl(SIOCGIFHWADDR) failed\n"));
-	}
+    if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
+      throw std::runtime_error(StringFormat::convert("ioctl(SIOCGIFHWADDR) failed\n"));
+    }
 
-	memcpy(ll_addr.sll_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
+    memcpy(ll_addr.sll_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 
-	if (bind(sock, (struct sockaddr *)&ll_addr, sizeof(ll_addr)) == -1) {
-	  close(sock);
-	  throw std::runtime_error("bind failed\n");
-	}
-	struct timeval timeout;
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 8000;
-	if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
-	  throw std::runtime_error("setsockopt SO_SNDTIMEO\n");
-	}
-	int sendbuff = 131072;
-	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, sizeof(sendbuff)) < 0) {
-	  throw std::runtime_error("setsockopt SO_SNDBUF\n");
-	}
-	return sock;
+    if (bind(sock, (struct sockaddr *) &ll_addr, sizeof(ll_addr)) == -1) {
+      close(sock);
+      throw std::runtime_error("bind failed\n");
+    }
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 8000;
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout)) < 0) {
+      throw std::runtime_error("setsockopt SO_SNDTIMEO\n");
+    }
+    int sendbuff = 131072;
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, sizeof(sendbuff)) < 0) {
+      throw std::runtime_error("setsockopt SO_SNDBUF\n");
+    }
+    return sock;
   }
  private:
   int sockFd;

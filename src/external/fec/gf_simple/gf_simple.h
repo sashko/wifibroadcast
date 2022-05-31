@@ -22,12 +22,12 @@ gal8 gal_add(gal8 a, gal8 b) {
 gal8 gal_mul(gal8 a, gal8 b) {
   gal8 res = 0;
   for (; b; b >>= 1) {
-	if (b & 1)
-	  res ^= a;
-	if (a & 0x80)
-	  a = (a << 1) ^ min_poly;
-	else
-	  a <<= 1;
+    if (b & 1)
+      res ^= a;
+    if (a & 0x80)
+      a = (a << 1) ^ min_poly;
+    else
+      a <<= 1;
   }
   return res;
 }
@@ -43,13 +43,13 @@ gal8 gal_madd(gal8 x, gal8 a, gal8 b) {
 static void
 gal_mul_region(gf *dst, const gf *src, gf c, const int sz) {
   for (int i = 0; i < sz; i++) {
-	dst[i] = gal_mul(src[i], c);
+    dst[i] = gal_mul(src[i], c);
   }
 }
 static void
 gal_madd_region(gf *dst, const gf *src, gf c, const int sz) {
   for (int i = 0; i < sz; i++) {
-	dst[i] = gal_madd(dst[i], src[i], c);
+    dst[i] = gal_madd(dst[i], src[i], c);
   }
 }
 

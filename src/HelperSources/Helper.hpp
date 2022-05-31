@@ -60,13 +60,13 @@ namespace GenericHelper {
 static void fillBufferWithRandomData(std::vector<uint8_t> &data) {
   const std::size_t size = data.size();
   for (std::size_t i = 0; i < size; i++) {
-	data[i] = rand() % 255;
+    data[i] = rand() % 255;
   }
 }
 template<std::size_t size>
 static void fillBufferWithRandomData(std::array<uint8_t, size> &data) {
   for (std::size_t i = 0; i < size; i++) {
-	data[i] = rand() % 255;
+    data[i] = rand() % 255;
   }
 }
 // Create a buffer filled with random data of size sizeByes
@@ -86,18 +86,18 @@ static std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB, const
   assert(sizeBytes <= maxSizeB);
   assert(sizeBytes >= minSizeB);
   if (minSizeB == maxSizeB) {
-	assert(sizeBytes == minSizeB);
+    assert(sizeBytes == minSizeB);
   }
   return createRandomDataBuffer(sizeBytes);
 }
 // create n random data buffers with size [minSizeB,...,maxSizeB]
 static std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t nBuffers,
-																 const std::size_t minSizeB,
-																 const std::size_t maxSizeB) {
+                                                                 const std::size_t minSizeB,
+                                                                 const std::size_t maxSizeB) {
   assert(minSizeB >= 0);
   std::vector<std::vector<uint8_t>> buffers;
   for (std::size_t i = 0; i < nBuffers; i++) {
-	buffers.push_back(GenericHelper::createRandomDataBuffer(minSizeB, maxSizeB));
+    buffers.push_back(GenericHelper::createRandomDataBuffer(minSizeB, maxSizeB));
   }
   return buffers;
 }
@@ -105,13 +105,13 @@ template<std::size_t size>
 static std::vector<std::array<uint8_t, size>> createRandomDataBuffers(const std::size_t nBuffers) {
   std::vector<std::array<uint8_t, size>> ret(nBuffers);
   for (auto &buff: ret) {
-	GenericHelper::fillBufferWithRandomData(buff);
+    GenericHelper::fillBufferWithRandomData(buff);
   }
   return ret;
 }
 static bool compareVectors(const std::vector<uint8_t> &sb, const std::vector<uint8_t> &rb) {
   if (sb.size() != rb.size()) {
-	return false;
+    return false;
   }
   const int result = memcmp(sb.data(), rb.data(), sb.size());
   return result == 0;
@@ -125,8 +125,8 @@ template<std::size_t S>
 static void assertArraysEqual(const std::array<uint8_t, S> &sb, const std::array<uint8_t, S> &rb) {
   const int result = memcmp(sb.data(), rb.data(), sb.size());
   if (result != 0) {
-	//std::cout<<"Data1:"<<StringHelper::arrayAsString(sb)<<"\n";
-	//std::cout<<"Data2:"<<StringHelper::arrayAsString(rb)<<"\n";
+    //std::cout<<"Data1:"<<StringHelper::arrayAsString(sb)<<"\n";
+    //std::cout<<"Data2:"<<StringHelper::arrayAsString(rb)<<"\n";
   }
   assert(result == 0);
 }
@@ -137,9 +137,9 @@ static std::vector<unsigned int> takeNRandomElements(std::vector<unsigned int> v
   assert(nElements <= values.size());
   std::vector<unsigned int> ret;
   for (std::size_t i = 0; i < nElements; i++) {
-	const auto idx = rand() % values.size();
-	ret.push_back(values[idx]);
-	values.erase(values.begin() + idx);
+    const auto idx = rand() % values.size();
+    ret.push_back(values[idx]);
+    values.erase(values.begin() + idx);
   }
   assert(ret.size() == nElements);
   std::sort(ret.begin(), ret.end());
@@ -148,62 +148,62 @@ static std::vector<unsigned int> takeNRandomElements(std::vector<unsigned int> v
 static std::vector<unsigned int> createIndices(const std::size_t nIndices) {
   std::vector<unsigned int> ret(nIndices);
   for (std::size_t i = 0; i < ret.size(); i++) {
-	ret[i] = i;
+    ret[i] = i;
   }
   return ret;
 }
 template<std::size_t S>
 static std::vector<uint8_t *> convertToP(std::vector<std::array<uint8_t, S>> &buff,
-										 std::size_t offset = 0,
-										 std::size_t n = -1) {
+                                         std::size_t offset = 0,
+                                         std::size_t n = -1) {
   if (n == -1)n = buff.size();
   std::vector<uint8_t *> ret(n);
   for (int i = 0; i < ret.size(); i++) {
-	ret[i] = buff[offset + i].data();
+    ret[i] = buff[offset + i].data();
   }
   return ret;
 }
 template<std::size_t S>
 static std::vector<const uint8_t *> convertToP_const(std::vector<std::array<uint8_t, S>> &buff,
-													 std::size_t offset = 0,
-													 std::size_t n = -1) {
+                                                     std::size_t offset = 0,
+                                                     std::size_t n = -1) {
   if (n == -1)n = buff.size();
   std::vector<const uint8_t *> ret(n);
   for (int i = 0; i < ret.size(); i++) {
-	ret[i] = buff[offset + i].data();
+    ret[i] = buff[offset + i].data();
   }
   return ret;
 }
 // given an array of available indices, for each index int the rane [0...range[, check if this index is contained in the input array.
 // if not, the index is "missing" and added to the return array
 static std::vector<unsigned int> findMissingIndices(const std::vector<unsigned int> &indicesAvailable,
-													const std::size_t range) {
+                                                    const std::size_t range) {
   std::vector<unsigned int> indicesMissing;
   for (unsigned int i = 0; i < range; i++) {
-	auto found = indicesAvailable.end() != std::find(indicesAvailable.begin(), indicesAvailable.end(), i);
-	if (!found) {
-	  // if not found, add to missing
-	  //std::cout<<"Not found:"<<i<<"\n";
-	  indicesMissing.push_back(i);
-	}
+    auto found = indicesAvailable.end() != std::find(indicesAvailable.begin(), indicesAvailable.end(), i);
+    if (!found) {
+      // if not found, add to missing
+      //std::cout<<"Not found:"<<i<<"\n";
+      indicesMissing.push_back(i);
+    }
   }
   return indicesMissing;
 }
 using namespace std::chrono;
 static constexpr nanoseconds timevalToDuration(timeval tv) {
   auto duration = seconds{tv.tv_sec}
-	  + microseconds{tv.tv_usec};
+      + microseconds{tv.tv_usec};
   return duration_cast<nanoseconds>(duration);
 }
 static constexpr time_point<system_clock, nanoseconds>
 timevalToTimePointSystemClock(timeval tv) {
   return time_point<system_clock, nanoseconds>{
-	  duration_cast<system_clock::duration>(timevalToDuration(tv))};
+      duration_cast<system_clock::duration>(timevalToDuration(tv))};
 }
 static constexpr time_point<steady_clock, nanoseconds>
 timevalToTimePointSteadyClock(timeval tv) {
   return time_point<steady_clock, nanoseconds>{
-	  duration_cast<steady_clock::duration>(timevalToDuration(tv))};
+      duration_cast<steady_clock::duration>(timevalToDuration(tv))};
 }
 static constexpr timeval durationToTimeval(nanoseconds dur) {
   const auto secs = duration_cast<seconds>(dur);
@@ -218,10 +218,10 @@ namespace notstd {
 template<class F, class...Args>
 auto inline bind_front(F &&f, Args &&...args) {
   return [f = std::forward<F>(f), tup = std::make_tuple(std::forward<Args>(args)...)](auto &&... more_args)
-	  -> decltype(auto) {
-	return std::apply([&](auto &&...args) -> decltype(auto) {
-	  return std::invoke(f, decltype(args)(args)..., decltype(more_args)(more_args)...);
-	}, tup);
+      -> decltype(auto) {
+    return std::apply([&](auto &&...args) -> decltype(auto) {
+      return std::invoke(f, decltype(args)(args)..., decltype(more_args)(more_args)...);
+    }, tup);
   };
 }
 }

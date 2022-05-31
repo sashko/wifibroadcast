@@ -23,14 +23,14 @@
 class FECDisabledEncoder {
  public:
   typedef std::function<void(const uint64_t nonce, const uint8_t *payload, const std::size_t payloadSize)>
-	  OUTPUT_DATA_CALLBACK;
+      OUTPUT_DATA_CALLBACK;
   OUTPUT_DATA_CALLBACK outputDataCallback;
   void encodePacket(const uint8_t *buf, const size_t size) {
-	outputDataCallback(currPacketIndex, buf, size);
-	currPacketIndex++;
-	if (currPacketIndex == std::numeric_limits<uint64_t>::max()) {
-	  currPacketIndex = 0;
-	}
+    outputDataCallback(currPacketIndex, buf, size);
+    currPacketIndex++;
+    if (currPacketIndex == std::numeric_limits<uint64_t>::max()) {
+      currPacketIndex = 0;
+    }
   }
  private:
   // With a 64 bit sequence number we will NEVER overrun, no matter how long the tx/rx are running
@@ -52,25 +52,25 @@ class FECDisabledDecoder {
   //counting lost packets doesn't work in this mode. It should be done by the upper level
   //saves the last FEC_DISABLED_MAX_SIZE_OF_MAP sequence numbers. If the sequence number of a new packet is already inside the map, it is discarded (duplicate)
   void processRawDataBlockFecDisabled(const uint64_t packetSeq, const std::vector<uint8_t> &decrypted) {
-	if (firstEverPacket) {
-	  // first ever packet. Map should be empty
-	  fecDisabledMapOfReceivedSeqNr.clear();
-	  mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-	  fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
-	  firstEverPacket = false;
-	}
-	// check if packet is already known (inside the map)
-	const auto search = fecDisabledMapOfReceivedSeqNr.find(packetSeq);
-	if (search == fecDisabledMapOfReceivedSeqNr.end()) {
-	  // if packet is not in the map it was not yet received(unless it is older than MAX_SIZE_OF_MAP, but that is basically impossible)
-	  mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-	  fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
-	}// else this is a duplicate
-	// house keeping, do not increase size to infinity
-	if (fecDisabledMapOfReceivedSeqNr.size() >= FEC_DISABLED_MAX_SIZE_OF_MAP - 1) {
-	  // remove oldest element
-	  fecDisabledMapOfReceivedSeqNr.erase(fecDisabledMapOfReceivedSeqNr.begin());
-	}
+    if (firstEverPacket) {
+      // first ever packet. Map should be empty
+      fecDisabledMapOfReceivedSeqNr.clear();
+      mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
+      fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
+      firstEverPacket = false;
+    }
+    // check if packet is already known (inside the map)
+    const auto search = fecDisabledMapOfReceivedSeqNr.find(packetSeq);
+    if (search == fecDisabledMapOfReceivedSeqNr.end()) {
+      // if packet is not in the map it was not yet received(unless it is older than MAX_SIZE_OF_MAP, but that is basically impossible)
+      mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
+      fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
+    }// else this is a duplicate
+    // house keeping, do not increase size to infinity
+    if (fecDisabledMapOfReceivedSeqNr.size() >= FEC_DISABLED_MAX_SIZE_OF_MAP - 1) {
+      // remove oldest element
+      fecDisabledMapOfReceivedSeqNr.erase(fecDisabledMapOfReceivedSeqNr.begin());
+    }
   }
 };
 
