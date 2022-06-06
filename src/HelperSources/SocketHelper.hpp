@@ -138,8 +138,11 @@ class UDPForwarder {
   void forwardPacketViaUDP(const uint8_t *packet, const std::size_t packetSize) const {
     //std::cout<<"Send"<<packetSize<<"\n";
     //send(sockfd,packet,packetSize, MSG_DONTWAIT);
-    sendto(sockfd, packet, packetSize, 0, (const struct sockaddr *) &saddr,
+    const auto ret=sendto(sockfd, packet, packetSize, 0, (const struct sockaddr *) &saddr,
            sizeof(saddr));
+	if(ret <0 || ret != packetSize){
+	  std::cout<<"Error sending packet of size:"<<packetSize<<" to port:"<<saddr.sin_port<<" code:"<<ret<<"\n";
+	}
   }
  private:
   struct sockaddr_in saddr{};
