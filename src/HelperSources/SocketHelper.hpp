@@ -255,9 +255,7 @@ class UDPReceiver {
   }
   // Now this one is kinda special - for mavsdk we need to send messages from the port we are listening on to
   // a specific IP::PORT tuple (such that the source address of the then received packet matches the address we are listening on).
-  void XforwardPacketViaUDP(const std::string destIp,const int destPort,const uint8_t *packet, const std::size_t packetSize) const {
-    //std::cout<<"Send"<<packetSize<<"\n";
-    //send(sockfd,packet,packetSize, MSG_DONTWAIT);
+  void forwardPacketViaUDP(const std::string& destIp,const int destPort,const uint8_t *packet, const std::size_t packetSize) const {
 	//set up the destination
 	struct sockaddr_in saddr{};
     bzero((char *) &saddr, sizeof(saddr));
