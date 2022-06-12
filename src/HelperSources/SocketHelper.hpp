@@ -42,7 +42,12 @@
 #include <mutex>
 
 namespace SocketHelper {
+struct UDPConfig{
+  const std::string ip;
+  const int port;
+};
 static const std::string ADDRESS_LOCALHOST = "127.0.0.1";
+static const std::string ADDRESS_NULL="0.0.0.0";
 // returns the current socket receive timeout
 static std::chrono::nanoseconds getCurrentSocketReceiveTimeout(int socketFd) {
   timeval tv{};
@@ -94,7 +99,7 @@ static void increaseSocketRecvBuffer(int sockfd, const int wantedSize) {
 // Open the specified port for udp receiving
 // sets SO_REUSEADDR to true if possible
 // throws a runtime exception if opening the socket fails
-static int openUdpSocketForReceiving(const int port) {
+static int openUdpSocketForReceiving(const std::string& address,const int port) {
   int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket %d: %s", port, strerror(errno)));
   setSocketReuse(fd);
@@ -102,10 +107,10 @@ static int openUdpSocketForReceiving(const int port) {
   bzero((char *) &saddr, sizeof(saddr));
   saddr.sin_family = AF_INET;
   //saddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  inet_aton("127.0.0.1", (in_addr *) &saddr.sin_addr.s_addr);
+  inet_aton(address.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
   saddr.sin_port = htons((unsigned short) port);
   if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
-    throw std::runtime_error(StringFormat::convert("Bind error on socket %d: %s", port, strerror(errno)));
+    throw std::runtime_error(StringFormat::convert("Bind error on socket %s:%d: %s",address.c_str(), port, strerror(errno)));
   }
   return fd;
 }
@@ -129,6 +134,8 @@ class UDPForwarder {
     inet_aton(client_addr.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
     saddr.sin_port = htons((unsigned short) client_udp_port);
     std::cout << "UDPForwarder::configured for " << client_addr << " " << client_udp_port << "\n";
+	//
+
   }
   UDPForwarder(const UDPForwarder &) = delete;
   UDPForwarder &operator=(const UDPForwarder &) = delete;
@@ -142,6 +149,18 @@ class UDPForwarder {
            sizeof(saddr));
 	if(ret <0 || ret != packetSize){
 	  std::cout<<"Error sending packet of size:"<<packetSize<<" to port:"<<saddr.sin_port<<" code:"<<ret<<"\n";
+	}
+  }
+  void lula(std::string address,int port){
+	setSocketReuse(sockfd);
+	struct sockaddr_in saddr{};
+	bzero((char *) &saddr, sizeof(saddr));
+	saddr.sin_family = AF_INET;
+	//saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	inet_aton(address.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
+	saddr.sin_port = htons((unsigned short) port);
+	if (bind(sockfd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
+	  throw std::runtime_error(StringFormat::convert("Bind error on socket %s:%d: %s",address.c_str(), port, strerror(errno)));
 	}
   }
  private:
@@ -212,7 +231,7 @@ class UDPReceiver {
    * Receive data from socket and forward it via callback until stopLooping() is called
    */
   explicit UDPReceiver(std::string client_addr, int client_udp_port, OUTPUT_DATA_CALLBACK cb) : mCb(std::move(cb)) {
-    mSocket = SocketHelper::openUdpSocketForReceiving(client_udp_port);
+    mSocket = SocketHelper::openUdpSocketForReceiving(client_addr,client_udp_port);
     //increaseSocketRecvBuffer(mSocket,1024*1024);
     std::cout << "UDPReceiver created with " << client_addr << ":" << client_udp_port << "\n";
   }
@@ -233,6 +252,22 @@ class UDPReceiver {
       }
     }
     std::cout << "UDP end\n";
+  }
+  void XforwardPacketViaUDP(const std::string destIp,const int destPort,const uint8_t *packet, const std::size_t packetSize) const {
+    //std::cout<<"Send"<<packetSize<<"\n";
+    //send(sockfd,packet,packetSize, MSG_DONTWAIT);
+	//set up the destination
+	struct sockaddr_in saddr{};
+    bzero((char *) &saddr, sizeof(saddr));
+    saddr.sin_family = AF_INET;
+    //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
+    inet_aton(destIp.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
+    saddr.sin_port = htons((unsigned short)  destPort);
+    const auto ret=sendto(mSocket, packet, packetSize, 0, (const struct sockaddr *) &saddr,
+           sizeof(saddr));
+	if(ret <0 || ret != packetSize){
+	  std::cout<<"Error sending packet of size:"<<packetSize<<" to port:"<<saddr.sin_port<<" code:"<<ret<<"\n";
+	}
   }
   void stopLooping() {
     receiving = false;
