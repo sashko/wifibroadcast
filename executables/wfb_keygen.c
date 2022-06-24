@@ -21,39 +21,36 @@
 #include <stdio.h>
 #include <sodium.h>
 
-int main(void)
-{
-    unsigned char drone_publickey[crypto_box_PUBLICKEYBYTES];
-    unsigned char drone_secretkey[crypto_box_SECRETKEYBYTES];
-    unsigned char gs_publickey[crypto_box_PUBLICKEYBYTES];
-    unsigned char gs_secretkey[crypto_box_SECRETKEYBYTES];
-    FILE *fp;
+int main(void) {
+  unsigned char drone_publickey[crypto_box_PUBLICKEYBYTES];
+  unsigned char drone_secretkey[crypto_box_SECRETKEYBYTES];
+  unsigned char gs_publickey[crypto_box_PUBLICKEYBYTES];
+  unsigned char gs_secretkey[crypto_box_SECRETKEYBYTES];
+  FILE *fp;
 
-    crypto_box_keypair(drone_publickey, drone_secretkey);
-    crypto_box_keypair(gs_publickey, gs_secretkey);
+  crypto_box_keypair(drone_publickey, drone_secretkey);
+  crypto_box_keypair(gs_publickey, gs_secretkey);
 
-    if((fp = fopen("drone.key", "w")) == NULL)
-    {
-        perror("Unable to save drone.key");
-        return 1;
-    }
+  if ((fp = fopen("drone.key", "w")) == NULL) {
+	perror("Unable to save drone.key");
+	return 1;
+  }
 
-    fwrite(drone_secretkey, crypto_box_SECRETKEYBYTES, 1, fp);
-    fwrite(gs_publickey, crypto_box_PUBLICKEYBYTES, 1, fp);
-    fclose(fp);
+  fwrite(drone_secretkey, crypto_box_SECRETKEYBYTES, 1, fp);
+  fwrite(gs_publickey, crypto_box_PUBLICKEYBYTES, 1, fp);
+  fclose(fp);
 
-    fprintf(stderr, "Drone keypair (drone sec + gs pub) saved to drone.key\n");
+  fprintf(stderr, "Drone keypair (drone sec + gs pub) saved to drone.key\n");
 
-    if((fp = fopen("gs.key", "w")) == NULL)
-    {
-        perror("Unable to save gs.key");
-        return 1;
-    }
+  if ((fp = fopen("gs.key", "w")) == NULL) {
+	perror("Unable to save gs.key");
+	return 1;
+  }
 
-    fwrite(gs_secretkey, crypto_box_SECRETKEYBYTES, 1, fp);
-    fwrite(drone_publickey, crypto_box_PUBLICKEYBYTES, 1, fp);
-    fclose(fp);
+  fwrite(gs_secretkey, crypto_box_SECRETKEYBYTES, 1, fp);
+  fwrite(drone_publickey, crypto_box_PUBLICKEYBYTES, 1, fp);
+  fclose(fp);
 
-    fprintf(stderr, "GS keypair (gs sec + drone pub) saved to gs.key\n");
-    return 0;
+  fprintf(stderr, "GS keypair (gs sec + drone pub) saved to gs.key\n");
+  return 0;
 }
