@@ -55,9 +55,9 @@ std::string WBReceiver::createDebugState() const {
   const auto count_fragments_recovered = mFECDDecoder ? mFECDDecoder->count_fragments_recovered : 0;
   //timestamp in ms
   const uint64_t runTime =
-      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
+      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
   std::stringstream ss;
-  ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:"
+  ss << runTime << "\tRx:(" << count_p_all << "|" << count_p_bad << ") Decryption(OK:"
      << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
      ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered
      << " recP:" << count_fragments_recovered << ")";

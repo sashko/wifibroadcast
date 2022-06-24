@@ -69,7 +69,7 @@ class WBSessionKeyPacket {
  public:
   // note how this member doesn't add up to the size of this class (c++ is so great !)
   static constexpr auto
-      SIZE_BYTES = 1 + crypto_box_NONCEBYTES + crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES + 1 + 2 + 16;
+      SIZE_BYTES = 1 + crypto_box_NONCEBYTES + crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES + 1 + 2 ;//+ 16;
  public:
   const uint8_t packet_type = WFB_PACKET_KEY;
   std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};  // random data
@@ -79,7 +79,7 @@ class WBSessionKeyPacket {
   uint16_t MAX_N_FRAGMENTS_PER_BLOCK = 0; //Max n of primary and secondary fragments per block (saves memory on rx)
   // extraData is usage-specific information that is unique per session.
   // For example, the plan is to change the session in OpenHD when the video format changes
-  std::array<uint8_t, 16> extraData{0};
+  //std::array<uint8_t, 16> extraData{0};
 }__attribute__ ((packed));
 static_assert(sizeof(WBSessionKeyPacket) == WBSessionKeyPacket::SIZE_BYTES, "ALWAYS_TRUE");
 

@@ -137,9 +137,10 @@ void WBTransmitter::sendSessionKey() {
 
 std::string WBTransmitter::createDebugState() const {
   const auto runTimeMs =
-      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
+      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
   std::stringstream ss;
-  ss << runTimeMs << "\tTX(" << nInputPackets << ":" << nInjectedPackets << ")\n";
+  // input packets & injected packets
+  ss << runTimeMs << "\tTX:(" << nInputPackets << ":" << nInjectedPackets << ")\n";
   return ss.str();
 }
 
