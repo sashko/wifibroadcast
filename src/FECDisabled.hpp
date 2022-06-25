@@ -52,6 +52,7 @@ class FECDisabledDecoder {
   //counting lost packets doesn't work in this mode. It should be done by the upper level
   //saves the last FEC_DISABLED_MAX_SIZE_OF_MAP sequence numbers. If the sequence number of a new packet is already inside the map, it is discarded (duplicate)
   void processRawDataBlockFecDisabled(const uint64_t packetSeq, const std::vector<uint8_t> &decrypted) {
+    assert(mSendDecodedPayloadCallback);
     if (firstEverPacket) {
       // first ever packet. Map should be empty
       fecDisabledMapOfReceivedSeqNr.clear();

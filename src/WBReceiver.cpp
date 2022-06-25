@@ -150,10 +150,14 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
   if (parsedPacket->allAntennaValues.size() > MAX_N_ANTENNAS_PER_WIFI_CARD) {
     std::cerr << "Wifi card with " << parsedPacket->allAntennaValues.size() << " antennas\n";
   }
-  auto &thisWifiCard = rssiForWifiCard[WLAN_IDX];
-  for (const auto &value: parsedPacket->allAntennaValues) {
-    // don't care from which antenna the value came
-    thisWifiCard.addRSSI(value.rssi);
+  if(WLAN_IDX<rssiForWifiCard.size()){
+    auto &thisWifiCard = rssiForWifiCard.at(WLAN_IDX);
+    for (const auto &value: parsedPacket->allAntennaValues) {
+      // don't care from which antenna the value came
+      thisWifiCard.addRSSI(value.rssi);
+    }
+  }else{
+    std::cerr<<"Ehm wlan idx out of bounds\n";
   }
 
   //RawTransmitterHelper::writeAntennaStats(antenna_stat, WLAN_IDX, parsedPacket->antenna, parsedPacket->rssi);
