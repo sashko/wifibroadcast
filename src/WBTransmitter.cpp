@@ -86,7 +86,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader radiotapHeader, TOptions options1) :
   std::cout << "Sending Session key on startup\n";
   for (int i = 0; i < 5; i++) {
     sendSessionKey();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 
@@ -133,14 +133,16 @@ void WBTransmitter::sendSessionKey() {
     std::cout << "sendSessionKey()\n";
   }
   sendPacket({(uint8_t *) &sessionKeyPacket, WBSessionKeyPacket::SIZE_BYTES});
+  nInjectedSessionKeypackets++;
 }
 
 std::string WBTransmitter::createDebugState() const {
-  const auto runTimeMs =
+  const auto runTimeSeconds =
       std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
   std::stringstream ss;
   // input packets & injected packets
-  ss << runTimeMs << "\tTX:(" << nInputPackets << ":" << nInjectedPackets << ")\n";
+  const auto nInjectedDataPackets=nInjectedPackets-nInjectedSessionKeypackets;
+  ss << runTimeSeconds << "\tTX:in:("<<nInputPackets<<")out:(" << nInjectedDataPackets << ":" << nInjectedSessionKeypackets << ")\n";
   return ss.str();
 }
 

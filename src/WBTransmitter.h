@@ -113,6 +113,8 @@ class WBTransmitter {
   int64_t nInputPackets = 0;
   // n of actually injected packets
   int64_t nInjectedPackets = 0;
+  // n of injected session key packets
+  int64_t nInjectedSessionKeypackets=0;
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point session_key_announce_ts{};
   static constexpr const std::chrono::nanoseconds LOG_INTERVAL = std::chrono::seconds(1);
