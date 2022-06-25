@@ -194,7 +194,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
         mFECDDecoder->mSendDecodedPayloadCallback = callback;
       } else {
         mFECDisabledDecoder = std::make_unique<FECDisabledDecoder>();
-        mFECDDecoder->mSendDecodedPayloadCallback = callback;
+        mFECDisabledDecoder->mSendDecodedPayloadCallback = callback;
       }
     } else {
       count_p_decryption_ok++;

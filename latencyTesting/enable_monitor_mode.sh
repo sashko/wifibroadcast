@@ -1,6 +1,7 @@
 #!/bin/bash
 # enable monitor mode and sets the card
 # to the right wifi channel (for listening OR injecting)
+# takes 2 parameters - the wifi card interface name and the wanted wifi channel
 
 # wifi card is first param
 MY_WIFI_CARD=$1
