@@ -33,7 +33,7 @@ struct Options {
   std::string udp_host = SocketHelper::ADDRESS_LOCALHOST;
   // How long you want this program to run, it will terminate after the specified time.
   // You can also always manually terminate with crt+x
-  std::chrono::seconds runTimeSeconds = std::chrono::seconds(30);
+  std::chrono::seconds runTimeSeconds = std::chrono::seconds(10);
 };
 
 using SEQUENCE_NUMBER = uint32_t;

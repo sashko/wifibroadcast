@@ -4,6 +4,7 @@
 
 TAOBAO="wlx00e0863200b9" #Taobao card
 ASUS="wlx244bfeb71c05" #ASUS card
+ASUS2="wlxac9e175ac9e8" #ASUS card 2
 
 #MY_TX="wlp3s0"
 #MY_TX="wlxc4e984126183"
