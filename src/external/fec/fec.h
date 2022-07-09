@@ -51,7 +51,6 @@ void fec_decode(unsigned int blockSize,
 
 void fec_license(void);
 
-
 #ifdef PROFILE
 void printDetail(void);
 #endif
@@ -67,8 +66,8 @@ void printDetail(void);
  * Using the data from @param primaryFragments constructs as many secondary fragments as @param secondaryFragments holds
  */
 void fec_encode2(unsigned int fragmentSize,
-                const std::vector<const uint8_t*>& primaryFragments,
-                const std::vector<uint8_t*>& secondaryFragments);
+                 const std::vector<const uint8_t *> &primaryFragments,
+                 const std::vector<uint8_t *> &secondaryFragments);
 
 /**
  * @param fragmentSize size of each fragment in this block
@@ -81,30 +80,30 @@ void fec_encode2(unsigned int fragmentSize,
  * When this call returns, all missing primary fragments (gaps) have been filled / reconstructed
  */
 void fec_decode2(unsigned int fragmentSize,
-                const std::vector<uint8_t*>& primaryFragments,
-                const std::vector<unsigned int>& indicesMissingPrimaryFragments,
-                const std::vector<uint8_t*>& secondaryFragmentsReceived,
-                const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived);
-
+                 const std::vector<uint8_t *> &primaryFragments,
+                 const std::vector<unsigned int> &indicesMissingPrimaryFragments,
+                 const std::vector<uint8_t *> &secondaryFragmentsReceived,
+                 const std::vector<unsigned int> &indicesOfSecondaryFragmentsReceived);
 
 // these methods just wrap the methods above for commonly used data representations
-template <class Container1,class Container2>
-void fec_encode3(unsigned int fragmentSize,const std::vector<const Container1>& primaryFragments,
-                 std::vector<Container2>& secondaryFragments);
+template<class Container1, class Container2>
+void fec_encode3(unsigned int fragmentSize, const std::vector<const Container1> &primaryFragments,
+                 std::vector<Container2> &secondaryFragments);
 
-template <class Container1,class Container2>
+template<class Container1, class Container2>
 void fec_decode3(unsigned int fragmentSize,
-                 std::vector<Container1>& primaryFragments,
-                 const std::vector<unsigned int>& indicesMissingPrimaryFragments,
-                 std::vector<Container2>& secondaryFragmentsReceived,
-                 const std::vector<unsigned int>& indicesOfSecondaryFragmentsReceived);
+                 std::vector<Container1> &primaryFragments,
+                 const std::vector<unsigned int> &indicesMissingPrimaryFragments,
+                 std::vector<Container2> &secondaryFragmentsReceived,
+                 const std::vector<unsigned int> &indicesOfSecondaryFragmentsReceived);
 
+// print the underlying optimization method
+void print_optimization_method();
 
 // Test the (optimized) galois field math
 void test_gf();
 
 // Test the fec encoding & reconstructing step
 void test_fec();
-
 
 #endif //FEC_2_H
