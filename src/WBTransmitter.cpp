@@ -142,7 +142,8 @@ std::string WBTransmitter::createDebugState() const {
   std::stringstream ss;
   // input packets & injected packets
   const auto nInjectedDataPackets=nInjectedPackets-nInjectedSessionKeypackets;
-  ss << runTimeSeconds << "\tTX:in:("<<nInputPackets<<")out:(" << nInjectedDataPackets << ":" << nInjectedSessionKeypackets << ")\n";
+  //ss << runTimeSeconds << "\tTX:in:("<<nInputPackets<<")out:(" << nInjectedDataPackets << ":" << nInjectedSessionKeypackets << ")\n";
+  ss <<"TX:in:("<<nInputPackets<<")out:(" << nInjectedDataPackets << ":" << nInjectedSessionKeypackets << ")\n";
   return ss.str();
 }
 
