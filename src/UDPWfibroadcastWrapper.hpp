@@ -63,6 +63,7 @@ class UDPWBReceiver {
     addForwarder(std::move(client_addr), client_udp_port);
     wbReceiver = std::make_unique<WBReceiver>(std::move(options1), [this](const uint8_t *payload, const std::size_t payloadSize) {
       onNewData(payload, payloadSize);
+      _anyDataReceived=true;
     });
   }
   /**
@@ -86,6 +87,9 @@ class UDPWBReceiver {
   [[nodiscard]] std::string createDebug() const {
     return wbReceiver->createDebugState();
   }
+  [[nodiscard]] bool anyDataReceived()const{
+    return _anyDataReceived;
+  }
  private:
   // forwards the data to all registered udp forwarder instances.
   void onNewData(const uint8_t *payload, const std::size_t payloadSize) {
@@ -94,6 +98,7 @@ class UDPWBReceiver {
   std::unique_ptr<SocketHelper::UDPMultiForwarder> udpMultiForwarder;
   std::unique_ptr<WBReceiver> wbReceiver;
   std::unique_ptr<std::thread> backgroundThread;
+  bool _anyDataReceived=false;
 };
 
 #endif //WIFIBROADCAST_UDPWFIBROADCASTWRAPPER_HPP
