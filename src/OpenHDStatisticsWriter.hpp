@@ -93,7 +93,9 @@ class OpenHDStatisticsWriter {
 
 static std::ostream& operator<<(std::ostream& strm, const OpenHDStatisticsWriter::Data& data){
   std::stringstream ss;
-  ss<<"WBStats:{port:"<<data.radio_port<<",count_p_all:"<<data.count_p_all<<",count_p_bad:"<<data.count_p_bad<<",count_p_fec_recovered:"<<data.count_p_fec_recovered<<"}";
+  ss<<"WBStats:{port:"<<(int)data.radio_port<<",count_p_all:"<<data.count_p_all<<",count_p_bad:"<<data.count_p_bad
+     <<",count_p_fec_recovered:"<<data.count_p_fec_recovered;
+  ss<<" rssi1:"<<(int)data.rssiPerCard.at(0).getAverage()<<"}";
   strm<<ss.str();
   return strm;
 }
