@@ -48,6 +48,10 @@ class UDPWBTransmitter {
   [[nodiscard]] std::string createDebug() const {
     return wbTransmitter->createDebugState();
   }
+  // temporary
+  [[nodiscard]] int64_t get_n_injected_packets()const{
+    return wbTransmitter->get_n_injected_packets();
+  }
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;
   std::unique_ptr<SocketHelper::UDPReceiver> udpReceiver;

@@ -89,6 +89,10 @@ class WBTransmitter {
   */
   [[nodiscard]] std::string createDebugState() const;
   const TOptions options;
+  // temporary
+  [[nodiscard]] int64_t get_n_injected_packets()const{
+    return nInjectedPackets;
+  }
  private:
   // send the current session key via WIFI (located in mEncryptor)
   void sendSessionKey();
