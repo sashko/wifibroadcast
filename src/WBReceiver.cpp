@@ -32,10 +32,14 @@
 #include <sstream>
 #include <utility>
 
-WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK callback) :
+WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback,
+                       std::optional<OpenHDStatisticsWriter::STATISTICS_CALLBACK> statistics_callback) :
     options(std::move(options1)),
     mDecryptor(options.keypair),
-    mOutputDataCallback(std::move(callback)) {
+    mOutputDataCallback(std::move(output_data_callback)) {
+  if(statistics_callback.has_value()){
+    openHdStatisticsWriter._statistics_callback=statistics_callback.value();
+  }
   std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";
   receiver = std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces, options.radio_port, options1.log_interval,
                                                    notstd::bind_front(&WBReceiver::processPacket, this),

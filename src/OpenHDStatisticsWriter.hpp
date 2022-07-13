@@ -76,7 +76,15 @@ class OpenHDStatisticsWriter {
     // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
     std::array<RSSIForWifiCard, 8> rssiPerCard{};
   }__attribute__((packed));
+  typedef std::function<void(Data data)> STATISTICS_CALLBACK;
+  STATISTICS_CALLBACK _statistics_callback= nullptr;
   void writeStats(const Data &data) {
+    // Either pass through via data callback
+    if(_statistics_callback!= nullptr){
+      _statistics_callback(data);
+      return;
+    }
+    // Otherwise, just blast it via UDP to be picked up
     // send all statistics regardless of the radio port to the same UDP port, they
     // will be differentiated over there
     forwarder.forwardPacketViaUDP((const uint8_t *) &data, (size_t) sizeof(data));

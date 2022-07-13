@@ -58,13 +58,14 @@ class UDPWBTransmitter {
  */
 class UDPWBReceiver {
  public:
-  UDPWBReceiver(ROptions options1, std::string client_addr, int client_udp_port) {
+  UDPWBReceiver(ROptions options1, std::string client_addr, int client_udp_port,
+                std::optional<OpenHDStatisticsWriter::STATISTICS_CALLBACK> statistics_callback=std::nullopt) {
     udpMultiForwarder = std::make_unique<SocketHelper::UDPMultiForwarder>();
     addForwarder(std::move(client_addr), client_udp_port);
     wbReceiver = std::make_unique<WBReceiver>(std::move(options1), [this](const uint8_t *payload, const std::size_t payloadSize) {
       onNewData(payload, payloadSize);
       _anyDataReceived=true;
-    });
+    },std::move(statistics_callback));
   }
   /**
    * Loop until an error occurs. Blocks the calling thread.

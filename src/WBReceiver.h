@@ -63,9 +63,11 @@ class WBReceiver {
    * (aggregation, FEC decoding) and forwards it via the callback.
    * Each instance has to be assigned with a Unique ID (same id as the corresponding tx instance).
    * @param options1 the options for this instance (some options - so to say - come from the tx instance)
-   * @param callback Callback that is called with the decoded data, can be null for debugging.
+   * @param output_data_callback Callback that is called with the decoded data, can be null for debugging.
+   * @param statistics_callback Callback that is called with the link statistics in regular intervals, can be nullopt / null.
    */
-  WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK callback);
+  WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback,
+             std::optional<OpenHDStatisticsWriter::STATISTICS_CALLBACK> statistics_callback=std::nullopt);
   WBReceiver(const WBReceiver &) = delete;
   WBReceiver &operator=(const WBReceiver &) = delete;
   void processPacket(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
