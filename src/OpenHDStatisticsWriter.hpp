@@ -72,6 +72,7 @@ class OpenHDStatisticsWriter {
     uint64_t count_p_fec_recovered = 0;
     // n packets that were completely lost though FEC
     uint64_t count_p_lost = 0;
+    uint64_t count_bytes_received=0;
     // min max and avg rssi for each wifi card since the last call.
     // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
     std::array<RSSIForWifiCard, 8> rssiPerCard{};

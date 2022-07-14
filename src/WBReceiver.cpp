@@ -78,7 +78,7 @@ void WBReceiver::dump_stats() {
   // first forward to OpenHD
   openHdStatisticsWriter.writeStats({
                                         options.radio_port, count_p_all, count_p_decryption_err, count_p_decryption_ok,
-                                        count_fragments_recovered, count_blocks_lost, count_p_bad, rssiForWifiCard
+                                        count_fragments_recovered, count_blocks_lost, count_p_bad, count_bytes_data_received,rssiForWifiCard
                                     });
   //timestamp in ms
   const uint64_t runTime =
@@ -217,6 +217,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
     }
     const WBDataHeader &wbDataHeader = *((WBDataHeader *) packetPayload);
     assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
+    count_bytes_data_received+=packetPayloadSize;
 
     const auto decryptedPayload = mDecryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
                                                            packetPayloadSize - sizeof(WBDataHeader), wbDataHeader);

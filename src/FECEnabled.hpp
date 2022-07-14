@@ -449,7 +449,7 @@ class FECDecoder {
    * @param discardMissingPackets : if true, gaps are ignored and fragments are forwarded even though this means the missing ones are irreversible lost
    * Be carefully with this param, use it only before you need to get rid of a block
    */
-  void forwardMissingPrimaryFragmentsIfAvailable(RxBlock &block, const bool discardMissingPackets = false) const {
+  void forwardMissingPrimaryFragmentsIfAvailable(RxBlock &block, const bool discardMissingPackets = false){
     assert(mSendDecodedPayloadCallback);
     const auto indices = block.pullAvailablePrimaryFragments(discardMissingPackets);
     for (auto primaryFragmentIndex: indices) {
@@ -464,6 +464,7 @@ class FECDecoder {
                   << ") : " << packet_size << "B\n";
       } else {
         mSendDecodedPayloadCallback(payload, packet_size);
+        count_bytes_forwarded+=packet_size;
       }
     }
   }
@@ -640,6 +641,8 @@ class FECDecoder {
   uint64_t count_blocks_recovered = 0;
   // n of primary fragments that were reconstructed during the recovery process of a block
   uint64_t count_fragments_recovered = 0;
+  // n of forwarded bytes
+  uint64_t count_bytes_forwarded=0;
 };
 
 // quick math regarding sequence numbers:

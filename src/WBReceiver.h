@@ -99,6 +99,8 @@ class WBReceiver {
   // encryption stats
   uint64_t count_p_decryption_err = 0;
   uint64_t count_p_decryption_ok = 0;
+  // n of total received bytes, before FEC decoding
+  uint64_t count_bytes_data_received=0;
   OpenHDStatisticsWriter openHdStatisticsWriter;
   //We know that once we get the first session key packet
   bool IS_FEC_ENABLED = false;
