@@ -143,6 +143,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
     auto &thisWifiCard = rssiForWifiCard.at(WLAN_IDX);
     std::cout<<all_rssi_to_string(parsedPacket->allAntennaValues);
     const auto best_rssi=RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
+    std::cout<<"best_rssi:"<<best_rssi<<"\n";
     if(best_rssi!=0){
       thisWifiCard.addRSSI(best_rssi);
     }
