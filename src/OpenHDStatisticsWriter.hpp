@@ -100,7 +100,7 @@ class OpenHDStatisticsWriter {
     WBRxStats wb_rx_stats;
     // only if FEC enabled
     std::optional<FECStreamStats> fec_stream_stats;
-  }__attribute__((packed));
+  };
 
   typedef std::function<void(Data data)> STATISTICS_CALLBACK;
   STATISTICS_CALLBACK _statistics_callback= nullptr;
