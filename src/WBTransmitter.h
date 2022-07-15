@@ -93,6 +93,9 @@ class WBTransmitter {
   [[nodiscard]] int64_t get_n_injected_packets()const{
     return nInjectedPackets;
   }
+  uint64_t get_current_injected_bits_per_second(){
+    return bitrate_calculator_injected_bytes.recalculateSinceLast(count_bytes_data_injected);
+  }
  private:
   // send the current session key via WIFI (located in mEncryptor)
   void sendSessionKey();
@@ -119,6 +122,9 @@ class WBTransmitter {
   int64_t nInjectedPackets = 0;
   // n of injected session key packets
   int64_t nInjectedSessionKeypackets=0;
+  // count of bytes we injected into the wifi card
+  uint64_t count_bytes_data_injected=0;
+  BitrateCalculator bitrate_calculator_injected_bytes{};
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point session_key_announce_ts{};
   static constexpr const std::chrono::nanoseconds LOG_INTERVAL = std::chrono::seconds(1);

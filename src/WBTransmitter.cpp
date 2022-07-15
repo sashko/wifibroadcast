@@ -98,6 +98,7 @@ WBTransmitter::~WBTransmitter() {
 }
 
 void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
+  count_bytes_data_injected+=abstractWbPacket.payloadSize;
   //std::cout << "WBTransmitter::sendPacket\n";
   mIeee80211Header.writeParams(options.radio_port, ieee80211_seq);
   ieee80211_seq += 16;
