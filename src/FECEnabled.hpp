@@ -374,10 +374,10 @@ class RxBlock {
     // n of reconstructed packets
     return recoveredFragmentIndices.size();
   }
-  uint64_t getBlockIdx() const {
+  [[nodiscard]] uint64_t getBlockIdx() const {
     return blockIdx;
   }
-  std::optional<std::chrono::steady_clock::time_point> getFirstFragmentTimePoint() const {
+  [[nodiscard]] std::optional<std::chrono::steady_clock::time_point> getFirstFragmentTimePoint() const {
     return firstFragmentTimePoint;
   }
  private:
