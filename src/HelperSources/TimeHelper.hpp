@@ -316,7 +316,8 @@ class RelativeCalculator {
 
 class BitrateCalculator{
  public:
-  // return: current bitrate in bits per second
+  // return: current bitrate in bits per second.
+  // aka bits received since last call / time delta since last call.
   uint64_t recalculateSinceLast(const uint64_t curr_bytes_received){
     const auto now=std::chrono::steady_clock::now();
     const auto deltaTime=now-last_time;
