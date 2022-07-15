@@ -53,33 +53,21 @@ void WBReceiver::loop() {
 }
 
 std::string WBReceiver::createDebugState() const {
-  const auto count_blocks_total = mFECDDecoder ? mFECDDecoder->count_blocks_total : 0;
-  const auto count_blocks_lost = mFECDDecoder ? mFECDDecoder->count_blocks_lost : 0;
-  const auto count_blocks_recovered = mFECDDecoder ? mFECDDecoder->count_blocks_recovered : 0;
-  const auto count_fragments_recovered = mFECDDecoder ? mFECDDecoder->count_fragments_recovered : 0;
-  //timestamp in ms
-  const uint64_t runTime =
-      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
   std::stringstream ss;
-  //ss << runTime << "\tRx:(" << count_p_all << "|" << count_p_bad << ") Decryption(OK:"
-  ss << "Rx:(" << count_p_all << "|" << count_p_bad << ") Decryption(OK:"
-     << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
-     ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered
-     << " recP:" << count_fragments_recovered << ")";
-  ss << "\n";
+  ss<<wb_rx_stats<<"\n";
+  if(mFECDDecoder){
+    ss<<"\n"; //TODO
+  }
   return ss.str();
 }
 
 void WBReceiver::dump_stats() {
-  const auto count_blocks_total = mFECDDecoder ? mFECDDecoder->count_blocks_total : 0;
-  const auto count_blocks_lost = mFECDDecoder ? mFECDDecoder->count_blocks_lost : 0;
-  const auto count_blocks_recovered = mFECDDecoder ? mFECDDecoder->count_blocks_recovered : 0;
-  const auto count_fragments_recovered = mFECDDecoder ? mFECDDecoder->count_fragments_recovered : 0;
   // first forward to OpenHD
-  openHdStatisticsWriter.writeStats({
-                                        options.radio_port, count_p_all, count_p_decryption_err, count_p_decryption_ok,
-                                        count_fragments_recovered, count_blocks_lost, count_p_bad, count_bytes_data_received,rssiForWifiCard
-                                    });
+  std::optional<FECStreamStats> fec_stream_stats=std::nullopt;
+  if(mFECDDecoder){
+    fec_stream_stats=mFECDDecoder->stats;
+  }
+  OpenHDStatisticsWriter::Data data{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
   //timestamp in ms
   const uint64_t runTime =
       std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
@@ -92,12 +80,7 @@ void WBReceiver::dump_stats() {
       wifiCard.reset();
     }
     std::stringstream ss;
-    ss << runTime << "\tPKT" << count_p_all << "\tRPort " << +options.radio_port << " Decryption(OK:"
-       << count_p_decryption_ok << " Err:" << count_p_decryption_err <<
-       ") FEC(totalB:" << count_blocks_total << " lostB:" << count_blocks_lost << " recB:" << count_blocks_recovered
-       << " recP:" << count_fragments_recovered << ")";
-
-    std::cout << ss.str() << "\n";
+    std::cout<<createDebugState();
   }
   // it is actually much more understandable when I use the absolute values for the logging
 #ifdef ENABLE_ADVANCED_DEBUGGING
@@ -114,42 +97,42 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
   const auto latency=std::chrono::system_clock::now() -tmp;
   avgPcapToApplicationLatency.add(latency);
 #endif
-  count_p_all++;
+  wb_rx_stats.count_p_all++;
   // The radio capture header precedes the 802.11 header.
   const auto parsedPacket = RawReceiverHelper::processReceivedPcapPacket(hdr, pkt);
   if (parsedPacket == std::nullopt) {
     std::cerr << "Discarding packet due to pcap parsing error!\n";
-    count_p_bad++;
+    wb_rx_stats.count_p_bad++;
     return;
   }
   if (parsedPacket->frameFailedFCSCheck) {
     std::cerr << "Discarding packet due to bad FCS!\n";
-    count_p_bad++;
+    wb_rx_stats.count_p_bad++;
     return;
   }
   if (!parsedPacket->ieee80211Header->isDataFrame()) {
     // we only process data frames
     std::cerr << "Got packet that is not a data packet" << (int) parsedPacket->ieee80211Header->getFrameControl()
               << "\n";
-    count_p_bad++;
+    wb_rx_stats.count_p_bad++;
     return;
   }
   if (parsedPacket->ieee80211Header->getRadioPort() != options.radio_port) {
     // If we have the proper filter on pcap only packets with the right radiotap port should pass through
     std::cerr << "Got packet with wrong radio port " << (int) parsedPacket->ieee80211Header->getRadioPort() << "\n";
     //RadiotapHelper::debugRadiotapHeader(pkt,hdr.caplen);
-    count_p_bad++;
+    wb_rx_stats.count_p_bad++;
     return;
   }
   // All these edge cases should NEVER happen if using a proper tx/rx setup and the wifi driver isn't complete crap
   if (parsedPacket->payloadSize <= 0) {
     std::cerr << "Discarding packet due to no actual payload !\n";
-    count_p_bad++;
+    wb_rx_stats.count_p_bad++;
     return;
   }
   if (parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
     std::cerr << "Discarding packet due to payload exceeding max " << (int) parsedPacket->payloadSize << "\n";
-    count_p_bad++;
+    wb_rx_stats.count_p_bad++;
     return;
   }
   if (parsedPacket->allAntennaValues.size() > MAX_N_ANTENNAS_PER_WIFI_CARD) {
@@ -181,7 +164,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
   if (packetPayload[0] == WFB_PACKET_KEY) {
     if (packetPayloadSize != WBSessionKeyPacket::SIZE_BYTES) {
       std::cerr << "invalid session key packet\n";
-      count_p_bad++;
+      wb_rx_stats.count_p_bad++;
       return;
     }
     WBSessionKeyPacket &sessionKeyPacket = *((WBSessionKeyPacket *) parsedPacket->payload);
@@ -189,7 +172,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
       std::cout << "Initializing new session. IS_FEC_ENABLED:" << (int) sessionKeyPacket.IS_FEC_ENABLED
                 << " MAX_N_FRAGMENTS_PER_BLOCK:" << (int) sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK << "\n";
       // We got a new session key (aka a session key that has not been received yet)
-      count_p_decryption_ok++;
+      wb_rx_stats.count_p_decryption_ok++;
       IS_FEC_ENABLED = sessionKeyPacket.IS_FEC_ENABLED;
       auto callback = [this](const uint8_t *payload, std::size_t payloadSize) {
         if (mOutputDataCallback != nullptr) {
@@ -206,28 +189,28 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
         mFECDisabledDecoder->mSendDecodedPayloadCallback = callback;
       }
     } else {
-      count_p_decryption_ok++;
+      wb_rx_stats.count_p_decryption_ok++;
     }
     return;
   } else if (packetPayload[0] == WFB_PACKET_DATA) {
     if (packetPayloadSize < sizeof(WBDataHeader) + sizeof(FECPayloadHdr)) {
       std::cerr << "Too short packet (fec header missing)\n";
-      count_p_bad++;
+      wb_rx_stats.count_p_bad++;
       return;
     }
     const WBDataHeader &wbDataHeader = *((WBDataHeader *) packetPayload);
     assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
-    count_bytes_data_received+=packetPayloadSize;
+    wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
 
     const auto decryptedPayload = mDecryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
                                                            packetPayloadSize - sizeof(WBDataHeader), wbDataHeader);
     if (decryptedPayload == std::nullopt) {
       //std::cerr << "unable to decrypt packet :" << std::to_string(wbDataHeader.nonce) << "\n";
-      count_p_decryption_err++;
+      wb_rx_stats.count_p_decryption_err++;
       return;
     }
 
-    count_p_decryption_ok++;
+    wb_rx_stats.count_p_decryption_ok++;
 
     assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
     if (IS_FEC_ENABLED) {
@@ -236,7 +219,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
         return;
       }
       if (!mFECDDecoder->validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)) {
-        count_p_bad++;
+        wb_rx_stats.count_p_bad++;
       }
     } else {
       if (!mFECDisabledDecoder) {
@@ -259,7 +242,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
 #endif
   else {
     std::cerr << "Unknown packet type " << (int) packetPayload[0] << " \n";
-    count_p_bad += 1;
+    wb_rx_stats.count_p_bad += 1;
     return;
   }
 }

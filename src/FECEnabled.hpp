@@ -6,6 +6,7 @@
 #define WIFIBROADCAST_FECENABLED_HPP
 
 #include "HelperSources/TimeHelper.hpp"
+#include "OpenHDStatisticsWriter.hpp"
 #include "FEC.hpp"
 #include <cstdint>
 #include <cerrno>
@@ -464,7 +465,7 @@ class FECDecoder {
                   << ") : " << packet_size << "B\n";
       } else {
         mSendDecodedPayloadCallback(payload, packet_size);
-        count_bytes_forwarded+=packet_size;
+        stats.count_bytes_forwarded+=packet_size;
       }
     }
   }
@@ -472,7 +473,7 @@ class FECDecoder {
   void rxQueuePopFront() {
     assert(rx_queue.front() != nullptr);
     if (!rx_queue.front()->allPrimaryFragmentsHaveBeenForwarded()) {
-      count_blocks_lost++;
+      stats.count_blocks_lost++;
     }
     rx_queue.pop_front();
   }
@@ -492,7 +493,7 @@ class FECDecoder {
     // we can return early if this operation doesn't exceed the size limit
     if (rx_queue.size() < RX_QUEUE_MAX_SIZE) {
       rx_queue.push_back(std::make_unique<RxBlock>(maxNFragmentsPerBlock, blockIdx));
-      count_blocks_total++;
+      stats.count_blocks_total++;
       return;
     }
     //Ring overflow. This means that there are more unfinished blocks than ring size
@@ -511,7 +512,7 @@ class FECDecoder {
 
     // now we are guaranteed to have space for one new block
     rx_queue.push_back(std::make_unique<RxBlock>(maxNFragmentsPerBlock, blockIdx));
-    count_blocks_total++;
+    stats.count_blocks_total++;
   }
 
   // If block is already known and not in the queue anymore return nullptr
@@ -569,8 +570,8 @@ class FECDecoder {
         return;
       }
       if (block.allPrimaryFragmentsCanBeRecovered()) {
-        count_fragments_recovered += block.reconstructAllMissingData();
-        count_blocks_recovered++;
+        stats.count_fragments_recovered += block.reconstructAllMissingData();
+        stats.count_blocks_recovered++;
         forwardMissingPrimaryFragmentsIfAvailable(block);
         assert(block.allPrimaryFragmentsHaveBeenForwarded());
         // remove block when done with it
@@ -594,8 +595,8 @@ class FECDecoder {
           assert(block.allPrimaryFragmentsHaveBeenForwarded());
         } else {
           // apply fec for this block
-          count_fragments_recovered += block.reconstructAllMissingData();
-          count_blocks_recovered++;
+          stats.count_fragments_recovered += block.reconstructAllMissingData();
+          stats.count_blocks_recovered++;
           forwardMissingPrimaryFragmentsIfAvailable(block);
           assert(block.allPrimaryFragmentsHaveBeenForwarded());
         }
@@ -634,7 +635,7 @@ class FECDecoder {
   }
  public:
   // total block count
-  uint64_t count_blocks_total = 0;
+  /*uint64_t count_blocks_total = 0;
   // a block counts as "lost" if it was removed before being fully received or recovered
   uint64_t count_blocks_lost = 0;
   // a block counts as "recovered" if it was recovered using FEC packets
@@ -642,7 +643,8 @@ class FECDecoder {
   // n of primary fragments that were reconstructed during the recovery process of a block
   uint64_t count_fragments_recovered = 0;
   // n of forwarded bytes
-  uint64_t count_bytes_forwarded=0;
+  uint64_t count_bytes_forwarded=0;*/
+  FECStreamStats stats{};
 };
 
 // quick math regarding sequence numbers:

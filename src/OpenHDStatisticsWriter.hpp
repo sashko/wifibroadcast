@@ -51,6 +51,48 @@ class RSSIForWifiCard {
   int8_t rssi_max = 0;
 };
 
+// receiving, validating and decrypting raw wifi packets
+struct WBRxStats{
+  // n of all received packets, absolute
+  uint64_t count_p_all = 0;
+  // n of received packets that are bad for any reason
+  uint64_t count_p_bad = 0;
+  // encryption stats
+  uint64_t count_p_decryption_err = 0;
+  uint64_t count_p_decryption_ok = 0;
+  // n of total received bytes, before FEC decoding
+  uint64_t count_bytes_data_received=0;
+};
+static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
+  std::stringstream ss;
+  ss<<"WBRxStats{all:"<<obj.count_p_all<<",bad:"<<obj.count_p_bad<<",decrypt_err:"<<obj.count_p_decryption_err
+     <<",decrypt_ok:"<<obj.count_p_decryption_ok<<",bytes:"<<obj.count_bytes_data_received<<"}";
+  strm<<ss.str();
+  return strm;
+}
+
+
+// matches FECDecoder
+struct FECStreamStats{
+  // total block count
+  uint64_t count_blocks_total = 0;
+  // a block counts as "lost" if it was removed before being fully received or recovered
+  uint64_t count_blocks_lost = 0;
+  // a block counts as "recovered" if it was recovered using FEC packets
+  uint64_t count_blocks_recovered = 0;
+  // n of primary fragments that were reconstructed during the recovery process of a block
+  uint64_t count_fragments_recovered = 0;
+  // n of forwarded bytes
+  uint64_t count_bytes_forwarded=0;
+};
+static std::ostream& operator<<(std::ostream& strm, const FECStreamStats& obj){
+  std::stringstream ss;
+  ss<<"FECStreamStats{blocks_total:"<<obj.count_blocks_lost<<",blocks_lost:"<<obj.count_blocks_lost<<",blocks_recovered:"<<obj.count_blocks_recovered
+     <<",fragments_recovered:"<<obj.count_fragments_recovered<<"bytes_forwarded:"<<obj.count_bytes_forwarded<<"}";
+  strm<<ss.str();
+  return strm;
+}
+
 class OpenHDStatisticsWriter {
  private:
   SocketHelper::UDPForwarder forwarder{SocketHelper::ADDRESS_LOCALHOST, OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT};
@@ -58,25 +100,16 @@ class OpenHDStatisticsWriter {
   // Forwarded data
   struct Data {
     // the unique stream ID this data refers to
-    uint8_t radio_port = 0;
-    // all these values are absolute (like done previously in OpenHD)
-    // all received packets
-    uint64_t count_p_all = 0;
-    // n packets that were received but could not be used (after already filtering for the right port)
-    uint64_t count_p_bad = 0;
-    // n packets that could not be decrypted
-    uint64_t count_p_dec_err = 0;
-    // n packets that were successfully decrypted
-    uint64_t count_p_dec_ok = 0;
-    // n packets that were corrected by FEC
-    uint64_t count_p_fec_recovered = 0;
-    // n packets that were completely lost though FEC
-    uint64_t count_p_lost = 0;
-    uint64_t count_bytes_received=0;
+    const uint8_t radio_port = 0;
     // min max and avg rssi for each wifi card since the last call.
     // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
-    std::array<RSSIForWifiCard, 8> rssiPerCard{};
+    const std::array<RSSIForWifiCard, 8> rssiPerCard{};
+    // always create wifibroadcast rx stats
+    const WBRxStats wb_rx_stats;
+    // only if FEC enabled
+    const std::optional<FECStreamStats> fec_stream_stats;
   }__attribute__((packed));
+
   typedef std::function<void(Data data)> STATISTICS_CALLBACK;
   STATISTICS_CALLBACK _statistics_callback= nullptr;
   void writeStats(const Data &data) {
@@ -94,9 +127,11 @@ class OpenHDStatisticsWriter {
 
 static std::ostream& operator<<(std::ostream& strm, const OpenHDStatisticsWriter::Data& data){
   std::stringstream ss;
-  ss<<"WBStats:{port:"<<(int)data.radio_port<<",count_p_all:"<<data.count_p_all<<",count_p_bad:"<<data.count_p_bad
-     <<",count_p_fec_recovered:"<<data.count_p_fec_recovered;
-  ss<<" rssi1:"<<(int)data.rssiPerCard.at(0).getAverage()<<"}";
+  ss<<"Stats for "<<(int)data.radio_port<<"\n";
+  ss<<data.wb_rx_stats<<"\n";
+  if(data.fec_stream_stats.has_value()){
+    ss<<data.fec_stream_stats.value()<<"\n";
+  }
   strm<<ss.str();
   return strm;
 }
