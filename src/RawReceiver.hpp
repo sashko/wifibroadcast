@@ -113,6 +113,23 @@ static std::string all_rssi_to_string(const std::vector<RssiForAntenna>& all_rss
   }
   return ss.str();
 }
+// It looks as if RTL88xxau reports 3 rssi values - for example,
+//RssiForAntenna0{10}
+//RssiForAntenna1{10}
+//RssiForAntenna2{-18}
+//Now this doesn't make sense, so this helper should fix it
+static int8_t get_best_rssi_of_card(const std::vector<RssiForAntenna>& all_rssi){
+  if(all_rssi.empty())return 0;
+  // best rssi == smallest value
+  int8_t smallest_value=INT8_MAX;
+  for(const auto& rssiForAntenna:all_rssi){
+    if(rssiForAntenna.rssi<smallest_value){
+      smallest_value=rssiForAntenna.rssi;
+    }
+  }
+  return smallest_value;
+}
+
 // Returns std::nullopt if radiotap was unable to parse the header
 // else return the *parsed information*
 // To avoid confusion it might help to treat this method as a big black Box :)
