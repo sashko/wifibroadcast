@@ -143,7 +143,10 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
     auto &thisWifiCard = rssiForWifiCard.at(WLAN_IDX);
     for (const auto &value: parsedPacket->allAntennaValues) {
       // don't care from which antenna the value came
-      thisWifiCard.addRSSI(value.rssi);
+      // There seems to be a bug where sometimes the reported rssi is 0 ???!!
+      if(value.rssi!=0){
+        thisWifiCard.addRSSI(value.rssi);
+      }
     }
   }else{
     std::cerr<<"Ehm wlan idx out of bounds\n";

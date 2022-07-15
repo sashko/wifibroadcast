@@ -104,6 +104,15 @@ struct ParsedRxPcapPacket {
   // Atheros forwards frames even though the fcs check failed ( this packet is corrupted)
   const bool frameFailedFCSCheck;
 };
+static std::string all_rssi_to_string(const std::vector<RssiForAntenna>& all_rssi){
+  std::stringstream ss;
+  int idx=0;
+  for(const auto& rssiForAntenna:all_rssi){
+    ss<<"RssiForAntenna"<<idx<<"{"<<(int)rssiForAntenna.rssi<<"}\n";
+    idx++;
+  }
+  return ss.str();
+}
 // Returns std::nullopt if radiotap was unable to parse the header
 // else return the *parsed information*
 // To avoid confusion it might help to treat this method as a big black Box :)
