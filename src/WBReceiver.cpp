@@ -68,6 +68,7 @@ void WBReceiver::dump_stats() {
     fec_stream_stats=mFECDDecoder->stats;
   }
   OpenHDStatisticsWriter::Data data{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
+  openHdStatisticsWriter.writeStats(data);
   //timestamp in ms
   const uint64_t runTime =
       std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - INIT_TIME).count();

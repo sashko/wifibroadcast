@@ -104,7 +104,7 @@ class OpenHDStatisticsWriter {
 
   typedef std::function<void(Data data)> STATISTICS_CALLBACK;
   STATISTICS_CALLBACK _statistics_callback= nullptr;
-  void writeStats(const Data &data) const {
+  void writeStats(const Data data) const {
     // Either pass through via data callback
     if(_statistics_callback!= nullptr){
       _statistics_callback(data);
