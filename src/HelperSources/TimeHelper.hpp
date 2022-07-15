@@ -314,4 +314,22 @@ class RelativeCalculator {
   }
 };
 
+class BitrateCalculator{
+ public:
+  // return: current bitrate in bits per second
+  uint64_t recalculateSinceLast(const uint64_t curr_bytes_received){
+    const auto now=std::chrono::steady_clock::now();
+    const auto deltaTime=now-last_time;
+    const auto deltaBytes=curr_bytes_received-bytes_last_time;
+    last_time=now;
+    bytes_last_time=curr_bytes_received;
+    const auto deltaTimeMilliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime).count();
+    const auto bits_per_second=(deltaBytes*8*1000 / deltaTimeMilliseconds);
+    return bits_per_second;
+  }
+ private:
+  uint64_t bytes_last_time=0;
+  std::chrono::steady_clock::time_point last_time=std::chrono::steady_clock::now();
+};
+
 #endif //LIVEVIDEO10MS_TIMEHELPER_HPP

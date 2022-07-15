@@ -63,21 +63,21 @@ std::string WBReceiver::createDebugState() const {
 
 void WBReceiver::dump_stats() {
   // first forward to OpenHD
+  // re-calculate the current bitrate
+  {
+    wb_rx_stats.curr_bits_per_second=rxBitrateCalculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
+  }
   std::optional<FECStreamStats> fec_stream_stats=std::nullopt;
   if(mFECDDecoder){
     fec_stream_stats=mFECDDecoder->stats;
   }
   OpenHDStatisticsWriter::Data data{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
   openHdStatisticsWriter.writeStats(data);
-  //timestamp in ms
-  const uint64_t runTime =
-      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
   if (options.enableLogAlive) {
     for (auto &wifiCard: rssiForWifiCard) {
       // no new rssi values for this card since the last call
       if (wifiCard.count_all == 0)continue;
-      std::cout << "RSSI Count|Min|Max|Avg:\t" << (int) wifiCard.count_all << ":" << (int) wifiCard.rssi_min << ":"
-                << (int) wifiCard.rssi_max << ":" << (int) wifiCard.getAverage() << "\n";
+      std::cout << wifiCard<<"\n";
       wifiCard.reset();
     }
     std::stringstream ss;

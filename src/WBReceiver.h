@@ -94,6 +94,8 @@ class WBReceiver {
   std::array<RSSIForWifiCard, MAX_RX_INTERFACES> rssiForWifiCard;
   WBRxStats wb_rx_stats{};
   OpenHDStatisticsWriter openHdStatisticsWriter;
+  // for calculating the current rx bitrate
+  BitrateCalculator rxBitrateCalculator{};
   //We know that once we get the first session key packet
   bool IS_FEC_ENABLED = false;
   // On the rx, either one of those two is active at the same time. NOTE: nullptr until the first session key packet
