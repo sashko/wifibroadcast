@@ -19,6 +19,7 @@ class RSSIForWifiCard {
  public:
   RSSIForWifiCard() = default;
   void addRSSI(int8_t rssi) {
+    last_rssi=rssi;
     if (count_all == 0) {
       rssi_min = rssi;
       rssi_max = rssi;
@@ -43,7 +44,15 @@ class RSSIForWifiCard {
   int32_t rssi_sum = 0;
   int8_t rssi_min = 0;
   int8_t rssi_max = 0;
+  int8_t last_rssi=0;
 };
+static std::ostream& operator<<(std::ostream& strm, const RSSIForWifiCard& obj){
+  std::stringstream ss;
+  ss<<"RSSIForWifiCard{last:"<<obj.last_rssi<<",avg:"<<obj.getAverage()<<",min:"<<obj.rssi_min
+     <<",max:"<<obj.rssi_max<<"}";
+  strm<<ss.str();
+  return strm;
+}
 
 // receiving, validating and decrypting raw wifi packets
 struct WBRxStats{
