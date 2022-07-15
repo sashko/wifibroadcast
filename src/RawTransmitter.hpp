@@ -131,9 +131,9 @@ class PcapTransmitter : public IRawPacketInjector {
   }
   // inject packet by prefixing wifibroadcast packet with the IEE and Radiotap header
   // return: time it took to inject the packet.If the injection time is absurdly high, you might want to do something about it
-  std::chrono::steady_clock::duration injectPacket(const RadiotapHeader &radiotapHeader,
+  [[nodiscard]] std::chrono::steady_clock::duration injectPacket(const RadiotapHeader &radiotapHeader,
                                                    const Ieee80211Header &ieee80211Header,
-                                                   const AbstractWBPacket &abstractWbPacket) const {
+                                                   const AbstractWBPacket &abstractWbPacket) const override {
     const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
     const auto before = std::chrono::steady_clock::now();
     RawTransmitterHelper::injectPacket(ppcap, packet);
@@ -162,9 +162,9 @@ class RawSocketTransmitter : public IRawPacketInjector {
   }
   // inject packet by prefixing wifibroadcast packet with the IEE and Radiotap header
   // return: time it took to inject the packet.If the injection time is absurdly high, you might want to do something about it
-  std::chrono::steady_clock::duration injectPacket(const RadiotapHeader &radiotapHeader,
+  [[nodiscard]] std::chrono::steady_clock::duration injectPacket(const RadiotapHeader &radiotapHeader,
                                                    const Ieee80211Header &ieee80211Header,
-                                                   const AbstractWBPacket &abstractWbPacket) const {
+                                                   const AbstractWBPacket &abstractWbPacket) const override {
     const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
     const auto before = std::chrono::steady_clock::now();
     if (write(sockFd, packet.data(), packet.size()) != packet.size()) {
@@ -204,7 +204,7 @@ class RawSocketTransmitter : public IRawPacketInjector {
       close(sock);
       throw std::runtime_error("bind failed\n");
     }
-    struct timeval timeout;
+    struct timeval timeout{};
     timeout.tv_sec = 0;
     timeout.tv_usec = 8000;
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout)) < 0) {

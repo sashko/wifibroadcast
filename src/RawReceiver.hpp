@@ -257,7 +257,7 @@ class PcapReceiver {
     }
     return nPacketsPolledUntilQueueWasEmpty;
   }
-  int getfd() const { return fd; }
+  [[nodiscard]] int getfd() const { return fd; }
  public:
   // name of the wlan
   const std::string WLAN_NAME;
@@ -375,16 +375,6 @@ class MultiRxPcapReceiver {
   // This callback is called regularily independent weather data was received or not
   const GENERIC_CALLBACK mCallbackLog;
  public:
-};
-
-// Assumption: At least per card there is no packet loss
-class LostPacketCount {
- public:
-  uint64_t count_p_received = 0;
-  uint64_t count_p_lost = 0;
-  void onPacketReceived(const Ieee80211Header &ieee80211Header) {
-    std::cout << (int) ieee80211Header.getSequenceNumber() << "\n";
-  }
 };
 
 #endif //WIFIBROADCAST_RAWRECEIVER_H
