@@ -11,12 +11,6 @@
 // TODO what happens here has to be decided yet
 // write the fec decoding stats (and optionally RSSI ) for each rx stream
 
-// Since some tx/rx instances might run in their own processes, we decided that each
-// instance sends its statistics in raw form to a specific udp port (localhost)
-// This data can then be picked up by the centralized mavlink service, packed into mavlink
-// and forwarded as needed.
-// The UDP port all instances broadcast their messages to.
-static constexpr auto OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT = 50000;
 
 // Stores the min, max and average of the rssi values reported for this wifi card
 // Doesn't differentiate from which antenna the rssi value came
@@ -94,34 +88,28 @@ static std::ostream& operator<<(std::ostream& strm, const FECStreamStats& obj){
 }
 
 class OpenHDStatisticsWriter {
- private:
-  SocketHelper::UDPForwarder forwarder{SocketHelper::ADDRESS_LOCALHOST, OHD_WIFIBROADCAST_STATISTICS_LOCAL_UDP_PORT};
  public:
   // Forwarded data
   struct Data {
     // the unique stream ID this data refers to
-    const uint8_t radio_port = 0;
+    uint8_t radio_port = 0;
     // min max and avg rssi for each wifi card since the last call.
     // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
-    const std::array<RSSIForWifiCard, 8> rssiPerCard{};
+    std::array<RSSIForWifiCard, 8> rssiPerCard{};
     // always create wifibroadcast rx stats
-    const WBRxStats wb_rx_stats;
+    WBRxStats wb_rx_stats;
     // only if FEC enabled
-    const std::optional<FECStreamStats> fec_stream_stats;
+    std::optional<FECStreamStats> fec_stream_stats;
   }__attribute__((packed));
 
   typedef std::function<void(Data data)> STATISTICS_CALLBACK;
   STATISTICS_CALLBACK _statistics_callback= nullptr;
-  void writeStats(const Data &data) {
+  void writeStats(const Data &data) const {
     // Either pass through via data callback
     if(_statistics_callback!= nullptr){
       _statistics_callback(data);
       return;
     }
-    // Otherwise, just blast it via UDP to be picked up
-    // send all statistics regardless of the radio port to the same UDP port, they
-    // will be differentiated over there
-    forwarder.forwardPacketViaUDP((const uint8_t *) &data, (size_t) sizeof(data));
   }
 };
 
