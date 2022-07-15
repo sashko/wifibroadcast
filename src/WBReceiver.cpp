@@ -141,8 +141,11 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
   }
   if(WLAN_IDX<rssiForWifiCard.size()){
     auto &thisWifiCard = rssiForWifiCard.at(WLAN_IDX);
-    //std::cout<<all_rssi_to_string(parsedPacket->allAntennaValues);
-    thisWifiCard.addRSSI(RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues));
+    std::cout<<all_rssi_to_string(parsedPacket->allAntennaValues);
+    const auto best_rssi=RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
+    if(best_rssi!=0){
+      thisWifiCard.addRSSI(best_rssi);
+    }
     /*for (const auto &value: parsedPacket->allAntennaValues) {
       // don't care from which antenna the value came
       // There seems to be a bug where sometimes the reported rssi is 0 ???!!
