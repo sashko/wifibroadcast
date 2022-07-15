@@ -116,9 +116,9 @@ class OpenHDStatisticsWriter {
 static std::ostream& operator<<(std::ostream& strm, const OpenHDStatisticsWriter::Data& data){
   std::stringstream ss;
   ss<<"Stats for "<<(int)data.radio_port<<"\n";
-  ss<<data.wb_rx_stats<<"\n";
+  ss<<data.wb_rx_stats;
   if(data.fec_stream_stats.has_value()){
-    ss<<data.fec_stream_stats.value()<<"\n";
+    ss<<"\n"<<data.fec_stream_stats.value();
   }
   strm<<ss.str();
   return strm;
