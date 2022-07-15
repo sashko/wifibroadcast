@@ -48,8 +48,8 @@ class RSSIForWifiCard {
 };
 static std::ostream& operator<<(std::ostream& strm, const RSSIForWifiCard& obj){
   std::stringstream ss;
-  ss<<"RSSIForWifiCard{last:"<<obj.last_rssi<<",avg:"<<obj.getAverage()<<",min:"<<obj.rssi_min
-     <<",max:"<<obj.rssi_max<<"}";
+  ss<<"RSSIForWifiCard{last:"<<(int)obj.last_rssi<<",avg:"<<)(intobj.getAverage()<<",min:"<<(int)obj.rssi_min
+     <<",max:"<<(int)obj.rssi_max<<"}";
   strm<<ss.str();
   return strm;
 }
