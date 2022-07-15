@@ -54,6 +54,15 @@ static std::ostream& operator<<(std::ostream& strm, const RSSIForWifiCard& obj){
   return strm;
 }
 
+static std::string bitrate_to_string(uint64_t bits_per_second){
+  const double mBits_per_second=static_cast<double>(bits_per_second)/(1000*1000);
+  if(mBits_per_second>1){
+    return std::to_string(mBits_per_second)+"mBit/s";
+  }
+  const double kBits_per_second=static_cast<double>(bits_per_second)/1000;
+  return std::to_string(kBits_per_second)+"kBit/s";
+}
+
 // receiving, validating and decrypting raw wifi packets
 struct WBRxStats{
   // n of all received packets, absolute
@@ -71,11 +80,11 @@ struct WBRxStats{
 static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
   std::stringstream ss;
   ss<<"WBRxStats{all:"<<obj.count_p_all<<",bad:"<<obj.count_p_bad<<",decrypt_err:"<<obj.count_p_decryption_err
-     <<",decrypt_ok:"<<obj.count_p_decryption_ok<<",bytes:"<<obj.count_bytes_data_received<<"}";
+     <<",decrypt_ok:"<<obj.count_p_decryption_ok<<",bytes:"<<obj.count_bytes_data_received
+     <<",bitrate:"<<bitrate_to_string(obj.curr_bits_per_second)<<"}";
   strm<<ss.str();
   return strm;
 }
-
 
 // matches FECDecoder
 struct FECStreamStats{
