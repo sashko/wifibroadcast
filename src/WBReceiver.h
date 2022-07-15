@@ -92,15 +92,6 @@ class WBReceiver {
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   Decryptor mDecryptor;
   std::array<RSSIForWifiCard, MAX_RX_INTERFACES> rssiForWifiCard;
-  // n of all received packets, absolute
-  /*uint64_t count_p_all = 0;
-  // n of received packets that are bad for any reason
-  uint64_t count_p_bad = 0;
-  // encryption stats
-  uint64_t count_p_decryption_err = 0;
-  uint64_t count_p_decryption_ok = 0;
-  // n of total received bytes, before FEC decoding
-  uint64_t count_bytes_data_received=0;*/
   WBRxStats wb_rx_stats{};
   OpenHDStatisticsWriter openHdStatisticsWriter;
   //We know that once we get the first session key packet
