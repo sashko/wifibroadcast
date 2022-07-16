@@ -105,6 +105,9 @@ void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
   //mIeee80211Header.printSequenceControl();
 
   const auto injectionTime = mPcapTransmitter.injectPacket(mRadiotapHeader, mIeee80211Header, abstractWbPacket);
+  if(injectionTime>MAX_SANE_INJECTION_TIME){
+    count_tx_injections_error_hint++;
+  }
   nInjectedPackets++;
 #ifdef ENABLE_ADVANCED_DEBUGGING
   pcapInjectionTime.add(injectionTime);

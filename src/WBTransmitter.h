@@ -38,7 +38,6 @@
 #include <iostream>
 #include <variant>
 #include <thread>
-
 // Note: The UDP port is missing as an option here, since it is not an option for WFBTransmitter anymore.
 // Only an option when you run this program via the command line.
 struct TOptions {
@@ -96,6 +95,9 @@ class WBTransmitter {
   uint64_t get_current_injected_bits_per_second(){
     return bitrate_calculator_injected_bytes.recalculateSinceLast(count_bytes_data_injected);
   }
+  [[nodiscard]] uint64_t get_count_tx_injections_error_hint()const{
+    return count_tx_injections_error_hint;
+  }
  private:
   // send the current session key via WIFI (located in mEncryptor)
   void sendSessionKey();
@@ -124,6 +126,10 @@ class WBTransmitter {
   int64_t nInjectedSessionKeypackets=0;
   // count of bytes we injected into the wifi card
   uint64_t count_bytes_data_injected=0;
+  // a tx error is thrown if injecting the packet takes longer than X ms,
+  // which hints at a overflowing tx queue (unfortunately I don't know a way to directly get the tx queue yet)
+  uint64_t count_tx_injections_error_hint=0;
+  static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
   BitrateCalculator bitrate_calculator_injected_bytes{};
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point session_key_announce_ts{};

@@ -55,6 +55,9 @@ class UDPWBTransmitter {
   uint64_t get_current_injected_bits_per_second(){
     return wbTransmitter->get_current_injected_bits_per_second();
   }
+  [[nodiscard]] uint64_t get_count_tx_injections_error_hint()const{
+    return wbTransmitter->get_count_tx_injections_error_hint();
+  }
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;
   std::unique_ptr<SocketHelper::UDPReceiver> udpReceiver;
