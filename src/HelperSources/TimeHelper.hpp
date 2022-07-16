@@ -325,8 +325,12 @@ class BitrateCalculator{
     last_time=now;
     bytes_last_time=curr_bytes_received;
     const auto deltaTimeMilliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime).count();
-    const auto bits_per_second=(deltaBytes*8*1000 / deltaTimeMilliseconds);
-    return bits_per_second;
+    if(deltaTimeMilliseconds>0){
+      const auto bits_per_second=(deltaBytes*8*1000 / deltaTimeMilliseconds);
+      return bits_per_second;
+    }else{
+      return 0;
+    }
   }
  private:
   uint64_t bytes_last_time=0;
