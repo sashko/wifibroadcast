@@ -95,6 +95,9 @@ class WBTransmitter {
   uint64_t get_current_injected_bits_per_second(){
     return bitrate_calculator_injected_bytes.recalculateSinceLast(count_bytes_data_injected);
   }
+  uint64_t get_current_provided_bits_per_second(){
+    return bitrate_calculator_data_provided.recalculateSinceLast(count_bytes_data_provided);
+  }
   [[nodiscard]] uint64_t get_count_tx_injections_error_hint()const{
     return count_tx_injections_error_hint;
   }
@@ -124,6 +127,9 @@ class WBTransmitter {
   int64_t nInjectedPackets = 0;
   // n of injected session key packets
   int64_t nInjectedSessionKeypackets=0;
+  // count of bytes we got passed (aka for examle, what the video encoder produced - does not include FEC)
+  uint64_t count_bytes_data_provided=0;
+  BitrateCalculator bitrate_calculator_data_provided{};
   // count of bytes we injected into the wifi card
   uint64_t count_bytes_data_injected=0;
   // a tx error is thrown if injecting the packet takes longer than X ms,

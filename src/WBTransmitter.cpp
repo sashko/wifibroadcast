@@ -161,6 +161,7 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
     std::cout << "Fed packet with incompatible size:" << size << "\n";
     return;
   }
+  count_bytes_data_provided+=size;
   const auto cur_ts = std::chrono::steady_clock::now();
   // send session key in SESSION_KEY_ANNOUNCE_DELTA intervals
   if ((cur_ts >= session_key_announce_ts)) {
