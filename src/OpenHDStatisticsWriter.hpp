@@ -101,7 +101,7 @@ struct FECStreamStats{
 };
 static std::ostream& operator<<(std::ostream& strm, const FECStreamStats& obj){
   std::stringstream ss;
-  ss<<"FECStreamStats{blocks_total:"<<obj.count_blocks_lost<<",blocks_lost:"<<obj.count_blocks_lost<<",blocks_recovered:"<<obj.count_blocks_recovered
+  ss<<"FECStreamStats{blocks_total:"<<obj.count_blocks_total<<",blocks_lost:"<<obj.count_blocks_lost<<",blocks_recovered:"<<obj.count_blocks_recovered
      <<",fragments_recovered:"<<obj.count_fragments_recovered<<"bytes_forwarded:"<<obj.count_bytes_forwarded<<"}";
   strm<<ss.str();
   return strm;
