@@ -45,6 +45,9 @@ class UDPWBTransmitter {
   void runInBackground() {
     udpReceiver->runInBackground();
   }
+  void stopBackground(){
+    udpReceiver->stopBackground();
+  }
   [[nodiscard]] std::string createDebug() const {
     return wbTransmitter->createDebugState();
   }
