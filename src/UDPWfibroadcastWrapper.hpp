@@ -86,6 +86,12 @@ class UDPWBReceiver {
   void loopUntilError() {
     wbReceiver->loop();
   }
+  void stop_looping(){
+    wbReceiver->stop_looping();
+    if(backgroundThread->joinable()){
+      backgroundThread->join();
+    }
+  }
   /**
    * Start looping in the background, creates a new thread.
    */

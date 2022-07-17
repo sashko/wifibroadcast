@@ -321,11 +321,17 @@ class MultiRxPcapReceiver {
       mReceiverFDs[i].events = POLLIN;
     }
   }
-  ~MultiRxPcapReceiver() = default;
-  // Runs until an error occurs
+  void stop(){
+    keep_running=false;
+    for(auto& receiver:mReceivers){
+      receiver.reset();
+    }
+    mReceivers.resize(0);
+  }
+  // Runs until destructor or an error occurs
   void loop() {
     std::chrono::steady_clock::time_point log_send_ts{};
-    for (;;) {
+    while (keep_running) {
       auto cur_ts = std::chrono::steady_clock::now();
       const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
       int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(), timeoutMS);
@@ -350,9 +356,13 @@ class MultiRxPcapReceiver {
       // TODO Optimization: If rc>1 we have data on more than one wifi card. It would be better to alternating process a couple of packets from card 1, then card 2 or similar
       for (int i = 0; rc > 0 && i < mReceiverFDs.size(); i++) {
         if (mReceiverFDs[i].revents & (POLLERR | POLLNVAL)) {
-          throw std::runtime_error(StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",
-                                                         i,
-                                                         rxInterfaces[i].c_str()));
+          if(keep_running){
+            throw std::runtime_error(StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",
+                                                           i,
+                                                           rxInterfaces[i].c_str()));
+          }else{
+            return;
+          }
         }
         if (mReceiverFDs[i].revents & POLLIN) {
           mReceivers[i]->loop_iter();
@@ -360,8 +370,10 @@ class MultiRxPcapReceiver {
         }
       }
     }
+    std::cout<<"MultiRxPcapReceiver::exitLoop\n";
   }
  private:
+  bool keep_running=true;
   const std::vector<std::string> rxInterfaces;
   const int radio_port;
   const std::chrono::milliseconds log_interval;

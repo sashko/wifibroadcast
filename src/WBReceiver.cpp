@@ -52,6 +52,10 @@ void WBReceiver::loop() {
   receiver->loop();
 }
 
+void WBReceiver::stop_looping() {
+  receiver->stop();
+}
+
 std::string WBReceiver::createDebugState() const {
   std::stringstream ss;
   ss<<wb_rx_stats<<"\n";

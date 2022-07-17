@@ -81,6 +81,7 @@ class WBReceiver {
    * NOTE: This blocks the calling thread (never returns unless error).
    */
   void loop();
+  void stop_looping();
   /**
    * Create a verbose string that gives debugging information about the current state of this wb receiver.
    * Since this one only reads, it is safe to call from any thread.
