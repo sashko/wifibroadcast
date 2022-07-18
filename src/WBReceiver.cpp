@@ -196,7 +196,7 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
         }
       };
       if (IS_FEC_ENABLED) {
-        mFECDDecoder = std::make_unique<FECDecoder>((unsigned int) sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
+        mFECDDecoder = std::make_unique<FECDecoder>(options.rx_queue_depth,(unsigned int) sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
         mFECDDecoder->mSendDecodedPayloadCallback = callback;
       } else {
         mFECDisabledDecoder = std::make_unique<FECDisabledDecoder>();
