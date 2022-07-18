@@ -413,6 +413,7 @@ class FECDecoder {
   RX_QUEUE_MAX_SIZE(rx_queue_max_depth),
   maxNFragmentsPerBlock(maxNFragmentsPerBlock) {
     assert(rx_queue_max_depth<20);
+    assert(rx_queue_max_depth>=1);
   }
   FECDecoder(const FECDecoder &other) = delete;
   ~FECDecoder() = default;
