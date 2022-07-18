@@ -409,8 +409,9 @@ class FECDecoder {
   // Does not need to know k,n or if tx does variable block length or not.
   // If the tx doesn't use the full range of fragment indices (aka K is fixed) use
   // @param maxNFragmentsPerBlock for a more efficient memory usage
-  explicit FECDecoder(const unsigned int maxNFragmentsPerBlock = MAX_TOTAL_FRAGMENTS_PER_BLOCK) : maxNFragmentsPerBlock(
-      maxNFragmentsPerBlock) {}
+  explicit FECDecoder(const unsigned int rx_queue_max_depth,const unsigned int maxNFragmentsPerBlock = MAX_TOTAL_FRAGMENTS_PER_BLOCK) :
+  RX_QUEUE_MAX_SIZE(rx_queue_max_depth),
+  maxNFragmentsPerBlock(maxNFragmentsPerBlock) {}
   FECDecoder(const FECDecoder &other) = delete;
   ~FECDecoder() = default;
   // data forwarded on this callback is always in-order but possibly with gaps
@@ -418,7 +419,7 @@ class FECDecoder {
   // WARNING: Don't forget to register this callback !
   SEND_DECODED_PACKET mSendDecodedPayloadCallback;
   // A value too high doesn't really give much benefit and increases memory usage
-  static constexpr auto RX_QUEUE_MAX_SIZE = 10;
+  const unsigned int RX_QUEUE_MAX_SIZE;
   const unsigned int maxNFragmentsPerBlock;
  public:
   // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)

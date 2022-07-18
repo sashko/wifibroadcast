@@ -53,6 +53,7 @@ struct ROptions {
   // Print log messages about the current status in regular intervals to stdout.
   // However, in OpenHD, it is more verbose to log all the tx/rx instances together.
   bool enableLogAlive = true;
+  unsigned int rx_queue_depth=10; // RX queue depth (max n of blocks that can be buffered in the rx pipeline)
 };
 
 class WBReceiver {

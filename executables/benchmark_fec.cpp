@@ -110,7 +110,7 @@ void benchmark_fec_decode(const Options &options) {
 	encoder.encodePacket(packet.data(), packet.size());
   }
 
-  FECDecoder decoder;
+  FECDecoder decoder{10};
   const auto decoderCb = [](const uint8_t *payload, std::size_t payloadSize)mutable {
 	// do nothing here. Let's hope the compiler doesn't notice.
   };
