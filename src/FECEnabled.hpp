@@ -411,7 +411,9 @@ class FECDecoder {
   // @param maxNFragmentsPerBlock for a more efficient memory usage
   explicit FECDecoder(const unsigned int rx_queue_max_depth,const unsigned int maxNFragmentsPerBlock = MAX_TOTAL_FRAGMENTS_PER_BLOCK) :
   RX_QUEUE_MAX_SIZE(rx_queue_max_depth),
-  maxNFragmentsPerBlock(maxNFragmentsPerBlock) {}
+  maxNFragmentsPerBlock(maxNFragmentsPerBlock) {
+    assert(rx_queue_max_depth<20);
+  }
   FECDecoder(const FECDecoder &other) = delete;
   ~FECDecoder() = default;
   // data forwarded on this callback is always in-order but possibly with gaps

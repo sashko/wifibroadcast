@@ -52,7 +52,7 @@ static void testNonce() {
 static void testWithoutPacketLoss(const int k, const int percentage, const std::vector<std::vector<uint8_t>> &testIn) {
   std::cout << "Test without packet loss. K:" << k << " P:" << percentage << " N_PACKETS:" << testIn.size() << "\n";
   FECEncoder encoder(k, percentage);
-  FECDecoder decoder;
+  FECDecoder decoder{10};
   std::vector<std::vector<uint8_t>> testOut;
 
   const auto cb1 = [&decoder](const uint64_t nonce, const uint8_t *payload, const std::size_t payloadSize)mutable {
@@ -80,7 +80,7 @@ static void testWithoutPacketLossDynamicBlockSize() {
   const auto testIn = GenericHelper::createRandomDataBuffers(N_BLOCKS, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
   std::vector<std::vector<uint8_t>> testOut;
   FECEncoder encoder(MAX_N_P_FRAGMENTS_PER_BLOCK, 50);
-  FECDecoder decoder;
+  FECDecoder decoder{10};
   const auto cb1 = [&decoder](const uint64_t nonce, const uint8_t *payload, const std::size_t payloadSize)mutable {
 	decoder.validateAndProcessPacket(nonce, std::vector<uint8_t>(payload, payload + payloadSize));
   };
@@ -102,11 +102,11 @@ static void testWithoutPacketLossDynamicBlockSize() {
 static void testRxQueue(const int k, const int percentage) {
   std::cout << "Test rx queue. K:" << k << " P:" << percentage << "\n";
   const auto n = FECEncoder::calculateN(k, percentage);
-  constexpr auto QUEUE_SIZE = FECDecoder::RX_QUEUE_MAX_SIZE;
+  constexpr auto QUEUE_SIZE = 10;
   const auto
 	  testIn = GenericHelper::createRandomDataBuffers(QUEUE_SIZE * k, FEC_MAX_PAYLOAD_SIZE, FEC_MAX_PAYLOAD_SIZE);
   FECEncoder encoder(k, percentage);
-  FECDecoder decoder;
+  FECDecoder decoder{10};
   // begin test
   std::vector<std::pair<uint64_t, std::vector<uint8_t>>> fecPackets;
   const auto cb1 = [&fecPackets](const uint64_t nonce, const uint8_t *payload, const std::size_t payloadSize)mutable {
@@ -174,7 +174,7 @@ static void testWithPacketLossButEverythingIsRecoverable(const int k,
   std::cout << "Test (with packet loss) K:" << k << " P:" << percentage << " N_PACKETS:" << testIn.size()
 			<< " DROP_MODE:" << DROP_MODE << "\n";
   FECEncoder encoder(k, percentage);
-  FECDecoder decoder;
+  FECDecoder decoder{10};
   std::vector<std::vector<uint8_t>> testOut;
   const auto cb1 = [&decoder, k, DROP_MODE, SEND_DUPLICATES](const uint64_t nonce,
 															 const uint8_t *payload,
