@@ -38,6 +38,8 @@
 #include <iostream>
 #include <variant>
 #include <thread>
+#include <atomic>
+
 // Note: The UDP port is missing as an option here, since it is not an option for WFBTransmitter anymore.
 // Only an option when you run this program via the command line.
 struct TOptions {
