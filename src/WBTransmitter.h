@@ -38,7 +38,7 @@
 #include <iostream>
 #include <variant>
 #include <thread>
-#include <atomic>
+//#include <atomic>
 
 // Note: The UDP port is missing as an option here, since it is not an option for WFBTransmitter anymore.
 // Only an option when you run this program via the command line.
@@ -124,7 +124,9 @@ class WBTransmitter {
   Ieee80211Header mIeee80211Header;
   // this one never changes,also used to inject packets
   RadiotapHeader::UserSelectableParams _radioTapHeaderParams;
-  std::atomic<RadiotapHeader> mRadiotapHeader;
+  std::mutex radiotapHeaderMutex;
+  RadiotapHeader mRadiotapHeader;
+  //std::atomic<bool> test={false};
   uint16_t ieee80211_seq = 0;
   // statistics for console
   // n of packets fed to the instance

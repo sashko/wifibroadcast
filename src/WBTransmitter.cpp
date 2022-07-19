@@ -58,7 +58,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     // FEC is variable if k is an string
     IS_FEC_VARIABLE(options.fec_k.index() == 1),
     fecVariableInputType(convert(options)),
-    mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}} {
+    mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}}{
   std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";
   mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (IS_FEC_DISABLED) {
@@ -104,7 +104,7 @@ void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
   mIeee80211Header.writeParams(options.radio_port, ieee80211_seq);
   ieee80211_seq += 16;
   //mIeee80211Header.printSequenceControl();
-
+  std::lock_guard<std::mutex> guard(radiotapHeaderMutex);
   const auto injectionTime = mPcapTransmitter.injectPacket(mRadiotapHeader, mIeee80211Header, abstractWbPacket);
   if(injectionTime>MAX_SANE_INJECTION_TIME){
     count_tx_injections_error_hint++;
@@ -199,5 +199,6 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
 void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
   _radioTapHeaderParams.mcs_index=mcs_index;
   auto newRadioTapHeader=RadiotapHeader{_radioTapHeaderParams};
+  std::lock_guard<std::mutex> guard(radiotapHeaderMutex);
   mRadiotapHeader=newRadioTapHeader;
 }
