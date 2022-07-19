@@ -118,8 +118,8 @@ static int openUdpSocketForReceiving(const std::string& address,const int port) 
 // opens port on construction, closes port on destruction
 class UDPForwarder {
  public:
-  explicit UDPForwarder(std::string client_addr, int client_udp_port) :
-      client_addr(std::move(client_addr)), client_udp_port(client_udp_port) {
+  explicit UDPForwarder(std::string client_addr1, int client_udp_port1) :
+      client_addr(std::move(client_addr1)), client_udp_port(client_udp_port1) {
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
       std::stringstream message;
@@ -134,8 +134,6 @@ class UDPForwarder {
     inet_aton(client_addr.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
     saddr.sin_port = htons((unsigned short) client_udp_port);
     std::cout << "UDPForwarder::configured for " << client_addr << " " << client_udp_port << "\n";
-	//
-
   }
   UDPForwarder(const UDPForwarder &) = delete;
   UDPForwarder &operator=(const UDPForwarder &) = delete;
