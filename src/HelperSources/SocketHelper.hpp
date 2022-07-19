@@ -132,7 +132,7 @@ class UDPForwarder {
     saddr.sin_family = AF_INET;
     //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
     inet_aton(client_addr.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
-    saddr.sin_port = htons((unsigned short) client_udp_port);
+    saddr.sin_port = htons((uint16_t) client_udp_port);
     std::cout << "UDPForwarder::configured for " << client_addr << " " << client_udp_port << "\n";
   }
   UDPForwarder(const UDPForwarder &) = delete;
@@ -156,7 +156,7 @@ class UDPForwarder {
 	saddr.sin_family = AF_INET;
 	//saddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	inet_aton(address.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
-	saddr.sin_port = htons((unsigned short) port);
+	saddr.sin_port = htons((uint16_t) port);
 	if (bind(sockfd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
 	  throw std::runtime_error(StringFormat::convert("Bind error on socket %s:%d: %s",address.c_str(), port, strerror(errno)));
 	}
@@ -260,7 +260,7 @@ class UDPReceiver {
     saddr.sin_family = AF_INET;
     //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
     inet_aton(destIp.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
-    saddr.sin_port = htons((unsigned short)  destPort);
+    saddr.sin_port = htons((uint16_t)  destPort);
     const auto ret=sendto(mSocket, packet, packetSize, 0, (const struct sockaddr *) &saddr,
            sizeof(saddr));
 	if(ret <0 || ret != packetSize){
