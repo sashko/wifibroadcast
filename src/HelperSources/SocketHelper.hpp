@@ -265,7 +265,7 @@ class UDPReceiver {
                             sizeof(saddr));
     if(ret <0 || ret != packetSize){
       std::stringstream ss;
-      ss<<"Error sending packet of size:"<<packetSize<<" to "<<destIp<<":"<<saddr.sin_port<<" code:"<<ret<<"\n";
+      ss<<"Error sending packet of size:"<<packetSize<<" to "<<destIp<<":"<<destPort<<" code:"<<ret<<"\n";
       std::cout<<ss.str();
     }
   }
