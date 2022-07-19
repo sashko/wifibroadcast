@@ -262,10 +262,12 @@ class UDPReceiver {
     inet_aton(destIp.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
     saddr.sin_port = htons((uint16_t)  destPort);
     const auto ret=sendto(mSocket, packet, packetSize, 0, (const struct sockaddr *) &saddr,
-           sizeof(saddr));
-	if(ret <0 || ret != packetSize){
-	  std::cout<<"Error sending packet of size:"<<packetSize<<" to port:"<<saddr.sin_port<<" code:"<<ret<<"\n";
-	}
+                            sizeof(saddr));
+    if(ret <0 || ret != packetSize){
+      std::stringstream ss;
+      ss<<"Error sending packet of size:"<<packetSize<<" to "<<destIp<<":"<<saddr.sin_port<<" code:"<<ret<<"\n";
+      std::cout<<ss.str();
+    }
   }
   void stopLooping() {
     receiving = false;
