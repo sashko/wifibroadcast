@@ -19,9 +19,8 @@ static std::unique_ptr<WBReceiver> make_with_out_of_scope() {
 static std::unique_ptr<WBTransmitter> make_with_out_of_scope2() {
   TOptions options;
   options.radio_port = 12;
-  RadiotapHeader::UserSelectableParams params;
-  RadiotapHeader radiotap_header{params};
-  auto wb_transmitter = std::make_unique<WBTransmitter>(radiotap_header, options);
+  RadiotapHeader::UserSelectableParams params{};
+  auto wb_transmitter = std::make_unique<WBTransmitter>(params, options);
   return wb_transmitter;
 }
 
