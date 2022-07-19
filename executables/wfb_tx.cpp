@@ -89,8 +89,6 @@ int main(int argc, char *const *argv) {
   }
   options.wlan = argv[optind];
 
-  RadiotapHeader radiotapHeader{wifiParams};
-
   //RadiotapHelper::debugRadiotapHeader((uint8_t*)&radiotapHeader,sizeof(RadiotapHeader));
   //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader80211n, sizeof(OldRadiotapHeaders::u8aRadiotapHeader80211n));
   //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader, sizeof(OldRadiotapHeaders::u8aRadiotapHeader));
@@ -122,7 +120,7 @@ int main(int argc, char *const *argv) {
   }
 
   try {
-	UDPWBTransmitter udpwbTransmitter{radiotapHeader, options, SocketHelper::ADDRESS_LOCALHOST, udp_port};
+	UDPWBTransmitter udpwbTransmitter{wifiParams, options, SocketHelper::ADDRESS_LOCALHOST, udp_port};
 	udpwbTransmitter.loopUntilError();
   } catch (std::runtime_error &e) {
 	fprintf(stderr, "Error: %s\n", e.what());

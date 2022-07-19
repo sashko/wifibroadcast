@@ -20,11 +20,11 @@
 
 class UDPWBTransmitter {
  public:
-  UDPWBTransmitter(RadiotapHeader radiotapHeader,
+  UDPWBTransmitter(RadiotapHeader::UserSelectableParams radiotapHeaderParams,
                    TOptions options1,
                    const std::string &client_addr,
                    int client_udp_port) {
-    wbTransmitter = std::make_unique<WBTransmitter>(radiotapHeader, std::move(options1));
+    wbTransmitter = std::make_unique<WBTransmitter>(radiotapHeaderParams, std::move(options1));
     udpReceiver = std::make_unique<SocketHelper::UDPReceiver>(client_addr,
                                                               client_udp_port,
                                                               [this](const uint8_t *payload,
@@ -52,6 +52,9 @@ class UDPWBTransmitter {
     return wbTransmitter->createDebugState();
   }
   // temporary
+  void update_mcs_index(uint8_t mcs_index){
+    wbTransmitter->update_mcs_index(mcs_index);
+  }
   [[nodiscard]] int64_t get_n_injected_packets()const{
     return wbTransmitter->get_n_injected_packets();
   }
