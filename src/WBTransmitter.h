@@ -68,7 +68,7 @@ class WBTransmitter {
    * @param radiotapHeader the radiotap header that is used for injecting, contains configurable data like the mcs index.
    * @param options1 options for this instance, some of them are forwarded to the receiver instance.
    */
-  WBTransmitter(RadiotapHeader radiotapHeader, TOptions options1);
+  WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1);
   WBTransmitter(const WBTransmitter &) = delete;
   WBTransmitter &operator=(const WBTransmitter &) = delete;
   ~WBTransmitter();
@@ -87,6 +87,9 @@ class WBTransmitter {
   * @return a string without new line at the end.
   */
   [[nodiscard]] std::string createDebugState() const;
+  // These are for updating parameters at run time
+  void update_mcs_index(uint8_t mcs_index);
+
   const TOptions options;
   // temporary
   [[nodiscard]] int64_t get_n_injected_packets()const{
@@ -118,7 +121,8 @@ class WBTransmitter {
   // Used to inject packets
   Ieee80211Header mIeee80211Header;
   // this one never changes,also used to inject packets
-  const RadiotapHeader mRadiotapHeader;
+  RadiotapHeader::UserSelectableParams _radioTapHeaderParams;
+  std::atomic<RadiotapHeader> mRadiotapHeader;
   uint16_t ieee80211_seq = 0;
   // statistics for console
   // n of packets fed to the instance
