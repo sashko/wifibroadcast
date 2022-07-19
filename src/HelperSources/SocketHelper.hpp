@@ -146,7 +146,9 @@ class UDPForwarder {
     const auto ret=sendto(sockfd, packet, packetSize, 0, (const struct sockaddr *) &saddr,
            sizeof(saddr));
 	if(ret <0 || ret != packetSize){
-	  std::cout<<"Error sending packet of size:"<<packetSize<<" to port:"<<saddr.sin_port<<" code:"<<ret<<"\n";
+          std::stringstream ss;
+          ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<"\n";
+          std::cout<<ss.str();
 	}
   }
   void lula(std::string address,int port){
