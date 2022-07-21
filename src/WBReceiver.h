@@ -25,18 +25,6 @@
 #include "HelperSources/TimeHelper.hpp"
 #include "RawReceiver.hpp"
 
-#include <unordered_map>
-#include <cstdint>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <cstdio>
-#include <cerrno>
-#include <string>
-#include <cstring>
-#include <stdexcept>
-#include <utility>
-
 // A wifi card with more than 4 antennas still has to be found :)
 static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD = 4;
 //

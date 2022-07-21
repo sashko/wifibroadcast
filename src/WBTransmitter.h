@@ -26,16 +26,6 @@
 #include "HelperSources/TimeHelper.hpp"
 #include "wifibroadcast.hpp"
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <cstdint>
-#include <cerrno>
-#include <string>
-#include <vector>
-#include <cstring>
-#include <stdexcept>
-#include <iostream>
 #include <variant>
 #include <thread>
 //#include <atomic>

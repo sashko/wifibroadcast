@@ -16,19 +16,16 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "RawReceiver.hpp"
 #include "WBReceiver.h"
+#include "RawReceiver.hpp"
 #include "wifibroadcast.hpp"
 #include "HelperSources/SchedulingHelper.hpp"
 #include <cassert>
-#include <cstdio>
 #include <cinttypes>
 #include <unistd.h>
 #include <pcap/pcap.h>
-#include <poll.h>
 #include <memory>
 #include <string>
-#include <chrono>
 #include <sstream>
 #include <utility>
 

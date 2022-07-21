@@ -19,22 +19,6 @@
 #include "WBTransmitter.h"
 #include "HelperSources/SchedulingHelper.hpp"
 #include "HelperSources/RTPHelper.hpp"
-#include <cstdio>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <poll.h>
-#include <ctime>
-#include <sys/resource.h>
-#include <cassert>
-#include <chrono>
-#include <memory>
-#include <string>
-#include <memory>
-#include <utility>
-#include <vector>
-#include <thread>
 
 static FEC_VARIABLE_INPUT_TYPE convert(const TOptions &options) {
   if (options.fec_k.index() == 0)return FEC_VARIABLE_INPUT_TYPE::none;
