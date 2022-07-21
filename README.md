@@ -1,3 +1,7 @@
+## Note 21.07.2022
+While the wfb_tx / wfb_rx main executables still exist, as of now, OpenHD uses the WBReceiver.h / WBTransmitter.h directly in c++,making
+them obsolete.
+
 ## Summary
 This code originated from https://github.com/svpcom/wifibroadcast  
 It was re-written in c++ with the intention to reduce latency, improve syntax, improve documentation 
