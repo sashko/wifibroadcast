@@ -58,6 +58,9 @@ class UDPWBTransmitter {
   [[nodiscard]] int64_t get_n_injected_packets()const{
     return wbTransmitter->get_n_injected_packets();
   }
+  [[nodiscard]] uint64_t get_n_injected_bytes()const{
+    return wbTransmitter->get_n_injected_bytes();
+  }
   uint64_t get_current_injected_bits_per_second(){
     return wbTransmitter->get_current_injected_bits_per_second();
   }

@@ -97,6 +97,9 @@ class WBTransmitter {
   [[nodiscard]] int64_t get_n_injected_packets()const{
     return nInjectedPackets;
   }
+  [[nodiscard]] uint64_t get_n_injected_bytes()const{
+    return static_cast<uint64_t>(count_bytes_data_injected);
+  }
   uint64_t get_current_injected_bits_per_second(){
     return bitrate_calculator_injected_bytes.recalculateSinceLast(count_bytes_data_injected);
   }
