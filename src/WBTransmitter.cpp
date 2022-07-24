@@ -73,6 +73,8 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     sendSessionKey();
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
+  // next session key in delta ms if packets are being fed
+  session_key_announce_ts = std::chrono::steady_clock::now()+SESSION_KEY_ANNOUNCE_DELTA;
 }
 
 WBTransmitter::~WBTransmitter() {
