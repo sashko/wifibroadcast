@@ -40,6 +40,7 @@
 #include <atomic>
 #include <list>
 #include <mutex>
+#include <optional>
 
 namespace SocketHelper {
 struct UDPConfig{
@@ -65,7 +66,9 @@ static void setSocketReceiveTimeout(int socketFd, const std::chrono::nanoseconds
     //std::cout<<"Changing timeout\n";
     auto tv = GenericHelper::durationToTimeval(timeout);
     if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-      throw std::runtime_error(StringFormat::convert("Cannot set socket timeout %d", timeout.count()));
+      std::stringstream ss;
+      ss<<"Cannot set socket timeout "<<timeout.count()<<"\n";
+      std::cerr<<ss.str();
       //std::cout<<"Cannot set socket timeout "<<timeout.count()<<"\n";
     }
   }
@@ -75,8 +78,6 @@ static void setSocketReceiveTimeout(int socketFd, const std::chrono::nanoseconds
 static void setSocketReuse(int sockfd) {
   int enable = 1;
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-    //throw std::runtime_error(StringFormat::convert("Error setting reuse on socket %d: %s",port, strerror(errno)));
-    // don't crash here
     std::cerr << "Cannot set socket reuse\n";
   }
 }
@@ -101,7 +102,12 @@ static void increaseSocketRecvBuffer(int sockfd, const int wantedSize) {
 // throws a runtime exception if opening the socket fails
 static int openUdpSocketForReceiving(const std::string& address,const int port) {
   int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (fd < 0) throw std::runtime_error(StringFormat::convert("Error opening socket %d: %s", port, strerror(errno)));
+  if (fd < 0){
+    std::stringstream ss;
+    ss<<"Error opening socket "<<port<<" "<<strerror(errno)<<"\n";
+    std::cerr<<ss.str();
+    return -1;
+  }
   setSocketReuse(fd);
   struct sockaddr_in saddr{};
   bzero((char *) &saddr, sizeof(saddr));
@@ -110,7 +116,10 @@ static int openUdpSocketForReceiving(const std::string& address,const int port) 
   inet_aton(address.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
   saddr.sin_port = htons((unsigned short) port);
   if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
-    throw std::runtime_error(StringFormat::convert("Bind error on socket %s:%d: %s",address.c_str(), port, strerror(errno)));
+    std::stringstream ss;
+    ss<<"Bind error on socket "<<address.c_str()<<":"<<port<<" "<< strerror(errno)<<"\n";
+    std::cerr<<ss.str();
+    return -1;
   }
   return fd;
 }
@@ -125,7 +134,6 @@ class UDPForwarder {
       std::stringstream message;
       message << "Error opening socket:" << strerror(errno) << "\n";
       std::cerr << message.str();
-      throw std::runtime_error(message.str());
     }
     //set up the destination
     bzero((char *) &saddr, sizeof(saddr));
@@ -149,18 +157,6 @@ class UDPForwarder {
           std::stringstream ss;
           ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<"\n";
           std::cout<<ss.str();
-	}
-  }
-  void lula(std::string address,int port){
-	setSocketReuse(sockfd);
-	struct sockaddr_in saddr{};
-	bzero((char *) &saddr, sizeof(saddr));
-	saddr.sin_family = AF_INET;
-	//saddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	inet_aton(address.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
-	saddr.sin_port = htons((uint16_t) port);
-	if (bind(sockfd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
-	  throw std::runtime_error(StringFormat::convert("Bind error on socket %s:%d: %s",address.c_str(), port, strerror(errno)));
 	}
   }
  private:
