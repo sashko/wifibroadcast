@@ -80,13 +80,13 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
     case DLT_IEEE802_11_RADIO:std::cout << wlan << " has DLT_IEEE802_11_RADIO Encap\n";
       program = StringFormat::convert("ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x", radio_port);
       break;
-    default:throw std::runtime_error(StringFormat::convert("unknown encapsulation on %s", wlan.c_str()));
+    default:std::cerr<<StringFormat::convert("unknown encapsulation on %s", wlan.c_str());
   }
   if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
-    throw std::runtime_error(StringFormat::convert("Unable to compile %s: %s", program.c_str(), pcap_geterr(ppcap)));
+    std::cerr<<StringFormat::convert("Unable to compile %s: %s", program.c_str(), pcap_geterr(ppcap));
   }
   if (pcap_setfilter(ppcap, &bpfprogram) == -1) {
-    throw std::runtime_error(StringFormat::convert("Unable to set filter %s: %s", program.c_str(), pcap_geterr(ppcap)));
+    std::cerr<<StringFormat::convert("Unable to set filter %s: %s", program.c_str(), pcap_geterr(ppcap));
   }
   pcap_freecode(&bpfprogram);
   return ppcap;
