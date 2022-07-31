@@ -360,7 +360,7 @@ class MultiRxPcapReceiver {
       for (int i = 0; rc > 0 && i < mReceiverFDs.size(); i++) {
         if (mReceiverFDs[i].revents & (POLLERR | POLLNVAL)) {
           if(keep_running){
-            std::cerr<<StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",i,rxInterfaces[i].c_str());
+            std::cerr<<StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s) \n",i,rxInterfaces[i].c_str());
           }else{
             return;
           }
