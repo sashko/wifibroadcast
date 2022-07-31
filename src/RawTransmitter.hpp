@@ -100,8 +100,7 @@ static pcap_t *openTxWithPcap(const std::string &wlan) {
   //if (pcap_set_rfmon(p, 1) !=0) std::cerr<<"set_rfmon failed";
   if (pcap_set_timeout(p, -1) != 0) std::cerr<<"set_timeout failed";
   //if (pcap_set_buffer_size(p, 2048) !=0) std::cerr<<"set_buffer_size failed";
-  // hm don't think it is needed on tx
-  //better not enable stuff that is not needed if(pcap_set_immediate_mode(p,true)!=0)  std::cerr<<StringFormat::convert("pcap_set_immediate_mode failed: %s", pcap_geterr(p)));
+  // NOTE: Immediate not needed on TX
   if (pcap_activate(p) != 0){
     std::cerr<<StringFormat::convert("pcap_activate failed: %s",
                                        pcap_geterr(p));
