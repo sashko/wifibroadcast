@@ -79,10 +79,13 @@ createRadiotapPacket(const RadiotapHeader &radiotapHeader,
   }
   return packet;
 }
-// throw runtime exception if injecting pcap packet goes wrong (should never happen)
+// log error if injecting pcap packet goes wrong (should never happen)
 static void injectPacket(pcap_t *pcap, const std::vector<uint8_t> &packetData) {
-  if (pcap_inject(pcap, packetData.data(), packetData.size()) != (int) packetData.size()) {
-    throw std::runtime_error(StringFormat::convert("Unable to inject packet %s", pcap_geterr(pcap)));
+  const auto len_injected=pcap_inject(pcap, packetData.data(), packetData.size());
+  if (len_injected != (int) packetData.size()) {
+    std::stringstream ss;
+    ss<<"pcap -unable to inject packet "<<packetData.size()<<" ret:"<<len_injected<<" "<<pcap_geterr(pcap)<<"\n";
+    std::cout<<ss.str();
   }
 }
 // copy paste from svpcom
@@ -90,19 +93,20 @@ static pcap_t *openTxWithPcap(const std::string &wlan) {
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_t *p = pcap_create(wlan.c_str(), errbuf);
   if (p == nullptr) {
-    throw std::runtime_error(StringFormat::convert("Unable to open interface %s in pcap: %s", wlan.c_str(), errbuf));
+    std::cerr<<StringFormat::convert("Unable to open interface %s in pcap: %s", wlan.c_str(), errbuf);
   }
-  if (pcap_set_snaplen(p, 4096) != 0) throw std::runtime_error("set_snaplen failed");
-  if (pcap_set_promisc(p, 1) != 0) throw std::runtime_error("set_promisc failed");
-  //if (pcap_set_rfmon(p, 1) !=0) throw runtime_error("set_rfmon failed");
-  if (pcap_set_timeout(p, -1) != 0) throw std::runtime_error("set_timeout failed");
-  //if (pcap_set_buffer_size(p, 2048) !=0) throw runtime_error("set_buffer_size failed");
+  if (pcap_set_snaplen(p, 4096) != 0) std::cerr<<"set_snaplen failed";
+  if (pcap_set_promisc(p, 1) != 0) std::cerr<<"set_promisc failed";
+  //if (pcap_set_rfmon(p, 1) !=0) std::cerr<<"set_rfmon failed";
+  if (pcap_set_timeout(p, -1) != 0) std::cerr<<"set_timeout failed";
+  //if (pcap_set_buffer_size(p, 2048) !=0) std::cerr<<"set_buffer_size failed";
   // hm don't think it is needed on tx
-  //better not enable stuff that is not needed if(pcap_set_immediate_mode(p,true)!=0)throw std::runtime_error(StringFormat::convert("pcap_set_immediate_mode failed: %s", pcap_geterr(p)));
-  if (pcap_activate(p) != 0)
-    throw std::runtime_error(StringFormat::convert("pcap_activate failed: %s",
-                                                   pcap_geterr(p)));
-  //if (pcap_setnonblock(p, 1, errbuf) != 0) throw runtime_error(string_format("set_nonblock failed: %s", errbuf));
+  //better not enable stuff that is not needed if(pcap_set_immediate_mode(p,true)!=0)  std::cerr<<StringFormat::convert("pcap_set_immediate_mode failed: %s", pcap_geterr(p)));
+  if (pcap_activate(p) != 0){
+    std::cerr<<StringFormat::convert("pcap_activate failed: %s",
+                                       pcap_geterr(p));
+  }
+  //if (pcap_setnonblock(p, 1, errbuf) != 0) std::cerr<<string_format("set_nonblock failed: %s", errbuf));
   return p;
 }
 }
@@ -167,8 +171,11 @@ class RawSocketTransmitter : public IRawPacketInjector {
                                                    const AbstractWBPacket &abstractWbPacket) const override {
     const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
     const auto before = std::chrono::steady_clock::now();
-    if (write(sockFd, packet.data(), packet.size()) != packet.size()) {
-      throw std::runtime_error(StringFormat::convert("Unable to inject packet (raw sock) %s", strerror(errno)));
+    const auto len_written=write(sockFd, packet.data(), packet.size());
+    if (len_written != packet.size()) {
+      std::stringstream ss;
+      ss<<"Unable to inject packet (raw sock) size:"<<packet.size()<<" res:"<<len_written<<" "<<strerror(errno)<<"\n";
+      std::cerr<<ss.str();
     }
     return std::chrono::steady_clock::now() - before;
   }
@@ -179,7 +186,9 @@ class RawSocketTransmitter : public IRawPacketInjector {
     struct ifreq ifr{};
     int sock = socket(AF_PACKET, SOCK_RAW, 0);
     if (sock == -1) {
-      throw std::runtime_error(StringFormat::convert("Socket failed %s %s", wifi.c_str(), strerror(errno)));
+      std::stringstream ss;
+      ss<<"RawSocketTransmitter:: open socket failed "<<wifi.c_str()<<" "<<strerror(errno)<<"\n";
+      std::cerr<<ss.str();
     }
 
     ll_addr.sll_family = AF_PACKET;
@@ -189,30 +198,34 @@ class RawSocketTransmitter : public IRawPacketInjector {
     strncpy(ifr.ifr_name, wifi.c_str(), IFNAMSIZ);
 
     if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
-      throw std::runtime_error(StringFormat::convert("ioctl(SIOCGIFINDEX) failed\n"));
+      std::stringstream ss;
+      ss<<"ioctl(SIOCGIFINDEX) failed\n";
+      std::cerr<<ss.str();
     }
 
     ll_addr.sll_ifindex = ifr.ifr_ifindex;
 
     if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
-      throw std::runtime_error(StringFormat::convert("ioctl(SIOCGIFHWADDR) failed\n"));
+      std::stringstream ss;
+      ss<<"ioctl(SIOCGIFHWADDR) failed\n";
+      std::cerr<<ss.str();
     }
 
     memcpy(ll_addr.sll_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 
     if (bind(sock, (struct sockaddr *) &ll_addr, sizeof(ll_addr)) == -1) {
       close(sock);
-      throw std::runtime_error("bind failed\n");
+      std::cerr<<"bind failed\n";
     }
     struct timeval timeout{};
     timeout.tv_sec = 0;
     timeout.tv_usec = 8000;
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout)) < 0) {
-      throw std::runtime_error("setsockopt SO_SNDTIMEO\n");
+      std::cerr<<"setsockopt SO_SNDTIMEO\n";
     }
     int sendbuff = 131072;
     if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, sizeof(sendbuff)) < 0) {
-      throw std::runtime_error("setsockopt SO_SNDBUF\n");
+      std::cerr<<"setsockopt SO_SNDBUF\n";
     }
     return sock;
   }

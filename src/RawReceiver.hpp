@@ -47,25 +47,28 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
   char errbuf[PCAP_ERRBUF_SIZE];
   ppcap = pcap_create(wlan.c_str(), errbuf);
   if (ppcap == NULL) {
-    throw std::runtime_error(StringFormat::convert("Unable to open interface %s in pcap: %s", wlan.c_str(), errbuf));
+    std::cerr<<StringFormat::convert("Unable to open interface %s in pcap: %s", wlan.c_str(), errbuf);
   }
   iteratePcapTimestamps(ppcap);
-  if (pcap_set_snaplen(ppcap, 4096) != 0) throw std::runtime_error("set_snaplen failed");
-  if (pcap_set_promisc(ppcap, 1) != 0) throw std::runtime_error("set_promisc failed");
-  //if (pcap_set_rfmon(ppcap, 1) !=0) throw runtime_error("set_rfmon failed");
-  if (pcap_set_timeout(ppcap, -1) != 0) throw std::runtime_error("set_timeout failed");
-  //if (pcap_set_buffer_size(ppcap, 2048) !=0) throw runtime_error("set_buffer_size failed");
+  if (pcap_set_snaplen(ppcap, 4096) != 0) std::cerr<<"set_snaplen failed";
+  if (pcap_set_promisc(ppcap, 1) != 0) std::cerr<<"set_promisc failed";
+  //if (pcap_set_rfmon(ppcap, 1) !=0) std::cerr<<"set_rfmon failed";
+  if (pcap_set_timeout(ppcap, -1) != 0) std::cerr<<"set_timeout failed";
+  //if (pcap_set_buffer_size(ppcap, 2048) !=0) std::cerr<<"set_buffer_size failed";
   // Important: Without enabling this mode pcap buffers quite a lot of packets starting with version 1.5.0 !
   // https://www.tcpdump.org/manpages/pcap_set_immediate_mode.3pcap.html
-  if (pcap_set_immediate_mode(ppcap, true) != 0)
-    throw std::runtime_error(StringFormat::convert("pcap_set_immediate_mode failed: %s",
-                                                   pcap_geterr(ppcap)));
-  if (pcap_activate(ppcap) != 0)
-    throw std::runtime_error(StringFormat::convert("pcap_activate failed: %s",
-                                                   pcap_geterr(ppcap)));
-  if (pcap_setnonblock(ppcap, 1, errbuf) != 0)
-    throw std::runtime_error(StringFormat::convert("set_nonblock failed: %s",
-                                                   errbuf));
+  if (pcap_set_immediate_mode(ppcap, true) != 0){
+    std::cerr<<StringFormat::convert("pcap_set_immediate_mode failed: %s",
+                                               pcap_geterr(ppcap));
+  }
+  if (pcap_activate(ppcap) != 0){
+    std::cerr<<StringFormat::convert("pcap_activate failed: %s",
+                                       pcap_geterr(ppcap));
+  }
+  if (pcap_setnonblock(ppcap, 1, errbuf) != 0){
+    std::cerr<<StringFormat::convert("set_nonblock failed: %s",
+                                       errbuf);
+  }
 
   int link_encap = pcap_datalink(ppcap);
   struct bpf_program bpfprogram{};
@@ -74,7 +77,6 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
     case DLT_PRISM_HEADER:std::cout << wlan << " has DLT_PRISM_HEADER Encap\n";
       program = StringFormat::convert("radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x", radio_port);
       break;
-
     case DLT_IEEE802_11_RADIO:std::cout << wlan << " has DLT_IEEE802_11_RADIO Encap\n";
       program = StringFormat::convert("ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x", radio_port);
       break;
@@ -339,7 +341,7 @@ class MultiRxPcapReceiver {
 
       if (rc < 0) {
         if (errno == EINTR || errno == EAGAIN) continue;
-        throw std::runtime_error(StringFormat::convert("Poll error: %s", strerror(errno)));
+        std::cerr<<StringFormat::convert("Poll error: %s", strerror(errno));
       }
 
       cur_ts = std::chrono::steady_clock::now();
@@ -357,9 +359,7 @@ class MultiRxPcapReceiver {
       for (int i = 0; rc > 0 && i < mReceiverFDs.size(); i++) {
         if (mReceiverFDs[i].revents & (POLLERR | POLLNVAL)) {
           if(keep_running){
-            throw std::runtime_error(StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",
-                                                           i,
-                                                           rxInterfaces[i].c_str()));
+            std::cerr<<StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",i,rxInterfaces[i].c_str());
           }else{
             return;
           }
