@@ -69,7 +69,6 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
     std::cerr<<StringFormat::convert("set_nonblock failed: %s",
                                        errbuf);
   }
-
   int link_encap = pcap_datalink(ppcap);
   struct bpf_program bpfprogram{};
   std::string program;
@@ -80,7 +79,9 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
     case DLT_IEEE802_11_RADIO:std::cout << wlan << " has DLT_IEEE802_11_RADIO Encap\n";
       program = StringFormat::convert("ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x", radio_port);
       break;
-    default:std::cerr<<StringFormat::convert("unknown encapsulation on %s", wlan.c_str());
+    default:{
+      std::cerr<<StringFormat::convert("unknown encapsulation on %s", wlan.c_str());
+    }
   }
   if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
     std::cerr<<StringFormat::convert("Unable to compile %s: %s", program.c_str(), pcap_geterr(ppcap));
