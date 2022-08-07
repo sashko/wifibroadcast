@@ -70,6 +70,9 @@ class UDPWBTransmitter {
   uint64_t get_current_provided_bits_per_second(){
     return wbTransmitter->get_current_provided_bits_per_second();
   }
+  uint64_t get_current_packets_per_second(){
+    return wbTransmitter->get_current_packets_per_second();
+  }
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;
   std::unique_ptr<SocketHelper::UDPReceiver> udpReceiver;
