@@ -99,6 +99,11 @@ class WBTransmitter {
   [[nodiscard]] uint64_t get_count_tx_injections_error_hint()const{
     return count_tx_injections_error_hint;
   }
+  // Other than bits per second, packets per second is also an important metric -
+  // Sending a lot of small packets for example should be avoided)
+  uint64_t get_current_packets_per_second(){
+    return _packets_per_second_calculator.recalculateSinceLast(nInjectedPackets);
+  }
  private:
   // send the current session key via WIFI (located in mEncryptor)
   void sendSessionKey();
@@ -138,6 +143,7 @@ class WBTransmitter {
   uint64_t count_tx_injections_error_hint=0;
   static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
   BitrateCalculator bitrate_calculator_injected_bytes{};
+  PacketsPerSecondCalculator _packets_per_second_calculator{};
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point session_key_announce_ts{};
   static constexpr const std::chrono::nanoseconds LOG_INTERVAL = std::chrono::seconds(1);

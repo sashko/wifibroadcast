@@ -337,4 +337,27 @@ class BitrateCalculator{
   std::chrono::steady_clock::time_point last_time=std::chrono::steady_clock::now();
 };
 
+class PacketsPerSecondCalculator{
+ public:
+  // return current packets per second
+  // aka packets since last call / time delta since last call
+  uint64_t recalculateSinceLast(uint64_t curr_packets){
+    const auto now=std::chrono::steady_clock::now();
+    const auto deltaTime=now-last_time;
+    const auto deltaPackets=curr_packets-packets_last_time;
+    last_time=now;
+    packets_last_time=curr_packets;
+    const auto deltaTimeMilliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime).count();
+    if(deltaTimeMilliseconds>0){
+      const auto packets_per_second=(deltaPackets*1000 / deltaTimeMilliseconds);
+      return packets_per_second;
+    }else{
+      return 0;
+    }
+  }
+ private:
+  uint64_t packets_last_time=0;
+  std::chrono::steady_clock::time_point last_time=std::chrono::steady_clock::now();
+};
+
 #endif //LIVEVIDEO10MS_TIMEHELPER_HPP
