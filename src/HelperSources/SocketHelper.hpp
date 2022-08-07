@@ -128,7 +128,7 @@ static int openUdpSocketForReceiving(const std::string& address,const int port) 
 class UDPForwarder {
  public:
   explicit UDPForwarder(std::string client_addr1, int client_udp_port1) :
-      client_addr(std::move(client_addr1)), client_udp_port(client_udp_port1) {
+                                                                          client_addr(std::move(client_addr1)), client_udp_port(client_udp_port1) {
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
       std::stringstream message;
@@ -152,12 +152,12 @@ class UDPForwarder {
     //std::cout<<"Send"<<packetSize<<"\n";
     //send(sockfd,packet,packetSize, MSG_DONTWAIT);
     const auto ret=sendto(sockfd, packet, packetSize, 0, (const struct sockaddr *) &saddr,
-           sizeof(saddr));
-	if(ret <0 || ret != packetSize){
-          std::stringstream ss;
-          ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<" "<<strerror(errno)<<"\n";
-          std::cout<<ss.str();
-	}
+                            sizeof(saddr));
+    if(ret <0 || ret != packetSize){
+      std::stringstream ss;
+      ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<" "<<strerror(errno)<<"\n";
+      std::cout<<ss.str();
+    }
   }
  private:
   struct sockaddr_in saddr{};
@@ -174,7 +174,7 @@ class UDPMultiForwarder {
  public:
   /**
   * Start forwarding data to another IP::Port tuple
-  */
+   */
   void addForwarder(const std::string &client_addr, int client_udp_port) {
     std::lock_guard<std::mutex> guard(udpForwardersLock);
     // check if we already forward data to this IP::Port tuple
@@ -190,14 +190,14 @@ class UDPMultiForwarder {
   /**
   * Remove an already existing udp forwarding instance.
   * Do nothing if such an instance is not found.
-  */
+   */
   void removeForwarder(const std::string &client_addr, int client_udp_port) {
     std::lock_guard<std::mutex> guard(udpForwardersLock);
     udpForwarders.erase(std::find_if(udpForwarders.begin(),
                                      udpForwarders.end(),
                                      [&client_addr, &client_udp_port](const auto &udpForwarder) {
                                        return udpForwarder->client_addr == client_addr
-                                           && udpForwarder->client_udp_port == client_udp_port;
+                                              && udpForwarder->client_udp_port == client_udp_port;
                                      }));
   }
   /**
@@ -252,8 +252,8 @@ class UDPReceiver {
   // Now this one is kinda special - for mavsdk we need to send messages from the port we are listening on
   // to a specific IP::PORT tuple (such that the source address of the then received packet matches the address we are listening on).
   void forwardPacketViaUDP(const std::string& destIp,const int destPort,const uint8_t *packet, const std::size_t packetSize) const {
-	//set up the destination
-	struct sockaddr_in saddr{};
+    //set up the destination
+    struct sockaddr_in saddr{};
     bzero((char *) &saddr, sizeof(saddr));
     saddr.sin_family = AF_INET;
     //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
