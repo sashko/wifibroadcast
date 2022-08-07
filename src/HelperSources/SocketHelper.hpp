@@ -155,7 +155,7 @@ class UDPForwarder {
            sizeof(saddr));
 	if(ret <0 || ret != packetSize){
           std::stringstream ss;
-          ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<"\n";
+          ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<" "<<strerror(errno)<<"\n";
           std::cout<<ss.str();
 	}
   }
@@ -263,7 +263,7 @@ class UDPReceiver {
                             sizeof(saddr));
     if(ret <0 || ret != packetSize){
       std::stringstream ss;
-      ss<<"Error sending packet of size:"<<packetSize<<" to "<<destIp<<":"<<destPort<<" code:"<<ret<<"\n";
+      ss<<"Error sending packet of size:"<<packetSize<<" to "<<destIp<<":"<<destPort<<" code:"<<ret<<" "<<strerror(errno)<<"\n";
       std::cout<<ss.str();
     }
   }
