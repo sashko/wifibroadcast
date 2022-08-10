@@ -298,6 +298,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
   }
+  print_optimization_method();
 
   try {
 	if (test_mode == 0 || test_mode == 1) {
