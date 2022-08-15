@@ -113,11 +113,11 @@ static uint8_t gf256_mul(uint8_t x, uint8_t y) {
 
 static void gf256_print_optimization_method() {
 #ifdef FEC_GF256_USE_X86_SSSE3
-  std::cout<<"Using X86_SSSE3 optimization\n";
+  std::cout<<"FEC Using X86_SSSE3 optimization\n";
 #elif defined(FEC_GF256_USE_ARM_NEON)
-  std::cout<<"Using ARM_NEON optimization\n";
+  std::cout<<"FEC Using ARM_NEON optimization\n";
 #else
-  std::cout << "WARNING No optimization, using flat_table as fallback\n";
+  std::cout << "WARNING FEC No optimization, using flat_table as fallback\n";
 #endif
 }
 
