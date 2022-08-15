@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_CXX_STANDARD 17)
 
-option(WB_ENABLE_SIMD_OPTIMIZATIONS "Enable NEON on ARM and AVX2 on X86 if the platform/compiler supports it" OFF)
+option(WB_ENABLE_SIMD_OPTIMIZATIONS "Enable NEON on ARM and AVX2 on X86 if the platform/compiler supports it" ON)
 #if(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
 #if(get_property(source_list GLOBAL PROPERTY source_list_property))
 #    message(STATUS "WIFIBROADCAST_LIBRARIES_ALREADY_BUILD")
