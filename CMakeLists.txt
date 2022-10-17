@@ -27,8 +27,8 @@ target_link_libraries(unit_test  ${WB_TARGET_LINK_LIBRARIES})
 add_executable(socket_helper_test executables/socket_helper_test.cpp)
 target_link_libraries(socket_helper_test ${WB_TARGET_LINK_LIBRARIES})
 
-add_executable(lol executables/lol.cpp)
-target_link_libraries(lol ${WB_TARGET_LINK_LIBRARIES})
+add_executable(udp_packet_drop_util executables/udp_packet_drop_util.cpp)
+target_link_libraries(udp_packet_drop_util ${WB_TARGET_LINK_LIBRARIES})
 
 # When it is a static library, we don't need to install it.
 # But if it is a shared library, we need to install it.
