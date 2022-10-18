@@ -380,6 +380,17 @@ class RxBlock {
   [[nodiscard]] std::optional<std::chrono::steady_clock::time_point> getFirstFragmentTimePoint() const {
     return firstFragmentTimePoint;
   }
+  // Returns the number of missing primary packets (e.g. the n of actual data packets that are missing)
+  // This only works if we know the "fec_k" parameter
+  std::optional<int> get_missing_primary_packets(){
+    if(fec_k<=0)return std::nullopt;
+    return fec_k-nAvailablePrimaryFragments;
+  }
+  std::string get_missing_primary_packets_readable(){
+    const auto tmp=get_missing_primary_packets();
+    if(tmp==std::nullopt)return "?";
+    return std::to_string(tmp.value());
+  }
  private:
   // the block idx marks which block this element refers to
   const uint64_t blockIdx = 0;
@@ -509,7 +520,7 @@ class FECDecoder {
     // forward remaining data for the (oldest) block, since we need to get rid of it
     auto &oldestBlock = rx_queue.front();
     std::cerr << "Forwarding block that is not yet fully finished " << oldestBlock->getBlockIdx() << " with n fragments"
-              << oldestBlock->getNAvailableFragments() << "\n";
+              << oldestBlock->getNAvailableFragments() << " missing:"<<oldestBlock->get_missing_primary_packets_readable()<<"\n";
     forwardMissingPrimaryFragmentsIfAvailable(*oldestBlock, true);
     // and remove the block once done with it
     rxQueuePopFront();
