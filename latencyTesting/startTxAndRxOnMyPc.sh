@@ -4,7 +4,8 @@
 
 TAOBAO="wlx00e0863200b9" #Taobao card
 ASUS="wlx244bfeb71c05" #ASUS card
-ASUS2="wlxac9e175ac9e8" #ASUS card 2
+#ASUS2="wlxac9e175ac9e8" #ASUS card 2
+ASUS2="wlxac9e17596103"
 
 #MY_TX="wlp3s0"
 #MY_TX="wlxc4e984126183"
@@ -16,15 +17,15 @@ ASUS2="wlxac9e175ac9e8" #ASUS card 2
 #MY_RX_SECONDARY="wlxc4e984126183"
 
 MY_TX=$ASUS
-MY_RX=$TAOBAO
+MY_RX=$ASUS2
 #MY_TX="wlan0" #rpi testing
 #MY_RX="wlan1" #rpi testing
 
-WFB_FOLDER="/home/consti10/Desktop/wifibroadcast"
+WFB_FOLDER="/home/consti10/Desktop/wifibroadcast/build"
 #WFB_FOLDER="/home/pi/Desktop/wifibroadcast"
 
-FEC_K=8
-FEC_PERCENTAGE=50
+FEC_K=0
+FEC_PERCENTAGE=0
 
 RADIO_PORT=60
 
@@ -55,9 +56,9 @@ sudo iwconfig $MY_RX channel $MY_WIFI_CHANNEL
 
 
 # $WFB_FOLDER/wfb_tx -k $FEC_K -n $FEC_N -u 6000 -p 60 -M 7 -K $WFB_FOLDER/drone.key $MY_TX
-xterm -hold -e $WFB_FOLDER/wfb_tx -k $FEC_K -p $FEC_PERCENTAGE -u 6000 -r $RADIO_PORT -M 5 -B 20 -K $WFB_FOLDER/drone.key  $MY_TX &
+xterm -hold -e $WFB_FOLDER/wfb_tx -k $FEC_K -p $FEC_PERCENTAGE -u 5600 -r $RADIO_PORT -M 6 -B 20 -K $WFB_FOLDER/drone.key  $MY_TX &
 
-$WFB_FOLDER/wfb_rx -c 127.0.0.1 -u 6100 -r $RADIO_PORT -K $WFB_FOLDER/gs.key $MY_RX
+$WFB_FOLDER/wfb_rx -c 127.0.0.1 -u 5601 -r $RADIO_PORT -K $WFB_FOLDER/gs.key $MY_RX
 
 #other usefull commands:
 #sudo iw dev
