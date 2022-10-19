@@ -6,9 +6,11 @@
 // when run as creator, creates deterministic packets and forwards them as udp packets
 // when run as validator, receives UDP packets (from a creator instance) and
 // validates these (deterministic) packets
+// This way one can (for example) run a wfb_tx instance and the creator on one pc,
+// and run a wfb_rx instance and a validator on another pc and measure packet loss as well
+// as validate the content of the packets.
 
 #include "../src/HelperSources/SequenceNumberDebugger.hpp"
-
 #include "../src/HelperSources/RandomBufferPot.hpp"
 #include "../src/HelperSources/Helper.hpp"
 #include "../src/HelperSources/SocketHelper.hpp"
