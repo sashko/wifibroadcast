@@ -81,7 +81,8 @@ static void setSocketReuse(int sockfd) {
     std::cerr << "Cannot set socket reuse\n";
   }
 }
-// increase the receive size, needed for high bandwidth
+// increase the UDP receive buffer size, needed for high bandwidth (at ~>20MBit/s the "default"
+// udp receive buffer size is often not enough and the OS might (silently) drop packets on localhost)
 static void increaseSocketRecvBuffer(int sockfd, const int wantedSize) {
   int recvBufferSize = 0;
   socklen_t len = sizeof(recvBufferSize);
