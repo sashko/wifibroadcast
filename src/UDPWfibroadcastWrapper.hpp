@@ -23,14 +23,15 @@ class UDPWBTransmitter {
   UDPWBTransmitter(RadiotapHeader::UserSelectableParams radiotapHeaderParams,
                    TOptions options1,
                    const std::string &client_addr,
-                   int client_udp_port) {
+                   int client_udp_port,
+                   std::optional<int> wanted_recv_buff_size=std::nullopt) {
     wbTransmitter = std::make_unique<WBTransmitter>(radiotapHeaderParams, std::move(options1));
     udpReceiver = std::make_unique<SocketHelper::UDPReceiver>(client_addr,
                                                               client_udp_port,
                                                               [this](const uint8_t *payload,
                                                                      const std::size_t payloadSize) {
                                                                 wbTransmitter->feedPacket(payload, payloadSize);
-                                                              });
+                                                              },wanted_recv_buff_size);
   }
   /**
    * Loop until an error occurs.

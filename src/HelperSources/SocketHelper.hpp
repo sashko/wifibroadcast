@@ -83,19 +83,26 @@ static void setSocketReuse(int sockfd) {
 }
 // increase the UDP receive buffer size, needed for high bandwidth (at ~>20MBit/s the "default"
 // udp receive buffer size is often not enough and the OS might (silently) drop packets on localhost)
-static void increaseSocketRecvBuffer(int sockfd, const int wantedSize) {
-  int recvBufferSize = 0;
-  socklen_t len = sizeof(recvBufferSize);
+static void increase_socket_recv_buff_size(int sockfd, const int wanted_rcvbuff_size_bytes) {
+  int recvBufferSize=0;
+  socklen_t len=sizeof(recvBufferSize);
   getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, &len);
-  std::cout << "Default socket recv buffer is " << StringHelper::memorySizeReadable(recvBufferSize);
-  if (wantedSize > recvBufferSize) {
-    recvBufferSize = wantedSize;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, len)) {
-      std::cout << "Cannot increase buffer size to " << StringHelper::memorySizeReadable(wantedSize);
+  {
+    std::stringstream ss;
+    ss<<"Default UDP socket recv buffer size:"<<StringHelper::memorySizeReadable(recvBufferSize)<<" wanted:"<<StringHelper::memorySizeReadable(wanted_rcvbuff_size_bytes)<<"\n";
+    std::cerr<<ss.str();
+  }
+  // We never decrease the socket receive buffer size, only increase it when neccessary
+  if(wanted_rcvbuff_size_bytes>(size_t)recvBufferSize){
+    int wanted_size=wanted_rcvbuff_size_bytes;
+    recvBufferSize=wanted_rcvbuff_size_bytes;
+    if(setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &wanted_size,len)) {
+      std::cerr<<"Cannot increase UDP buffer size to "<<StringHelper::memorySizeReadable(wanted_rcvbuff_size_bytes)<<"\n";
     }
+    // Fetch it again to double check
+    recvBufferSize=-1;
     getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, &len);
-    std::cout << "Wanted " << StringHelper::memorySizeReadable(wantedSize) << " Set "
-              << StringHelper::memorySizeReadable(recvBufferSize);
+    std::cerr<<"UDP Wanted "<<StringHelper::memorySizeReadable(wanted_rcvbuff_size_bytes)<<" Set "<<StringHelper::memorySizeReadable(recvBufferSize)<<"\n";
   }
 }
 // Open the specified port for udp receiving
@@ -227,9 +234,12 @@ class UDPReceiver {
   /**
    * Receive data from socket and forward it via callback until stopLooping() is called
    */
-  explicit UDPReceiver(std::string client_addr, int client_udp_port, OUTPUT_DATA_CALLBACK cb) : mCb(std::move(cb)) {
+  explicit UDPReceiver(std::string client_addr, int client_udp_port, OUTPUT_DATA_CALLBACK cb,std::optional<int> wanted_recv_buff_size=std::nullopt)
+      :mCb(std::move(cb)),m_wanted_recv_buff_size(wanted_recv_buff_size) {
     mSocket = SocketHelper::openUdpSocketForReceiving(client_addr,client_udp_port);
-    //increaseSocketRecvBuffer(mSocket,1024*1024);
+    if(m_wanted_recv_buff_size!=std::nullopt){
+      increase_socket_recv_buff_size(mSocket,m_wanted_recv_buff_size.value());
+    }
     std::cout << "UDPReceiver created with " << client_addr << ":" << client_udp_port << "\n";
   }
   void loopUntilError() {
@@ -293,6 +303,7 @@ class UDPReceiver {
   bool receiving = true;
   int mSocket;
   std::unique_ptr<std::thread> receiverThread = nullptr;
+  const std::optional<int> m_wanted_recv_buff_size;
 };
 }
 
