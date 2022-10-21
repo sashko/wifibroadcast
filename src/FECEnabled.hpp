@@ -547,9 +547,15 @@ class FECDecoder {
       return nullptr;
     }
 
+    // don't forget to increase the lost blocks counter if we do not add blocks here due to no space in the rx queue
+    // (can happen easily if the rx queue has a size of 1)
+    const auto n_needed_new_blocks = last_known_block != (uint64_t) -1 ? blockIdx - last_known_block : 1;
+    if(n_needed_new_blocks>RX_QUEUE_MAX_SIZE){
+      stats.count_blocks_lost+=n_needed_new_blocks-RX_QUEUE_MAX_SIZE;
+    }
     // add as many blocks as we need ( the rx ring mustn't have any gaps between the block indices).
     // but there is no point in adding more blocks than RX_RING_SIZE
-    const int new_blocks = (int) std::min(last_known_block != (uint64_t) -1 ? blockIdx - last_known_block : 1,
+    const int new_blocks = (int) std::min(n_needed_new_blocks,
                                           (uint64_t) FECDecoder::RX_QUEUE_MAX_SIZE);
     last_known_block = blockIdx;
 
