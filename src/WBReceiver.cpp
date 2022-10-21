@@ -57,7 +57,8 @@ std::string WBReceiver::createDebugState() const {
   std::stringstream ss;
   ss<<wb_rx_stats<<"\n";
   if(mFECDDecoder){
-    ss<<"\n"; //TODO
+    auto stats=mFECDDecoder->stats;
+    ss<<stats<<"\n";
   }
   return ss.str();
 }
