@@ -468,8 +468,10 @@ class FECDecoder {
   void forwardMissingPrimaryFragmentsIfAvailable(RxBlock &block, const bool discardMissingPackets = false){
     assert(mSendDecodedPayloadCallback);
     // TODO remove me
-    std::cerr << "Forwarding block that is not yet fully finished " << block.getBlockIdx() << " with n fragments"
-              << block.getNAvailableFragments() << " missing:"<<block.get_missing_primary_packets_readable()<<"\n";
+    if(discardMissingPackets){
+      std::cerr << "Forwarding block that is not yet fully finished " << block.getBlockIdx() << " with n fragments"
+                << block.getNAvailableFragments() << " missing:"<<block.get_missing_primary_packets_readable()<<"\n";
+    }
     const auto indices = block.pullAvailablePrimaryFragments(discardMissingPackets);
     for (auto primaryFragmentIndex: indices) {
       const uint8_t *primaryFragment = block.getDataPrimaryFragment(primaryFragmentIndex);
