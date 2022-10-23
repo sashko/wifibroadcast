@@ -31,7 +31,7 @@ FEC_PERCENTAGE=20
 RADIO_PORT=60
 
 #MY_WIFI_CHANNEL=149 #5ghz channel
-MY_WIFI_CHANNEL=13 #2.4ghz channel
+MY_WIFI_CHANNEL=1 #2.4ghz channel
 
 sudo rfkill unblock wifi
 #sudo killall ifplugd #stop management of interface

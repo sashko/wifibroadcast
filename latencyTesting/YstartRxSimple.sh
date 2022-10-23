@@ -17,9 +17,10 @@ ASUS2="wlxac9e17596103"
 #MY_RX_SECONDARY="wlxc4e984126183"
 
 #MY_TX=$ASUS
-MY_RX=$ASUS
+#MY_RX=$ASUS
 #MY_TX="wlan0" #rpi testing
 #MY_RX="wlan1" #rpi testing
+MY_RX="wlx6cfdb9b2a150"
 
 WFB_FOLDER="/home/consti10/Desktop/wifibroadcast/build"
 #WFB_FOLDER="/home/pi/Desktop/wifibroadcast"
@@ -29,8 +30,8 @@ FEC_PERCENTAGE=0
 
 RADIO_PORT=60
 
-MY_WIFI_CHANNEL=149 #5ghz channel
-#MY_WIFI_CHANNEL=13 #2.4ghz channel
+#MY_WIFI_CHANNEL=149 #5ghz channel
+MY_WIFI_CHANNEL=1 #2.4ghz channel
 
 sudo rfkill unblock wifi
 #sudo killall ifplugd #stop management of interface
