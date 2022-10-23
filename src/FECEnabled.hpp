@@ -420,9 +420,11 @@ class FECDecoder {
   // Does not need to know k,n or if tx does variable block length or not.
   // If the tx doesn't use the full range of fragment indices (aka K is fixed) use
   // @param maxNFragmentsPerBlock for a more efficient memory usage
-  explicit FECDecoder(const unsigned int rx_queue_max_depth,const unsigned int maxNFragmentsPerBlock = MAX_TOTAL_FRAGMENTS_PER_BLOCK) :
+  explicit FECDecoder(const unsigned int rx_queue_max_depth,const unsigned int maxNFragmentsPerBlock = MAX_TOTAL_FRAGMENTS_PER_BLOCK,
+                      bool enable_log_debug=false) :
   RX_QUEUE_MAX_SIZE(rx_queue_max_depth),
-  maxNFragmentsPerBlock(maxNFragmentsPerBlock) {
+  maxNFragmentsPerBlock(maxNFragmentsPerBlock),
+  m_enable_log_debug(enable_log_debug){
     assert(rx_queue_max_depth<20);
     assert(rx_queue_max_depth>=1);
   }
@@ -435,6 +437,7 @@ class FECDecoder {
   // A value too high doesn't really give much benefit and increases memory usage
   const unsigned int RX_QUEUE_MAX_SIZE;
   const unsigned int maxNFragmentsPerBlock;
+  const bool m_enable_log_debug;
  public:
   // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
   bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t> &decrypted) {
@@ -469,8 +472,10 @@ class FECDecoder {
     assert(mSendDecodedPayloadCallback);
     // TODO remove me
     if(discardMissingPackets){
-      std::cerr << "Forwarding block that is not yet fully finished " << block.getBlockIdx() << " with n fragments"
-                << block.getNAvailableFragments() << " missing:"<<block.get_missing_primary_packets_readable()<<"\n";
+      if(m_enable_log_debug){
+        std::cerr << "Forwarding block that is not yet fully finished " << block.getBlockIdx() << " with n fragments"
+                  << block.getNAvailableFragments() << " missing:"<<block.get_missing_primary_packets_readable()<<"\n";
+      }
     }
     const auto indices = block.pullAvailablePrimaryFragments(discardMissingPackets);
     for (auto primaryFragmentIndex: indices) {
@@ -524,8 +529,6 @@ class FECDecoder {
 
     // forward remaining data for the (oldest) block, since we need to get rid of it
     auto &oldestBlock = rx_queue.front();
-    std::cerr << "Forwarding block that is not yet fully finished " << oldestBlock->getBlockIdx() << " with n fragments"
-              << oldestBlock->getNAvailableFragments() << " missing:"<<oldestBlock->get_missing_primary_packets_readable()<<"\n";
     forwardMissingPrimaryFragmentsIfAvailable(*oldestBlock, true);
     // and remove the block once done with it
     rxQueuePopFront();
