@@ -94,15 +94,15 @@ void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
   const auto injectionTime = mPcapTransmitter.injectPacket(mRadiotapHeader, mIeee80211Header, abstractWbPacket);
   if(injectionTime>MAX_SANE_INJECTION_TIME){
     count_tx_injections_error_hint++;
+    if(options.enableLogAlive){
+      std::cerr<<"Injecting PCAP packet took really long:"<<MyTimeHelper::R(injectionTime)<<"\n";
+    }
   }
   nInjectedPackets++;
-#ifdef ENABLE_ADVANCED_DEBUGGING
-  pcapInjectionTime.add(injectionTime);
-  if(pcapInjectionTime.getMax()>std::chrono::milliseconds (1)){
-      std::cerr<<"Injecting PCAP packet took really long:"<<pcapInjectionTime.getAvgReadable()<<"\n";
-      pcapInjectionTime.reset();
+  if(options.enableLogAlive){
+    pcapInjectionTime.add(injectionTime);
+    pcapInjectionTime.printInIntervalls(std::chrono::seconds(1), false);
   }
-#endif
 }
 
 void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce,
