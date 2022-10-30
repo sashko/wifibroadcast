@@ -138,7 +138,7 @@ class WBTransmitter {
   BitrateCalculator bitrate_calculator_data_provided{};
   // count of bytes we injected into the wifi card
   uint64_t count_bytes_data_injected=0;
-  // a tx error is thrown if injecting the packet takes longer than X ms,
+  // a tx error is thrown if injecting the packet takes longer than MAX_SANE_INJECTION_TIME,
   // which hints at a overflowing tx queue (unfortunately I don't know a way to directly get the tx queue yet)
   uint64_t count_tx_injections_error_hint=0;
   static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
