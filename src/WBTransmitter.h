@@ -140,6 +140,9 @@ class WBTransmitter {
   uint64_t count_bytes_data_injected=0;
   // a tx error is thrown if injecting the packet takes longer than MAX_SANE_INJECTION_TIME,
   // which hints at a overflowing tx queue (unfortunately I don't know a way to directly get the tx queue yet)
+  // However, this hint can be misleading - for example, during testing (MCS set to 3) and with about 5MBit/s video after FEC
+  // I get about 5 tx error(s) per second with my atheros, but it works fine. This workaround also seems to not work at all
+  // with the RTL8812au.
   uint64_t count_tx_injections_error_hint=0;
   static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
   BitrateCalculator bitrate_calculator_injected_bytes{};
