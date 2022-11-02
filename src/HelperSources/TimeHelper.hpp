@@ -332,9 +332,16 @@ class BitrateCalculator{
       return 0;
     }
   }
+  uint64_t get_last_or_recalculate(uint64_t curr_bytes_received,const std::chrono::steady_clock::duration& time_between_recalculations=std::chrono::seconds(2)){
+    if(std::chrono::steady_clock::now()-last_time>=time_between_recalculations){
+      curr_bits_per_second= recalculateSinceLast(curr_bytes_received);
+    }
+    return curr_bits_per_second;
+  }
  private:
   uint64_t bytes_last_time=0;
   std::chrono::steady_clock::time_point last_time=std::chrono::steady_clock::now();
+  uint64_t curr_bits_per_second=0;
 };
 
 class PacketsPerSecondCalculator{
@@ -355,9 +362,17 @@ class PacketsPerSecondCalculator{
       return 0;
     }
   }
+  uint64_t get_last_or_recalculate(uint64_t curr_packets,const std::chrono::steady_clock::duration& time_between_recalculations=std::chrono::seconds(2)){
+    if(std::chrono::steady_clock::now()-last_time>=time_between_recalculations){
+      curr_packets_per_second= recalculateSinceLast(curr_packets);
+    }
+    return curr_packets_per_second;
+  }
  private:
   uint64_t packets_last_time=0;
   std::chrono::steady_clock::time_point last_time=std::chrono::steady_clock::now();
+  //
+  uint64_t curr_packets_per_second=0;
 };
 
 #endif //LIVEVIDEO10MS_TIMEHELPER_HPP

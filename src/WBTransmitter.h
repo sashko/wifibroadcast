@@ -91,10 +91,10 @@ class WBTransmitter {
     return static_cast<uint64_t>(count_bytes_data_injected);
   }
   uint64_t get_current_injected_bits_per_second(){
-    return bitrate_calculator_injected_bytes.recalculateSinceLast(count_bytes_data_injected);
+    return bitrate_calculator_injected_bytes.get_last_or_recalculate(count_bytes_data_injected,std::chrono::seconds(2));
   }
   uint64_t get_current_provided_bits_per_second(){
-    return bitrate_calculator_data_provided.recalculateSinceLast(count_bytes_data_provided);
+    return bitrate_calculator_data_provided.get_last_or_recalculate(count_bytes_data_provided,std::chrono::seconds(2));
   }
   [[nodiscard]] uint64_t get_count_tx_injections_error_hint()const{
     return count_tx_injections_error_hint;
@@ -102,7 +102,7 @@ class WBTransmitter {
   // Other than bits per second, packets per second is also an important metric -
   // Sending a lot of small packets for example should be avoided)
   uint64_t get_current_packets_per_second(){
-    return _packets_per_second_calculator.recalculateSinceLast(nInjectedPackets);
+    return _packets_per_second_calculator.get_last_or_recalculate(nInjectedPackets,std::chrono::seconds(2));
   }
  private:
   // send the current session key via WIFI (located in mEncryptor)
