@@ -94,7 +94,7 @@ void WBReceiver::dump_stats() {
 #endif
 }
 
-void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, const uint8_t *pkt) {
+void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt) {
 #ifdef ENABLE_ADVANCED_DEBUGGING
   const auto tmp=GenericHelper::timevalToTimePointSystemClock(hdr.ts);
   const auto latency=std::chrono::system_clock::now() -tmp;
@@ -141,8 +141,8 @@ void WBReceiver::processPacket(const uint8_t WLAN_IDX, const pcap_pkthdr &hdr, c
   if (parsedPacket->allAntennaValues.size() > MAX_N_ANTENNAS_PER_WIFI_CARD) {
     std::cerr << "Wifi card with " << parsedPacket->allAntennaValues.size() << " antennas\n";
   }
-  if(WLAN_IDX<rssiForWifiCard.size()){
-    auto &thisWifiCard = rssiForWifiCard.at(WLAN_IDX);
+  if(wlan_idx <rssiForWifiCard.size()){
+    auto &thisWifiCard = rssiForWifiCard.at(wlan_idx);
     //std::cout<<all_rssi_to_string(parsedPacket->allAntennaValues);
     const auto best_rssi=RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
     //std::cout<<"best_rssi:"<<(int)best_rssi<<"\n";
