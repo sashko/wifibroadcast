@@ -121,16 +121,16 @@ static std::string all_rssi_to_string(const std::vector<RssiForAntenna>& all_rss
 //RssiForAntenna1{10}
 //RssiForAntenna2{-18}
 //Now this doesn't make sense, so this helper should fix it
-static int8_t get_best_rssi_of_card(const std::vector<RssiForAntenna>& all_rssi){
-  if(all_rssi.empty())return 0;
-  // best rssi == smallest value
-  int8_t smallest_value=INT8_MAX;
+static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAntenna>& all_rssi){
+  if(all_rssi.empty())return std::nullopt;
+  // best rssi == highest value
+  int8_t highest_value=INT8_MIN;
   for(const auto& rssiForAntenna:all_rssi){
-    if(rssiForAntenna.rssi<smallest_value){
-      smallest_value=rssiForAntenna.rssi;
+    if(rssiForAntenna.rssi>highest_value){
+      highest_value=rssiForAntenna.rssi;
     }
   }
-  return smallest_value;
+  return highest_value;
 }
 
 // Returns std::nullopt if radiotap was unable to parse the header
