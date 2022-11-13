@@ -211,8 +211,19 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
 
     const auto diff=wbDataHeader.sequence_number_extra-last_seq_nr;
+    if(diff>1){
+      x_n_missing_packets+=diff;
+    }else{
+      x_n_received_packets++;
+    }
+    if(std::chrono::steady_clock::now()-x_last_rec>std::chrono::seconds(1)){
+      x_last_rec=std::chrono::steady_clock::now();
+      x_curr_packet_loss=x_n_missing_packets/(x_n_received_packets==0 ? 1: x_n_received_packets;
+      x_n_received_packets=0;
+      x_n_missing_packets=0;
+    }
     std::stringstream ss;
-    ss<<"Diff:"<<diff<<"\n";
+    ss<<"Diff:"<<diff<<" pl:"<<x_curr_packet_loss<<"\n";
     std::cout<<ss.str();
     last_seq_nr=wbDataHeader.sequence_number_extra;
 

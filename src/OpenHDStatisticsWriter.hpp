@@ -76,6 +76,8 @@ struct WBRxStats{
   uint64_t count_bytes_data_received=0;
   // current bitrate, in bits per second.
   uint64_t curr_bits_per_second=0;
+  // current packet loss, in percent
+  int curr_packet_loss=-1;
 };
 static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
   std::stringstream ss;
