@@ -109,8 +109,8 @@ void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce,
                                                       const uint8_t *payload,
                                                       const std::size_t payloadSize) {
   //std::cout << "WBTransmitter::sendFecBlock"<<(int)wbDataPacket.payloadSize<<"\n";
-  const WBDataHeader wbDataHeader(nonce,m_curr_seq);
-  m_curr_seq++;
+  const WBDataHeader wbDataHeader(nonce,m_curr_seq_nr);
+  m_curr_seq_nr++;
   const auto encryptedData = mEncryptor.encryptPacket(nonce, payload, payloadSize, wbDataHeader);
   //
   sendPacket({(const uint8_t *) &wbDataHeader, sizeof(WBDataHeader), encryptedData.data(), encryptedData.size()});

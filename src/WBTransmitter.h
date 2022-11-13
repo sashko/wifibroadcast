@@ -164,7 +164,7 @@ class WBTransmitter {
   // so we cannot do any automatic logging in fixed intervalls.
   std::unique_ptr<std::thread> logAliveThread;
   //
-  uint16_t m_curr_seq-nr=0;
+  uint16_t m_curr_seq_nr=0;
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_TRANSMITTER_H
