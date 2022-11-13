@@ -106,6 +106,8 @@ class WBReceiver {
   AvgCalculator avgPcapToApplicationLatency;
   AvgCalculator2 avgLatencyBeaconPacketLatency;
 #endif
+ private:
+  uint16_t last_seq_nr;
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_RECEIVER_H

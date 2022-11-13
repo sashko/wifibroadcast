@@ -210,6 +210,11 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
     wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
 
+    const auto diff=last_seq_nr-wbDataHeader.sequence_number_extra;
+    std::stringstream ss;
+    ss<<"Diff:"<<diff<<"\n";
+    std::cout<<ss.str();
+
     const auto decryptedPayload = mDecryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
                                                            packetPayloadSize - sizeof(WBDataHeader), wbDataHeader);
     if (decryptedPayload == std::nullopt) {

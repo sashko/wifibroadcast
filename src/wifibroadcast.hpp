@@ -87,12 +87,13 @@ static_assert(sizeof(WBSessionKeyPacket) == WBSessionKeyPacket::SIZE_BYTES, "ALW
 // This part is not encrypted ! (though used for checksum)
 class WBDataHeader {
  public:
-  explicit WBDataHeader(uint64_t nonce1) : nonce(nonce1) {};
+  explicit WBDataHeader(uint64_t nonce1,uint16_t seq_nr) : nonce(nonce1),sequence_number_extra(seq_nr) {};
  public:
   const uint8_t packet_type = WFB_PACKET_DATA;
+  const uint16_t sequence_number_extra=0;
   const uint64_t nonce;  // it is left up to the implementation on how to use nonce
 }  __attribute__ ((packed));
-static_assert(sizeof(WBDataHeader) == 8 + 1, "ALWAYS_TRUE");
+static_assert(sizeof(WBDataHeader) == 8 + 1+2, "ALWAYS_TRUE");
 
 
 struct LatencyTestingPacket {
@@ -113,7 +114,7 @@ static constexpr const auto WB_FRAME_MAX_PAYLOAD =
     (PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES - sizeof(WBDataHeader)
         - crypto_aead_chacha20poly1305_ABYTES);
 
-static_assert(WB_FRAME_MAX_PAYLOAD==1448);
+static_assert(WB_FRAME_MAX_PAYLOAD==1448-2);
 
 // comment this for a release
 //#define ENABLE_ADVANCED_DEBUGGING
