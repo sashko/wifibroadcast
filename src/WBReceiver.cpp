@@ -218,7 +218,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     }
     if(std::chrono::steady_clock::now()-x_last_rec>std::chrono::seconds(1)){
       x_last_rec=std::chrono::steady_clock::now();
-      x_curr_packet_loss=x_n_missing_packets/(x_n_received_packets==0 ? 1: x_n_received_packets;
+      x_curr_packet_loss=x_n_missing_packets/(x_n_received_packets==0 ? 1: x_n_received_packets);
       x_n_received_packets=0;
       x_n_missing_packets=0;
     }
