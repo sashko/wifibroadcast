@@ -76,7 +76,7 @@ static_assert(sizeof(FECPayloadHdr) == 2, "ALWAYS_TRUE");
 
 // 1510-(13+24+9+16+2)
 //A: Any UDP with packet size <= 1466. For example x264 inside RTP or Mavlink.
-// set here to removoe dependency on wifibroadcast.hpp
+// set here to remove dependency on wifibroadcast.hpp
 static constexpr const auto FEC_MAX_PACKET_SIZE = 1448;
 //static constexpr const auto FEC_MAX_PACKET_SIZE= WB_FRAME_MAX_PAYLOAD;
 static constexpr const auto FEC_MAX_PAYLOAD_SIZE = FEC_MAX_PACKET_SIZE - sizeof(FECPayloadHdr);

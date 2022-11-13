@@ -113,6 +113,8 @@ static constexpr const auto WB_FRAME_MAX_PAYLOAD =
     (PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES - sizeof(WBDataHeader)
         - crypto_aead_chacha20poly1305_ABYTES);
 
+static_assert(WB_FRAME_MAX_PAYLOAD==1448);
+
 // comment this for a release
 //#define ENABLE_ADVANCED_DEBUGGING
 
