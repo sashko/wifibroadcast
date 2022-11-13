@@ -53,10 +53,8 @@ class WBReceiver {
    * Each instance has to be assigned with a Unique ID (same id as the corresponding tx instance).
    * @param options1 the options for this instance (some options - so to say - come from the tx instance)
    * @param output_data_callback Callback that is called with the decoded data, can be null for debugging.
-   * @param statistics_callback Callback that is called with the link statistics in regular intervals, can be nullopt / null.
    */
-  WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback,
-             std::optional<OpenHDStatisticsWriter::STATISTICS_CALLBACK> statistics_callback=std::nullopt);
+  WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback);
   WBReceiver(const WBReceiver &) = delete;
   WBReceiver &operator=(const WBReceiver &) = delete;
   void processPacket(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
@@ -78,12 +76,16 @@ class WBReceiver {
    * @return a string without new line at the end.
    */
   [[nodiscard]] std::string createDebugState() const;
+  /**
+   * Fetch the current / latest statistics, can be called in regular intervals.
+   * Thread-safe and guaranteed to not block for a significant amount of time
+   */
+  OpenHDStatisticsWriter::Data get_latest_stats();
  private:
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   Decryptor mDecryptor;
   std::array<RSSIForWifiCard, MAX_RX_INTERFACES> rssiForWifiCard;
   WBRxStats wb_rx_stats{};
-  OpenHDStatisticsWriter openHdStatisticsWriter;
   // for calculating the current rx bitrate
   BitrateCalculator rxBitrateCalculator{};
   //We know that once we get the first session key packet
@@ -95,6 +97,9 @@ class WBReceiver {
   // Callback that is called with the decoded data
   const OUTPUT_DATA_CALLBACK mOutputDataCallback;
   std::unique_ptr<MultiRxPcapReceiver> receiver;
+  std::mutex m_last_stats_mutex;
+  OpenHDStatisticsWriter::Data m_last_stats{};
+  void set_latest_stats(OpenHDStatisticsWriter::Data new_stats);
  public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
   // time between <packet arrives at pcap processing queue> <<->> <packet is pulled out of pcap by RX>

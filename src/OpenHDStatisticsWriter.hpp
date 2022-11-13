@@ -121,16 +121,6 @@ class OpenHDStatisticsWriter {
     // only if FEC enabled
     std::optional<FECStreamStats> fec_stream_stats;
   };
-
-  typedef std::function<void(Data data)> STATISTICS_CALLBACK;
-  STATISTICS_CALLBACK _statistics_callback= nullptr;
-  void writeStats(const Data data) const {
-    // Either pass through via data callback
-    if(_statistics_callback!= nullptr){
-      _statistics_callback(data);
-      return;
-    }
-  }
 };
 
 static std::ostream& operator<<(std::ostream& strm, const OpenHDStatisticsWriter::Data& data){

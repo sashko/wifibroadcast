@@ -29,14 +29,10 @@
 #include <sstream>
 #include <utility>
 
-WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback,
-                       std::optional<OpenHDStatisticsWriter::STATISTICS_CALLBACK> statistics_callback) :
+WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback) :
     options(std::move(options1)),
     mDecryptor(options.keypair),
     mOutputDataCallback(std::move(output_data_callback)) {
-  if(statistics_callback.has_value()){
-    openHdStatisticsWriter._statistics_callback=statistics_callback.value();
-  }
   std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";
   receiver = std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces, options.radio_port, options1.log_interval,
                                                    notstd::bind_front(&WBReceiver::processPacket, this),
@@ -74,7 +70,7 @@ void WBReceiver::dump_stats() {
     fec_stream_stats=mFECDDecoder->stats;
   }
   OpenHDStatisticsWriter::Data data{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
-  openHdStatisticsWriter.writeStats(data);
+  set_latest_stats(data);
   if (options.enableLogAlive) {
     for (auto &wifiCard: rssiForWifiCard) {
       // no new rssi values for this card since the last call
@@ -257,4 +253,14 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     wb_rx_stats.count_p_bad += 1;
     return;
   }
+}
+
+void WBReceiver::set_latest_stats(OpenHDStatisticsWriter::Data new_stats) {
+  std::lock_guard<std::mutex> lock(m_last_stats_mutex);
+  m_last_stats=new_stats;
+}
+
+OpenHDStatisticsWriter::Data WBReceiver::get_latest_stats(){
+  std::lock_guard<std::mutex> lock(m_last_stats_mutex);
+  return m_last_stats;
 }
