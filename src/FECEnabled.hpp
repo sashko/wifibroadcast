@@ -68,7 +68,7 @@ class FECPayloadHdr {
     packet_size = htobe16(packetSize1);
   }
   // convert from big endian if needed
-  std::size_t getPrimaryFragmentSize() const {
+  [[nodiscard]] std::size_t getPrimaryFragmentSize() const {
     return be16toh(packet_size);
   }
 }  __attribute__ ((packed));
