@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <iostream>
 #include "StringHelper.hpp"
+#include "../wifibroadcast-spdlog.h"
 
 /**
  * Debug the n lost packets and the n of packet gaps by for a continuous stream of packets with increasing sequence number.
@@ -26,7 +27,7 @@ class SequenceNumberDebugger {
     nReceivedPackets++;
     auto delta = seqNr - lastReceivedSequenceNr;
     if (delta <= 0) {
-      std::cerr << "ERROR got packet nr:" << seqNr << "after packet nr:" << lastReceivedSequenceNr << "\n";
+      wifibroadcast::log::get_default()->debug("got packet nr: {} after packet nr: {}",seqNr,lastReceivedSequenceNr);
       return;
     }
     if (delta > 1) {
@@ -40,8 +41,10 @@ class SequenceNumberDebugger {
    * @param clear clear the already accumulated data.
    */
   void debug(bool clear) {
-    std::cout << "N packets received:" << nReceivedPackets << "\tlost:" << nLostPackets << "\n";
-    std::cout << "Packet gaps:" << StringHelper::vectorAsString(gapsBetweenLostPackets) << "\n";
+    std::stringstream ss;
+    ss<< "N packets received:" << nReceivedPackets << "\tlost:" << nLostPackets << "\n";
+    ss<< "Packet gaps:" << StringHelper::vectorAsString(gapsBetweenLostPackets);
+    wifibroadcast::log::get_default()->debug(ss.str());
     if (clear) {
       gapsBetweenLostPackets.resize(0);
     }

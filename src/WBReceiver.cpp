@@ -31,7 +31,7 @@
 
 static int diff_between_packets(int last_packet,int curr_packet){
   if(last_packet==curr_packet){
-    std::cerr<<"Duplicate?!\n";
+    wifibroadcast::log::get_default()->debug("Duplicate?!");
   }
   if(curr_packet<last_packet){
     // We probably have overflown the uin16_t range
