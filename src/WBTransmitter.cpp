@@ -23,7 +23,6 @@
 static FEC_VARIABLE_INPUT_TYPE convert(const TOptions &options) {
   if (options.fec_k.index() == 0)return FEC_VARIABLE_INPUT_TYPE::none;
   const std::string tmp = std::get<std::string>(options.fec_k);
-  std::cout << "Lol (" << tmp << ")\n";
   if (tmp == std::string("h264")) {
     return FEC_VARIABLE_INPUT_TYPE::h264;
   } else if (tmp == std::string("h265")) {
@@ -48,7 +47,6 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
   }else{
     m_console=console;
   }
-  std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";
   mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (IS_FEC_DISABLED) {
     mFecDisabledEncoder = std::make_unique<FECDisabledEncoder>();
@@ -73,7 +71,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
       }
     });
   }
-  std::cout << "Sending Session key on startup\n";
+  m_console->info("Sending Session key on startup");
   for (int i = 0; i < 5; i++) {
     sendSessionKey();
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -91,7 +89,6 @@ WBTransmitter::~WBTransmitter() {
 
 void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
   count_bytes_data_injected+=abstractWbPacket.payloadSize;
-  //std::cout << "WBTransmitter::sendPacket\n";
   mIeee80211Header.writeParams(options.radio_port, ieee80211_seq);
   ieee80211_seq += 16;
   //mIeee80211Header.printSequenceControl();
@@ -100,7 +97,7 @@ void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
   if(injectionTime>MAX_SANE_INJECTION_TIME){
     count_tx_injections_error_hint++;
     if(options.enableLogAlive){
-      std::cerr<<"Injecting PCAP packet took really long:"<<MyTimeHelper::R(injectionTime)<<"\n";
+      m_console->warn("Injecting PCAP packet took really long:",MyTimeHelper::R(injectionTime));
     }
   }
   nInjectedPackets++;
@@ -113,7 +110,7 @@ void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
 void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce,
                                                       const uint8_t *payload,
                                                       const std::size_t payloadSize) {
-  //std::cout << "WBTransmitter::sendFecBlock"<<(int)wbDataPacket.payloadSize<<"\n";
+  //m_console->info("WBTransmitter::sendFecBlock {}",(int)payloadSize);
   const WBDataHeader wbDataHeader(nonce,m_curr_seq_nr);
   m_curr_seq_nr++;
   const auto encryptedData = mEncryptor.encryptPacket(nonce, payload, payloadSize, wbDataHeader);
@@ -126,9 +123,6 @@ void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce,
 }
 
 void WBTransmitter::sendSessionKey() {
-  //if (options.enableLogAlive) {
-    //std::cout << "sendSessionKey()\n";
-  //}
   sendPacket({(uint8_t *) &sessionKeyPacket, WBSessionKeyPacket::SIZE_BYTES});
   nInjectedSessionKeypackets++;
 }
@@ -149,9 +143,8 @@ void WBTransmitter::logAlive() const {
 }
 
 void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
-  //std::cout << "WBTransmitter::send_packet\n";
   if (size <= 0 || size > FEC_MAX_PAYLOAD_SIZE) {
-    std::cout << "Fed packet with incompatible size:" << size << "\n";
+    m_console->warn("Fed packet with incompatible size:",size);
     return;
   }
   count_bytes_data_provided+=size;

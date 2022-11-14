@@ -51,11 +51,10 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
   }else{
     m_console=console;
   }
-  m_console->debug("WFB_VERSION: {}",WFB_VERSION);
   receiver = std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces, options.radio_port, options1.log_interval,
                                                    notstd::bind_front(&WBReceiver::processPacket, this),
                                                    notstd::bind_front(&WBReceiver::dump_stats, this));
-  m_console->debug("WFB-RX RADIO_PORT: {} Logging enabled:{}",(int) options.radio_port,(options.enableLogAlive ? "Y" : "N"));
+  m_console->info("WFB-RX RADIO_PORT: {} Logging enabled:{}",(int) options.radio_port,(options.enableLogAlive ? "Y" : "N"));
 }
 
 void WBReceiver::loop() {
