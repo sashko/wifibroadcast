@@ -221,10 +221,10 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
       x_curr_packet_loss=x_n_missing_packets/(x_n_received_packets==0 ? 1: x_n_received_packets);
       x_n_received_packets=0;
       x_n_missing_packets=0;
+      std::stringstream ss;
+      ss<<"Diff:"<<diff<<" pl:"<<x_curr_packet_loss<<"\n";
+      std::cout<<ss.str();
     }
-    std::stringstream ss;
-    ss<<"Diff:"<<diff<<" pl:"<<x_curr_packet_loss<<"\n";
-    std::cout<<ss.str();
     last_seq_nr=wbDataHeader.sequence_number_extra;
 
     const auto decryptedPayload = mDecryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
