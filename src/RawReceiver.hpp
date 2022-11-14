@@ -339,7 +339,7 @@ class MultiRxPcapReceiver {
     while (keep_running) {
       auto cur_ts = std::chrono::steady_clock::now();
       const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
-      const int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(), timeoutMS);
+      int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(), timeoutMS);
 
       if (rc < 0) {
         if (errno == EINTR || errno == EAGAIN) continue;
