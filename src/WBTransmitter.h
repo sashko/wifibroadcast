@@ -61,7 +61,7 @@ class WBTransmitter {
    * @param radiotapHeader the radiotap header that is used for injecting, contains configurable data like the mcs index.
    * @param options1 options for this instance, some of them are forwarded to the receiver instance.
    */
-  WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1);
+  WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> console= nullptr);
   WBTransmitter(const WBTransmitter &) = delete;
   WBTransmitter &operator=(const WBTransmitter &) = delete;
   ~WBTransmitter();

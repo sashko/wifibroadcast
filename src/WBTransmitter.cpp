@@ -32,7 +32,7 @@ static FEC_VARIABLE_INPUT_TYPE convert(const TOptions &options) {
   assert(false);
 }
 
-WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1) :
+WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> console) :
     options(std::move(options1)),
     mPcapTransmitter(options.wlan),
     mEncryptor(options.keypair),
@@ -43,7 +43,11 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     IS_FEC_VARIABLE(options.fec_k.index() == 1),
     fecVariableInputType(convert(options)),
     mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}}{
-  m_console=wifibroadcast::log::get_default();
+  if(!console){
+    m_console=wifibroadcast::log::get_default();
+  }else{
+    m_console=console;
+  }
   std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";
   mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (IS_FEC_DISABLED) {

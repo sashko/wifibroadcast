@@ -55,7 +55,7 @@ class WBReceiver {
    * @param options1 the options for this instance (some options - so to say - come from the tx instance)
    * @param output_data_callback Callback that is called with the decoded data, can be null for debugging.
    */
-  WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback);
+  WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback,std::shared_ptr<spdlog::logger> console= nullptr);
   WBReceiver(const WBReceiver &) = delete;
   WBReceiver &operator=(const WBReceiver &) = delete;
   void processPacket(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
