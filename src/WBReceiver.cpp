@@ -228,10 +228,10 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
       const auto diff= diff_between_packets(x_last_seq_nr,wbDataHeader.sequence_number_extra);
       if(diff>1){
         x_n_missing_packets+=diff;
+        std::cout<<"Diff:"<<diff<<"\n";
       }else{
         x_n_received_packets++;
       }
-      //std::cout<<"Diff:"<<diff<<"\n";
       if(std::chrono::steady_clock::now()-x_last_rec>std::chrono::seconds(1)){
         x_last_rec=std::chrono::steady_clock::now();
         auto n_total_packets=x_n_received_packets+x_n_missing_packets;
