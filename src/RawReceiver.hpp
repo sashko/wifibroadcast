@@ -47,26 +47,26 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
   char errbuf[PCAP_ERRBUF_SIZE];
   ppcap = pcap_create(wlan.c_str(), errbuf);
   if (ppcap == NULL) {
-    std::cerr<<StringFormat::convert("Unable to open interface %s in pcap: %s", wlan.c_str(), errbuf);
+    wifibroadcast::log::get_default()->error("Unable to open interface {} in pcap: {}", wlan.c_str(), errbuf);
   }
   iteratePcapTimestamps(ppcap);
-  if (pcap_set_snaplen(ppcap, 4096) != 0) std::cerr<<"set_snaplen failed";
-  if (pcap_set_promisc(ppcap, 1) != 0) std::cerr<<"set_promisc failed";
-  //if (pcap_set_rfmon(ppcap, 1) !=0) std::cerr<<"set_rfmon failed";
-  if (pcap_set_timeout(ppcap, -1) != 0) std::cerr<<"set_timeout failed";
-  //if (pcap_set_buffer_size(ppcap, 2048) !=0) std::cerr<<"set_buffer_size failed";
+  if (pcap_set_snaplen(ppcap, 4096) != 0) wifibroadcast::log::get_default()->error("set_snaplen failed");
+  if (pcap_set_promisc(ppcap, 1) != 0) wifibroadcast::log::get_default()->error("set_promisc failed");
+  //if (pcap_set_rfmon(ppcap, 1) !=0) wifibroadcast::log::get_default()->error("set_rfmon failed");
+  if (pcap_set_timeout(ppcap, -1) != 0) wifibroadcast::log::get_default()->error("set_timeout failed");
+  //if (pcap_set_buffer_size(ppcap, 2048) !=0) wifibroadcast::log::get_default()->error("set_buffer_size failed");
   // Important: Without enabling this mode pcap buffers quite a lot of packets starting with version 1.5.0 !
   // https://www.tcpdump.org/manpages/pcap_set_immediate_mode.3pcap.html
   if (pcap_set_immediate_mode(ppcap, true) != 0){
-    std::cerr<<StringFormat::convert("pcap_set_immediate_mode failed: %s",
+    wifibroadcast::log::get_default()->warn("pcap_set_immediate_mode failed: {}",
                                                pcap_geterr(ppcap));
   }
   if (pcap_activate(ppcap) != 0){
-    std::cerr<<StringFormat::convert("pcap_activate failed: %s",
+    wifibroadcast::log::get_default()->error("pcap_activate failed: {}",
                                        pcap_geterr(ppcap));
   }
   if (pcap_setnonblock(ppcap, 1, errbuf) != 0){
-    std::cerr<<StringFormat::convert("set_nonblock failed: %s",
+    wifibroadcast::log::get_default()->error("set_nonblock failed: {}",
                                        errbuf);
   }
   int link_encap = pcap_datalink(ppcap);
@@ -82,14 +82,14 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
       program = StringFormat::convert("ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x", radio_port);
       break;
     default:{
-      std::cerr<<StringFormat::convert("unknown encapsulation on %s", wlan.c_str());
+      wifibroadcast::log::get_default()->error("unknown encapsulation on {}", wlan.c_str());
     }
   }
   if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
-    std::cerr<<StringFormat::convert("Unable to compile %s: %s", program.c_str(), pcap_geterr(ppcap));
+    wifibroadcast::log::get_default()->error("Unable to compile {} {}", program.c_str(), pcap_geterr(ppcap));
   }
   if (pcap_setfilter(ppcap, &bpfprogram) == -1) {
-    std::cerr<<StringFormat::convert("Unable to set filter %s: %s", program.c_str(), pcap_geterr(ppcap));
+    wifibroadcast::log::get_default()->error("Unable to set filter {} {}", program.c_str(), pcap_geterr(ppcap));
   }
   pcap_freecode(&bpfprogram);
   return ppcap;
