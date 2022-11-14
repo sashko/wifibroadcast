@@ -29,6 +29,19 @@
 #include <sstream>
 #include <utility>
 
+static int diff_between_packets(int last_packet,int curr_packet){
+  if(last_packet==curr_packet){
+    std::cerr<<"Duplicate?!\n";
+  }
+  if(curr_packet<last_packet){
+    // We probably have overflown the uin16_t range
+    const auto diff=curr_packet+UINT16_MAX+1-last_packet;
+    return diff;
+  }else{
+    return curr_packet-last_packet;
+  }
+}
+
 WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback) :
     options(std::move(options1)),
     mDecryptor(options.keypair),
@@ -209,24 +222,25 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     const WBDataHeader &wbDataHeader = *((WBDataHeader *) packetPayload);
     assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
     wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
-
-    const auto diff=wbDataHeader.sequence_number_extra-last_seq_nr;
-    if(diff>1){
-      x_n_missing_packets+=diff;
+    if(x_last_seq_nr==-1){
+      x_last_seq_nr=wbDataHeader.sequence_number_extra;
     }else{
-      x_n_received_packets++;
+      const auto diff= diff_between_packets(x_last_seq_nr,wbDataHeader.sequence_number_extra);
+      std::cout<<"Diff:"<<diff<<"\n";
+      if(std::chrono::steady_clock::now()-x_last_rec>std::chrono::seconds(1)){
+        x_last_rec=std::chrono::steady_clock::now();
+        auto n_total_packets=x_n_received_packets+x_n_missing_packets;
+        if(n_total_packets>=1){
+          x_curr_packet_loss_perc=x_n_missing_packets/n_total_packets;
+        }
+        x_n_received_packets=0;
+        x_n_missing_packets=0;
+        std::stringstream ss;
+        ss<<"Packet loss:"<<x_curr_packet_loss_perc<<"%\n";
+        std::cout<<ss.str();
+      }
+      x_last_seq_nr=wbDataHeader.sequence_number_extra;
     }
-    if(std::chrono::steady_clock::now()-x_last_rec>std::chrono::seconds(1)){
-      x_last_rec=std::chrono::steady_clock::now();
-      x_curr_packet_loss=x_n_missing_packets/(x_n_received_packets==0 ? 1: x_n_received_packets);
-      x_n_received_packets=0;
-      x_n_missing_packets=0;
-      std::stringstream ss;
-      ss<<"Diff:"<<diff<<" pl:"<<x_curr_packet_loss<<"\n";
-      std::cout<<ss.str();
-    }
-    last_seq_nr=wbDataHeader.sequence_number_extra;
-
     const auto decryptedPayload = mDecryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
                                                            packetPayloadSize - sizeof(WBDataHeader), wbDataHeader);
     if (decryptedPayload == std::nullopt) {

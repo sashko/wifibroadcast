@@ -107,11 +107,11 @@ class WBReceiver {
   AvgCalculator2 avgLatencyBeaconPacketLatency;
 #endif
  private:
-  uint16_t last_seq_nr;
+  int x_last_seq_nr=-1;
   int x_n_received_packets=0;
   int x_n_missing_packets=0;
   std::chrono::steady_clock::time_point x_last_rec=std::chrono::steady_clock::now();
-  int x_curr_packet_loss=0;
+  int x_curr_packet_loss_perc=0;
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_RECEIVER_H
