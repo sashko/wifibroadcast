@@ -230,21 +230,20 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
       const auto diff= diff_between_packets(x_last_seq_nr,wbDataHeader.sequence_number_extra);
       if(diff>1){
         x_n_missing_packets+=diff-1;
-        std::cout<<"Diff:"<<diff<<"\n";
+        m_console->debug("Diff:{}",diff);
       }else{
         x_n_received_packets++;
       }
       if(std::chrono::steady_clock::now()-x_last_rec>std::chrono::seconds(1)){
         x_last_rec=std::chrono::steady_clock::now();
         auto n_total_packets=x_n_received_packets+x_n_missing_packets;
+        m_console->debug("x_n_missing_packets:{} x_n_received_packets:{} n_total_packets:{}",x_n_missing_packets,x_n_received_packets,n_total_packets);
         if(n_total_packets>=1){
           x_curr_packet_loss_perc=x_n_missing_packets/n_total_packets;
         }
         x_n_received_packets=0;
         x_n_missing_packets=0;
-        std::stringstream ss;
-        ss<<"Packet loss:"<<x_curr_packet_loss_perc<<"%\n";
-        std::cout<<ss.str();
+        m_console->debug("Packet loss:{} %",x_curr_packet_loss_perc);
       }
       x_last_seq_nr=wbDataHeader.sequence_number_extra;
     }
