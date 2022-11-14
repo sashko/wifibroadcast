@@ -240,7 +240,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
         auto n_total_packets=x_n_received_packets+x_n_missing_packets;
         m_console->debug("x_n_missing_packets:{} x_n_received_packets:{} n_total_packets:{}",x_n_missing_packets,x_n_received_packets,n_total_packets);
         if(n_total_packets>=1){
-          const double loss_perc=static_cast<double>(x_n_missing_packets)/static_cast<double>(n_total_packets);
+          const double loss_perc=static_cast<double>(x_n_missing_packets)/static_cast<double>(n_total_packets)*100.0;
           m_console->debug("Packet loss:{} %",loss_perc);
           x_curr_packet_loss_perc=x_n_missing_packets/n_total_packets;
         }
