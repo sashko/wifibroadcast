@@ -193,8 +193,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     }
     WBSessionKeyPacket &sessionKeyPacket = *((WBSessionKeyPacket *) parsedPacket->payload);
     if (mDecryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)) {
-      std::cout << "Initializing new session. IS_FEC_ENABLED:" << (int) sessionKeyPacket.IS_FEC_ENABLED
-                << " MAX_N_FRAGMENTS_PER_BLOCK:" << (int) sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK << "\n";
+      m_console->debug("Initializing new session. IS_FEC_ENABLED:{} MAX_N_FRAGMENTS_PER_BLOCK:{}",(int)sessionKeyPacket.IS_FEC_ENABLED,(int) sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK);
       // We got a new session key (aka a session key that has not been received yet)
       wb_rx_stats.count_p_decryption_ok++;
       IS_FEC_ENABLED = sessionKeyPacket.IS_FEC_ENABLED;
