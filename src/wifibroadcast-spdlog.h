@@ -19,6 +19,7 @@ static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_n
   auto ret = spdlog::get(logger_name);
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
+    created->set_level(spd::level::debug);
     assert(created);
     return created;
   }
