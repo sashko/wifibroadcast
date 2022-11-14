@@ -10,6 +10,7 @@
 #include <iostream>
 #include <array>
 #include <sodium.h>
+#include "../wifibroadcast-spdlog.h"
 
 // Single Header file that can be used to add encryption to a lossy unidirectional link
 // Other than encryption, (which might not seem important to the average user) this also adds packet validation, e.g. makes it impossible
@@ -28,7 +29,7 @@ class Encryptor {
     if (keypair == std::nullopt) {
       // use default encryption keys
       crypto_box_seed_keypair(rx_publickey.data(), tx_secretkey.data(), DEFAULT_ENCRYPTION_SEED.data());
-      std::cout << "Using default keys\n";
+      wifibroadcast::log::get_default()->debug("Using default keys");
     } else {
       FILE *fp;
       if ((fp = fopen(keypair->c_str(), "r")) == nullptr) {
@@ -97,7 +98,7 @@ class Decryptor {
       : DISABLE_ENCRYPTION_FOR_PERFORMANCE(DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
     if (keypair == std::nullopt) {
       crypto_box_seed_keypair(tx_publickey.data(), rx_secretkey.data(), DEFAULT_ENCRYPTION_SEED.data());
-      std::cout << "Using default keys\n";
+      wifibroadcast::log::get_default()->debug("Using default keys");
     } else {
       FILE *fp;
       if ((fp = fopen(keypair->c_str(), "r")) == nullptr) {
@@ -140,7 +141,7 @@ class Decryptor {
     }
     if (memcmp(session_key.data(), new_session_key.data(), sizeof(session_key)) != 0) {
       // this is NOT an error, the same session key is sent multiple times !
-      std::cout << "Decryptor-New session detected\n";
+      wifibroadcast::log::get_default()->info("Decryptor-New session detected");
       session_key = new_session_key;
       return true;
     }

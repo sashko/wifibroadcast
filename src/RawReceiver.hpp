@@ -34,7 +34,7 @@ static void iteratePcapTimestamps(pcap_t *ppcap) {
     const char *description = pcap_tstamp_type_val_to_description(availableTimestamps[i]);
     //std::cout<<"Name: "<<std::string(name)<<" Description: "<<std::string(description)<<"\n";
     if (availableTimestamps[i] == PCAP_TSTAMP_HOST) {
-      std::cout << "Setting timestamp to host\n";
+      wifibroadcast::log::get_default()->debug("Setting timestamp to host");
       pcap_set_tstamp_type(ppcap, PCAP_TSTAMP_HOST);
     }
   }
@@ -73,10 +73,12 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
   struct bpf_program bpfprogram{};
   std::string program;
   switch (link_encap) {
-    case DLT_PRISM_HEADER:std::cout << wlan << " has DLT_PRISM_HEADER Encap\n";
+    case DLT_PRISM_HEADER:
+      wifibroadcast::log::get_default()->debug("{} has DLT_PRISM_HEADER Encap",wlan);
       program = StringFormat::convert("radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x", radio_port);
       break;
-    case DLT_IEEE802_11_RADIO:std::cout << wlan << " has DLT_IEEE802_11_RADIO Encap\n";
+    case DLT_IEEE802_11_RADIO:
+      wifibroadcast::log::get_default()->debug("{] has DLT_IEEE802_11_RADIO Encap",wlan);
       program = StringFormat::convert("ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x", radio_port);
       break;
     default:{
@@ -315,8 +317,8 @@ class MultiRxPcapReceiver {
       ss << s << ",";
     }
     ss << "]";
-    ss << " LOG_INTERVAL(ms)" << (int) log_interval.count() << "\n";
-    std::cout << ss.str() << "\n";
+    ss << " LOG_INTERVAL(ms)" << (int) log_interval.count();
+    wifibroadcast::log::get_default()->debug(ss.str());
 
     for (int i = 0; i < N_RECEIVERS; i++) {
       mReceivers[i] = std::make_unique<PcapReceiver>(rxInterfaces[i], i, radio_port, mCallbackData);
@@ -371,7 +373,7 @@ class MultiRxPcapReceiver {
         }
       }
     }
-    std::cout<<"MultiRxPcapReceiver::exitLoop\n";
+    wifibroadcast::log::get_default()->debug("MultiRxPcapReceiver::exitLoop");
   }
  private:
   bool keep_running=true;
