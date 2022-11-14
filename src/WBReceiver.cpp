@@ -227,7 +227,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     }else{
       const auto diff= diff_between_packets(x_last_seq_nr,wbDataHeader.sequence_number_extra);
       if(diff>1){
-        x_n_missing_packets+=diff;
+        x_n_missing_packets+=diff-1;
         std::cout<<"Diff:"<<diff<<"\n";
       }else{
         x_n_received_packets++;
