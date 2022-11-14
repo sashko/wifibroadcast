@@ -43,6 +43,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     IS_FEC_VARIABLE(options.fec_k.index() == 1),
     fecVariableInputType(convert(options)),
     mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}}{
+  m_console=wifibroadcast::log::get_default();
   std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";
   mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (IS_FEC_DISABLED) {

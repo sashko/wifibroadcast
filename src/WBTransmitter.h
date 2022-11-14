@@ -25,6 +25,7 @@
 #include "RawTransmitter.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "wifibroadcast.hpp"
+#include "wifibroadcast-spdlog.h"
 
 #include <variant>
 #include <thread>
@@ -113,6 +114,7 @@ class WBTransmitter {
   void sendPacket(const AbstractWBPacket &abstractWbPacket);
   // print some simple debug information. Called in regular intervals by the logAliveThread
   void logAlive() const;
+  std::shared_ptr<spdlog::logger> m_console;
   // this one is used for injecting packets
   PcapTransmitter mPcapTransmitter;
   //RawSocketTransmitter mPcapTransmitter;

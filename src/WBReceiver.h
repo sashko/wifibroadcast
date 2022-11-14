@@ -24,6 +24,7 @@
 #include "OpenHDStatisticsWriter.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "RawReceiver.hpp"
+#include "wifibroadcast-spdlog.h"
 
 // A wifi card with more than 4 antennas still has to be found :)
 static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD = 4;
@@ -83,6 +84,7 @@ class WBReceiver {
   OpenHDStatisticsWriter::Data get_latest_stats();
  private:
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
+  std::shared_ptr<spdlog::logger> m_console;
   Decryptor mDecryptor;
   std::array<RSSIForWifiCard, MAX_RX_INTERFACES> rssiForWifiCard;
   WBRxStats wb_rx_stats{};

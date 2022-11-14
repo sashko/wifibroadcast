@@ -46,6 +46,7 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
     options(std::move(options1)),
     mDecryptor(options.keypair),
     mOutputDataCallback(std::move(output_data_callback)) {
+  m_console=wifibroadcast::log::get_default();
   std::cout << "WFB_VERSION:" << WFB_VERSION << "\n";
   receiver = std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces, options.radio_port, options1.log_interval,
                                                    notstd::bind_front(&WBReceiver::processPacket, this),
