@@ -47,7 +47,7 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
     mDecryptor(options.keypair),
     mOutputDataCallback(std::move(output_data_callback)) {
   if(!console){
-    m_console=wifibroadcast::log::get_default();
+    m_console=wifibroadcast::log::create_or_get("wb_rx"+std::to_string(options.radio_port));
   }else{
     m_console=console;
   }

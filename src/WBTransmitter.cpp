@@ -43,7 +43,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     fecVariableInputType(convert(options)),
     mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}}{
   if(!console){
-    m_console=wifibroadcast::log::get_default();
+    m_console=m_console=wifibroadcast::log::create_or_get("wb_tx"+std::to_string(options.radio_port));
   }else{
     m_console=console;
   }
