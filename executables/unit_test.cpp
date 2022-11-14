@@ -270,7 +270,7 @@ static void test(const bool useGeneratedFiles) {
   // now encrypt a couple of packets and decrypt them again afterwards
   for (uint64_t nonce = 0; nonce < 20; nonce++) {
 	const auto data = GenericHelper::createRandomDataBuffer(FEC_MAX_PAYLOAD_SIZE);
-	const WBDataHeader wbDataHeader(nonce);
+	const WBDataHeader wbDataHeader(nonce,0);
 	const auto encrypted = encryptor.encryptPacket(wbDataHeader.nonce, data.data(), data.size(), wbDataHeader);
 	const auto
 		decrypted = decryptor.decryptPacket(wbDataHeader.nonce, encrypted.data(), encrypted.size(), wbDataHeader);

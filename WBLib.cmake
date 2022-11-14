@@ -82,6 +82,9 @@ target_link_libraries(wifibroadcast PUBLIC ${sodium_LIBRARY_RELEASE})
 find_package(Threads REQUIRED)
 target_link_libraries(wifibroadcast PUBLIC Threads::Threads)
 
+find_package(spdlog REQUIRED)
+target_link_libraries(wifibroadcast PRIVATE spdlog::spdlog)
+
 SET(WB_TARGET_LINK_LIBRARIES wifibroadcast)
 SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
 
