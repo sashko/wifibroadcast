@@ -41,6 +41,7 @@
 #include <list>
 #include <mutex>
 #include <optional>
+#include "../wifibroadcast-spdlog.h"
 
 namespace SocketHelper {
 struct UDPConfig{
@@ -63,13 +64,11 @@ static std::chrono::nanoseconds getCurrentSocketReceiveTimeout(int socketFd) {
 static void setSocketReceiveTimeout(int socketFd, const std::chrono::nanoseconds timeout) {
   const auto currentTimeout = getCurrentSocketReceiveTimeout(socketFd);
   if (currentTimeout != timeout) {
-    //std::cout<<"Changing timeout\n";
     auto tv = GenericHelper::durationToTimeval(timeout);
     if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
       std::stringstream ss;
-      ss<<"Cannot set socket timeout "<<timeout.count()<<"\n";
-      std::cerr<<ss.str();
-      //std::cout<<"Cannot set socket timeout "<<timeout.count()<<"\n";
+      ss<<"Cannot set socket timeout "<<timeout.count();
+      wifibroadcast::log::get_default()->warn(ss.str());
     }
   }
 }
@@ -78,7 +77,7 @@ static void setSocketReceiveTimeout(int socketFd, const std::chrono::nanoseconds
 static void setSocketReuse(int sockfd) {
   int enable = 1;
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-    std::cerr << "Cannot set socket reuse\n";
+    wifibroadcast::log::get_default()->warn("Cannot set socket reuse");
   }
 }
 // increase the UDP receive buffer size, needed for high bandwidth (at ~>20MBit/s the "default"
@@ -90,19 +89,19 @@ static void increase_socket_recv_buff_size(int sockfd, const int wanted_rcvbuff_
   {
     std::stringstream ss;
     ss<<"Default UDP socket recv buffer size:"<<StringHelper::memorySizeReadable(recvBufferSize)<<" wanted:"<<StringHelper::memorySizeReadable(wanted_rcvbuff_size_bytes)<<"\n";
-    std::cerr<<ss.str();
+    wifibroadcast::log::get_default()->warn(ss.str());
   }
   // We never decrease the socket receive buffer size, only increase it when neccessary
   if(wanted_rcvbuff_size_bytes>(size_t)recvBufferSize){
     int wanted_size=wanted_rcvbuff_size_bytes;
     recvBufferSize=wanted_rcvbuff_size_bytes;
     if(setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &wanted_size,len)) {
-      std::cerr<<"Cannot increase UDP buffer size to "<<StringHelper::memorySizeReadable(wanted_rcvbuff_size_bytes)<<"\n";
+      wifibroadcast::log::get_default()->warn("Cannot increase UDP buffer size to {}",StringHelper::memorySizeReadable(wanted_rcvbuff_size_bytes));
     }
     // Fetch it again to double check
     recvBufferSize=-1;
     getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, &len);
-    std::cerr<<"UDP Wanted "<<StringHelper::memorySizeReadable(wanted_rcvbuff_size_bytes)<<" Set "<<StringHelper::memorySizeReadable(recvBufferSize)<<"\n";
+    wifibroadcast::log::get_default()->warn("UDP Wanted {} Set {}",StringHelper::memorySizeReadable(wanted_rcvbuff_size_bytes),StringHelper::memorySizeReadable(recvBufferSize));
   }
 }
 // Open the specified port for udp receiving
@@ -113,7 +112,7 @@ static int openUdpSocketForReceiving(const std::string& address,const int port) 
   if (fd < 0){
     std::stringstream ss;
     ss<<"Error opening socket "<<port<<" "<<strerror(errno)<<"\n";
-    std::cerr<<ss.str();
+    wifibroadcast::log::get_default()->warn(ss.str());
     return -1;
   }
   setSocketReuse(fd);
@@ -126,7 +125,7 @@ static int openUdpSocketForReceiving(const std::string& address,const int port) 
   if (bind(fd, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
     std::stringstream ss;
     ss<<"Bind error on socket "<<address.c_str()<<":"<<port<<" "<< strerror(errno)<<"\n";
-    std::cerr<<ss.str();
+    wifibroadcast::log::get_default()->warn(ss.str());
     return -1;
   }
   return fd;
@@ -141,7 +140,7 @@ class UDPForwarder {
     if (sockfd < 0) {
       std::stringstream message;
       message << "Error opening socket:" << strerror(errno) << "\n";
-      std::cerr << message.str();
+      wifibroadcast::log::get_default()->warn(message.str());
     }
     //set up the destination
     bzero((char *) &saddr, sizeof(saddr));
@@ -149,7 +148,7 @@ class UDPForwarder {
     //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
     inet_aton(client_addr.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
     saddr.sin_port = htons((uint16_t) client_udp_port);
-    std::cout << "UDPForwarder::configured for " << client_addr << " " << client_udp_port << "\n";
+    wifibroadcast::log::get_default()->info("UDPForwarder::configured for {} {}",client_addr,client_udp_port);
   }
   UDPForwarder(const UDPForwarder &) = delete;
   UDPForwarder &operator=(const UDPForwarder &) = delete;
@@ -157,14 +156,13 @@ class UDPForwarder {
     close(sockfd);
   }
   void forwardPacketViaUDP(const uint8_t *packet, const std::size_t packetSize) const {
-    //std::cout<<"Send"<<packetSize<<"\n";
     //send(sockfd,packet,packetSize, MSG_DONTWAIT);
     const auto ret=sendto(sockfd, packet, packetSize, 0, (const struct sockaddr *) &saddr,
                             sizeof(saddr));
     if(ret <0 || ret != packetSize){
       std::stringstream ss;
-      ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<" "<<strerror(errno)<<"\n";
-      std::cout<<ss.str();
+      ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<" "<<strerror(errno);
+      wifibroadcast::log::get_default()->warn(ss.str());
     }
   }
  private:
@@ -188,11 +186,11 @@ class UDPMultiForwarder {
     // check if we already forward data to this IP::Port tuple
     for (const auto &udpForwarder: udpForwarders) {
       if (udpForwarder->client_addr == client_addr && udpForwarder->client_udp_port == client_udp_port) {
-        std::cout << "UDPMultiForwarder: already forwarding to:" << client_addr << ":" << client_udp_port << "\n";
+        wifibroadcast::log::get_default()->info("UDPMultiForwarder: already forwarding to: {}:{}",client_addr,client_udp_port);
         return;
       }
     }
-    std::cout << "UDPMultiForwarder: add forwarding to:" << client_addr << ":" << client_udp_port << "\n";
+    wifibroadcast::log::get_default()->info("UDPMultiForwarder: add forwarding to: {}:{}",client_addr,client_udp_port);
     udpForwarders.emplace_back(std::make_unique<SocketHelper::UDPForwarder>(client_addr, client_udp_port));
   }
   /**
@@ -240,7 +238,7 @@ class UDPReceiver {
     if(m_wanted_recv_buff_size!=std::nullopt){
       increase_socket_recv_buff_size(mSocket,m_wanted_recv_buff_size.value());
     }
-    std::cout << "UDPReceiver created with " << client_addr << ":" << client_udp_port << "\n";
+    wifibroadcast::log::get_default()->info("UDPReceiver created with {}:{}",client_addr,client_udp_port);
   }
   void loopUntilError() {
     const auto buff = std::make_unique<std::array<uint8_t, UDP_PACKET_MAX_SIZE>>();
@@ -254,11 +252,11 @@ class UDPReceiver {
       } else {
         // this can also come from the shutdown, in which case it is not an error.
         // But this way we break out of the loop.
-        std::cout << "ERROR got message length of:" << message_length << "\n";
+        wifibroadcast::log::get_default()->warn("Got message length of: {}",message_length);
         receiving = false;
       }
     }
-    std::cout << "UDP end\n";
+    wifibroadcast::log::get_default()->debug("UDP end");
   }
   // Now this one is kinda special - for mavsdk we need to send messages from the port we are listening on
   // to a specific IP::PORT tuple (such that the source address of the then received packet matches the address we are listening on).
@@ -274,8 +272,8 @@ class UDPReceiver {
                             sizeof(saddr));
     if(ret <0 || ret != packetSize){
       std::stringstream ss;
-      ss<<"Error sending packet of size:"<<packetSize<<" to "<<destIp<<":"<<destPort<<" code:"<<ret<<" "<<strerror(errno)<<"\n";
-      std::cout<<ss.str();
+      ss<<"Error sending packet of size:"<<packetSize<<" to "<<destIp<<":"<<destPort<<" code:"<<ret<<" "<<strerror(errno);
+      wifibroadcast::log::get_default()->warn(ss.str());
     }
   }
   void stopLooping() {
@@ -286,7 +284,7 @@ class UDPReceiver {
   }
   void runInBackground() {
     if (receiverThread) {
-      std::cerr << "Receiver thread is already running or has not been properly stopped\n";
+      wifibroadcast::log::get_default()->warn("Receiver thread is already running or has not been properly stopped");
       return;
     }
     receiverThread = std::make_unique<std::thread>(&UDPReceiver::loopUntilError, this);

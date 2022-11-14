@@ -136,7 +136,7 @@ class Decryptor {
                              sessionKeyNonce.data(),
                              tx_publickey.data(), rx_secretkey.data()) != 0) {
       // this basically should just never happen, and is an error
-      std::cerr << "unable to decrypt session key\n";
+      wifibroadcast::log::get_default()->warn("unable to decrypt session key");
       return false;
     }
     if (memcmp(session_key.data(), new_session_key.data(), sizeof(session_key)) != 0) {

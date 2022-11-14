@@ -179,12 +179,12 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
     }
   }  /* while more rt headers */
   if (ret != -ENOENT) {
-    //std::cerr<<"Error parsing radiotap header!\n";
+    //wifibroadcast::log::get_default()->warn("Error parsing radiotap header!\n";
     return std::nullopt;
   }
   bool frameFailedFcsCheck = false;
   if (tmpCopyOfIEEE80211_RADIOTAP_FLAGS & IEEE80211_RADIOTAP_F_BADFCS) {
-    //std::cerr<<"Got packet with bad fsc\n";
+    //wifibroadcast::log::get_default()->warn("Got packet with bad fsc\n";
     frameFailedFcsCheck = true;
   }
   // the fcs is at the end of the packet
@@ -246,7 +246,7 @@ class PcapReceiver {
       if (pkt == nullptr) {
 #ifdef ENABLE_ADVANCED_DEBUGGING
         nOfPacketsPolledFromPcapQueuePerIteration.add(nPacketsPolledUntilQueueWasEmpty);
-        std::cout<<"nOfPacketsPolledFromPcapQueuePerIteration: "<<nOfPacketsPolledFromPcapQueuePerIteration.getAvgReadable()<<"\n";
+       wifibroadcast::log::get_default()->debug("nOfPacketsPolledFromPcapQueuePerIteration: {}",nOfPacketsPolledFromPcapQueuePerIteration.getAvgReadable());
         nOfPacketsPolledFromPcapQueuePerIteration.reset();
 #endif
         break;
@@ -339,12 +339,11 @@ class MultiRxPcapReceiver {
     while (keep_running) {
       auto cur_ts = std::chrono::steady_clock::now();
       const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
-      int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(), timeoutMS);
-      //std::cout<<"End poll\n";
+      const int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(), timeoutMS);
 
       if (rc < 0) {
         if (errno == EINTR || errno == EAGAIN) continue;
-        std::cerr<<StringFormat::convert("Poll error: %s", strerror(errno));
+        wifibroadcast::log::get_default()->warn("Poll error: {}", strerror(errno));
       }
 
       cur_ts = std::chrono::steady_clock::now();
@@ -362,7 +361,7 @@ class MultiRxPcapReceiver {
       for (int i = 0; rc > 0 && i < mReceiverFDs.size(); i++) {
         if (mReceiverFDs[i].revents & (POLLERR | POLLNVAL)) {
           if(keep_running){
-            std::cerr<<StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s) \n",i,rxInterfaces[i].c_str());
+            wifibroadcast::log::get_default()->warn(StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s) \n",i,rxInterfaces[i].c_str()));
           }else{
             return;
           }

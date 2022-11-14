@@ -7,6 +7,7 @@
 
 #include "Ieee80211Header.hpp"
 #include "RadiotapHeader.hpp"
+#include "wifibroadcast-spdlog.h"
 
 #include <cstdlib>
 #include <endian.h>
@@ -85,7 +86,7 @@ static void injectPacket(pcap_t *pcap, const std::vector<uint8_t> &packetData) {
   if (len_injected != (int) packetData.size()) {
     std::stringstream ss;
     ss<<"pcap -unable to inject packet "<<packetData.size()<<" ret:"<<len_injected<<" "<<pcap_geterr(pcap)<<"\n";
-    std::cout<<ss.str();
+    wifibroadcast::log::get_default()->warn(ss.str());
   }
 }
 // copy paste from svpcom
@@ -93,19 +94,19 @@ static pcap_t *openTxWithPcap(const std::string &wlan) {
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_t *p = pcap_create(wlan.c_str(), errbuf);
   if (p == nullptr) {
-    std::cerr<<StringFormat::convert("Unable to open interface %s in pcap: %s", wlan.c_str(), errbuf);
+    wifibroadcast::log::get_default()->error("Unable to open interface {} in pcap: {}", wlan.c_str(), errbuf);
   }
-  if (pcap_set_snaplen(p, 4096) != 0) std::cerr<<"set_snaplen failed";
-  if (pcap_set_promisc(p, 1) != 0) std::cerr<<"set_promisc failed";
-  //if (pcap_set_rfmon(p, 1) !=0) std::cerr<<"set_rfmon failed";
-  if (pcap_set_timeout(p, -1) != 0) std::cerr<<"set_timeout failed";
-  //if (pcap_set_buffer_size(p, 2048) !=0) std::cerr<<"set_buffer_size failed";
+  if (pcap_set_snaplen(p, 4096) != 0) wifibroadcast::log::get_default()->warn("set_snaplen failed");
+  if (pcap_set_promisc(p, 1) != 0) wifibroadcast::log::get_default()->warn("set_promisc failed");
+  //if (pcap_set_rfmon(p, 1) !=0) wifibroadcast::log::get_default()->warn("set_rfmon failed";
+  if (pcap_set_timeout(p, -1) != 0) wifibroadcast::log::get_default()->warn("set_timeout failed");
+  //if (pcap_set_buffer_size(p, 2048) !=0) wifibroadcast::log::get_default()->warn("set_buffer_size failed";
   // NOTE: Immediate not needed on TX
   if (pcap_activate(p) != 0){
-    std::cerr<<StringFormat::convert("pcap_activate failed: %s",
+    wifibroadcast::log::get_default()->error("pcap_activate failed: {}",
                                        pcap_geterr(p));
   }
-  //if (pcap_setnonblock(p, 1, errbuf) != 0) std::cerr<<string_format("set_nonblock failed: %s", errbuf));
+  //if (pcap_setnonblock(p, 1, errbuf) != 0) wifibroadcast::log::get_default()->warn(string_format("set_nonblock failed: %s", errbuf));
   return p;
 }
 }
@@ -173,8 +174,8 @@ class RawSocketTransmitter : public IRawPacketInjector {
     const auto len_written=write(sockFd, packet.data(), packet.size());
     if (len_written != packet.size()) {
       std::stringstream ss;
-      ss<<"Unable to inject packet (raw sock) size:"<<packet.size()<<" res:"<<len_written<<" "<<strerror(errno)<<"\n";
-      std::cerr<<ss.str();
+      ss<<"Unable to inject packet (raw sock) size:"<<packet.size()<<" res:"<<len_written<<" "<<strerror(errno);
+      wifibroadcast::log::get_default()->error(ss.str());
     }
     return std::chrono::steady_clock::now() - before;
   }
@@ -186,8 +187,8 @@ class RawSocketTransmitter : public IRawPacketInjector {
     int sock = socket(AF_PACKET, SOCK_RAW, 0);
     if (sock == -1) {
       std::stringstream ss;
-      ss<<"RawSocketTransmitter:: open socket failed "<<wifi.c_str()<<" "<<strerror(errno)<<"\n";
-      std::cerr<<ss.str();
+      ss<<"RawSocketTransmitter:: open socket failed "<<wifi.c_str()<<" "<<strerror(errno);
+      wifibroadcast::log::get_default()->error(ss.str());
     }
 
     ll_addr.sll_family = AF_PACKET;
@@ -197,34 +198,30 @@ class RawSocketTransmitter : public IRawPacketInjector {
     strncpy(ifr.ifr_name, wifi.c_str(), IFNAMSIZ);
 
     if (ioctl(sock, SIOCGIFINDEX, &ifr) < 0) {
-      std::stringstream ss;
-      ss<<"ioctl(SIOCGIFINDEX) failed\n";
-      std::cerr<<ss.str();
+      wifibroadcast::log::get_default()->error("ioctl(SIOCGIFINDEX) failed");
     }
 
     ll_addr.sll_ifindex = ifr.ifr_ifindex;
 
     if (ioctl(sock, SIOCGIFHWADDR, &ifr) < 0) {
-      std::stringstream ss;
-      ss<<"ioctl(SIOCGIFHWADDR) failed\n";
-      std::cerr<<ss.str();
+      wifibroadcast::log::get_default()->error("ioctl(SIOCGIFHWADDR) failed");
     }
 
     memcpy(ll_addr.sll_addr, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
 
     if (bind(sock, (struct sockaddr *) &ll_addr, sizeof(ll_addr)) == -1) {
       close(sock);
-      std::cerr<<"bind failed\n";
+      wifibroadcast::log::get_default()->error("bind failed");
     }
     struct timeval timeout{};
     timeout.tv_sec = 0;
     timeout.tv_usec = 8000;
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout)) < 0) {
-      std::cerr<<"setsockopt SO_SNDTIMEO\n";
+      wifibroadcast::log::get_default()->error("setsockopt SO_SNDTIMEO");
     }
     int sendbuff = 131072;
     if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, sizeof(sendbuff)) < 0) {
-      std::cerr<<"setsockopt SO_SNDBUF\n";
+      wifibroadcast::log::get_default()->error("setsockopt SO_SNDBUF");
     }
     return sock;
   }
