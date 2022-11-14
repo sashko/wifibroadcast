@@ -229,8 +229,9 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     }else{
       const auto diff= diff_between_packets(x_last_seq_nr,wbDataHeader.sequence_number_extra);
       if(diff>1){
+        // as an example, a diff of 2 means one packet is missing.
         x_n_missing_packets+=diff-1;
-        m_console->debug("Diff:{}",diff);
+        //m_console->debug("Diff:{}",diff);
       }else{
         x_n_received_packets++;
       }
