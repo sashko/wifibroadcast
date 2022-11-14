@@ -10,7 +10,7 @@
 #include <iostream>
 #include <array>
 #include <sodium.h>
-#include "../wifibroadcast-spdlog.h"
+#include "wifibroadcast-spdlog.h"
 
 // Single Header file that can be used to add encryption to a lossy unidirectional link
 // Other than encryption, (which might not seem important to the average user) this also adds packet validation, e.g. makes it impossible
