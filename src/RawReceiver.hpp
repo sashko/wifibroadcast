@@ -28,11 +28,11 @@ namespace RawReceiverHelper {
 static void iteratePcapTimestamps(pcap_t *ppcap) {
   int *availableTimestamps;
   const int nTypes = pcap_list_tstamp_types(ppcap, &availableTimestamps);
-  //std::cout<<"N available timestamp types "<<nTypes<<"\n";
+  //"N available timestamp types "<<nTypes<<"\n";
   for (int i = 0; i < nTypes; i++) {
     const char *name = pcap_tstamp_type_val_to_name(availableTimestamps[i]);
     const char *description = pcap_tstamp_type_val_to_description(availableTimestamps[i]);
-    //std::cout<<"Name: "<<std::string(name)<<" Description: "<<std::string(description)<<"\n";
+    //<<"Name: "<<std::string(name)<<" Description: "<<std::string(description)<<"\n";
     if (availableTimestamps[i] == PCAP_TSTAMP_HOST) {
       wifibroadcast::log::get_default()->debug("Setting timestamp to host");
       pcap_set_tstamp_type(ppcap, PCAP_TSTAMP_HOST);
@@ -163,7 +163,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
       {
           uint8_t pkt_rate = (*(uint8_t*)(iterator.this_arg))/2;
           int rateInMbps=pkt_rate*2;
-          std::cout<<"Packet rate is "<<rateInMbps<<"\n";
+          <<"Packet rate is "<<rateInMbps<<"\n";
       }
           break;*/
       case IEEE80211_RADIOTAP_ANTENNA:
@@ -189,15 +189,15 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   }
   // the fcs is at the end of the packet
   if (tmpCopyOfIEEE80211_RADIOTAP_FLAGS & IEEE80211_RADIOTAP_F_FCS) {
-    //std::cout<<"Packet has IEEE80211_RADIOTAP_F_FCS";
+    //<<"Packet has IEEE80211_RADIOTAP_F_FCS";
     pktlen -= 4;
   }
 #ifdef ENABLE_ADVANCED_DEBUGGING
-  //std::cout<<RadiotapFlagsToString::flagsIEEE80211_RADIOTAP_MCS(mIEEE80211_RADIOTAP_MCS)<<"\n";
-  //std::cout<<RadiotapFlagsToString::flagsIEEE80211_RADIOTAP_FLAGS(mIEEE80211_RADIOTAP_FLAGS)<<"\n";
+  wifibroadcast::log::get_default()->debug(RadiotapFlagsToString::flagsIEEE80211_RADIOTAP_MCS(mIEEE80211_RADIOTAP_MCS));
+  wifibroadcast::log::get_default()->debug(RadiotapFlagsToString::flagsIEEE80211_RADIOTAP_FLAGS(mIEEE80211_RADIOTAP_FLAGS));
   // With AR9271 I get 39 as length of the radio-tap header
   // With my internal laptop wifi chip I get 36 as length of the radio-tap header
-  //std::cout<<"iterator._max_length was "<<iterator._max_length<<"\n";
+  wifibroadcast::log::get_default()->debug("iterator._max_length was {}",iterator._max_length);
 #endif
   //assert(iterator._max_length==hdr.caplen);
   /* discard the radiotap header part */

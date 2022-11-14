@@ -5,21 +5,22 @@
 #ifndef WIFIBROADCAST_FECENABLED_HPP
 #define WIFIBROADCAST_FECENABLED_HPP
 
-#include "HelperSources/TimeHelper.hpp"
-#include "OpenHDStatisticsWriter.hpp"
-#include "FEC.hpp"
-#include <cstdint>
+#include <array>
 #include <cerrno>
+#include <cstdint>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
-#include <array>
-#include <cstring>
-#include <stdexcept>
-#include <iostream>
-#include <functional>
-#include <map>
 
+#include "FEC.hpp"
+#include "HelperSources/TimeHelper.hpp"
+#include "OpenHDStatisticsWriter.hpp"
+#include "wifibroadcast-spdlog.h"
 
 // RN this module depends on "wifibroadcast.hpp", since it holds the "packet size(s)" needed to calculate FEC_MAX_PAYLOAD_SIZE
 // Removing this dependency (to write your own customized link) would be easy to do though.
@@ -107,8 +108,8 @@ class FECEncoder {
   // encodePacket(...,true) as needed.
   explicit FECEncoder(unsigned int K_MAX, unsigned int percentage) : mKMax(K_MAX), mPercentage(percentage) {
     const auto tmp_n = calculateN(K_MAX, percentage);
-    std::cout << "FEC with k max:" << mKMax << " and percentage:" << percentage << "\n";
-    std::cout << "For a block size of k max this is (" << mKMax << ":" << tmp_n << ") in old (K:N) terms.\n";
+    wifibroadcast::log::get_default()->debug( "FEC with k max: {} and percentage: {}",mKMax,percentage);
+    wifibroadcast::log::get_default()->debug("For a block size of k max this is {}:{} in old (K:N) terms.",mKMax,tmp_n);
     assert(K_MAX > 0);
     assert(K_MAX <= MAX_N_P_FRAGMENTS_PER_BLOCK);
     assert(tmp_n <= MAX_TOTAL_FRAGMENTS_PER_BLOCK);
@@ -132,7 +133,7 @@ class FECEncoder {
     assert(size <= FEC_MAX_PAYLOAD_SIZE);
     // do not feed an "empty" packet to the FECEncoder
     if (size <= 0) {
-      std::cerr << "Do not feed empty packets to FECEncoder\n";
+      wifibroadcast::log::get_default()->warn("Do not feed empty packets to FECEncoder");
       return false;
     }
     //assert(outputDataCallback);
@@ -165,10 +166,10 @@ class FECEncoder {
     if (!lastPrimaryFragment) {
       return false;
     }
-    //std::cout<<"Doing FEC step on block size"<<currNPrimaryFragments<<"\n";
+    //wifibroadcast::log::get_default()->debug("Doing FEC step on block size {}",currNPrimaryFragments);
     // prepare for the fec step
     const auto nSecondaryFragments = currNPrimaryFragments * mPercentage / 100;
-    //std::cout<<"Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
+    //wifibroadcast::log::get_default()->debug("Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
 
     // once enough data has been buffered, create all the secondary fragments
     fecEncode(currMaxPacketSize, blockBuffer, currNPrimaryFragments, nSecondaryFragments);
@@ -295,14 +296,14 @@ class RxBlock {
       // when we receive the last primary fragment for this block we know the "K" parameter
       if (fecNonce.number != 0) {
         fec_k = fecNonce.number;
-        //std::cout<<"K is known now(P)"<<fec_k<<"\n";
+        //wifibroadcast::log::get_default()->debug("K is known now(P)"<<fec_k<<"\n";
       }
     } else {
       nAvailableSecondaryFragments++;
       // when we receive any secondary fragment we now know k for this block
       if (fec_k == -1) {
         fec_k = fecNonce.number;
-        //std::cout<<"K is known now(S)"<<fec_k<<"\n";
+        //wifibroadcast::log::get_default()->debug("K is known now(S)"<<fec_k<<"\n";
       } else {
         assert(fec_k == fecNonce.number);
       }
@@ -317,7 +318,7 @@ class RxBlock {
     if (firstFragmentTimePoint == std::nullopt) {
       firstFragmentTimePoint = std::chrono::steady_clock::now();
     }
-    //std::cout<<"block_idx:"<<blockIdx<<" frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
+    //wifibroadcast::log::get_default()->debug("block_idx:"<<blockIdx<<" frag_idx:"<<(int)fecNonce.fragmentIdx<<" k:"<<fec_k<<" nP:"<<nAvailablePrimaryFragments<<"nS:"<<nAvailableSecondaryFragments<<"\n";
   }
   /**
    * @returns the indices for all primary fragments that have not yet been forwarded and are available (already received or reconstructed).
@@ -354,7 +355,7 @@ class RxBlock {
   // reconstructing only part of the missing data is not supported !
   // return: the n of reconstructed packets
   int reconstructAllMissingData() {
-    //std::cout<<"reconstructAllMissingData"<<nAvailablePrimaryFragments<<" "<<nAvailableSecondaryFragments<<" "<<fec.FEC_K<<"\n";
+    //wifibroadcast::log::get_default()->debug("reconstructAllMissingData"<<nAvailablePrimaryFragments<<" "<<nAvailableSecondaryFragments<<" "<<fec.FEC_K<<"\n";
     // NOTE: FEC does only work if nPrimaryFragments+nSecondaryFragments>=FEC_K
     assert(fec_k != -1);
     // do not reconstruct if reconstruction is impossible
@@ -446,11 +447,11 @@ class FECDecoder {
 
     // Should never happen due to generating new session key on tx side
     if (fecNonce.blockIdx > MAX_BLOCK_IDX) {
-      std::cerr << "block_idx overflow\n";
+      wifibroadcast::log::get_default()->warn("block_idx overflow");
       return false;
     }
     if (fecNonce.fragmentIdx >= maxNFragmentsPerBlock) {
-      std::cerr << "invalid fragment_idx:" << fecNonce.fragmentIdx << "\n";
+      wifibroadcast::log::get_default()->warn("invalid fragment_idx: {}",fecNonce.fragmentIdx);
       return false;
     }
     processFECBlockWitRxQueue(fecNonce, decrypted);
@@ -473,8 +474,8 @@ class FECDecoder {
     // TODO remove me
     if(discardMissingPackets){
       if(m_enable_log_debug){
-        std::cerr << "Forwarding block that is not yet fully finished " << block.getBlockIdx() << " with n fragments"
-                  << block.getNAvailableFragments() << " missing:"<<block.get_missing_primary_packets_readable()<<"\n";
+        wifibroadcast::log::get_default()->warn("Forwarding block that is not yet fully finished: {} with n fragments: {} missing: {}",
+                                                block.getBlockIdx(),block.getNAvailableFragments(),block.get_missing_primary_packets_readable());
       }
     }
     const auto indices = block.pullAvailablePrimaryFragments(discardMissingPackets);
@@ -486,8 +487,7 @@ class FECDecoder {
       const auto packet_size = packet_hdr.getPrimaryFragmentSize();
       if (packet_size > FEC_MAX_PAYLOAD_SIZE || packet_size <= 0) {
         // this should never happen !
-        std::cerr << "corrupted packet on FECDecoder out (" << block.getBlockIdx() << ":" << (int) primaryFragmentIndex
-                  << ") : " << packet_size << "B\n";
+        wifibroadcast::log::get_default()->warn("corrupted packet on FECDecoder out ({}:{}) : {}B",block.getBlockIdx(),primaryFragmentIndex,packet_size);
       } else {
         mSendDecodedPayloadCallback(payload, packet_size);
         stats.count_bytes_forwarded+=packet_size;
@@ -511,7 +511,7 @@ class FECDecoder {
       // the newest block in the queue should be equal to block_idx -1
       // but it must not ?!
       if (rx_queue.back()->getBlockIdx() != (blockIdx - 1)) {
-        std::cout << "In queue:" << rx_queue.back()->getBlockIdx() << " But new:" << blockIdx << "\n";
+        wifibroadcast::log::get_default()->debug("In queue: {} But new: {}",rx_queue.back()->getBlockIdx(),blockIdx);
       }
       //assert(rx_queue.back()->getBlockIdx() == (blockIdx - 1));
     }
@@ -588,7 +588,7 @@ class FECDecoder {
     block.addFragment(fecNonce, decrypted.data(), decrypted.size());
     //
     if (block == *rx_queue.front()) {
-      //std::cout<<"In front\n";
+      //wifibroadcast::log::get_default()->debug("In front\n";
       // we are in the front of the queue (e.g. at the oldest block)
       // forward packets until the first gap
       forwardMissingPrimaryFragmentsIfAvailable(block);
@@ -609,7 +609,7 @@ class FECDecoder {
       }
       return;
     } else {
-      //std::cout<<"Not in front\n";
+      //wifibroadcast::log::get_default()->debug("Not in front\n";
       // we are not in the front of the queue but somewhere else
       // If this block can be fully recovered or all primary fragments are available this triggers a flush
       if (block.allPrimaryFragmentsAreAvailable() || block.allPrimaryFragmentsCanBeRecovered()) {
@@ -636,7 +636,7 @@ class FECDecoder {
   }
  public:
   void decreaseRxRingSize(int newSize) {
-    std::cout << "Decreasing ring size from " << rx_queue.size() << "to " << newSize << "\n";
+    wifibroadcast::log::get_default()->debug("Decreasing ring size from {} to {}",rx_queue.size(),newSize);
     while (rx_queue.size() > newSize) {
       forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), true);
       rxQueuePopFront();
@@ -657,7 +657,7 @@ class FECDecoder {
       if (firstFragmentTimePoint != std::nullopt) {
         const auto delta = now - *firstFragmentTimePoint;
         if (delta > maxDelta) {
-          //std::cout<<"Got block"<<block->getBlockIdx()<<" with age"<<MyTimeHelper::R(delta)<<"\n";
+          //wifibroadcast::log::get_default()->debug("Got block"<<block->getBlockIdx()<<" with age"<<MyTimeHelper::R(delta)<<"\n";
         }
       }
     }
