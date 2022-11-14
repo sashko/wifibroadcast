@@ -80,6 +80,7 @@ void WBReceiver::dump_stats() {
   // re-calculate the current bitrate
   {
     wb_rx_stats.curr_bits_per_second=rxBitrateCalculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
+    wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
   }
   std::optional<FECStreamStats> fec_stream_stats=std::nullopt;
   if(mFECDDecoder){
@@ -238,11 +239,11 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
       if(std::chrono::steady_clock::now()-x_last_rec>std::chrono::seconds(1)){
         x_last_rec=std::chrono::steady_clock::now();
         auto n_total_packets=x_n_received_packets+x_n_missing_packets;
-        m_console->debug("x_n_missing_packets:{} x_n_received_packets:{} n_total_packets:{}",x_n_missing_packets,x_n_received_packets,n_total_packets);
+        //m_console->debug("x_n_missing_packets:{} x_n_received_packets:{} n_total_packets:{}",x_n_missing_packets,x_n_received_packets,n_total_packets);
         if(n_total_packets>=1){
           const double loss_perc=static_cast<double>(x_n_missing_packets)/static_cast<double>(n_total_packets)*100.0;
           x_curr_packet_loss_perc=static_cast<int>(std::lround(loss_perc));
-          m_console->debug("Packet loss:{} % {} %",x_curr_packet_loss_perc,loss_perc);
+          //m_console->debug("Packet loss:{} % {} %",x_curr_packet_loss_perc,loss_perc);
         }
         x_n_received_packets=0;
         x_n_missing_packets=0;

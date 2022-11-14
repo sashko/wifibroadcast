@@ -113,7 +113,7 @@ class WBReceiver {
   int x_n_received_packets=0;
   int x_n_missing_packets=0;
   std::chrono::steady_clock::time_point x_last_rec=std::chrono::steady_clock::now();
-  int x_curr_packet_loss_perc=0;
+  int x_curr_packet_loss_perc=-1;
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_RECEIVER_H
