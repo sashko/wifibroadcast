@@ -12,6 +12,7 @@
 #include <chrono>
 #include <sstream>
 #include <list>
+#include <utility>
 
 // Helpers fo performing packet-based throughput measurement
 // and/or duration-based measurement
@@ -24,7 +25,7 @@ class PacketizedBenchmark {
    * @param name1 what we are benchmarking here (for example FEC, encryption)
    * @param factor1 use a factor other than 1.0 if the packet size changes during the benchmarked step
    */
-  PacketizedBenchmark(std::string name1, double factor1 = 1.0f) : name(name1), factor(factor1) {};
+  explicit PacketizedBenchmark(std::string name1, double factor1 = 1.0f) : name(std::move(name1)), factor(factor1) {};
   void begin() {
     testBegin = std::chrono::steady_clock::now();
     logTs = std::chrono::steady_clock::now();

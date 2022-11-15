@@ -23,7 +23,7 @@ static void printCurrentThreadPriority(const std::string& name) {
 static void printCurrentThreadSchedulingPolicy(const std::string& name) {
   auto self = pthread_self();
   int policy;
-  sched_param param;
+  sched_param param{};
   auto result = pthread_getschedparam(self, &policy, &param);
   if (result != 0) {
     wifibroadcast::log::get_default()->warn( "Cannot get thread scheduling policy");
@@ -34,7 +34,7 @@ static void printCurrentThreadSchedulingPolicy(const std::string& name) {
 // this thread should run as close to realtime as possible
 static void setThreadParamsMaxRealtime(pthread_t target) {
   int policy = SCHED_FIFO;
-  sched_param param;
+  sched_param param{};
   param.sched_priority = sched_get_priority_max(policy);
   auto result = pthread_setschedparam(target, policy, &param);
   if (result != 0) {
