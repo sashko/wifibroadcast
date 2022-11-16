@@ -294,7 +294,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     }
 #endif
   else {
-    m_console->warn("Unknown packet type {]",(int) packetPayload[0]);
+    m_console->warn("Unknown packet type {}",(int) packetPayload[0]);
     wb_rx_stats.count_p_bad += 1;
     return;
   }

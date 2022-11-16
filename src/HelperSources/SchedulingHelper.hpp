@@ -28,7 +28,7 @@ static void printCurrentThreadSchedulingPolicy(const std::string& name) {
   if (result != 0) {
     wifibroadcast::log::get_default()->warn( "Cannot get thread scheduling policy");
   }
-  wifibroadcast::log::get_default()->debug("{} has policy {} and priority {]",name,policy,param.sched_priority);
+  wifibroadcast::log::get_default()->debug("{} has policy {} and priority {}",name,policy,param.sched_priority);
 }
 
 // this thread should run as close to realtime as possible
