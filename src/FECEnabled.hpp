@@ -517,7 +517,8 @@ class FECDecoder {
       // the newest block in the queue should be equal to block_idx -1
       // but it must not ?!
       if (rx_queue.back()->getBlockIdx() != (blockIdx - 1)) {
-        wifibroadcast::log::get_default()->debug("In queue: {} But new: {}",rx_queue.back()->getBlockIdx(),blockIdx);
+        // If we land here, one or more full blocks are missing, which can happen on bad rx links
+        //wifibroadcast::log::get_default()->debug("In queue: {} But new: {}",rx_queue.back()->getBlockIdx(),blockIdx);
       }
       //assert(rx_queue.back()->getBlockIdx() == (blockIdx - 1));
     }
