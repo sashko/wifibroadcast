@@ -81,6 +81,7 @@ void WBReceiver::dump_stats() {
   {
     wb_rx_stats.curr_bits_per_second=rxBitrateCalculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
     wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
+    wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;
   }
   std::optional<FECStreamStats> fec_stream_stats=std::nullopt;
   if(mFECDDecoder){
@@ -232,6 +233,9 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
         // as an example, a diff of 2 means one packet is missing.
         x_n_missing_packets+=diff-1;
         //m_console->debug("Diff:{}",diff);
+        if(diff>=MIN_SIZE_BIG_GAP){
+          x_n_big_gaps_since_last++;
+        }
       }else{
         x_n_received_packets++;
       }
@@ -244,6 +248,8 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
           x_curr_packet_loss_perc=static_cast<int>(std::lround(loss_perc));
           //m_console->debug("Packet loss:{} % {} %",x_curr_packet_loss_perc,loss_perc);
         }
+        x_curr_n_of_big_gaps=x_n_big_gaps_since_last;
+        x_n_big_gaps_since_last=0;
         x_n_received_packets=0;
         x_n_missing_packets=0;
       }
