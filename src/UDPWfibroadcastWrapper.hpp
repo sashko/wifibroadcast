@@ -92,6 +92,9 @@ class UDPWBReceiver {
       _anyDataReceived=true;
     });
   }
+  ~UDPWBReceiver(){
+    stop_looping();
+  }
   /**
    * Loop until an error occurs. Blocks the calling thread.
    */
