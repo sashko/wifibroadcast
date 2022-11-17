@@ -240,6 +240,9 @@ class UDPReceiver {
     }
     wifibroadcast::log::get_default()->info("UDPReceiver created with {}:{}",client_addr,client_udp_port);
   }
+  ~UDPReceiver(){
+    stopBackground();
+  }
   void loopUntilError() {
     const auto buff = std::make_unique<std::array<uint8_t, UDP_PACKET_MAX_SIZE>>();
     //sockaddr_in source;
