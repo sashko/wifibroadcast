@@ -135,7 +135,7 @@ class PcapTransmitter : public IRawPacketInjector {
     const auto len_injected=pcap_inject(ppcap, packet.data(), packet.size());
     if (len_injected != (int) packet.size()) {
       // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
-      wifibroadcast::log::get_default()->warn("pcap -unable to inject packet size:{} ret:{} err;{}",packet.size(),len_injected, pcap_geterr(ppcap));
+      wifibroadcast::log::get_default()->warn("pcap -unable to inject packet size:{} ret:{} err:{}",packet.size(),len_injected, pcap_geterr(ppcap));
     }
     return std::chrono::steady_clock::now() - before;
   }
@@ -173,9 +173,7 @@ class RawSocketTransmitter : public IRawPacketInjector {
     const auto before = std::chrono::steady_clock::now();
     const auto len_written=write(sockFd, packet.data(), packet.size());
     if (len_written != packet.size()) {
-      std::stringstream ss;
-      ss<<"Unable to inject packet (raw sock) size:"<<packet.size()<<" res:"<<len_written<<" "<<strerror(errno);
-      wifibroadcast::log::get_default()->error(ss.str());
+      wifibroadcast::log::get_default()->error("raw -unable to inject packet size:{} ret:{} err:{}",packet.size(),len_written,strerror(errno));
     }
     return std::chrono::steady_clock::now() - before;
   }
