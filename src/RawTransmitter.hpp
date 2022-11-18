@@ -227,7 +227,7 @@ class RawSocketTransmitter : public IRawPacketInjector {
       wifibroadcast::log::get_default()->warn("setsockopt SO_SNDTIMEO");
     }
     wifibroadcast::log::get_default()->debug("RawSocketTransmitter::curr_send_buffer_size:{}",get_socket_send_buffer_size(sock));
-    const int wanted_sendbuff = 131072;
+    const int wanted_sendbuff = 128*1024; //131072
     if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &wanted_sendbuff, sizeof(wanted_sendbuff)) < 0) {
       wifibroadcast::log::get_default()->warn("setsockopt SO_SNDBUF");
     }
