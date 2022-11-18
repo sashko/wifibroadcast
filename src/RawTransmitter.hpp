@@ -186,6 +186,17 @@ class RawSocketTransmitter : public IRawPacketInjector {
     }
     return sendBufferSize;
   }
+  static int64_t get_socket_timeout_us(int sockfd){
+    struct timeval timeout{};
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0; // timeout of 1 ms
+    socklen_t len=sizeof(timeout);
+    if (getsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO,(void*) &timeout, &len) != 0) {
+      wifibroadcast::log::get_default()->warn("cannot get socket_timeout");
+      return -1;
+    }
+    return timeout.tv_sec*1000*1000+timeout.tv_usec;
+  }
   // taken from https://github.com/OpenHD/Open.HD/blob/2.0/wifibroadcast-base/tx_rawsock.c#L86
   // open wifi interface using a socket (somehow this works ?!)
   static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
@@ -226,6 +237,7 @@ class RawSocketTransmitter : public IRawPacketInjector {
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout)) < 0) {
       wifibroadcast::log::get_default()->warn("setsockopt SO_SNDTIMEO");
     }
+    wifibroadcast::log::get_default()->debug("RawSocketTransmitter::timeout: {}ms", static_cast<double>(get_socket_timeout_us(sock))/1000.0);
     wifibroadcast::log::get_default()->debug("RawSocketTransmitter::curr_send_buffer_size:{}",get_socket_send_buffer_size(sock));
     const int wanted_sendbuff = 128*1024; //131072
     if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &wanted_sendbuff, sizeof(wanted_sendbuff)) < 0) {
