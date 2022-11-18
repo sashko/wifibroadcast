@@ -195,7 +195,7 @@ class RawSocketTransmitter : public IRawPacketInjector {
       wifibroadcast::log::get_default()->warn("cannot get socket_timeout");
       return -1;
     }
-    return timeout.tv_sec*1000*1000+timeout.tv_usec;
+    return (timeout.tv_sec*1000*1000)+timeout.tv_usec;
   }
   // taken from https://github.com/OpenHD/Open.HD/blob/2.0/wifibroadcast-base/tx_rawsock.c#L86
   // open wifi interface using a socket (somehow this works ?!)
@@ -234,7 +234,7 @@ class RawSocketTransmitter : public IRawPacketInjector {
     struct timeval timeout{};
     timeout.tv_sec = 0;
     timeout.tv_usec = 1*1000; // timeout of 1 ms
-    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout)) < 0) {
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
       wifibroadcast::log::get_default()->warn("setsockopt SO_SNDTIMEO");
     }
     wifibroadcast::log::get_default()->debug("RawSocketTransmitter::timeout: {}ms", static_cast<double>(get_socket_timeout_us(sock))/1000.0);
