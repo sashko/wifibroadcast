@@ -116,8 +116,8 @@ class WBTransmitter {
   void logAlive() const;
   std::shared_ptr<spdlog::logger> m_console;
   // this one is used for injecting packets
-  PcapTransmitter mPcapTransmitter;
-  //RawSocketTransmitter mPcapTransmitter;
+  //PcapTransmitter mPcapTransmitter;
+  RawSocketTransmitter mPcapTransmitter;
   // Used to encrypt the packets
   Encryptor mEncryptor;
   // Used to inject packets
