@@ -59,7 +59,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     mFecEncoder->outputDataCallback = notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
     sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK = FECEncoder::calculateN(kMax, options.fec_percentage);
   }
-  m_console->info("WB-TX assigned ID {} assigned WLAN {}", options.radio_port, options.wlan.c_str());
+  m_console->info("WB-TX RADIO_PORT {} assigned WLAN {}", options.radio_port, options.wlan.c_str());
   // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
   sessionKeyPacket.IS_FEC_ENABLED = !IS_FEC_DISABLED;
   if (options.enableLogAlive) {
