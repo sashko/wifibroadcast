@@ -234,7 +234,7 @@ class RawSocketTransmitter : public IRawPacketInjector {
     struct timeval timeout{};
     timeout.tv_sec = 0;
     timeout.tv_usec = 1*1000; // timeout of 1 ms
-    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) != 0) {
       wifibroadcast::log::get_default()->warn("setsockopt SO_SNDTIMEO");
     }
     wifibroadcast::log::get_default()->debug("RawSocketTransmitter::timeout: {}ms", static_cast<double>(get_socket_timeout_us(sock))/1000.0);
