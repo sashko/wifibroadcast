@@ -80,15 +80,7 @@ createRadiotapPacket(const RadiotapHeader &radiotapHeader,
   }
   return packet;
 }
-// log error if injecting pcap packet goes wrong (should never happen)
-static void injectPacket(pcap_t *pcap, const std::vector<uint8_t> &packetData) {
-  const auto len_injected=pcap_inject(pcap, packetData.data(), packetData.size());
-  if (len_injected != (int) packetData.size()) {
-    std::stringstream ss;
-    ss<<"pcap -unable to inject packet "<<packetData.size()<<" ret:"<<len_injected<<" "<<pcap_geterr(pcap)<<"\n";
-    wifibroadcast::log::get_default()->warn(ss.str());
-  }
-}
+
 // copy paste from svpcom
 static pcap_t *openTxWithPcap(const std::string &wlan) {
   char errbuf[PCAP_ERRBUF_SIZE];
@@ -140,14 +132,22 @@ class PcapTransmitter : public IRawPacketInjector {
                                                    const AbstractWBPacket &abstractWbPacket) const override {
     const auto packet = RawTransmitterHelper::createRadiotapPacket(radiotapHeader, ieee80211Header, abstractWbPacket);
     const auto before = std::chrono::steady_clock::now();
-    RawTransmitterHelper::injectPacket(ppcap, packet);
+    const auto len_injected=pcap_inject(ppcap, packet.data(), packet.size());
+    if (len_injected != (int) packet.size()) {
+      // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
+      wifibroadcast::log::get_default()->warn("pcap -unable to inject packet size:{} ret:{} err;{}",packet.size(),len_injected, pcap_geterr(ppcap));
+    }
     return std::chrono::steady_clock::now() - before;
   }
   void injectControllFrame(const RadiotapHeader &radiotapHeader, const std::vector<uint8_t> &iee80211ControllHeader) {
     std::vector<uint8_t> packet(radiotapHeader.getSize() + iee80211ControllHeader.size());
     memcpy(packet.data(), &radiotapHeader, RadiotapHeader::SIZE_BYTES);
     memcpy(&packet[RadiotapHeader::SIZE_BYTES], iee80211ControllHeader.data(), iee80211ControllHeader.size());
-    RawTransmitterHelper::injectPacket(ppcap, packet);
+    const auto len_injected=pcap_inject(ppcap, packet.data(), packet.size());
+    if (len_injected != (int) packet.size()) {
+      // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
+      wifibroadcast::log::get_default()->warn("pcap -unable to inject controll packet size:{} ret:{} err;{}",packet.size(),len_injected, pcap_geterr(ppcap));
+    }
   }
  private:
   pcap_t *ppcap;
