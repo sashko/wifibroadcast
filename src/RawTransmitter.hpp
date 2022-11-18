@@ -214,13 +214,13 @@ class RawSocketTransmitter : public IRawPacketInjector {
     }
     struct timeval timeout{};
     timeout.tv_sec = 0;
-    timeout.tv_usec = 8000;
+    timeout.tv_usec = 1*1000; // timeout of 1 ms
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout)) < 0) {
-      wifibroadcast::log::get_default()->error("setsockopt SO_SNDTIMEO");
+      wifibroadcast::log::get_default()->warn("setsockopt SO_SNDTIMEO");
     }
     int sendbuff = 131072;
     if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, sizeof(sendbuff)) < 0) {
-      wifibroadcast::log::get_default()->error("setsockopt SO_SNDBUF");
+      wifibroadcast::log::get_default()->warn("setsockopt SO_SNDBUF");
     }
     return sock;
   }
