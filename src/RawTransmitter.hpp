@@ -178,6 +178,14 @@ class RawSocketTransmitter : public IRawPacketInjector {
     }
     return std::chrono::steady_clock::now() - before;
   }
+  static int get_socket_send_buffer_size(int sockfd){
+    int sendBufferSize=INT_MIN;
+    socklen_t len=sizeof(sendBufferSize);
+    if(getsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &sendBufferSize, &len)!=0){
+      wifibroadcast::log::get_default()->debug("Cannot get socket sendbuffer size");
+    }
+    return sendBufferSize;
+  }
   // taken from https://github.com/OpenHD/Open.HD/blob/2.0/wifibroadcast-base/tx_rawsock.c#L86
   // open wifi interface using a socket (somehow this works ?!)
   static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
@@ -218,10 +226,12 @@ class RawSocketTransmitter : public IRawPacketInjector {
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout)) < 0) {
       wifibroadcast::log::get_default()->warn("setsockopt SO_SNDTIMEO");
     }
-    int sendbuff = 131072;
-    if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, sizeof(sendbuff)) < 0) {
+    wifibroadcast::log::get_default()->debug("RawSocketTransmitter::curr_send_buffer_size:{}",get_socket_send_buffer_size(sock));
+    const int wanted_sendbuff = 131072;
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &wanted_sendbuff, sizeof(wanted_sendbuff)) < 0) {
       wifibroadcast::log::get_default()->warn("setsockopt SO_SNDBUF");
     }
+    wifibroadcast::log::get_default()->debug("RawSocketTransmitter::applied_send_buffer_size:{}",get_socket_send_buffer_size(sock));
     return sock;
   }
  private:
