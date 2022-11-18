@@ -159,6 +159,7 @@ class PcapTransmitter : public IRawPacketInjector {
 class RawSocketTransmitter : public IRawPacketInjector {
  public:
   explicit RawSocketTransmitter(const std::string &wlan) {
+    wifibroadcast::log::get_default()->debug("RawSocketTransmitter on {}",wlan);
     sockFd = openWifiInterfaceAsTxRawSocket(wlan);
   }
   ~RawSocketTransmitter() {
