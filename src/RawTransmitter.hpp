@@ -237,6 +237,7 @@ class RawSocketTransmitter : public IRawPacketInjector {
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) != 0) {
       wifibroadcast::log::get_default()->warn("setsockopt SO_SNDTIMEO");
     }
+    // for some reason setting the timeout does not seem to work here, I always get 10ms back
     wifibroadcast::log::get_default()->debug("RawSocketTransmitter::timeout: {}ms", static_cast<double>(get_socket_timeout_us(sock))/1000.0);
     wifibroadcast::log::get_default()->debug("RawSocketTransmitter::curr_send_buffer_size:{}",get_socket_send_buffer_size(sock));
     const int wanted_sendbuff = 128*1024; //131072
