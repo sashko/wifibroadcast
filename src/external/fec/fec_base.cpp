@@ -514,7 +514,7 @@ void fec_license() {
 #include <vector>
 #include <iostream>
 
-namespace FUCK {
+namespace BuffHelper {
 static void fillBufferWithRandomData(std::vector<uint8_t> &data) {
   const std::size_t size = data.size();
   for (std::size_t i = 0; i < size; i++) {
@@ -653,7 +653,8 @@ void fec_decode2(unsigned int fragmentSize,
 template<class Container1, class Container2>
 void fec_encode3(unsigned int fragmentSize, const std::vector<Container1> &primaryFragments,
                  std::vector<Container2> &secondaryFragments) {
-  fec_encode2(fragmentSize, FUCK::convertToP(primaryFragments), FUCK::convertToP(secondaryFragments));
+  fec_encode2(fragmentSize, BuffHelper::convertToP(primaryFragments),
+              BuffHelper::convertToP(secondaryFragments));
 }
 template<class Container1, class Container2>
 void fec_decode3(unsigned int fragmentSize,
@@ -661,8 +662,8 @@ void fec_decode3(unsigned int fragmentSize,
                  const std::vector<unsigned int> &indicesMissingPrimaryFragments,
                  std::vector<Container2> &secondaryFragmentsReceived,
                  const std::vector<unsigned int> &indicesOfSecondaryFragmentsReceived) {
-  fec_decode2(fragmentSize, FUCK::convertToP(primaryFragments), indicesMissingPrimaryFragments,
-              FUCK::convertToP(secondaryFragmentsReceived), indicesOfSecondaryFragmentsReceived);
+  fec_decode2(fragmentSize, BuffHelper::convertToP(primaryFragments), indicesMissingPrimaryFragments,
+              BuffHelper::convertToP(secondaryFragmentsReceived), indicesOfSecondaryFragmentsReceived);
 }
 
 /**
@@ -736,7 +737,7 @@ static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>> &
   );
   // make sure everything was reconstructed properly
   for (int i = 0; i < nDataPackets; i++) {
-    FUCK::assertVectorsEqual(dataPackets[i], fullyReconstructedDataPackets[i]);
+    BuffHelper::assertVectorsEqual(dataPackets[i], fullyReconstructedDataPackets[i]);
     //std::cout<<i<<"\n";
   }
   //std::cout<<"SUCCESS: N data packets:"<<nDataPackets<<" N fec packets:"<<nFecPackets<<" N lost&reconstructed data packets:"<<nLostDataPackets<<"\n";
@@ -751,9 +752,10 @@ static void test_fec_encode_and_decode_simple(const int nDataPackets,
                                               const int packetSize,
                                               const int nLostDataPackets) {
   // create our data packets
-  const auto dataPackets = FUCK::createRandomDataBuffers(nDataPackets, packetSize);
+  const auto dataPackets =
+      BuffHelper::createRandomDataBuffers(nDataPackets, packetSize);
   assert(dataPackets.size() == nDataPackets);
-  const auto indices = FUCK::createDecodeableIndexList(nDataPackets, nFecPackets, nLostDataPackets);
+  const auto indices = BuffHelper::createDecodeableIndexList(nDataPackets, nFecPackets, nLostDataPackets);
   assert(indices.size() == nDataPackets);
   test_fec_encode_and_decode(dataPackets, nFecPackets, indices);
 }
@@ -764,10 +766,12 @@ static void test_fec_encode_and_decode_all_permutations(const int nDataPackets,
                                                         const int nFecPackets,
                                                         const int packetSize) {
   // create our data packets
-  const auto dataPackets = FUCK::createRandomDataBuffers(nDataPackets, packetSize);
+  const auto dataPackets =
+      BuffHelper::createRandomDataBuffers(nDataPackets, packetSize);
   assert(dataPackets.size() == nDataPackets);
   // build the indices lists
-  const auto permutations = FUCK::createAllDecodablePermutations(nDataPackets, nFecPackets);
+  const auto permutations =
+      BuffHelper::createAllDecodablePermutations(nDataPackets, nFecPackets);
   for (const auto &permutation: permutations) {
     test_fec_encode_and_decode(dataPackets, nFecPackets, permutation);
   }
@@ -814,13 +818,13 @@ void test_gf() {
   std::cout << "Testing gf256 mul operation (array)\n";
   for (int size = 0; size < 2048; size++) {
     std::cout << "x" << std::flush;
-    const auto source = FUCK::createRandomDataBuffer(size);
+    const auto source = BuffHelper::createRandomDataBuffer(size);
     std::vector<uint8_t> res1(size);
     std::vector<uint8_t> res2(size);
     for (int constant = 0; constant < 255; constant++) {
       gal_mul_region(res1.data(), source.data(), constant, size);
       gf256_mul_optimized(res2.data(), source.data(), constant, size);
-      FUCK::assertVectorsEqual(res1, res2);
+      BuffHelper::assertVectorsEqual(res1, res2);
     }
   }
   std::cout << " - success.\n";
@@ -828,15 +832,15 @@ void test_gf() {
   std::cout << "Testing gf256 madd operation (array)\n";
   for (int size = 0; size < 2048; size++) {
     std::cout << "x" << std::flush;
-    const auto source = FUCK::createRandomDataBuffer(size);
-    const auto source2 = FUCK::createRandomDataBuffer(size);
+    const auto source = BuffHelper::createRandomDataBuffer(size);
+    const auto source2 = BuffHelper::createRandomDataBuffer(size);
     for (int constant = 0; constant < 255; constant++) {
       // other than mul, madd actually also reads from the dst array
       auto res1 = source2;
       auto res2 = source2;
       gal_madd_region(res1.data(), source.data(), constant, size);
       gf256_madd_optimized(res2.data(), source.data(), constant, size);
-      FUCK::assertVectorsEqual(res1, res2);
+      BuffHelper::assertVectorsEqual(res1, res2);
     }
   }
   std::cout << " - success.\n";
