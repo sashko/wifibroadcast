@@ -16,24 +16,6 @@ if (TARGET wifibroadcast)
     return()
 endif()
 
-#find_library(WIFIBROADCAST_LIB wifibroadcast)
-#if(WIFIBROADCAST_LIB)
-#    message(STATUS "wifibroadcast already here")
-#    return()
-#endif()
-
-# Build and include wifibroadcast
-# ----------------------------------
-#add_library( radiotap
-#        SHARED
-#        ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
-#        )
-
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-#add_library( fec
-#        SHARED
-#        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
-#        )
 
 # Well, let's just build everything together
 add_library(wifibroadcast
