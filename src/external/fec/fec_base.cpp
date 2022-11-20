@@ -379,19 +379,6 @@ static inline void reduce(unsigned int blockSize,
   assert(nr_fec_blocks == erasedIdx);
 }
 
-#ifdef PROFILE
-static long long rdtsc(void)
-{
-    unsigned long low, hi;
-    asm volatile ("rdtsc" : "=d" (hi), "=a" (low));
-    return ( (((long long)hi) << 32) | ((long long) low));
-}
-
-long long reduceTime = 0;
-long long resolveTime =0;
-long long invTime =0;
-#endif
-
 /**
  * Resolves reduced system. Constructs "mini" encoding matrix, inverts
  * it, and multiply reduced vector by it.
@@ -402,9 +389,6 @@ static inline void resolve(int blockSize,
                            const unsigned int fec_block_nos[],
                            const unsigned int erased_blocks[],
                            short nr_fec_blocks) {
-#ifdef PROFILE
-  long long begin;
-#endif
   /* construct matrix */
   int row;
   gf matrix[nr_fec_blocks * nr_fec_blocks];
@@ -425,13 +409,7 @@ static inline void resolve(int blockSize,
     }
   }
 
-#ifdef PROFILE
-  begin = rdtsc();
-#endif
   r = invert_mat(matrix, nr_fec_blocks);
-#ifdef PROFILE
-  invTime += rdtsc()-begin;
-#endif
 
   if (r) {
     int col;
@@ -465,37 +443,14 @@ void fec_decode(unsigned int blockSize,
                 const unsigned int fec_block_nos[],
                 const unsigned int erased_blocks[],
                 unsigned short nr_fec_blocks) {
-#ifdef PROFILE
-  long long begin;
-  long long end;
-#endif
-
-#ifdef PROFILE
-  begin = rdtsc();
-#endif
   reduce(blockSize, data_blocks, nr_data_blocks,
          fec_blocks, fec_block_nos, erased_blocks, nr_fec_blocks);
-#ifdef PROFILE
-  end = rdtsc();
-  reduceTime += end - begin;
-  begin = end;
-#endif
+  //
   resolve(blockSize, data_blocks,
           fec_blocks, fec_block_nos, erased_blocks,
           nr_fec_blocks);
-#ifdef PROFILE
-  end = rdtsc();
-  resolveTime += end - begin;
-  printDetail();
-#endif
 }
 
-#ifdef PROFILE
-void printDetail(void) {
-    fprintf(stderr, "red=%9lld\nres=%9lld\ninv=%9lld\n",
-        reduceTime, resolveTime, invTime);
-}
-#endif
 
 void fec_license() {
   fprintf(stderr,

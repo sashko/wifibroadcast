@@ -1,8 +1,6 @@
 #ifndef FEC_2_H
 #define FEC_2_H
 
-//#define PROFILE
-
 #include <cstdint>
 
 typedef uint8_t gf;
@@ -46,10 +44,6 @@ void fec_decode(unsigned int blockSize,
                 unsigned short nr_fec_blocks  /* how many blocks per stripe */);
 
 void fec_license();
-
-#ifdef PROFILE
-void printDetail(void);
-#endif
 
 // ---------------------------------- C++ code ------------------------------------------------------------
 #include <vector>
