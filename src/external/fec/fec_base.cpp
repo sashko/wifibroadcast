@@ -41,12 +41,12 @@
  */
 #define GF_BITS  8    /* code over GF(2^GF_BITS) - DO NOT CHANGE*/
 
+#include "fec_base.h"
+
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <assert.h>
-#include "fec.h"
 /**
  * Include our optimized GF256 math functions - since FEC mostly boils down to "Galois field" mul / madd on big memory blocks
  * this is the most straight forward optimization, and it really speeds up the code by a lot (see paper and my benchmark results)
@@ -497,7 +497,7 @@ void printDetail(void) {
 }
 #endif
 
-void fec_license(void) {
+void fec_license() {
   fprintf(stderr,
           "   wifibroadcast and its FEC code are free software\n"
           "\n"

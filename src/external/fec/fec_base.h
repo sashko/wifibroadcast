@@ -1,22 +1,18 @@
 #ifndef FEC_2_H
 #define FEC_2_H
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 //#define PROFILE
 
-#include <stdint.h>
+#include <cstdint>
 
 typedef uint8_t gf;
 
 
 /**
- * Consti10 - fec_init is not needed anymore - the gf256 values are precomputed and stored in the header(s) of optimized -
+ * Root FEC encode / decode implementation, originated from https://github.com/OpenHD/Open.HD/blob/8f7be98a3b7c97f325ae655256c81bea09199834/wifibroadcast-base/fec.c
+ * NOTE: fec_init is not needed anymore - the gf256 values are precomputed and stored in the header(s) of optimized -
  * and the block size / n data / n fec blocks is variable (note: for each sequence of blocks, the encode / decode params need to match though)
  */
-//void fec_init(void);
 
 /**
  * @param blockSize size of each block (all blocks must have the same size)
@@ -49,7 +45,7 @@ void fec_decode(unsigned int blockSize,
                 const unsigned int erased_blocks[],
                 unsigned short nr_fec_blocks  /* how many blocks per stripe */);
 
-void fec_license(void);
+void fec_license();
 
 #ifdef PROFILE
 void printDetail(void);
@@ -60,6 +56,7 @@ void printDetail(void);
 #include <array>
 
 /**
+ * Like fec_encode, but c++-style
  * @param fragmentSize size of each fragment in this block
  * @param primaryFragments list of pointers to memory for primary fragments
  * @param secondaryFragments list of pointers to memory for secondary fragments (fec fragments)
@@ -70,6 +67,7 @@ void fec_encode2(unsigned int fragmentSize,
                  const std::vector<uint8_t *> &secondaryFragments);
 
 /**
+ * Like fec_decode, but c++-style & syntax that better fits a streaming usage.
  * @param fragmentSize size of each fragment in this block
  * @param primaryFragments list of pointers to memory for primary fragments. Must be same size as used for fec_encode()
  * @param indicesMissingPrimaryFragments list of the indices of missing primary fragments.

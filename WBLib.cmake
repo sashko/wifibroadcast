@@ -23,7 +23,7 @@ add_library(wifibroadcast::wifibroadcast ALIAS wifibroadcast)
 target_sources(wifibroadcast PUBLIC
         # radiotap and fec
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec_base.cpp
         # the couple of non-header-only files for wifibroadcast
         ${CMAKE_CURRENT_LIST_DIR}/src/WBReceiver.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBTransmitter.cpp
