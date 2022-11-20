@@ -7,9 +7,11 @@ typedef uint8_t gf;
 
 
 /**
- * Root FEC encode / decode implementation, originated from https://github.com/OpenHD/Open.HD/blob/8f7be98a3b7c97f325ae655256c81bea09199834/wifibroadcast-base/fec.c
+ * Root FEC encode / decode implementation, originated from
+ * https://github.com/OpenHD/Open.HD/blob/8f7be98a3b7c97f325ae655256c81bea09199834/wifibroadcast-base/fec.c
  * NOTE: fec_init is not needed anymore - the gf256 values are precomputed and stored in the header(s) of optimized -
- * and the block size / n data / n fec blocks is variable (note: for each sequence of blocks, the encode / decode params need to match though)
+ * and the block size / n data / n fec blocks is variable (note: for each sequence of blocks, the encode / decode params need to match though).
+ * First part of this file mostly matches the original fec impl, second part is mostly new / was created during the libmoepgf refactoring.
  */
 
 /**
