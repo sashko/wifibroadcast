@@ -18,18 +18,20 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "Encryption.hpp"
-#include "FECEnabled.hpp"
-#include "FECDisabled.hpp"
-#include "HelperSources/Helper.hpp"
-#include "RawTransmitter.hpp"
-#include "HelperSources/TimeHelper.hpp"
-#include "wifibroadcast.hpp"
-#include "wifibroadcast-spdlog.h"
-
-#include <variant>
+#include <queue>
 #include <thread>
+#include <variant>
+
+#include "Encryption.hpp"
+#include "FECDisabled.hpp"
+#include "FECEnabled.hpp"
+#include "HelperSources/Helper.hpp"
+#include "HelperSources/TimeHelper.hpp"
+#include "RawTransmitter.hpp"
+#include "wifibroadcast-spdlog.h"
+#include "wifibroadcast.hpp"
 //#include <atomic>
+#include "../HelperSources/ThreadsafeQueue.h"
 
 // Note: The UDP port is missing as an option here, since it is not an option for WFBTransmitter anymore.
 // Only an option when you run this program via the command line.
@@ -167,6 +169,12 @@ class WBTransmitter {
   std::unique_ptr<std::thread> logAliveThread;
   //
   uint16_t m_curr_seq_nr=0;
+ private:
+  ThreadsafeQueue<std::vector<uint8_t>> m_data_queue;
+  std::unique_ptr<std::thread> m_process_data_thread;
+  bool m_process_data_thread_run=true;
+  void loop_process_data();
+  void feedPacket2(const uint8_t *buf, size_t size);
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_TRANSMITTER_H

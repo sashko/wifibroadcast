@@ -78,12 +78,19 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
   }
   // next session key in delta ms if packets are being fed
   session_key_announce_ts = std::chrono::steady_clock::now()+SESSION_KEY_ANNOUNCE_DELTA;
+
+  m_process_data_thread_run=true;
+  m_process_data_thread=std::make_unique<std::thread>(&WBTransmitter::loop_process_data, this);
 }
 
 WBTransmitter::~WBTransmitter() {
   keepLogAliveThreadRunning = false;
   if (logAliveThread && logAliveThread->joinable()) {
     logAliveThread->join();
+  }
+  m_process_data_thread_run=false;
+  if(m_process_data_thread && m_process_data_thread->joinable()){
+    m_process_data_thread->join();
   }
 }
 
@@ -143,6 +150,30 @@ void WBTransmitter::logAlive() const {
 }
 
 void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
+  auto packet=std::make_shared<std::vector<uint8_t>>(buf,buf+size);
+  m_data_queue.push(packet);
+  if(options.radio_port==10){
+    m_console->debug("Data queue curr size:{}",m_data_queue.size());
+  }
+}
+
+void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
+  _radioTapHeaderParams.mcs_index=mcs_index;
+  auto newRadioTapHeader=RadiotapHeader{_radioTapHeaderParams};
+  std::lock_guard<std::mutex> guard(radiotapHeaderMutex);
+  mRadiotapHeader=newRadioTapHeader;
+}
+
+void WBTransmitter::loop_process_data() {
+  while (m_process_data_thread_run){
+    auto packet=m_data_queue.popIfAvailable();
+    if(packet){
+      feedPacket2(packet->data(),packet->size());
+    }
+  }
+}
+
+void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
   if (size <= 0 || size > FEC_MAX_PAYLOAD_SIZE) {
     m_console->warn("Fed packet with incompatible size:",size);
     return;
@@ -179,11 +210,4 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
     }
   }
   nInputPackets++;
-}
-
-void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
-  _radioTapHeaderParams.mcs_index=mcs_index;
-  auto newRadioTapHeader=RadiotapHeader{_radioTapHeaderParams};
-  std::lock_guard<std::mutex> guard(radiotapHeaderMutex);
-  mRadiotapHeader=newRadioTapHeader;
 }
