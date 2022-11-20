@@ -251,4 +251,15 @@ class RawSocketTransmitter : public IRawPacketInjector {
   int sockFd;
 };
 
+class SharedWBTransmitter{
+ public:
+  void enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet){
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_packets.emplace_back(packet);
+  }
+ private:
+  std::mutex m_mutex;
+  std::vector<std::shared_ptr<std::vector<uint8_t>>> m_packets;
+};
+
 #endif //WIFIBROADCAST_RAWTRANSMITTER_HPP

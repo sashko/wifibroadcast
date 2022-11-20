@@ -16,10 +16,11 @@ if (TARGET wifibroadcast)
     return()
 endif()
 
+add_library(wifibroadcast STATIC) # initialized below
+add_library(wifibroadcast::wifibroadcast ALIAS wifibroadcast)
 
 # Well, let's just build everything together
-add_library(wifibroadcast
-        STATIC
+target_sources(wifibroadcast PUBLIC
         # radiotap and fec
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec.cpp
@@ -27,6 +28,10 @@ add_library(wifibroadcast
         ${CMAKE_CURRENT_LIST_DIR}/src/WBReceiver.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBTransmitter.cpp
         )
+target_include_directories(wifibroadcast PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/src/HelperSources
+)
+
 ## FEC Optimizations begin ---------------------------------
 set(WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_X86 -mavx2 -faligned-new=256)
 set(WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_ARM -mfpu=neon -march=armv7-a -marm)
@@ -69,7 +74,5 @@ target_link_libraries(wifibroadcast PRIVATE spdlog::spdlog)
 
 SET(WB_TARGET_LINK_LIBRARIES wifibroadcast)
 SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
-
-include_directories(${CMAKE_CURRENT_LIST_DIR}/src/HelperSources)
 
 # ----------------------------------
