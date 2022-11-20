@@ -386,7 +386,7 @@ class MultiRxPcapReceiver {
   // NOTE 2: If you are using more than one wifi card as RX, There are probably duplicate packets and packets do not arrive in order. E.g. the following is possible:
   // You get packet nr 0,1,2,3 from card 1 | then you get packet 0,2,3 from card 2
   const PcapReceiver::PROCESS_PACKET_CALLBACK mCallbackData;
-  // This callback is called regularily independent weather data was received or not
+  // This callback is called regularly independent weather data was received or not
   const GENERIC_CALLBACK mCallbackLog;
  public:
 };
