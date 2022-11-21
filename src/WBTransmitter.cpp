@@ -17,6 +17,8 @@
  */
 
 #include "WBTransmitter.h"
+
+#include <utility>
 #include "HelperSources/SchedulingHelper.hpp"
 #include "HelperSources/RTPHelper.hpp"
 
@@ -31,7 +33,7 @@ static FEC_VARIABLE_INPUT_TYPE convert(const TOptions &options) {
   assert(false);
 }
 
-WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> console) :
+WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> opt_console) :
     options(std::move(options1)),
     mPcapTransmitter(options.wlan),
     mEncryptor(options.keypair),
@@ -41,12 +43,12 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     // FEC is variable if k is an string
     IS_FEC_VARIABLE(options.fec_k.index() == 1),
     fecVariableInputType(convert(options)),
-    mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}}{
-  if(!console){
-    m_console=m_console=wifibroadcast::log::create_or_get("wb_tx"+std::to_string(options.radio_port));
-  }else{
-    m_console=console;
+    mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}},
+    m_console(std::move(opt_console)){
+  if(!m_console){
+    m_console=wifibroadcast::log::create_or_get("wb_tx"+std::to_string(options.radio_port));
   }
+  assert(m_console);
   mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (IS_FEC_DISABLED) {
     mFecDisabledEncoder = std::make_unique<FECDisabledEncoder>();
@@ -116,18 +118,12 @@ void WBTransmitter::sendSessionKey() {
 }
 
 std::string WBTransmitter::createDebugState() const {
-  const auto runTimeSeconds =
-      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - INIT_TIME).count();
   std::stringstream ss;
   // input packets & injected packets
   const auto nInjectedDataPackets=nInjectedPackets-nInjectedSessionKeypackets;
   //ss << runTimeSeconds << "\tTX:in:("<<nInputPackets<<")out:(" << nInjectedDataPackets << ":" << nInjectedSessionKeypackets << ")\n";
   ss <<"TX:in:("<<nInputPackets<<")out:(" << nInjectedDataPackets << ":" << nInjectedSessionKeypackets << ")\n";
   return ss.str();
-}
-
-void WBTransmitter::logAlive() const {
-  std::cout << createDebugState();
 }
 
 void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {

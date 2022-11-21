@@ -60,7 +60,7 @@ class WBTransmitter {
    * @param radiotapHeader the radiotap header that is used for injecting, contains configurable data like the mcs index.
    * @param options1 options for this instance, some of them are forwarded to the receiver instance.
    */
-  WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> console= nullptr);
+  WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> opt_console= nullptr);
   WBTransmitter(const WBTransmitter &) = delete;
   WBTransmitter &operator=(const WBTransmitter &) = delete;
   ~WBTransmitter();
@@ -113,8 +113,6 @@ class WBTransmitter {
   void sendFecPrimaryOrSecondaryFragment(uint64_t nonce, const uint8_t *payload, size_t payloadSize);
   // send packet by prefixing data with the current IEE and Radiotap header
   void sendPacket(const AbstractWBPacket &abstractWbPacket);
-  // print some simple debug information. Called in regular intervals by the logAliveThread
-  void logAlive() const;
   const TOptions options;
   std::shared_ptr<spdlog::logger> m_console;
   // this one is used for injecting packets

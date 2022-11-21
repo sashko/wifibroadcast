@@ -124,6 +124,7 @@ int main(int argc, char *const *argv) {
 	udpwbTransmitter.runInBackground();
         while (true){
           std::cout << udpwbTransmitter.createDebug();
+          std::this_thread::sleep_for(std::chrono::seconds(1));
         }
   } catch (std::runtime_error &e) {
 	fprintf(stderr, "Error: %s\n", e.what());
