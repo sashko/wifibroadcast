@@ -107,8 +107,8 @@ class WBTransmitter {
   uint64_t get_current_packets_per_second(){
     return _packets_per_second_calculator.get_last_or_recalculate(nInjectedPackets,std::chrono::seconds(2));
   }
-  bool has_more_packets_buffered_than(uint32_t packets){
-    return m_data_queue.size_approx()>packets;
+  std::size_t estimate_buffered_packets(){
+    return m_data_queue.size_approx();
   }
  private:
   // send the current session key via WIFI (located in mEncryptor)
