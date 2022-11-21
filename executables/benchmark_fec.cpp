@@ -205,13 +205,15 @@ int main(int argc, char *const *argv) {
   std::cout << "FEC_PERCENTAGE: " << options.FEC_PERCENTAGE << "\n";
   std::cout << "Benchmark time: " << options.benchmarkTimeSeconds << " s\n";
   switch (options.benchmarkType) {
-	case FEC_ENCODE:benchmark_fec_encode(options);
+	case FEC_ENCODE:
+          benchmark_fec_encode(options);
 	  break;
 	case FEC_DECODE:
 	  //benchmark_fec_decode(options);
 	  std::cout << "Unimplemented\n";
 	  break;
-	case ENCRYPT:benchmark_crypt(options);
+	case ENCRYPT:
+          benchmark_crypt(options);
 	  break;
 	case DECRYPT:
 	  //benchmark_crypt(options);
