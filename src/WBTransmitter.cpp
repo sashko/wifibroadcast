@@ -167,8 +167,8 @@ void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
 }
 
 void WBTransmitter::loop_process_data() {
+  std::shared_ptr<std::vector<uint8_t>> packet;
   while (m_process_data_thread_run){
-    std::shared_ptr<std::vector<uint8_t>> packet;
     static constexpr std::int64_t timeout_usecs=100*1000;
     if(m_data_queue.wait_dequeue_timed(packet,timeout_usecs)){
       feedPacket2(packet->data(),packet->size());
