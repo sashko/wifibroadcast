@@ -85,7 +85,6 @@ class WBTransmitter {
   // These are for updating parameters at run time
   void update_mcs_index(uint8_t mcs_index);
 
-  const TOptions options;
   // temporary
   [[nodiscard]] int64_t get_n_injected_packets()const{
     return nInjectedPackets;
@@ -119,15 +118,16 @@ class WBTransmitter {
   void sendPacket(const AbstractWBPacket &abstractWbPacket);
   // print some simple debug information. Called in regular intervals by the logAliveThread
   void logAlive() const;
+  const TOptions options;
   std::shared_ptr<spdlog::logger> m_console;
   // this one is used for injecting packets
   PcapTransmitter mPcapTransmitter;
   //RawSocketTransmitter mPcapTransmitter;
   // Used to encrypt the packets
   Encryptor mEncryptor;
-  // Used to inject packets
+  // Header for injected packets
   Ieee80211Header mIeee80211Header;
-  // this one never changes,also used to inject packets
+  // this one never changes,also used as a header for injected packets.
   RadiotapHeader::UserSelectableParams _radioTapHeaderParams;
   std::mutex radiotapHeaderMutex;
   RadiotapHeader mRadiotapHeader;
@@ -140,7 +140,7 @@ class WBTransmitter {
   int64_t nInjectedPackets = 0;
   // n of injected session key packets
   int64_t nInjectedSessionKeypackets=0;
-  // count of bytes we got passed (aka for examle, what the video encoder produced - does not include FEC)
+  // count of bytes we got passed (aka for example, what the video encoder produced - does not include FEC)
   uint64_t count_bytes_data_provided=0;
   BitrateCalculator bitrate_calculator_data_provided{};
   // count of bytes we injected into the wifi card
