@@ -31,7 +31,6 @@
 #include "wifibroadcast-spdlog.h"
 #include "wifibroadcast.hpp"
 //#include <atomic>
-#include "../HelperSources/ThreadsafeQueue.h"
 #include "../HelperSources/readerwritercircularbuffer.h"
 
 // Note: The UDP port is missing as an option here, since it is not an option for WFBTransmitter anymore.
