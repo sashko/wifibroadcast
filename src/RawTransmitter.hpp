@@ -251,17 +251,4 @@ class RawSocketTransmitter : public IRawPacketInjector {
   int sockFd;
 };
 
-// Adds our own packet queue to fix the existing issue that wifi driver(s) won't drop packets
-// if the driver tx queue is full, and the fact that reducing the timeout doesn't seem to work.
-class QueuedWBTransmitter{
- public:
-  void enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet){
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_packets.emplace_back(packet);
-  }
- private:
-  std::mutex m_mutex;
-  std::vector<std::shared_ptr<std::vector<uint8_t>>> m_packets;
-};
-
 #endif //WIFIBROADCAST_RAWTRANSMITTER_HPP
