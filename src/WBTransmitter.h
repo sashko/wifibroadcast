@@ -50,6 +50,11 @@ struct TOptions {
   // Print log messages about the current status in regular intervals to stdout.
   // However, in OpenHD, it is more verbose to log all the tx/rx instances together.
   bool enableLogAlive = true;
+  // Only works when FEC is disabled, since it only makes sense there
+  // Aggregate multiple (small) packets (for example, multiple mavlink telemetry messages)
+  // since sending packets close to the MTU is more efficient than sending multiple small packets
+  bool aggregate_on_mtu_or_timeout=false;
+  std::chrono::microseconds max_aggregation_wait_time=std::chrono::milliseconds(100);
 };
 enum FEC_VARIABLE_INPUT_TYPE { none, h264, h265 };
 

@@ -168,10 +168,40 @@ void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
 
 void WBTransmitter::loop_process_data() {
   while (m_process_data_thread_run){
-    std::shared_ptr<std::vector<uint8_t>> packet;
-    static constexpr std::int64_t timeout_usecs=100*1000;
-    if(m_data_queue.wait_dequeue_timed(packet,timeout_usecs)){
-      feedPacket2(packet->data(),packet->size());
+    if(options.aggregate_on_mtu_or_timeout) {
+      // accumulate data until either MTU or timeout is reached
+      std::vector<uint8_t> buffer;
+      buffer.reserve(WB_FRAME_MAX_PAYLOAD);
+      buffer.resize(0);
+      const auto begin = std::chrono::steady_clock::now();
+      while (true) {
+        const auto delta = std::chrono::steady_clock::now() - begin;
+        if (delta >= options.max_aggregation_wait_time) break;
+        const auto remaining = delta - options.max_aggregation_wait_time;
+        std::shared_ptr<std::vector<uint8_t>> packet;
+        if (m_data_queue.wait_dequeue_timed(packet, remaining)) {
+          const auto new_size = buffer.size() + packet->size();
+          if (new_size > WB_FRAME_MAX_PAYLOAD) {
+            feedPacket2(buffer.data(), buffer.size());
+            buffer.resize(0);
+            feedPacket2(packet->data(), packet->size());
+            break;
+          } else {
+            const auto offset = buffer.size();
+            buffer.resize(buffer.size() + packet->size());
+            memcpy(&buffer[offset], packet->data(), packet->size());
+          }
+        }
+      }
+      if(!buffer.empty()){
+        feedPacket2(buffer.data(),buffer.size());
+      }
+    }else{
+      std::shared_ptr<std::vector<uint8_t>> packet;
+      static constexpr std::int64_t timeout_usecs=100*1000;
+      if(m_data_queue.wait_dequeue_timed(packet,timeout_usecs)){
+        feedPacket2(packet->data(),packet->size());
+      }
     }
   }
 }
