@@ -151,9 +151,11 @@ void WBTransmitter::logAlive() const {
 
 void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
   auto packet=std::make_shared<std::vector<uint8_t>>(buf,buf+size);
-  m_data_queue.push(packet);
-  if(options.radio_port==10){
-    m_console->debug("Data queue curr size:{}",m_data_queue.size());
+  const bool res=m_data_queue.try_enqueue(packet);
+  if(!res){
+    if(options.radio_port==10){
+      m_console->debug("Dropping packet, data queue is full");
+    }
   }
 }
 
@@ -166,8 +168,9 @@ void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
 
 void WBTransmitter::loop_process_data() {
   while (m_process_data_thread_run){
-    auto packet=m_data_queue.popIfAvailable();
-    if(packet){
+    std::shared_ptr<std::vector<uint8_t>> packet;
+    static constexpr std::int64_t timeout_usecs=5*1000;
+    if(m_data_queue.wait_dequeue_timed(packet,timeout_usecs)){
       feedPacket2(packet->data(),packet->size());
     }
   }
