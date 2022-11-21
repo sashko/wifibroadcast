@@ -62,15 +62,6 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
   m_console->info("WB-TX RADIO_PORT {} assigned WLAN {}", options.radio_port, options.wlan.c_str());
   // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
   sessionKeyPacket.IS_FEC_ENABLED = !IS_FEC_DISABLED;
-  if (options.enableLogAlive) {
-    keepLogAliveThreadRunning = true;
-    logAliveThread = std::make_unique<std::thread>([this]() {
-      while (keepLogAliveThreadRunning) {
-        logAlive();
-        std::this_thread::sleep_for(LOG_INTERVAL);
-      }
-    });
-  }
   m_console->info("Sending Session key on startup");
   for (int i = 0; i < 5; i++) {
     sendSessionKey();
@@ -84,10 +75,6 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
 }
 
 WBTransmitter::~WBTransmitter() {
-  keepLogAliveThreadRunning = false;
-  if (logAliveThread && logAliveThread->joinable()) {
-    logAliveThread->join();
-  }
   m_process_data_thread_run=false;
   if(m_process_data_thread && m_process_data_thread->joinable()){
     m_process_data_thread->join();
@@ -103,15 +90,9 @@ void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
   const auto injectionTime = mPcapTransmitter.injectPacket(mRadiotapHeader, mIeee80211Header, abstractWbPacket);
   if(injectionTime>MAX_SANE_INJECTION_TIME){
     count_tx_injections_error_hint++;
-    if(options.enableLogAlive){
-      m_console->warn("Injecting PCAP packet took really long:",MyTimeHelper::R(injectionTime));
-    }
+    //m_console->warn("Injecting PCAP packet took really long:",MyTimeHelper::R(injectionTime));
   }
   nInjectedPackets++;
-  if(options.enableLogAlive){
-    pcapInjectionTime.add(injectionTime);
-    pcapInjectionTime.printInIntervalls(std::chrono::seconds(1), false);
-  }
 }
 
 void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce,

@@ -47,9 +47,6 @@ struct TOptions {
   // either fixed or variable. If int==fixed, if string==variable but hook needs to be added (currently only hooked h264 and h265)
   std::variant<int, std::string> fec_k = 8;
   int fec_percentage = 50;
-  // Print log messages about the current status in regular intervals to stdout.
-  // However, in OpenHD, it is more verbose to log all the tx/rx instances together.
-  bool enableLogAlive = true;
 };
 enum FEC_VARIABLE_INPUT_TYPE { none, h264, h265 };
 
@@ -157,7 +154,6 @@ class WBTransmitter {
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point session_key_announce_ts{};
   static constexpr const std::chrono::nanoseconds LOG_INTERVAL = std::chrono::seconds(1);
-  Chronometer pcapInjectionTime{"PcapInjectionTime"};
   WBSessionKeyPacket sessionKeyPacket;
   const bool IS_FEC_DISABLED;
   const bool IS_FEC_VARIABLE;
@@ -165,11 +161,6 @@ class WBTransmitter {
   // On the tx, either one of those two is active at the same time
   std::unique_ptr<FECEncoder> mFecEncoder = nullptr;
   std::unique_ptr<FECDisabledEncoder> mFecDisabledEncoder = nullptr;
-  bool keepLogAliveThreadRunning;
-  // this threads only purpose is to print statistics (if enabled).
-  // since when no messages come in, no methods of this class are called,
-  // so we cannot do any automatic logging in fixed intervalls.
-  std::unique_ptr<std::thread> logAliveThread;
   //
   uint16_t m_curr_seq_nr=0;
  private:

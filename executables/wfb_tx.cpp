@@ -121,7 +121,10 @@ int main(int argc, char *const *argv) {
 
   try {
 	UDPWBTransmitter udpwbTransmitter{wifiParams, options, SocketHelper::ADDRESS_LOCALHOST, udp_port};
-	udpwbTransmitter.loopUntilError();
+	udpwbTransmitter.runInBackground();
+        while (true){
+          std::cout << udpwbTransmitter.createDebug();
+        }
   } catch (std::runtime_error &e) {
 	fprintf(stderr, "Error: %s\n", e.what());
 	exit(1);
