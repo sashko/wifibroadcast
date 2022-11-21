@@ -150,6 +150,7 @@ void WBTransmitter::logAlive() const {
 }
 
 void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
+  count_bytes_data_provided+=size;
   auto packet=std::make_shared<std::vector<uint8_t>>(buf,buf+size);
   const bool res=m_data_queue.try_enqueue(packet);
   if(!res){
@@ -181,7 +182,6 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
     m_console->warn("Fed packet with incompatible size:",size);
     return;
   }
-  count_bytes_data_provided+=size;
   const auto cur_ts = std::chrono::steady_clock::now();
   // send session key in SESSION_KEY_ANNOUNCE_DELTA intervals
   if ((cur_ts >= session_key_announce_ts)) {

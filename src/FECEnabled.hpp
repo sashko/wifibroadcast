@@ -131,14 +131,11 @@ class FECEncoder {
   // else, the FEC step is only applied if reaching mKMax
   // @return true if the fec step was performed, false otherwise
   bool encodePacket(const uint8_t *buf, const size_t size, const bool endBlock = false) {
-    assert(size <= FEC_MAX_PAYLOAD_SIZE);
-    // do not feed an "empty" packet to the FECEncoder
-    if (size <= 0) {
+    // Drop and log warning if the packet size is not valid
+    if (size <= 0 || size>FEC_MAX_PAYLOAD_SIZE) {
       wifibroadcast::log::get_default()->warn("Do not feed empty packets to FECEncoder");
       return false;
     }
-    //assert(outputDataCallback);
-
     FECPayloadHdr dataHeader(size);
     // write the size of the data part into each primary fragment.
     // This is needed for the 'up to n bytes' workaround
