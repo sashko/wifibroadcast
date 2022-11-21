@@ -74,8 +74,8 @@ class UDPWBTransmitter {
   uint64_t get_current_packets_per_second(){
     return wbTransmitter->get_current_packets_per_second();
   }
-  std::size_t estimate_buffered_packets()
-    return wbTransmitter->estimate_buffered_packets();
+  std::size_t get_estimate_buffered_packets(){
+    return wbTransmitter->get_estimate_buffered_packets();
   }
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;

@@ -107,7 +107,7 @@ class WBTransmitter {
   uint64_t get_current_packets_per_second(){
     return _packets_per_second_calculator.get_last_or_recalculate(nInjectedPackets,std::chrono::seconds(2));
   }
-  std::size_t estimate_buffered_packets(){
+  std::size_t get_estimate_buffered_packets(){
     return m_data_queue.size_approx();
   }
  private:
