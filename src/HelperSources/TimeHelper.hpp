@@ -24,17 +24,17 @@ static std::string R(const std::chrono::steady_clock::duration &dur) {
   if (durAbsolute >= std::chrono::seconds(1)) {
     // More than one second, print as decimal with ms resolution.
     const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-    return std::to_string(ms / 1000.0f) + "s";
+    return std::to_string(static_cast<float>(ms) / 1000.0f) + "s";
   }
   if (durAbsolute >= std::chrono::milliseconds(1)) {
     // More than one millisecond, print as decimal with us resolution
     const auto us = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
-    return std::to_string(us / 1000.0f) + "ms";
+    return std::to_string(static_cast<float>(us) / 1000.0f) + "ms";
   }
   if (durAbsolute >= std::chrono::microseconds(1)) {
     // More than one microsecond, print as decimal with ns resolution
     const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count();
-    return std::to_string(ns / 1000.0f) + "us";
+    return std::to_string(static_cast<float>(ns) / 1000.0f) + "us";
   }
   const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(dur).count();
   return std::to_string(ns) + "ns";

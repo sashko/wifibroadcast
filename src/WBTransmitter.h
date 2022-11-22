@@ -167,6 +167,8 @@ class WBTransmitter {
   uint16_t m_curr_seq_nr=0;
   uint64_t m_n_dropped_packets=0;
  private:
+  // extra data queue, to smooth out input from udp port AND more importantly, have a queue we can reason about
+  // in contrast to the linux udp socket buffer, which we cannot get any information about.
   moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<std::vector<uint8_t>>> m_data_queue{128};
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;

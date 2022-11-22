@@ -72,6 +72,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
   m_console->info("radio_port: {} wlan: {} fec:{}", options.radio_port, options.wlan.c_str(), fec_readable(options.fec_k));
   // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
   sessionKeyPacket.IS_FEC_ENABLED = !IS_FEC_DISABLED;
+  // send session key a couple of times on startup to make it more likely an already running rx picks it up immediately
   m_console->info("Sending Session key on startup");
   for (int i = 0; i < 5; i++) {
     sendSessionKey();
