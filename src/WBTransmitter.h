@@ -99,7 +99,7 @@ class WBTransmitter {
     return count_tx_injections_error_hint;
   }
   // N of dropped packets, increases when both the internal driver queue and the extra 124 packets queue of the tx fill up
-  uint64_t get_n_dropped_packets()const{
+  [[nodiscard]] uint64_t get_n_dropped_packets()const{
       return m_n_dropped_packets;
   }
   // Other than bits per second, packets per second is also an important metric -
