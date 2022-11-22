@@ -131,9 +131,7 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
   auto packet=std::make_shared<std::vector<uint8_t>>(buf,buf+size);
   const bool res=m_data_queue.try_enqueue(packet);
   if(!res){
-    if(options.radio_port==10){
-      m_console->debug("Dropping packet, data queue is full");
-    }
+    m_n_dropped_packets++;
   }
 }
 

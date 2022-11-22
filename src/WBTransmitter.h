@@ -98,6 +98,10 @@ class WBTransmitter {
   [[nodiscard]] uint64_t get_count_tx_injections_error_hint()const{
     return count_tx_injections_error_hint;
   }
+  // N of dropped packets, increases when both the internal driver queue and the extra 124 packets queue of the tx fill up
+  uint64_t get_n_dropped_packets()const{
+      return m_n_dropped_packets;
+  }
   // Other than bits per second, packets per second is also an important metric -
   // Sending a lot of small packets for example should be avoided)
   uint64_t get_current_packets_per_second(){
@@ -161,6 +165,7 @@ class WBTransmitter {
   std::unique_ptr<FECDisabledEncoder> mFecDisabledEncoder = nullptr;
   //
   uint16_t m_curr_seq_nr=0;
+  uint64_t m_n_dropped_packets=0;
  private:
   moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<std::vector<uint8_t>>> m_data_queue{128};
   std::unique_ptr<std::thread> m_process_data_thread;

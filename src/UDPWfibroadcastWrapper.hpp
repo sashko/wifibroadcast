@@ -77,6 +77,9 @@ class UDPWBTransmitter {
   std::size_t get_estimate_buffered_packets(){
     return wbTransmitter->get_estimate_buffered_packets();
   }
+  uint64_t get_n_dropped_packets()const{
+    return wbTransmitter->get_n_dropped_packets();
+  }
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;
   std::unique_ptr<SocketHelper::UDPReceiver> udpReceiver;
