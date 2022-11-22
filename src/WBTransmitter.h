@@ -79,8 +79,12 @@ class WBTransmitter {
   * @return a string without new line at the end.
   */
   [[nodiscard]] std::string createDebugState() const;
+
   // These are for updating parameters at run time
+  // change the mcs index (will be applied on the next transmitted packet)
   void update_mcs_index(uint8_t mcs_index);
+  // change the fec percentage value (will be applied on the next block)
+  void update_fec_percentage(uint32_t fec_percentage);
 
   // temporary
   [[nodiscard]] int64_t get_n_injected_packets()const{

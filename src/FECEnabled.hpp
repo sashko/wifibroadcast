@@ -113,9 +113,9 @@ class FECEncoder {
   // encodePacket(...,true).
   // Else, if you want to use the encoder for variable k, just use K_MAX=MAX_N_P_FRAGMENTS_PER_BLOCK and call
   // encodePacket(...,true) as needed.
-  explicit FECEncoder(unsigned int K_MAX, unsigned int percentage) : mKMax(K_MAX), mPercentage(percentage) {
-    const auto tmp_n = calculateN(K_MAX, percentage);
-    wifibroadcast::log::get_default()->debug( "FEC with k max: {} and percentage: {}",mKMax,percentage);
+  explicit FECEncoder(unsigned int K_MAX, unsigned int fec_overhead_perc) : mKMax(K_MAX), m_curr_fec_overhead_perc(fec_overhead_perc) {
+    const auto tmp_n = calculateN(K_MAX, fec_overhead_perc);
+    wifibroadcast::log::get_default()->debug( "FEC with k max: {} and percentage: {}",mKMax,fec_overhead_perc);
     wifibroadcast::log::get_default()->debug("For a block size of k max this is {}:{} in old (K:N) terms.",mKMax,tmp_n);
     assert(K_MAX > 0);
     assert(K_MAX <= MAX_N_P_FRAGMENTS_PER_BLOCK);
@@ -130,7 +130,7 @@ class FECEncoder {
   // Pre-allocated to hold all primary and secondary fragments
   std::vector<std::array<uint8_t, FEC_MAX_PACKET_SIZE>> blockBuffer;
   const unsigned int mKMax;
-  const unsigned int mPercentage;
+  std::atomic<uint32_t> m_curr_fec_overhead_perc;
   AvgCalculator m_fec_block_encode_time;
  public:
   // encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback
@@ -173,7 +173,7 @@ class FECEncoder {
     }
     //wifibroadcast::log::get_default()->debug("Doing FEC step on block size {}",currNPrimaryFragments);
     // prepare for the fec step
-    const auto nSecondaryFragments = calculate_n_secondary_fragments(currNPrimaryFragments,mPercentage);
+    const auto nSecondaryFragments = calculate_n_secondary_fragments(currNPrimaryFragments,m_curr_fec_overhead_perc);
     //wifibroadcast::log::get_default()->debug("Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
     const auto before=std::chrono::steady_clock::now();
     // once enough data has been buffered, create all the secondary fragments
@@ -188,6 +188,10 @@ class FECEncoder {
     currFragmentIdx = 0;
     currMaxPacketSize = 0;
     return true;
+  }
+
+  void update_fec_overhead_percentage(uint32_t fec_overhead_perc){
+    m_curr_fec_overhead_perc=fec_overhead_perc;
   }
 
   // returns true if the block_idx has reached its maximum

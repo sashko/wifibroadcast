@@ -198,3 +198,7 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
   }
   nInputPackets++;
 }
+
+void WBTransmitter::update_fec_percentage(uint32_t fec_percentage) {
+  //TODO
+}
