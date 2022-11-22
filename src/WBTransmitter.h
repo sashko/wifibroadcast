@@ -134,7 +134,6 @@ class WBTransmitter {
   RadiotapHeader::UserSelectableParams _radioTapHeaderParams;
   std::mutex radiotapHeaderMutex;
   RadiotapHeader mRadiotapHeader;
-  //std::atomic<bool> test={false};
   uint16_t ieee80211_seq = 0;
   // statistics for console
   // n of packets fed to the instance

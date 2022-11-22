@@ -200,5 +200,9 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
 }
 
 void WBTransmitter::update_fec_percentage(uint32_t fec_percentage) {
-  //TODO
+  if(mFecEncoder){
+    mFecEncoder->update_fec_overhead_percentage(fec_percentage);
+  }else{
+    m_console->warn("Cannot change fec overhead when fec is disabled");
+  }
 }

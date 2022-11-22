@@ -113,6 +113,7 @@ class FECEncoder {
   // encodePacket(...,true).
   // Else, if you want to use the encoder for variable k, just use K_MAX=MAX_N_P_FRAGMENTS_PER_BLOCK and call
   // encodePacket(...,true) as needed.
+  // Note: you can change the fec overhead percentage value at any time, itl be applied on the next fec encode step
   explicit FECEncoder(unsigned int K_MAX, unsigned int fec_overhead_perc) : mKMax(K_MAX), m_curr_fec_overhead_perc(fec_overhead_perc) {
     const auto tmp_n = calculateN(K_MAX, fec_overhead_perc);
     wifibroadcast::log::get_default()->debug( "FEC with k max: {} and percentage: {}",mKMax,fec_overhead_perc);
