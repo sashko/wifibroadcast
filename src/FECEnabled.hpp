@@ -207,6 +207,7 @@ class FECEncoder {
     return currFragmentIdx == 0;
   }
   // calculate n from k and percentage as used in FEC terms
+  // (k: number of primary fragments, n: primary + secondary fragments)
   static unsigned int calculateN(const unsigned int k, const unsigned int percentage) {
     return k + calculate_n_secondary_fragments(k,percentage);
   }
