@@ -67,7 +67,6 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     const int kMax = options.fec_k.index() == 0 ? std::get<int>(options.fec_k) : MAX_N_P_FRAGMENTS_PER_BLOCK;
     mFecEncoder = std::make_unique<FECEncoder>(kMax, options.fec_percentage);
     mFecEncoder->outputDataCallback = notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
-    sessionKeyPacket.MAX_N_FRAGMENTS_PER_BLOCK = FECEncoder::calculateN(kMax, options.fec_percentage);
   }
   m_console->info("radio_port: {} wlan: {} fec:{}", options.radio_port, options.wlan.c_str(), fec_readable(options.fec_k));
   // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled

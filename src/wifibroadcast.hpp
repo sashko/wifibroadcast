@@ -76,7 +76,7 @@ class WBSessionKeyPacket {
   std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES>
       sessionKeyData{}; // encrypted session key
   uint8_t IS_FEC_ENABLED = 0; // ether true or false
-  uint16_t MAX_N_FRAGMENTS_PER_BLOCK = 0; //Max n of primary and secondary fragments per block (saves memory on rx)
+  uint16_t unused = 0;
   // extraData is usage-specific information that is unique per session.
   // For example, the plan is to change the session in OpenHD when the video format changes
   //std::array<uint8_t, 16> extraData{0};
