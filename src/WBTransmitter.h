@@ -162,7 +162,7 @@ class WBTransmitter {
   //
   uint16_t m_curr_seq_nr=0;
  private:
-  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<std::vector<uint8_t>>> m_data_queue{1024};
+  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<std::vector<uint8_t>>> m_data_queue{128};
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;
   void loop_process_data();
