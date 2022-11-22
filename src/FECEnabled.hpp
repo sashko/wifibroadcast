@@ -90,6 +90,13 @@ static constexpr const uint16_t MAX_N_S_FRAGMENTS_PER_BLOCK = 128;
 static constexpr const uint16_t
     MAX_TOTAL_FRAGMENTS_PER_BLOCK = MAX_N_P_FRAGMENTS_PER_BLOCK + MAX_N_S_FRAGMENTS_PER_BLOCK;
 
+// For dynamic block sizes, we switched to a FEC overhead "percentage" value.
+// e.g. the final data throughput ~= original data troughput * fec overhead percentage
+static uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,uint32_t fec_overhead_perc){
+  if(fec_overhead_perc<=0)return 0;
+  return std::lroundf(static_cast<float>(n_primary_fragments) * static_cast<float>(fec_overhead_perc) / 100.0f);
+}
+
 // Takes a continuous stream of packets and
 // encodes them via FEC such that they can be decoded by FECDecoder
 // The encoding is slightly different from traditional FEC. It
@@ -166,7 +173,7 @@ class FECEncoder {
     }
     //wifibroadcast::log::get_default()->debug("Doing FEC step on block size {}",currNPrimaryFragments);
     // prepare for the fec step
-    const auto nSecondaryFragments = currNPrimaryFragments * mPercentage / 100;
+    const auto nSecondaryFragments = calculate_n_secondary_fragments(currNPrimaryFragments,mPercentage);
     //wifibroadcast::log::get_default()->debug("Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
     const auto before=std::chrono::steady_clock::now();
     // once enough data has been buffered, create all the secondary fragments
@@ -201,7 +208,7 @@ class FECEncoder {
   }
   // calculate n from k and percentage as used in FEC terms
   static unsigned int calculateN(const unsigned int k, const unsigned int percentage) {
-    return k + (k * percentage / 100);
+    return k + calculate_n_secondary_fragments(k,percentage);
   }
   std::chrono::nanoseconds get_curr_fec_block_encode_time(){
     auto ret=m_fec_block_encode_time.getAvg();
