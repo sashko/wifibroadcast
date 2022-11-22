@@ -18,6 +18,7 @@ endif()
 
 add_library(wifibroadcast STATIC) # initialized below
 add_library(wifibroadcast::wifibroadcast ALIAS wifibroadcast)
+#target_compile_options(wifibroadcast INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
 
 # Well, let's just build everything together
 target_sources(wifibroadcast PUBLIC
