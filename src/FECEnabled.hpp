@@ -137,21 +137,21 @@ class FECEncoder {
    * else, the FEC step is only applied if reaching m_curr_fec_k_max
    * @return true if the fec step was performed, false otherwise
    */
-  bool encodePacket(const uint8_t *buf, const size_t size, const bool endBlock = false) {
+  bool encodePacket(const uint8_t *buf, const size_t buff_size, const bool endBlock = false) {
     // Drop and log warning if the packet size is not valid
-    if (size <= 0 || size>FEC_MAX_PAYLOAD_SIZE) {
-      wifibroadcast::log::get_default()->warn("Invalid packet size {}",size);
+    if (buff_size <= 0 || buff_size >FEC_MAX_PAYLOAD_SIZE) {
+      wifibroadcast::log::get_default()->warn("Invalid packet size {}",buff_size);
       return false;
     }
-    FECPayloadHdr dataHeader(size);
+    FECPayloadHdr dataHeader(buff_size);
     // write the size of the data part into each primary fragment.
     // This is needed for the 'up to n bytes' workaround
     memcpy(blockBuffer[currFragmentIdx].data(), &dataHeader, sizeof(dataHeader));
     // write the actual data
-    memcpy(blockBuffer[currFragmentIdx].data() + sizeof(dataHeader), buf, size);
+    memcpy(blockBuffer[currFragmentIdx].data() + sizeof(dataHeader), buf,buff_size);
     // zero out the remaining bytes such that FEC always sees zeroes
     // same is done on the rx. These zero bytes are never transmitted via wifi
-    const auto writtenDataSize = sizeof(FECPayloadHdr) + size;
+    const auto writtenDataSize = sizeof(FECPayloadHdr) + buff_size;
     memset(blockBuffer[currFragmentIdx].data() + writtenDataSize, '\0', FEC_MAX_PACKET_SIZE - writtenDataSize);
 
     // check if we need to end the block right now (aka do FEC step on tx)
@@ -159,13 +159,13 @@ class FECEncoder {
     // end block if we either reached mKMax or the caller requested it
     const bool lastPrimaryFragment = (currNPrimaryFragments == m_curr_fec_k_max) || endBlock;
 
-    sendPrimaryFragment(sizeof(dataHeader) + size, lastPrimaryFragment);
+    sendPrimaryFragment(sizeof(dataHeader) + buff_size, lastPrimaryFragment);
     // the packet size for FEC encoding is determined by calculating the max of all primary fragments in this block.
     // Since the rest of the bytes are zeroed out we can run FEC with dynamic packet size.
     // As long as the deviation in packet size of primary fragments isn't too high the loss in raw bandwidth is negligible
     // Note,the loss in raw bandwidth comes from the size of the FEC secondary packets, which always has to be the max of all primary fragments
     // Not from the primary fragments, they are transmitted without the "zeroed out" part
-    currMaxPacketSize = std::max(currMaxPacketSize, sizeof(dataHeader) + size);
+    currMaxPacketSize = std::max(currMaxPacketSize, sizeof(dataHeader) + buff_size);
     currFragmentIdx += 1;
     // if this is not the last primary fragment, wo don't need to do anything else
     if (!lastPrimaryFragment) {
