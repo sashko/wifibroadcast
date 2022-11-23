@@ -164,7 +164,7 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
     } else {
       // variable k
       bool endBlock = false;
-      if (m_tx_fec_options.variable_input_type == FEC_VARIABLE_INPUT_TYPE::H264) {
+      if (m_tx_fec_options.variable_input_type == FEC_VARIABLE_INPUT_TYPE::RTP_H264) {
         endBlock = RTPLockup::h264_end_block(buf, size);
       } else {
         endBlock = RTPLockup::h265_end_block(buf, size);

@@ -34,7 +34,7 @@
 #include "../readerwriterqueue/readerwritercircularbuffer.h"
 
 // dynamic fec block size, NONE = use fixed k value
-enum class FEC_VARIABLE_INPUT_TYPE {NONE,H264,H265,MJPEG};
+enum class FEC_VARIABLE_INPUT_TYPE {NONE, RTP_H264, RTP_H265, RTP_MJPEG };
 
 // the following settings are only needed if fec is enabled
 struct TxFecOptions{
@@ -42,6 +42,7 @@ struct TxFecOptions{
   // replaced the fec "K" parameter since we cannot use this notation when changing the fec block size on the fly
   int overhead_percentage = 50;
   // enable / disable variable fec, you need to tell the tx instance the video codec in this case
+  // with variable fec, we can increase the fec block length / k to the max without creating a buffered frame stuck in FEC.
   FEC_VARIABLE_INPUT_TYPE variable_input_type =FEC_VARIABLE_INPUT_TYPE::NONE;
   // fixed block length, used when FEC_VARIABLE_INPUT_TYPE==NONE
   int fixed_k =8;
@@ -179,9 +180,7 @@ class WBTransmitter {
   static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
   BitrateCalculator bitrate_calculator_injected_bytes{};
   PacketsPerSecondCalculator _packets_per_second_calculator{};
-  const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point session_key_announce_ts{};
-  static constexpr const std::chrono::nanoseconds LOG_INTERVAL = std::chrono::seconds(1);
   WBSessionKeyPacket sessionKeyPacket;
   const bool kEnableFec;
   // only used if FEC is enabled
