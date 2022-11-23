@@ -115,7 +115,8 @@ class FECEncoder {
   // Else, if you want to use the encoder for variable k, just use K_MAX=MAX_N_P_FRAGMENTS_PER_BLOCK and call
   // encodePacket(...,true) as needed.
   // Note: you can change the fec overhead percentage value at any time, itl be applied on the next fec encode step
-  explicit FECEncoder(unsigned int k_max, unsigned int fec_overhead_perc) : m_curr_fec_k_max(k_max), m_curr_fec_overhead_perc(fec_overhead_perc) {
+  explicit FECEncoder(unsigned int k_max, unsigned int fec_overhead_perc):
+    m_curr_fec_k_max(k_max), m_curr_fec_overhead_perc(fec_overhead_perc) {
     blockBuffer.resize(MAX_TOTAL_FRAGMENTS_PER_BLOCK);
     validate_and_debug_current_params();
   }

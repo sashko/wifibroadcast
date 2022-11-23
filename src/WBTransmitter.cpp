@@ -201,5 +201,6 @@ void WBTransmitter::update_fec_video_codec(const FEC_VARIABLE_INPUT_TYPE& fec_va
     m_console->warn("Cannot switch to variable fec on the fly");
     return;
   }
+  m_fec_encoder->update_fec_k(MAX_N_P_FRAGMENTS_PER_BLOCK);
   m_tx_fec_options.variable_input_type=fec_variable_input_type;
 }
