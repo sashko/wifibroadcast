@@ -80,6 +80,9 @@ class UDPWBTransmitter {
   uint64_t get_n_dropped_packets()const{
     return wbTransmitter->get_n_dropped_packets();
   }
+  WBTransmitter& get_wb_tx(){
+    return *wbTransmitter;
+  }
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;
   std::unique_ptr<SocketHelper::UDPReceiver> udpReceiver;
@@ -133,6 +136,9 @@ class UDPWBReceiver {
   }
   [[nodiscard]] OpenHDStatisticsWriter::Data get_latest_stats()const{
     return wbReceiver->get_latest_stats();
+  }
+  WBReceiver& get_wb_receiver(){
+    return *wbReceiver;
   }
  private:
   // forwards the data to all registered udp forwarder instances.
