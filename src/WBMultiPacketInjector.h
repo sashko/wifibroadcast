@@ -19,7 +19,7 @@ class WBMultiPacketInjector {
   /**
    * TODO Thread-safe and lock_free
    * @param abstractWbPacket the (raw) data of the packet you want to inject
-   * @return true on success, false otherwise
+   * @return true on success (space in extra tx queue available), false otherwise.
    */
   bool enqueue_packet(const AbstractWBPacket &abstractWbPacket);
   /**
