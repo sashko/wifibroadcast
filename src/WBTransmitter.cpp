@@ -197,5 +197,9 @@ void WBTransmitter::update_fec_video_codec(const FEC_VARIABLE_INPUT_TYPE& fec_va
     m_console->warn("Cannot update_fec_video_codec, fec disabled");
     return;
   }
+  if(m_tx_fec_options.fixed_k!=0){
+    m_console->warn("Cannot switch to variable fec on the fly");
+    return;
+  }
   m_tx_fec_options.variable_input_type=fec_variable_input_type;
 }
