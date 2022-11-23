@@ -70,19 +70,6 @@ int main(int argc, char *const *argv) {
 		fprintf(stderr,
 				"Usage: %s [-K tx_key] [-k FEC_K or rtp video codec as string] [-p FEC_PERCENTAGE] [-u udp_port] [-r radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] interface \n",
 				argv[0]);
-                // TODO fixme
-		/*fprintf(stderr,
-				"Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d \n",
-				"none",
-				std::get<int>(options.fec_k),
-				options.fec_percentage,
-				udp_port,
-				options.radio_port,
-				wifiParams.bandwidth,
-				wifiParams.short_gi ? "short" : "long",
-				wifiParams.stbc,
-				wifiParams.ldpc,
-				wifiParams.mcs_index);*/
 		fprintf(stderr, "Radio MTU: %lu\n", (unsigned long)FEC_MAX_PAYLOAD_SIZE);
 		fprintf(stderr, "WFB version "
 						WFB_VERSION
