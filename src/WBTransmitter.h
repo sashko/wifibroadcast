@@ -108,7 +108,7 @@ class WBTransmitter {
   // use rtp fu-end marker to dynamically determine the size of each block
   // (such that each block contains the fragments of exactly one frame).
   // will be applied on the next received rtp packet
-  void update_fec_video_codec();
+  void update_fec_video_codec(const FEC_VARIABLE_INPUT_TYPE& fec_variable_input_type);
 
   // temporary
   [[nodiscard]] int64_t get_n_injected_packets()const{

@@ -192,11 +192,10 @@ void WBTransmitter::update_fec_percentage(uint32_t fec_percentage) {
   m_fec_encoder->update_fec_overhead_percentage(fec_percentage);
 }
 
-void WBTransmitter::update_fec_video_codec() {
+void WBTransmitter::update_fec_video_codec(const FEC_VARIABLE_INPUT_TYPE& fec_variable_input_type) {
   if(!kEnableFec){
     m_console->warn("Cannot update_fec_video_codec, fec disabled");
     return;
   }
-  //TODO
-  m_console->warn("TODO");
+  m_tx_fec_options.variable_input_type=fec_variable_input_type;
 }
