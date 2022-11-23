@@ -37,7 +37,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
   }
   assert(m_console);
   m_console->info("WBTransmitter radio_port: {} wlan: {} keypair:{}", options.radio_port, options.wlan.c_str(),
-                  (options.keypair.has_value() ? "none" : options.keypair.value()));
+                  (options.keypair.has_value() ? options.keypair.value() : "none" ));
   m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (kEnableFec) {
     // variable if k is a string with video type
