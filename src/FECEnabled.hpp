@@ -103,7 +103,8 @@ static uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,uin
 // a) makes sure to send out data packets immediately
 // b) Handles packets of size up to N instead of packets of exact size N
 // Due to b) the packet size has to be written into the first two bytes of each data packet. See https://github.com/svpcom/wifibroadcast/issues/67
-// c) allows ending a block at any time when putting in a new primary fragment
+// c) allows ending a block at any time when putting in a new primary fragment. This way primary fragments can be forwarded immediately to the
+// transmitter, and each fec block can be aligned to the end of a fragmented packet.
 class FECEncoder {
  public:
   typedef std::function<void(const uint64_t nonce, const uint8_t *payload, const std::size_t payloadSize)>
@@ -114,34 +115,32 @@ class FECEncoder {
   // Else, if you want to use the encoder for variable k, just use K_MAX=MAX_N_P_FRAGMENTS_PER_BLOCK and call
   // encodePacket(...,true) as needed.
   // Note: you can change the fec overhead percentage value at any time, itl be applied on the next fec encode step
-  explicit FECEncoder(unsigned int K_MAX, unsigned int fec_overhead_perc) : mKMax(K_MAX), m_curr_fec_overhead_perc(fec_overhead_perc) {
-    const auto tmp_n = calculateN(K_MAX, fec_overhead_perc);
-    wifibroadcast::log::get_default()->debug( "FEC with k max: {} and percentage: {}",mKMax,fec_overhead_perc);
-    wifibroadcast::log::get_default()->debug("For a block size of k max this is {}:{} in old (K:N) terms.",mKMax,tmp_n);
-    assert(K_MAX > 0);
-    assert(K_MAX <= MAX_N_P_FRAGMENTS_PER_BLOCK);
-    assert(tmp_n <= MAX_TOTAL_FRAGMENTS_PER_BLOCK);
-    blockBuffer.resize(tmp_n);
+  explicit FECEncoder(unsigned int k_max, unsigned int fec_overhead_perc) : m_curr_fec_k_max(k_max), m_curr_fec_overhead_perc(fec_overhead_perc) {
+    blockBuffer.resize(MAX_TOTAL_FRAGMENTS_PER_BLOCK);
+    validate_and_debug_current_params();
   }
   FECEncoder(const FECEncoder &other) = delete;
  private:
   uint32_t currBlockIdx = 0;
   uint16_t currFragmentIdx = 0;
   size_t currMaxPacketSize = 0;
-  // Pre-allocated to hold all primary and secondary fragments
-  std::vector<std::array<uint8_t, FEC_MAX_PACKET_SIZE>> blockBuffer;
-  const unsigned int mKMax;
+  // Pre-allocated to have space for storing primary fragments (they are needed once the fec step needs to be performed)
+  // and creating the wanted amount of secondary packets
+  std::vector<std::array<uint8_t, FEC_MAX_PACKET_SIZE>> blockBuffer{};
+  std::atomic<uint32_t> m_curr_fec_k_max;
   std::atomic<uint32_t> m_curr_fec_overhead_perc;
   AvgCalculator m_fec_block_encode_time;
  public:
-  // encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback
-  // if @param endBlock=true, the FEC step is applied immediately
-  // else, the FEC step is only applied if reaching mKMax
-  // @return true if the fec step was performed, false otherwise
+  /**
+   * encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback.
+   * @param endBlock if true, the FEC step is applied immediately
+   * else, the FEC step is only applied if reaching m_curr_fec_k_max
+   * @return true if the fec step was performed, false otherwise
+   */
   bool encodePacket(const uint8_t *buf, const size_t size, const bool endBlock = false) {
     // Drop and log warning if the packet size is not valid
     if (size <= 0 || size>FEC_MAX_PAYLOAD_SIZE) {
-      wifibroadcast::log::get_default()->warn("Do not feed empty packets to FECEncoder");
+      wifibroadcast::log::get_default()->warn("Invalid packet size {}",size);
       return false;
     }
     FECPayloadHdr dataHeader(size);
@@ -158,7 +157,7 @@ class FECEncoder {
     // check if we need to end the block right now (aka do FEC step on tx)
     const int currNPrimaryFragments = currFragmentIdx + 1;
     // end block if we either reached mKMax or the caller requested it
-    const bool lastPrimaryFragment = (currNPrimaryFragments == mKMax) || endBlock;
+    const bool lastPrimaryFragment = (currNPrimaryFragments == m_curr_fec_k_max) || endBlock;
 
     sendPrimaryFragment(sizeof(dataHeader) + size, lastPrimaryFragment);
     // the packet size for FEC encoding is determined by calculating the max of all primary fragments in this block.
@@ -193,6 +192,22 @@ class FECEncoder {
 
   void update_fec_overhead_percentage(uint32_t fec_overhead_perc){
     m_curr_fec_overhead_perc=fec_overhead_perc;
+    validate_and_debug_current_params();
+  }
+
+  void update_fec_k(uint32_t fec_k){
+    m_curr_fec_k_max =fec_k;
+    validate_and_debug_current_params();
+  }
+
+  void validate_and_debug_current_params(){
+    const auto tmp_n = calculateN(m_curr_fec_k_max, m_curr_fec_overhead_perc);
+    wifibroadcast::log::get_default()->debug( "FEC with k max: {} and percentage: {}", m_curr_fec_k_max,m_curr_fec_overhead_perc);
+    wifibroadcast::log::get_default()->debug("For a block size of k max this is {}:{} in old (K:N) terms.",
+        m_curr_fec_k_max,tmp_n);
+    assert(m_curr_fec_k_max > 0);
+    assert(m_curr_fec_k_max <= MAX_N_P_FRAGMENTS_PER_BLOCK);
+    assert(tmp_n <= MAX_TOTAL_FRAGMENTS_PER_BLOCK);
   }
 
   // returns true if the block_idx has reached its maximum
