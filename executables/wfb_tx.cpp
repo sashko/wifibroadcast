@@ -35,10 +35,13 @@ int main(int argc, char *const *argv) {
 	  case 'k':
                 options.enable_fec=true;
                 if (std::string(optarg) == std::string("h264")){
+                  options.tx_fec_options.fixed_k =0;
                   options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::RTP_H264;
                 }else if(std::string(optarg) == std::string("h265")){
+                  options.tx_fec_options.fixed_k =0;
                   options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::RTP_H265;
                 }else if(std::string(optarg) == std::string("mjpeg")){
+                  options.tx_fec_options.fixed_k =0;
                   options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::RTP_MJPEG;
                 }else{
                   const auto fec_fixed_k=std::stoi(optarg);
