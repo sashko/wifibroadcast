@@ -40,9 +40,9 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
                   (options.keypair.has_value() ? options.keypair.value() : "none" ));
   m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (kEnableFec) {
-    // variable if k is a string with video type
-    const int kMax=m_tx_fec_options.variable_input_type ==FEC_VARIABLE_INPUT_TYPE::NONE ? options.tx_fec_options.fixed_k
-            : MAX_N_P_FRAGMENTS_PER_BLOCK;
+    // for variable k we manually specify when to end the block, of course we cannot do more than what the FEC impl. supports
+    // and / or what the max compute allows (NOTE: exponentially with increasing length).
+    const int kMax= options.tx_fec_options.fixed_k > 0 ? options.tx_fec_options.fixed_k : MAX_N_P_FRAGMENTS_PER_BLOCK;
     m_console->info("fec enabled, kMax:{}",kMax);
     m_fec_encoder = std::make_unique<FECEncoder>(kMax, options.tx_fec_options.overhead_percentage);
     m_fec_encoder->outputDataCallback = notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
@@ -159,7 +159,7 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
   }
   // this calls a callback internally
   if (kEnableFec) {
-    if (m_tx_fec_options.variable_input_type ==FEC_VARIABLE_INPUT_TYPE::NONE) {
+    if (m_tx_fec_options.fixed_k > 0) {
       // fixed k
       m_fec_encoder->encodePacket(buf, size);
     } else {
