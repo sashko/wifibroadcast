@@ -29,6 +29,7 @@ bool WBMultiPacketInjector::enqueue_packet(
 void WBMultiPacketInjector::set_mcs_index(int mcs_index) {
   if(mcs_index<0 || mcs_index>7){
     wifibroadcast::log::get_default()->warn("Invalid mcs index {}",mcs_index);
+    return;
   }
 }
 
