@@ -22,55 +22,37 @@
 #include "HelperSources/SchedulingHelper.hpp"
 #include "HelperSources/RTPHelper.hpp"
 
-static FEC_VARIABLE_INPUT_TYPE convert(const TOptions &options) {
-  if (options.fec_k.index() == 0)return FEC_VARIABLE_INPUT_TYPE::none;
-  const std::string tmp = std::get<std::string>(options.fec_k);
-  if (tmp == std::string("h264")) {
-    return FEC_VARIABLE_INPUT_TYPE::h264;
-  } else if (tmp == std::string("h265")) {
-    return FEC_VARIABLE_INPUT_TYPE::h265;
-  }
-  assert(false);
-}
-static std::string fec_readable(const std::variant<int, std::string>& fec_k){
-  if(std::holds_alternative<int>(fec_k)){
-    const int fec_k_int= std::get<int>(fec_k);
-    return std::to_string(fec_k_int);
-  }else{
-    return std::get<std::string>(fec_k);
-  }
-}
 
 WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> opt_console) :
     options(std::move(options1)),
     mPcapTransmitter(options.wlan),
     mEncryptor(options.keypair),
     _radioTapHeaderParams(radioTapHeaderParams),
-    // FEC is disabled if k is integer and 0
-    IS_FEC_DISABLED(options.fec_k.index() == 0 && std::get<int>(options.fec_k) == 0),
-    // FEC is variable if k is an string
-    IS_FEC_VARIABLE(options.fec_k.index() == 1),
-    fecVariableInputType(convert(options)),
+    kEnableFec(options.enable_fec),
+    m_tx_fec_options(options.tx_fec_options),
     mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}},
     m_console(std::move(opt_console)){
   if(!m_console){
     m_console=wifibroadcast::log::create_or_get("wb_tx"+std::to_string(options.radio_port));
   }
   assert(m_console);
+  m_console->info("WBTransmitter radio_port: {} wlan: {} keypair:{}", options.radio_port, options.wlan.c_str(),
+                  (options.keypair.has_value() ? "none" : options.keypair.value()));
   mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-  if (IS_FEC_DISABLED) {
+  if (kEnableFec) {
+    // variable if k is a string with video type
+    const int kMax=m_tx_fec_options.fec_variable_input_type==FEC_VARIABLE_INPUT_TYPE::NONE ? options.tx_fec_options.fec_fixed_k : MAX_N_P_FRAGMENTS_PER_BLOCK;
+    m_console->info("fec enabled, kMax:{}",kMax);
+    mFecEncoder = std::make_unique<FECEncoder>(kMax, options.tx_fec_options.fec_fixed_k);
+    mFecEncoder->outputDataCallback = notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
+  } else {
+    m_console->info("fec disabled");
     mFecDisabledEncoder = std::make_unique<FECDisabledEncoder>();
     mFecDisabledEncoder->outputDataCallback =
         notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
-  } else {
-    // variable if k is a string with video type
-    const int kMax = options.fec_k.index() == 0 ? std::get<int>(options.fec_k) : MAX_N_P_FRAGMENTS_PER_BLOCK;
-    mFecEncoder = std::make_unique<FECEncoder>(kMax, options.fec_percentage);
-    mFecEncoder->outputDataCallback = notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
   }
-  m_console->info("radio_port: {} wlan: {} fec:{}", options.radio_port, options.wlan.c_str(), fec_readable(options.fec_k));
   // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
-  sessionKeyPacket.IS_FEC_ENABLED = !IS_FEC_DISABLED;
+  sessionKeyPacket.IS_FEC_ENABLED = kEnableFec;
   // send session key a couple of times on startup to make it more likely an already running rx picks it up immediately
   m_console->info("Sending Session key on startup");
   for (int i = 0; i < 5; i++) {
@@ -174,35 +156,45 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
     session_key_announce_ts = cur_ts + SESSION_KEY_ANNOUNCE_DELTA;
   }
   // this calls a callback internally
-  if (IS_FEC_DISABLED) {
-    mFecDisabledEncoder->encodePacket(buf, size);
-  } else {
-    if (IS_FEC_VARIABLE) {
+  if (kEnableFec) {
+    if (m_tx_fec_options.fec_variable_input_type==FEC_VARIABLE_INPUT_TYPE::NONE) {
+      // fixed k
+      mFecEncoder->encodePacket(buf, size);
+    } else {
       // variable k
       bool endBlock = false;
-      if (fecVariableInputType == FEC_VARIABLE_INPUT_TYPE::h264) {
+      if (m_tx_fec_options.fec_variable_input_type == FEC_VARIABLE_INPUT_TYPE::H264) {
         endBlock = RTPLockup::h264_end_block(buf, size);
       } else {
         endBlock = RTPLockup::h265_end_block(buf, size);
       }
       mFecEncoder->encodePacket(buf, size, endBlock);
-    } else {
-      // fixed k
-      mFecEncoder->encodePacket(buf, size);
     }
     if (mFecEncoder->resetOnOverflow()) {
       // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
       mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
       sendSessionKey();
     }
+  } else {
+    mFecDisabledEncoder->encodePacket(buf, size);
   }
   nInputPackets++;
 }
 
 void WBTransmitter::update_fec_percentage(uint32_t fec_percentage) {
-  if(mFecEncoder){
-    mFecEncoder->update_fec_overhead_percentage(fec_percentage);
-  }else{
+  if(!kEnableFec){
     m_console->warn("Cannot change fec overhead when fec is disabled");
+    return;
   }
+  assert(mFecEncoder);
+  mFecEncoder->update_fec_overhead_percentage(fec_percentage);
+}
+
+void WBTransmitter::update_fec_video_codec() {
+  if(!kEnableFec){
+    m_console->warn("Cannot update_fec_video_codec, fec disabled");
+    return;
+  }
+  //TODO
+  m_console->warn("TODO");
 }

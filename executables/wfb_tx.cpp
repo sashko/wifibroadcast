@@ -33,15 +33,20 @@ int main(int argc, char *const *argv) {
 	  case 'K':options.keypair = optarg;
 		break;
 	  case 'k':
-		if (std::string(optarg) == std::string("h264")
-			|| std::string(optarg) == std::string("h265")) {
-		  std::cout << "LolX" << std::string(optarg) << "\n";
-		  options.fec_k = std::string(optarg);
-		} else {
-		  options.fec_k = (int)std::stoi(optarg);
-		}
+                options.enable_fec=true;
+                if (std::string(optarg) == std::string("h264")){
+                  options.tx_fec_options.fec_variable_input_type=FEC_VARIABLE_INPUT_TYPE::H264;
+                }else if(std::string(optarg) == std::string("h265")){
+                  options.tx_fec_options.fec_variable_input_type=FEC_VARIABLE_INPUT_TYPE::H265;
+                }else if(std::string(optarg) == std::string("mjpeg")){
+                  options.tx_fec_options.fec_variable_input_type=FEC_VARIABLE_INPUT_TYPE::MJPEG;
+                }else{
+                  options.tx_fec_options.fec_variable_input_type=FEC_VARIABLE_INPUT_TYPE::NONE;
+                  options.tx_fec_options.fec_fixed_k=static_cast<int>(std::stoi(optarg));
+                }
 		break;
-	  case 'p':options.fec_percentage = std::stoi(optarg);
+	  case 'p':
+                options.tx_fec_options.fec_overhead_percentage = std::stoi(optarg);
 		break;
 	  case 'u':udp_port = std::stoi(optarg);
 		break;
@@ -63,9 +68,10 @@ int main(int argc, char *const *argv) {
 	  default: /* '?' */
 	  show_usage:
 		fprintf(stderr,
-				"Usage: %s [-K tx_key] [-k FEC_K] [-p FEC_PERCENTAGE] [-u udp_port] [-r radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] interface \n",
+				"Usage: %s [-K tx_key] [-k FEC_K or rtp video codec as string] [-p FEC_PERCENTAGE] [-u udp_port] [-r radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] interface \n",
 				argv[0]);
-		fprintf(stderr,
+                // TODO fixme
+		/*fprintf(stderr,
 				"Default: K='%s', k=%d, n=%d, udp_port=%d, radio_port=%d bandwidth=%d guard_interval=%s stbc=%d ldpc=%d mcs_index=%d \n",
 				"none",
 				std::get<int>(options.fec_k),
@@ -76,7 +82,7 @@ int main(int argc, char *const *argv) {
 				wifiParams.short_gi ? "short" : "long",
 				wifiParams.stbc,
 				wifiParams.ldpc,
-				wifiParams.mcs_index);
+				wifiParams.mcs_index);*/
 		fprintf(stderr, "Radio MTU: %lu\n", (unsigned long)FEC_MAX_PAYLOAD_SIZE);
 		fprintf(stderr, "WFB version "
 						WFB_VERSION
@@ -93,31 +99,6 @@ int main(int argc, char *const *argv) {
   //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader80211n, sizeof(OldRadiotapHeaders::u8aRadiotapHeader80211n));
   //RadiotapHelper::debugRadiotapHeader((uint8_t*)&OldRadiotapHeaders::u8aRadiotapHeader, sizeof(OldRadiotapHeaders::u8aRadiotapHeader));
   SchedulingHelper::setThreadParamsMaxRealtime();
-
-  if (options.fec_k.index() == 0) {
-	// If the user selected -k as an integer number
-	const int k = std::get<int>(options.fec_k);
-	if (k == 0) {
-	  std::cout << "FEC is disabled. -p won't do anything\n";
-	} else {
-	  const auto n = FECEncoder::calculateN(k, options.fec_percentage);
-	  if (n > MAX_TOTAL_FRAGMENTS_PER_BLOCK) {
-		std::cout << "Please select a smaller -p (FEC_PERCENTAGE) value\n";
-		exit(1);
-	  }
-	  std::cout << "FEC is enabled and fixed. A block always consists of (K:N) fragments (" << k << ":" << n << ")\n";
-	}
-  } else {
-	// If the user selected -k h264 (as a string)
-	std::cout
-		<< "FEC is enabled and variable, can only be used in conjunction with h264/h265. FEC_PERCENTAGE(overhead):"
-		<< options.fec_percentage << " type:" << std::get<std::string>(options.fec_k) << "\n";
-	if (options.fec_percentage > 100) {
-	  std::cout << "Using more than 100% fec overhead (=2x the bandwidth) is not supported\n";
-	  //limit of the fec library, would need to go back to zfec
-	  exit(1);
-	}
-  }
 
   try {
 	UDPWBTransmitter udpwbTransmitter{wifiParams, options, SocketHelper::ADDRESS_LOCALHOST, udp_port};
