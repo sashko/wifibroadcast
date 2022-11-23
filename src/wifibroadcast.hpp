@@ -73,8 +73,7 @@ class WBSessionKeyPacket {
  public:
   const uint8_t packet_type = WFB_PACKET_KEY;
   std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};  // random data
-  std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES>
-      sessionKeyData{}; // encrypted session key
+  std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES> sessionKeyData{}; // encrypted session key
   uint8_t IS_FEC_ENABLED = 0; // ether true or false
   uint16_t unused = 0;
   // extraData is usage-specific information that is unique per session.
