@@ -63,7 +63,7 @@ struct TOptions {
   // packet re-ordering
   bool enable_fec= true;
   // the following settings are only needed if fec is enabled
-  TxFecOptions tx_fec_options;
+  TxFecOptions tx_fec_options{};
 };
 
 class WBTransmitter {
