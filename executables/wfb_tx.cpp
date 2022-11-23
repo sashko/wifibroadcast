@@ -35,18 +35,18 @@ int main(int argc, char *const *argv) {
 	  case 'k':
                 options.enable_fec=true;
                 if (std::string(optarg) == std::string("h264")){
-                  options.tx_fec_options.fec_variable_input_type=FEC_VARIABLE_INPUT_TYPE::H264;
+                  options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::H264;
                 }else if(std::string(optarg) == std::string("h265")){
-                  options.tx_fec_options.fec_variable_input_type=FEC_VARIABLE_INPUT_TYPE::H265;
+                  options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::H265;
                 }else if(std::string(optarg) == std::string("mjpeg")){
-                  options.tx_fec_options.fec_variable_input_type=FEC_VARIABLE_INPUT_TYPE::MJPEG;
+                  options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::MJPEG;
                 }else{
-                  options.tx_fec_options.fec_variable_input_type=FEC_VARIABLE_INPUT_TYPE::NONE;
-                  options.tx_fec_options.fec_fixed_k=static_cast<int>(std::stoi(optarg));
+                  options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::NONE;
+                  options.tx_fec_options.fixed_k =static_cast<int>(std::stoi(optarg));
                 }
 		break;
 	  case 'p':
-                options.tx_fec_options.fec_overhead_percentage = std::stoi(optarg);
+                options.tx_fec_options.overhead_percentage = std::stoi(optarg);
 		break;
 	  case 'u':udp_port = std::stoi(optarg);
 		break;

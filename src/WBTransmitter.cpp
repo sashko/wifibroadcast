@@ -41,9 +41,10 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
   mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (kEnableFec) {
     // variable if k is a string with video type
-    const int kMax=m_tx_fec_options.fec_variable_input_type==FEC_VARIABLE_INPUT_TYPE::NONE ? options.tx_fec_options.fec_fixed_k : MAX_N_P_FRAGMENTS_PER_BLOCK;
+    const int kMax=m_tx_fec_options.variable_input_type ==FEC_VARIABLE_INPUT_TYPE::NONE ? options.tx_fec_options.fixed_k
+            : MAX_N_P_FRAGMENTS_PER_BLOCK;
     m_console->info("fec enabled, kMax:{}",kMax);
-    mFecEncoder = std::make_unique<FECEncoder>(kMax, options.tx_fec_options.fec_overhead_percentage);
+    mFecEncoder = std::make_unique<FECEncoder>(kMax, options.tx_fec_options.overhead_percentage);
     mFecEncoder->outputDataCallback = notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
   } else {
     m_console->info("fec disabled");
@@ -157,13 +158,13 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
   }
   // this calls a callback internally
   if (kEnableFec) {
-    if (m_tx_fec_options.fec_variable_input_type==FEC_VARIABLE_INPUT_TYPE::NONE) {
+    if (m_tx_fec_options.variable_input_type ==FEC_VARIABLE_INPUT_TYPE::NONE) {
       // fixed k
       mFecEncoder->encodePacket(buf, size);
     } else {
       // variable k
       bool endBlock = false;
-      if (m_tx_fec_options.fec_variable_input_type == FEC_VARIABLE_INPUT_TYPE::H264) {
+      if (m_tx_fec_options.variable_input_type == FEC_VARIABLE_INPUT_TYPE::H264) {
         endBlock = RTPLockup::h264_end_block(buf, size);
       } else {
         endBlock = RTPLockup::h265_end_block(buf, size);
