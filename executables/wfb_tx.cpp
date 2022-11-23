@@ -41,8 +41,12 @@ int main(int argc, char *const *argv) {
                 }else if(std::string(optarg) == std::string("mjpeg")){
                   options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::RTP_MJPEG;
                 }else{
-                  options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::NONE;
-                  options.tx_fec_options.fixed_k =static_cast<int>(std::stoi(optarg));
+                  const auto fec_fixed_k=std::stoi(optarg);
+                  if(fec_fixed_k<=0){
+                    options.enable_fec= false;
+                  }else{
+                    options.tx_fec_options.fixed_k =fec_fixed_k;
+                  }
                 }
 		break;
 	  case 'p':
@@ -68,7 +72,7 @@ int main(int argc, char *const *argv) {
 	  default: /* '?' */
 	  show_usage:
 		fprintf(stderr,
-				"Usage: %s [-K tx_key] [-k FEC_K or rtp video codec as string] [-p FEC_PERCENTAGE] [-u udp_port] [-r radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] interface \n",
+				"Usage: %s [-K tx_key] [-k FEC_K or rtp video codec as string, <0: disable fec] [-p FEC_PERCENTAGE] [-u udp_port] [-r radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] interface \n",
 				argv[0]);
 		fprintf(stderr, "Radio MTU: %lu\n", (unsigned long)FEC_MAX_PAYLOAD_SIZE);
 		fprintf(stderr, "WFB version "

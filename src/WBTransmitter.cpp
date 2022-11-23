@@ -159,10 +159,7 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
   }
   // this calls a callback internally
   if (kEnableFec) {
-    if (m_tx_fec_options.fixed_k > 0) {
-      // fixed k
-      m_fec_encoder->encodePacket(buf, size);
-    } else {
+    if (m_tx_fec_options.fixed_k == 0) {
       // variable k
       bool endBlock = false;
       if (m_tx_fec_options.variable_input_type == FEC_VARIABLE_INPUT_TYPE::RTP_H264) {
@@ -171,6 +168,9 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
         endBlock = RTPLockup::h265_end_block(buf, size);
       }
       m_fec_encoder->encodePacket(buf, size, endBlock);
+    } else {
+      // fixed k
+      m_fec_encoder->encodePacket(buf, size);
     }
     if (m_fec_encoder->resetOnOverflow()) {
       // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
