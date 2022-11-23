@@ -146,17 +146,23 @@ class WBTransmitter {
   // send packet by prefixing data with the current IEE and Radiotap header
   void sendPacket(const AbstractWBPacket &abstractWbPacket);
   const TOptions options;
+  const bool kEnableFec;
+  // only used if FEC is enabled
+  TxFecOptions m_tx_fec_options;
+  // On the tx, either one of those two is active at the same time
+  std::unique_ptr<FECEncoder> m_fec_encoder = nullptr;
+  std::unique_ptr<FECDisabledEncoder> m_fec_disabled_encoder = nullptr;
   std::shared_ptr<spdlog::logger> m_console;
   // this one is used for injecting packets
-  PcapTransmitter mPcapTransmitter;
+  PcapTransmitter m_pcap_transmitter;
   //RawSocketTransmitter mPcapTransmitter;
   // Used to encrypt the packets
-  Encryptor mEncryptor;
+  Encryptor m_encryptor;
   // Header for injected packets
   Ieee80211Header mIeee80211Header;
   // this one never changes,also used as a header for injected packets.
-  RadiotapHeader::UserSelectableParams _radioTapHeaderParams;
-  std::mutex radiotapHeaderMutex;
+  RadiotapHeader::UserSelectableParams m_radioTapHeaderParams;
+  std::mutex m_radiotapHeaderMutex;
   RadiotapHeader mRadiotapHeader;
   uint16_t ieee80211_seq = 0;
   // statistics for console
@@ -182,12 +188,6 @@ class WBTransmitter {
   PacketsPerSecondCalculator _packets_per_second_calculator{};
   std::chrono::steady_clock::time_point session_key_announce_ts{};
   WBSessionKeyPacket sessionKeyPacket;
-  const bool kEnableFec;
-  // only used if FEC is enabled
-  TxFecOptions m_tx_fec_options;
-  // On the tx, either one of those two is active at the same time
-  std::unique_ptr<FECEncoder> mFecEncoder = nullptr;
-  std::unique_ptr<FECDisabledEncoder> mFecDisabledEncoder = nullptr;
   //
   uint16_t m_curr_seq_nr=0;
   uint64_t m_n_dropped_packets=0;

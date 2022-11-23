@@ -25,12 +25,12 @@
 
 WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> opt_console) :
     options(std::move(options1)),
-    mPcapTransmitter(options.wlan),
-    mEncryptor(options.keypair),
-    _radioTapHeaderParams(radioTapHeaderParams),
+      m_pcap_transmitter(options.wlan),
+      m_encryptor(options.keypair),
+      m_radioTapHeaderParams(radioTapHeaderParams),
     kEnableFec(options.enable_fec),
     m_tx_fec_options(options.tx_fec_options),
-    mRadiotapHeader{RadiotapHeader{_radioTapHeaderParams}},
+    mRadiotapHeader{RadiotapHeader{m_radioTapHeaderParams}},
     m_console(std::move(opt_console)){
   if(!m_console){
     m_console=wifibroadcast::log::create_or_get("wb_tx"+std::to_string(options.radio_port));
@@ -38,18 +38,18 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
   assert(m_console);
   m_console->info("WBTransmitter radio_port: {} wlan: {} keypair:{}", options.radio_port, options.wlan.c_str(),
                   (options.keypair.has_value() ? "none" : options.keypair.value()));
-  mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
+  m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (kEnableFec) {
     // variable if k is a string with video type
     const int kMax=m_tx_fec_options.variable_input_type ==FEC_VARIABLE_INPUT_TYPE::NONE ? options.tx_fec_options.fixed_k
             : MAX_N_P_FRAGMENTS_PER_BLOCK;
     m_console->info("fec enabled, kMax:{}",kMax);
-    mFecEncoder = std::make_unique<FECEncoder>(kMax, options.tx_fec_options.overhead_percentage);
-    mFecEncoder->outputDataCallback = notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
+    m_fec_encoder = std::make_unique<FECEncoder>(kMax, options.tx_fec_options.overhead_percentage);
+    m_fec_encoder->outputDataCallback = notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
   } else {
     m_console->info("fec disabled");
-    mFecDisabledEncoder = std::make_unique<FECDisabledEncoder>();
-    mFecDisabledEncoder->outputDataCallback =
+    m_fec_disabled_encoder = std::make_unique<FECDisabledEncoder>();
+    m_fec_disabled_encoder->outputDataCallback =
         notstd::bind_front(&WBTransmitter::sendFecPrimaryOrSecondaryFragment, this);
   }
   // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
@@ -79,8 +79,8 @@ void WBTransmitter::sendPacket(const AbstractWBPacket &abstractWbPacket) {
   mIeee80211Header.writeParams(options.radio_port, ieee80211_seq);
   ieee80211_seq += 16;
   //mIeee80211Header.printSequenceControl();
-  std::lock_guard<std::mutex> guard(radiotapHeaderMutex);
-  const auto injectionTime = mPcapTransmitter.injectPacket(mRadiotapHeader, mIeee80211Header, abstractWbPacket);
+  std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
+  const auto injectionTime = m_pcap_transmitter.injectPacket(mRadiotapHeader, mIeee80211Header, abstractWbPacket);
   if(injectionTime>MAX_SANE_INJECTION_TIME){
     count_tx_injections_error_hint++;
     //m_console->warn("Injecting PCAP packet took really long:",MyTimeHelper::R(injectionTime));
@@ -94,7 +94,8 @@ void WBTransmitter::sendFecPrimaryOrSecondaryFragment(const uint64_t nonce,
   //m_console->info("WBTransmitter::sendFecBlock {}",(int)payloadSize);
   const WBDataHeader wbDataHeader(nonce,m_curr_seq_nr);
   m_curr_seq_nr++;
-  const auto encryptedData = mEncryptor.encryptPacket(nonce, payload, payloadSize, wbDataHeader);
+  const auto encryptedData =
+      m_encryptor.encryptPacket(nonce, payload, payloadSize, wbDataHeader);
   //
   sendPacket({(const uint8_t *) &wbDataHeader, sizeof(WBDataHeader), encryptedData.data(), encryptedData.size()});
 #ifdef ENABLE_ADVANCED_DEBUGGING
@@ -127,9 +128,9 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
 }
 
 void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
-  _radioTapHeaderParams.mcs_index=mcs_index;
-  auto newRadioTapHeader=RadiotapHeader{_radioTapHeaderParams};
-  std::lock_guard<std::mutex> guard(radiotapHeaderMutex);
+  m_radioTapHeaderParams.mcs_index=mcs_index;
+  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
+  std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
   mRadiotapHeader=newRadioTapHeader;
 }
 
@@ -160,7 +161,7 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
   if (kEnableFec) {
     if (m_tx_fec_options.variable_input_type ==FEC_VARIABLE_INPUT_TYPE::NONE) {
       // fixed k
-      mFecEncoder->encodePacket(buf, size);
+      m_fec_encoder->encodePacket(buf, size);
     } else {
       // variable k
       bool endBlock = false;
@@ -169,15 +170,15 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
       } else {
         endBlock = RTPLockup::h265_end_block(buf, size);
       }
-      mFecEncoder->encodePacket(buf, size, endBlock);
+      m_fec_encoder->encodePacket(buf, size, endBlock);
     }
-    if (mFecEncoder->resetOnOverflow()) {
+    if (m_fec_encoder->resetOnOverflow()) {
       // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
-      mEncryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
+      m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
       sendSessionKey();
     }
   } else {
-    mFecDisabledEncoder->encodePacket(buf, size);
+    m_fec_disabled_encoder->encodePacket(buf, size);
   }
   nInputPackets++;
 }
@@ -187,8 +188,8 @@ void WBTransmitter::update_fec_percentage(uint32_t fec_percentage) {
     m_console->warn("Cannot change fec overhead when fec is disabled");
     return;
   }
-  assert(mFecEncoder);
-  mFecEncoder->update_fec_overhead_percentage(fec_percentage);
+  assert(m_fec_encoder);
+  m_fec_encoder->update_fec_overhead_percentage(fec_percentage);
 }
 
 void WBTransmitter::update_fec_video_codec() {
