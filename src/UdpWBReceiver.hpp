@@ -38,7 +38,7 @@ class UDPWBReceiver {
   }
   void stop_looping(){
     wbReceiver->stop_looping();
-    if(backgroundThread->joinable()){
+    if(backgroundThread && backgroundThread->joinable()){
       backgroundThread->join();
     }
   }
