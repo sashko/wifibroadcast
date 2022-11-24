@@ -158,7 +158,8 @@ class FECEncoder {
     // check if we need to end the block right now (aka do FEC step on tx)
     const int currNPrimaryFragments = currFragmentIdx + 1;
     // end block if we either reached mKMax or the caller requested it
-    const bool lastPrimaryFragment = (currNPrimaryFragments == m_curr_fec_k_max) || endBlock;
+    // we use greater than or equal here because the k_max might change atomically
+    const bool lastPrimaryFragment = (currNPrimaryFragments >= m_curr_fec_k_max) || endBlock;
 
     sendPrimaryFragment(sizeof(dataHeader) + buff_size, lastPrimaryFragment);
     // the packet size for FEC encoding is determined by calculating the max of all primary fragments in this block.
