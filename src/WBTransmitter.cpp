@@ -192,15 +192,26 @@ void WBTransmitter::update_fec_percentage(uint32_t fec_percentage) {
   m_fec_encoder->update_fec_overhead_percentage(fec_percentage);
 }
 
-void WBTransmitter::update_fec_video_codec(const FEC_VARIABLE_INPUT_TYPE& fec_variable_input_type) {
+void WBTransmitter::update_fec_k(int fec_k,std::optional<FEC_VARIABLE_INPUT_TYPE> fec_variable_input_type) {
   if(!kEnableFec){
-    m_console->warn("Cannot update_fec_video_codec, fec disabled");
+    m_console->warn("Cannot update_fec_k, fec disabled");
     return;
   }
-  if(m_tx_fec_options.fixed_k!=0){
-    m_console->warn("Cannot switch to variable fec on the fly");
+  if(fec_k<0){
+    m_console->warn("Invalid fec_k value {}",fec_k);
     return;
   }
-  m_fec_encoder->update_fec_k(MAX_N_P_FRAGMENTS_PER_BLOCK);
-  m_tx_fec_options.variable_input_type=fec_variable_input_type;
+  if(fec_k==0){
+    if(!fec_variable_input_type.has_value()){
+      m_console->warn("need fec_k==0 and variable");
+      return;
+    }
+    m_tx_fec_options.variable_input_type=fec_variable_input_type.value();
+    m_tx_fec_options.fixed_k=0;
+    m_fec_encoder->update_fec_k(MAX_N_P_FRAGMENTS_PER_BLOCK);
+  }else{
+    assert(fec_k>0);
+    m_tx_fec_options.fixed_k=fec_k;
+    m_fec_encoder->update_fec_k(fec_k);
+  }
 }

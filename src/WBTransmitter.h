@@ -109,10 +109,10 @@ class WBTransmitter {
   // only valid if fec is enabled
   void update_fec_percentage(uint32_t fec_percentage);
 
-  // use rtp fu-end marker to dynamically determine the size of each block
-  // (such that each block contains the fragments of exactly one frame).
-  // will be applied on the next received rtp packet
-  void update_fec_video_codec(const FEC_VARIABLE_INPUT_TYPE& fec_variable_input_type);
+  // Change the fec k parameter. Note that we only support changing the fec_k
+  // (fixed or variable) if fec is enabled, NOT switching between fec enabled / disabled
+  // (Since we use FEC enabled for video and FEC disabled for telemetry anyways)
+  void update_fec_k(int fec_k,std::optional<FEC_VARIABLE_INPUT_TYPE> fec_variable_input_type);
 
   // temporary
   [[nodiscard]] int64_t get_n_injected_packets()const{
