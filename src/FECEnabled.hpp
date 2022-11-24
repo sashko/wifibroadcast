@@ -191,6 +191,10 @@ class FECEncoder {
     // once enough data has been buffered, create all the secondary fragments
     fecEncode(currMaxPacketSize, blockBuffer, currNPrimaryFragments, nSecondaryFragments);
     m_fec_block_encode_time.add(std::chrono::steady_clock::now()-before);
+    if(m_fec_block_encode_time.getNSamples()>1000){
+      wifibroadcast::log::get_default()->debug("FEC encode time:{}",m_fec_block_encode_time.getAvgReadable());
+      m_fec_block_encode_time.reset();
+    }
     // and send them all out
     while (currFragmentIdx < currNPrimaryFragments + nSecondaryFragments) {
       sendSecondaryFragment(currMaxPacketSize, currNPrimaryFragments);
