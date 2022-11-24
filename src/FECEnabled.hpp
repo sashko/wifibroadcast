@@ -486,6 +486,7 @@ class FECDecoder {
   const unsigned int RX_QUEUE_MAX_SIZE;
   const unsigned int maxNFragmentsPerBlock;
   const bool m_enable_log_debug;
+  AvgCalculator m_fec_decode_time{};
  public:
   // returns false if the packet fragment index doesn't match the set FEC parameters (which should never happen !)
   bool validateAndProcessPacket(const uint64_t nonce, const std::vector<uint8_t> &decrypted) {
@@ -647,7 +648,13 @@ class FECDecoder {
         return;
       }
       if (block.allPrimaryFragmentsCanBeRecovered()) {
+        const auto before_encode=std::chrono::steady_clock::now();
         stats.count_fragments_recovered += block.reconstructAllMissingData();
+        m_fec_decode_time.add(std::chrono::steady_clock::now()-before_encode);
+        if(m_fec_decode_time.get_delta_since_last_reset()>std::chrono::seconds(1)){
+          wifibroadcast::log::get_default()->debug("FEC decode took {}",m_fec_decode_time.getAvgReadable());
+          m_fec_decode_time.reset();
+        }
         stats.count_blocks_recovered++;
         forwardMissingPrimaryFragmentsIfAvailable(block);
         assert(block.allPrimaryFragmentsHaveBeenForwarded());
