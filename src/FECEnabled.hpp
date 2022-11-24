@@ -176,7 +176,11 @@ class FECEncoder {
     }
     //wifibroadcast::log::get_default()->debug("Doing FEC step on block size {}",currNPrimaryFragments);
     // prepare for the fec step
-    const auto nSecondaryFragments = calculate_n_secondary_fragments(currNPrimaryFragments,m_curr_fec_overhead_perc);
+    auto nSecondaryFragments = calculate_n_secondary_fragments(currNPrimaryFragments,m_curr_fec_overhead_perc);
+    if(nSecondaryFragments>MAX_N_S_FRAGMENTS_PER_BLOCK){
+      wifibroadcast::log::get_default()->warn("Too many secondary fragments {}, reduce % value",nSecondaryFragments);
+      nSecondaryFragments=MAX_N_S_FRAGMENTS_PER_BLOCK;
+    }
     m_block_sizes.add(currNPrimaryFragments);
     if(m_block_sizes.getNSamples()>1000){
       wifibroadcast::log::get_default()->debug("Block sizes: {}",m_block_sizes.getAvgReadable());
