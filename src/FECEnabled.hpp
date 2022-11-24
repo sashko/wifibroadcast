@@ -131,6 +131,7 @@ class FECEncoder {
   std::atomic<uint32_t> m_curr_fec_k_max;
   std::atomic<uint32_t> m_curr_fec_overhead_perc;
   AvgCalculator m_fec_block_encode_time;
+  BaseAvgCalculator<uint32_t> m_block_sizes{};
  public:
   /**
    * encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback.
@@ -176,6 +177,11 @@ class FECEncoder {
     //wifibroadcast::log::get_default()->debug("Doing FEC step on block size {}",currNPrimaryFragments);
     // prepare for the fec step
     const auto nSecondaryFragments = calculate_n_secondary_fragments(currNPrimaryFragments,m_curr_fec_overhead_perc);
+    m_block_sizes.add(currNPrimaryFragments);
+    if(m_block_sizes.getNSamples()>1000){
+      wifibroadcast::log::get_default()->debug("Block sizes: {}",m_block_sizes.getAvgReadable());
+      m_block_sizes.reset();
+    }
     //wifibroadcast::log::get_default()->debug("Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
     const auto before=std::chrono::steady_clock::now();
     // once enough data has been buffered, create all the secondary fragments
