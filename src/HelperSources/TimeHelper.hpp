@@ -67,6 +67,7 @@ class BaseAvgCalculator {
   long nSamples = 0;
   T min{};
   T max{};
+  std::chrono::steady_clock::time_point m_last_reset=std::chrono::steady_clock::now();
  public:
   BaseAvgCalculator() { reset(); };
   void add(const T &value) {
@@ -112,6 +113,7 @@ class BaseAvgCalculator {
         min=std::numeric_limits<T>::max();
     }*/
     max = {};
+    m_last_reset=std::chrono::steady_clock::now();
   }
   // Merges two AvgCalculator(s) that hold the same types of samples together
   BaseAvgCalculator<T> operator+(const BaseAvgCalculator<T> &other) {
@@ -153,6 +155,9 @@ class BaseAvgCalculator {
   }
   float getAvg_ms() {
     return (float) (std::chrono::duration_cast<std::chrono::microseconds>(getAvg()).count()) / 1000.0f;
+  }
+  auto get_delta_since_last_reset(){
+    return std::chrono::steady_clock::now()-m_last_reset;
   }
 };
 // Default is using timestamps

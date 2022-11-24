@@ -182,7 +182,7 @@ class FECEncoder {
       nSecondaryFragments=MAX_N_S_FRAGMENTS_PER_BLOCK;
     }
     m_block_sizes.add(currNPrimaryFragments);
-    if(m_block_sizes.getNSamples()>1000){
+    if(m_block_sizes.get_delta_since_last_reset()>=std::chrono::seconds(1)){
       wifibroadcast::log::get_default()->debug("Block sizes: {}",m_block_sizes.getAvgReadable());
       m_block_sizes.reset();
     }
@@ -191,7 +191,7 @@ class FECEncoder {
     // once enough data has been buffered, create all the secondary fragments
     fecEncode(currMaxPacketSize, blockBuffer, currNPrimaryFragments, nSecondaryFragments);
     m_fec_block_encode_time.add(std::chrono::steady_clock::now()-before);
-    if(m_fec_block_encode_time.getNSamples()>1000){
+    if(m_fec_block_encode_time.get_delta_since_last_reset()>=std::chrono::seconds(1)){
       wifibroadcast::log::get_default()->debug("FEC encode time:{}",m_fec_block_encode_time.getAvgReadable());
       m_fec_block_encode_time.reset();
     }
