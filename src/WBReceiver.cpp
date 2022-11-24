@@ -268,7 +268,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
     if (IS_FEC_ENABLED) {
       if (!mFECDDecoder) {
-        m_console->warn("FEC K,N is not set yet");
+        m_console->warn("FEC K,N is not set yet (enabled)");
         return;
       }
       if (!mFECDDecoder->validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)) {
