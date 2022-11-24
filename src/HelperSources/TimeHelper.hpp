@@ -58,7 +58,8 @@ static std::string timeSamplesAsString(const std::vector<std::chrono::nanosecond
 
 // Use this class to compare many samples of the same kind
 // Saves the minimum,maximum and average of all the samples
-// The type of the samples is for example std::chrono::nanoseconds when measuring time intervalls
+// The type of the samples is for example std::chrono::nanoseconds when measuring time intervals
+// Negative values are not supported (since min / max / avg doesn't make sense with them)
 template<typename T>
 class BaseAvgCalculator {
  private:
@@ -107,11 +108,11 @@ class BaseAvgCalculator {
     sum = {};
     nSamples = 0;
     // Workaround for std::numeric_limits returning 0 for std::chrono::nanoseconds
-    /*if constexpr (std::is_same_v<T,std::chrono::nanoseconds>){
+    if constexpr (std::is_same_v<T,std::chrono::nanoseconds>){
         min=std::chrono::nanoseconds::max();
     }else{
         min=std::numeric_limits<T>::max();
-    }*/
+    }
     max = {};
     m_last_reset=std::chrono::steady_clock::now();
   }
