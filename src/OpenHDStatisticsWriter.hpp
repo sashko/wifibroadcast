@@ -93,7 +93,7 @@ static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
 }
 
 // matches FECDecoder
-struct FECStreamStats{
+struct FECRxStats {
   // total block count
   uint64_t count_blocks_total = 0;
   // a block counts as "lost" if it was removed before being fully received or recovered
@@ -105,9 +105,9 @@ struct FECStreamStats{
   // n of forwarded bytes
   uint64_t count_bytes_forwarded=0;
 };
-static std::ostream& operator<<(std::ostream& strm, const FECStreamStats& obj){
+static std::ostream& operator<<(std::ostream& strm, const FECRxStats& obj){
   std::stringstream ss;
-  ss<<"FECStreamStats{blocks_total:"<<obj.count_blocks_total<<",blocks_lost:"<<obj.count_blocks_lost<<",blocks_recovered:"<<obj.count_blocks_recovered
+  ss<<"FECRxStats{blocks_total:"<<obj.count_blocks_total<<",blocks_lost:"<<obj.count_blocks_lost<<",blocks_recovered:"<<obj.count_blocks_recovered
      <<",fragments_recovered:"<<obj.count_fragments_recovered<<",bytes_forwarded:"<<obj.count_bytes_forwarded<<"}";
   strm<<ss.str();
   return strm;
@@ -122,10 +122,10 @@ class OpenHDStatisticsWriter {
     // min max and avg rssi for each wifi card since the last call.
     // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
     std::array<RSSIForWifiCard, 8> rssiPerCard{};
-    // always create wifibroadcast rx stats
+    // Available regardless if FEC is enabled or disabled
     WBRxStats wb_rx_stats;
     // only if FEC enabled
-    std::optional<FECStreamStats> fec_stream_stats;
+    std::optional<FECRxStats> fec_rx_stats;
   };
 };
 
@@ -133,8 +133,8 @@ static std::ostream& operator<<(std::ostream& strm, const OpenHDStatisticsWriter
   std::stringstream ss;
   ss<<"Stats for "<<(int)data.radio_port<<"\n";
   ss<<data.wb_rx_stats;
-  if(data.fec_stream_stats.has_value()){
-    ss<<"\n"<<data.fec_stream_stats.value();
+  if(data.fec_rx_stats.has_value()){
+    ss<<"\n"<<data.fec_rx_stats.value();
   }
   strm<<ss.str();
   return strm;

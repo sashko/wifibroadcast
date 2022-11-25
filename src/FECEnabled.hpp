@@ -718,7 +718,7 @@ class FECDecoder {
     }
   }
  public:
-  FECStreamStats stats{};
+  FECRxStats stats{};
 };
 
 // quick math regarding sequence numbers:

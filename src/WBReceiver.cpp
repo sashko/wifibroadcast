@@ -84,7 +84,7 @@ void WBReceiver::recalculate_statistics() {
     wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
     wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;
   }
-  std::optional<FECStreamStats> fec_stream_stats=std::nullopt;
+  std::optional<FECRxStats> fec_stream_stats=std::nullopt;
   if(mFECDDecoder){
     fec_stream_stats=mFECDDecoder->stats;
   }
