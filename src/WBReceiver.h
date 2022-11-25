@@ -16,15 +16,15 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "wifibroadcast.hpp"
+#include "AllWBRxStats.hpp"
 #include "Encryption.hpp"
-#include "FECEnabled.hpp"
 #include "FECDisabled.hpp"
+#include "FECEnabled.hpp"
 #include "HelperSources/Helper.hpp"
-#include "OpenHDStatisticsWriter.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "RawReceiver.hpp"
 #include "wifibroadcast-spdlog.h"
+#include "wifibroadcast.hpp"
 
 // A wifi card with more than 4 antennas still has to be found :)
 static constexpr const auto MAX_N_ANTENNAS_PER_WIFI_CARD = 4;
@@ -77,7 +77,7 @@ class WBReceiver {
    * Fetch the current / latest statistics, can be called in regular intervals.
    * Thread-safe and guaranteed to not block for a significant amount of time
    */
-  OpenHDStatisticsWriter::Data get_latest_stats();
+  AllWBRxStats get_latest_stats();
  private:
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::shared_ptr<spdlog::logger> m_console;
@@ -96,8 +96,8 @@ class WBReceiver {
   const OUTPUT_DATA_CALLBACK mOutputDataCallback;
   std::unique_ptr<MultiRxPcapReceiver> receiver;
   std::mutex m_last_stats_mutex;
-  OpenHDStatisticsWriter::Data m_last_stats{};
-  void set_latest_stats(OpenHDStatisticsWriter::Data new_stats);
+  AllWBRxStats m_last_stats{};
+  void set_latest_stats(AllWBRxStats new_stats);
  public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
   // time between <packet arrives at pcap processing queue> <<->> <packet is pulled out of pcap by RX>

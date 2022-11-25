@@ -113,23 +113,19 @@ static std::ostream& operator<<(std::ostream& strm, const FECRxStats& obj){
   return strm;
 }
 
-class OpenHDStatisticsWriter {
- public:
-  // Forwarded data
-  struct Data {
-    // the unique stream ID this data refers to
-    uint8_t radio_port = 0;
-    // min max and avg rssi for each wifi card since the last call.
-    // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
-    std::array<RSSIForWifiCard, 8> rssiPerCard{};
-    // Available regardless if FEC is enabled or disabled
-    WBRxStats wb_rx_stats;
-    // only if FEC enabled
-    std::optional<FECRxStats> fec_rx_stats;
-  };
+struct AllWBRxStats{
+  // the unique stream ID this data refers to
+  uint8_t radio_port = 0;
+  // min max and avg rssi for each wifi card since the last call.
+  // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
+  std::array<RSSIForWifiCard, 8> rssiPerCard{};
+  // Available regardless if FEC is enabled or disabled
+  WBRxStats wb_rx_stats;
+  // only if FEC enabled
+  std::optional<FECRxStats> fec_rx_stats;
 };
 
-static std::ostream& operator<<(std::ostream& strm, const OpenHDStatisticsWriter::Data& data){
+static std::ostream& operator<<(std::ostream& strm, const AllWBRxStats& data){
   std::stringstream ss;
   ss<<"Stats for "<<(int)data.radio_port<<"\n";
   ss<<data.wb_rx_stats;
