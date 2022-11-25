@@ -60,7 +60,7 @@ class UDPWBReceiver {
   [[nodiscard]] bool anyDataReceived()const{
     return _anyDataReceived;
   }
-  [[nodiscard]] OpenHDStatisticsWriter::Data get_latest_stats()const{
+  [[nodiscard]] WBReceiverStats get_latest_stats()const{
     return wbReceiver->get_latest_stats();
   }
   WBReceiver& get_wb_receiver(){

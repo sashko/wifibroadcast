@@ -20,7 +20,7 @@ int main(int argc, char *const *argv) {
   int client_udp_port = 5600;
   std::string client_addr = "127.0.0.1";// default to localhost
 
-  while ((opt = getopt(argc, argv, "K:c:u:r:l:n:k:")) != -1) {
+  while ((opt = getopt(argc, argv, "K:c:u:r:n:k:")) != -1) {
 	switch (opt) {
 	  case 'K':options.keypair = optarg;
 		break;
@@ -30,8 +30,6 @@ int main(int argc, char *const *argv) {
 		break;
 	  case 'r':options.radio_port = std::stoi(optarg);
 		break;
-	  case 'l':options.log_interval = std::chrono::milliseconds(std::stoi(optarg));
-		break;
 	  case 'k':
 	  case 'n':
 		std::cout << "-n is deprecated. Please read https://github.com/Consti10/wifibroadcast/blob/master/README.md \n";
@@ -39,11 +37,10 @@ int main(int argc, char *const *argv) {
 	  default: /* '?' */
 	  show_usage:
 		fprintf(stderr,
-				"Local receiver: %s [-K rx_key] [-c client_addr] [-u udp_client_port] [-r radio_port] [-l log_interval(ms)] interface1 [interface2] ...\n",
+				"Local receiver: %s [-K rx_key] [-c client_addr] [-u udp_client_port] [-r radio_port] interface1 [interface2] ...\n",
 				argv[0]);
-		fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d, log_interval=%d \n",
-				"none", client_addr.c_str(), client_udp_port, options.radio_port,
-				(int)std::chrono::duration_cast<std::chrono::milliseconds>(options.log_interval).count());
+		fprintf(stderr, "Default: K='%s', connect=%s:%d, radio_port=%d\n",
+				"none", client_addr.c_str(), client_udp_port, options.radio_port);
 		fprintf(stderr, "WFB version "
 						WFB_VERSION
 						"\n");
