@@ -193,7 +193,7 @@ class WBTransmitter {
   std::chrono::steady_clock::time_point session_key_announce_ts{};
   WBSessionKeyPacket sessionKeyPacket;
   //
-  uint16_t m_curr_seq_nr=0;
+  std::atomic<uint16_t> m_curr_seq_nr=0;
   uint64_t m_n_dropped_packets=0;
  private:
   // extra data queue, to smooth out input from udp port AND more importantly, have a queue we can reason about

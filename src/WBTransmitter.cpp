@@ -124,6 +124,9 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
   const bool res=m_data_queue.try_enqueue(packet);
   if(!res){
     m_n_dropped_packets++;
+    // TODO not exactly the correct solution - include dropped packets in the seq nr, such that they are included
+    // in the loss (perc) on the ground
+    m_curr_seq_nr++;
   }
 }
 
