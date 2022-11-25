@@ -14,9 +14,9 @@
 #include <utility>
 #include <list>
 
-// Convenient methods to create WB transmitter / receiver with UDP as input/output
-// Used for wfb_tx / wfb_rx executables and OpenHD
-
+/**
+ * Creates a WB Transmitter that gets its input data stream from an UDP Port
+ */
 class UDPWBTransmitter {
  public:
   UDPWBTransmitter(RadiotapHeader::UserSelectableParams radiotapHeaderParams,
