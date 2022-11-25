@@ -37,12 +37,8 @@ struct ROptions {
   // file for encryptor
   // make optional for ease of use - with no keypair given the default "seed" is used
   std::optional<std::string> keypair = std::nullopt;
-  // allows setting the log interval.
-  std::chrono::milliseconds log_interval = std::chrono::seconds(1);
-  // Print log messages about the current status in regular intervals to stdout.
-  // However, in OpenHD, it is more verbose to log all the tx/rx instances together.
-  bool enableLogAlive = true;
-  unsigned int rx_queue_depth=10; // RX queue depth (max n of blocks that can be buffered in the rx pipeline)
+  // RX queue depth (max n of blocks that can be buffered in the rx pipeline)
+  unsigned int rx_queue_depth=10;
 };
 
 class WBReceiver {
@@ -60,7 +56,7 @@ class WBReceiver {
   WBReceiver &operator=(const WBReceiver &) = delete;
   void processPacket(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
   // dump statistics
-  void dump_stats();
+  void recalculate_statistics();
   const ROptions options;
   /**
    * Process incoming data packets as long as nothing goes wrong (nothing should go wrong as long
@@ -89,7 +85,7 @@ class WBReceiver {
   std::array<RSSIForWifiCard, MAX_RX_INTERFACES> rssiForWifiCard;
   WBRxStats wb_rx_stats{};
   // for calculating the current rx bitrate
-  BitrateCalculator rxBitrateCalculator{};
+  BitrateCalculator m_received_bitrate_calculator{};
   //We know that once we get the first session key packet
   bool IS_FEC_ENABLED = false;
   // On the rx, either one of those two is active at the same time. NOTE: nullptr until the first session key packet

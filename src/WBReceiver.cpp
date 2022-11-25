@@ -51,10 +51,10 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
   }else{
     m_console=console;
   }
-  receiver = std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces, options.radio_port, options1.log_interval,
+  receiver = std::make_unique<MultiRxPcapReceiver>(options.rxInterfaces, options.radio_port,std::chrono::seconds(1),
                                                    notstd::bind_front(&WBReceiver::processPacket, this),
-                                                   notstd::bind_front(&WBReceiver::dump_stats, this));
-  m_console->info("WFB-RX RADIO_PORT: {} Logging enabled:{}",(int) options.radio_port,(options.enableLogAlive ? "Y" : "N"));
+                                                   notstd::bind_front(&WBReceiver::recalculate_statistics, this));
+  m_console->info("WFB-RX RADIO_PORT: {}",(int) options.radio_port);
 }
 
 void WBReceiver::loop() {
@@ -75,11 +75,12 @@ std::string WBReceiver::createDebugState() const {
   return ss.str();
 }
 
-void WBReceiver::dump_stats() {
+void WBReceiver::recalculate_statistics() {
   // first forward to OpenHD
   // re-calculate the current bitrate
   {
-    wb_rx_stats.curr_bits_per_second=rxBitrateCalculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
+    wb_rx_stats.curr_bits_per_second=
+        m_received_bitrate_calculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
     wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
     wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;
   }
@@ -89,16 +90,6 @@ void WBReceiver::dump_stats() {
   }
   OpenHDStatisticsWriter::Data data{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
   set_latest_stats(data);
-  if (options.enableLogAlive) {
-    for (auto &wifiCard: rssiForWifiCard) {
-      // no new rssi values for this card since the last call
-      if (wifiCard.count_all == 0)continue;
-      std::cout << wifiCard<<"\n";
-      wifiCard.reset();
-    }
-    std::stringstream ss;
-    std::cout<<createDebugState();
-  }
   // it is actually much more understandable when I use the absolute values for the logging
 #ifdef ENABLE_ADVANCED_DEBUGGING
   std::cout<<"avgPcapToApplicationLatency: "<<avgPcapToApplicationLatency.getAvgReadable()<<"\n";
