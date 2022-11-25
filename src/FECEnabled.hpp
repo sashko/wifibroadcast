@@ -17,9 +17,9 @@
 #include <utility>
 #include <vector>
 
-#include "AllWBRxStats.hpp"
 #include "FEC.hpp"
 #include "HelperSources/TimeHelper.hpp"
+#include "WBReceiverStats.hpp"
 #include "wifibroadcast-spdlog.h"
 
 // RN this module depends on "wifibroadcast.hpp", since it holds the "packet size(s)" needed to calculate FEC_MAX_PAYLOAD_SIZE

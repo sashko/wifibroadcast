@@ -88,7 +88,7 @@ void WBReceiver::recalculate_statistics() {
   if(mFECDDecoder){
     fec_stream_stats=mFECDDecoder->stats;
   }
-  AllWBRxStats all_wb_rx_stats{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
+  WBReceiverStats all_wb_rx_stats{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
   set_latest_stats(all_wb_rx_stats);
   // it is actually much more understandable when I use the absolute values for the logging
 #ifdef ENABLE_ADVANCED_DEBUGGING
@@ -291,12 +291,12 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
   }
 }
 
-void WBReceiver::set_latest_stats(AllWBRxStats new_stats) {
+void WBReceiver::set_latest_stats(WBReceiverStats new_stats) {
   std::lock_guard<std::mutex> lock(m_last_stats_mutex);
   m_last_stats=new_stats;
 }
 
-AllWBRxStats WBReceiver::get_latest_stats(){
+WBReceiverStats WBReceiver::get_latest_stats(){
   std::lock_guard<std::mutex> lock(m_last_stats_mutex);
   return m_last_stats;
 }

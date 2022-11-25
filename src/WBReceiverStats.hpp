@@ -113,7 +113,7 @@ static std::ostream& operator<<(std::ostream& strm, const FECRxStats& obj){
   return strm;
 }
 
-struct AllWBRxStats{
+struct WBReceiverStats {
   // the unique stream ID this data refers to
   uint8_t radio_port = 0;
   // min max and avg rssi for each wifi card since the last call.
@@ -125,7 +125,7 @@ struct AllWBRxStats{
   std::optional<FECRxStats> fec_rx_stats;
 };
 
-static std::ostream& operator<<(std::ostream& strm, const AllWBRxStats& data){
+static std::ostream& operator<<(std::ostream& strm, const WBReceiverStats& data){
   std::stringstream ss;
   ss<<"Stats for "<<(int)data.radio_port<<"\n";
   ss<<data.wb_rx_stats;
