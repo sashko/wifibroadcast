@@ -14,12 +14,10 @@ struct WBTxStats{
   // Other than bits per second, packets per second is also an important metric -
   // Sending a lot of small packets for example should be avoided)
   uint64_t current_injected_packets_per_second;
-  //
+  // tx errors, first sign the tx can't keep up with the provided bitrate
   uint64_t count_tx_injections_error_hint;
   // N of dropped packets, increases when both the internal driver queue and the extra 124 packets queue of the tx fill up
   uint64_t n_dropped_packets;
-  //
-  uint64_t curr_estimate_buffered_packets;
 };
 
 struct FECTxStats{
