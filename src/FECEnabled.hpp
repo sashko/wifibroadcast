@@ -228,6 +228,10 @@ class FECEncoder {
     assert(tmp_n <= MAX_TOTAL_FRAGMENTS_PER_BLOCK);
   }
 
+  MinMaxAvg<std::chrono::nanoseconds> get_current_fec_blk_encode_time(){
+    return m_curr_fec_block_encode_time;
+  }
+
   // returns true if the block_idx has reached its maximum
   // You want to send a new session key in this case
   bool resetOnOverflow() {
