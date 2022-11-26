@@ -76,18 +76,13 @@ std::string WBReceiver::createDebugState() const {
 }
 
 void WBReceiver::recalculate_statistics() {
-  // first forward to OpenHD
-  // re-calculate the current bitrate
-  {
-    wb_rx_stats.curr_incoming_bits_per_second =
-        m_received_bitrate_calculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
-    wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
-    wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;
-  }
+  wb_rx_stats.curr_incoming_bits_per_second =
+      m_received_bitrate_calculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
+  wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
+  wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;
   std::optional<FECRxStats> fec_stream_stats=std::nullopt;
   if(mFECDDecoder){
     fec_stream_stats=mFECDDecoder->stats;
-
   }
   WBReceiverStats all_wb_rx_stats{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
   set_latest_stats(all_wb_rx_stats);
