@@ -119,6 +119,8 @@ class WBTransmitter {
     return m_data_queue.size_approx();
   }
   WBTxStats get_latest_stats();
+  // only valid when actually doing FEC
+  FECTxStats get_latest_fec_stats();
  private:
   // send the current session key via WIFI (located in mEncryptor)
   void sendSessionKey();

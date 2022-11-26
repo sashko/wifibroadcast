@@ -230,3 +230,7 @@ WBTxStats WBTransmitter::get_latest_stats() {
   ret.current_injected_packets_per_second=_packets_per_second_calculator.get_last_or_recalculate(nInjectedPackets,std::chrono::seconds(2));
   return ret;
 }
+
+FECTxStats WBTransmitter::get_latest_fec_stats() {
+  return {};
+}

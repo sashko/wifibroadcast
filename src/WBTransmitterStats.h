@@ -22,4 +22,9 @@ struct WBTxStats{
   uint64_t curr_estimate_buffered_packets;
 };
 
+struct FECTxStats{
+  MinMaxAvg<std::chrono::nanoseconds> curr_fec_encode_time{};
+  MinMaxAvg<uint16_t> curr_fec_block_length{};
+};
+
 #endif  // WIFIBROADCAST_SRC_WBTRANSMITTERSTATS_H_
