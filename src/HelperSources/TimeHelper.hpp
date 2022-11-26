@@ -55,6 +55,12 @@ static std::string timeSamplesAsString(const std::vector<std::chrono::nanosecond
   return ss.str();
 }
 };
+template<typename T>
+struct MinMaxAvg{
+  T min;
+  T max;
+  T avg;
+};
 
 // Use this class to compare many samples of the same kind
 // Saves the minimum,maximum and average of all the samples
@@ -134,23 +140,28 @@ class BaseAvgCalculator {
     if (deltaMin > deltaMax)return deltaMin;
     return deltaMax;
   }
+  MinMaxAvg<T> getMinMaxAvg()const{
+      return {getMin(),getMax(),getAvg()};
+  }
   std::string getAvgReadable(const bool averageOnly = false) const {
     std::stringstream ss;
     if constexpr (std::is_same_v<T, std::chrono::nanoseconds>) {
+      const auto curr=getMinMaxAvg();
       // Class stores time samples
       if (averageOnly) {
         ss << "avg=" << MyTimeHelper::R(getAvg());
         return ss.str();
       }
-      ss << "min=" << MyTimeHelper::R(getMin()) << " max=" << MyTimeHelper::R(getMax()) << " avg="
-         << MyTimeHelper::R(getAvg());
+      ss << "min=" << MyTimeHelper::R(curr.min) << " max=" << MyTimeHelper::R(curr.max) << " avg="
+         << MyTimeHelper::R(curr.avg);
     } else {
       // Class stores other type of samples
+      const auto curr=getMinMaxAvg();
       if (averageOnly) {
-        ss << "avg=" << getAvg();
+        ss << "avg=" << curr.avg;
         return ss.str();
       }
-      ss << "min=" << getMin() << " max=" << getMax() << " avg=" << getAvg();
+      ss << "min=" << curr.min << " max=" << curr.max << " avg=" << curr.avg;
     }
     return ss.str();
   }

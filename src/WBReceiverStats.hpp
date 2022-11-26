@@ -104,6 +104,7 @@ struct FECRxStats {
   uint64_t count_fragments_recovered = 0;
   // n of forwarded bytes
   uint64_t count_bytes_forwarded=0;
+  MinMaxAvg<std::chrono::nanoseconds> curr_fec_decode_time{};
 };
 static std::ostream& operator<<(std::ostream& strm, const FECRxStats& obj){
   std::stringstream ss;

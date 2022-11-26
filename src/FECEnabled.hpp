@@ -131,6 +131,7 @@ class FECEncoder {
   std::atomic<uint32_t> m_curr_fec_k_max;
   std::atomic<uint32_t> m_curr_fec_overhead_perc;
   AvgCalculator m_fec_block_encode_time;
+  MinMaxAvg<std::chrono::nanoseconds> m_curr_fec_block_encode_time{};
   BaseAvgCalculator<uint32_t> m_block_sizes{};
  public:
   /**
@@ -193,6 +194,7 @@ class FECEncoder {
     m_fec_block_encode_time.add(std::chrono::steady_clock::now()-before);
     if(m_fec_block_encode_time.get_delta_since_last_reset()>=std::chrono::seconds(1)){
       wifibroadcast::log::get_default()->debug("FEC encode time:{}",m_fec_block_encode_time.getAvgReadable());
+      m_curr_fec_block_encode_time=m_fec_block_encode_time.getMinMaxAvg();
       m_fec_block_encode_time.reset();
     }
     // and send them all out
@@ -653,6 +655,7 @@ class FECDecoder {
         m_fec_decode_time.add(std::chrono::steady_clock::now()-before_encode);
         if(m_fec_decode_time.get_delta_since_last_reset()>std::chrono::seconds(1)){
           wifibroadcast::log::get_default()->debug("FEC decode took {}",m_fec_decode_time.getAvgReadable());
+          stats.curr_fec_decode_time=m_fec_decode_time.getMinMaxAvg();
           m_fec_decode_time.reset();
         }
         stats.count_blocks_recovered++;

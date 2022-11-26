@@ -87,6 +87,7 @@ void WBReceiver::recalculate_statistics() {
   std::optional<FECRxStats> fec_stream_stats=std::nullopt;
   if(mFECDDecoder){
     fec_stream_stats=mFECDDecoder->stats;
+
   }
   WBReceiverStats all_wb_rx_stats{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
   set_latest_stats(all_wb_rx_stats);
