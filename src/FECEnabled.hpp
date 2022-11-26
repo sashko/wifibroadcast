@@ -185,7 +185,7 @@ class FECEncoder {
     }
     m_block_sizes.add(currNPrimaryFragments);
     if(m_block_sizes.get_delta_since_last_reset()>=std::chrono::seconds(1)){
-      wifibroadcast::log::get_default()->debug("Block sizes: {}",m_block_sizes.getAvgReadable());
+      //wifibroadcast::log::get_default()->debug("Block sizes: {}",m_block_sizes.getAvgReadable());
       m_curr_fec_block_sizes=m_block_sizes.getMinMaxAvg();
       m_block_sizes.reset();
     }
@@ -195,7 +195,7 @@ class FECEncoder {
     fecEncode(currMaxPacketSize, blockBuffer, currNPrimaryFragments, nSecondaryFragments);
     m_fec_block_encode_time.add(std::chrono::steady_clock::now()-before);
     if(m_fec_block_encode_time.get_delta_since_last_reset()>=std::chrono::seconds(1)){
-      wifibroadcast::log::get_default()->debug("FEC encode time:{}",m_fec_block_encode_time.getAvgReadable());
+      //wifibroadcast::log::get_default()->debug("FEC encode time:{}",m_fec_block_encode_time.getAvgReadable());
       m_curr_fec_block_encode_time=m_fec_block_encode_time.getMinMaxAvg();
       m_fec_block_encode_time.reset();
     }
@@ -658,7 +658,7 @@ class FECDecoder {
         stats.count_fragments_recovered += block.reconstructAllMissingData();
         m_fec_decode_time.add(std::chrono::steady_clock::now()-before_encode);
         if(m_fec_decode_time.get_delta_since_last_reset()>std::chrono::seconds(1)){
-          wifibroadcast::log::get_default()->debug("FEC decode took {}",m_fec_decode_time.getAvgReadable());
+          //wifibroadcast::log::get_default()->debug("FEC decode took {}",m_fec_decode_time.getAvgReadable());
           stats.curr_fec_decode_time=m_fec_decode_time.getMinMaxAvg();
           m_fec_decode_time.reset();
         }
