@@ -79,7 +79,7 @@ void WBReceiver::recalculate_statistics() {
   // first forward to OpenHD
   // re-calculate the current bitrate
   {
-    wb_rx_stats.curr_bits_per_second=
+    wb_rx_stats.curr_incoming_bits_per_second =
         m_received_bitrate_calculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
     wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
     wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;

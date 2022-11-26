@@ -75,8 +75,9 @@ struct WBRxStats{
   uint64_t count_p_decryption_ok = 0;
   // n of total received bytes, before FEC decoding
   uint64_t count_bytes_data_received=0;
-  // current bitrate, in bits per second.
-  uint64_t curr_bits_per_second=0;
+  // current incoming bitrate, in bits per second.
+  // includes FEC overhead
+  uint64_t curr_incoming_bits_per_second =0;
   // current packet loss, in percent
   int curr_packet_loss_percentage=-1;
   // N of "big gaps", recalculated in regular intervals. Together with the packet loss
@@ -88,7 +89,7 @@ static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
   std::stringstream ss;
   ss<<"WBRxStats{all:"<<obj.count_p_all<<",bad:"<<obj.count_p_bad<<",decrypt_err:"<<obj.count_p_decryption_err
      <<",decrypt_ok:"<<obj.count_p_decryption_ok<<",bytes:"<<obj.count_bytes_data_received
-     <<",bitrate:"<<bitrate_to_string(obj.curr_bits_per_second)<<"}";
+     <<",bitrate:"<<bitrate_to_string(obj.curr_incoming_bits_per_second)<<"}";
   strm<<ss.str();
   return strm;
 }
