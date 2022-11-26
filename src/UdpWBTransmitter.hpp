@@ -55,29 +55,11 @@ class UDPWBTransmitter {
   void update_mcs_index(uint8_t mcs_index){
     wbTransmitter->update_mcs_index(mcs_index);
   }
-  [[nodiscard]] int64_t get_n_injected_packets()const{
-    return wbTransmitter->get_n_injected_packets();
-  }
-  [[nodiscard]] uint64_t get_n_injected_bytes()const{
-    return wbTransmitter->get_n_injected_bytes();
-  }
-  uint64_t get_current_injected_bits_per_second(){
-    return wbTransmitter->get_current_injected_bits_per_second();
-  }
-  [[nodiscard]] uint64_t get_count_tx_injections_error_hint()const{
-    return wbTransmitter->get_count_tx_injections_error_hint();
-  }
-  uint64_t get_current_provided_bits_per_second(){
-    return wbTransmitter->get_current_provided_bits_per_second();
-  }
-  uint64_t get_current_packets_per_second(){
-    return wbTransmitter->get_current_packets_per_second();
+  WBTxStats get_latest_stats(){
+    return wbTransmitter->get_latest_stats();
   }
   std::size_t get_estimate_buffered_packets(){
     return wbTransmitter->get_estimate_buffered_packets();
-  }
-  uint64_t get_n_dropped_packets()const{
-    return wbTransmitter->get_n_dropped_packets();
   }
   WBTransmitter& get_wb_tx(){
     return *wbTransmitter;

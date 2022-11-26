@@ -32,6 +32,7 @@
 #include "wifibroadcast.hpp"
 //#include <atomic>
 #include "../readerwriterqueue/readerwritercircularbuffer.h"
+#include "WBTransmitterStats.h"
 
 // dynamic fec block size, NONE = use fixed k value
 enum class FEC_VARIABLE_INPUT_TYPE {RTP_H264, RTP_H265, RTP_MJPEG };
@@ -114,33 +115,19 @@ class WBTransmitter {
   // (Since we use FEC enabled for video and FEC disabled for telemetry anyways)
   void update_fec_k(int fec_k,std::optional<FEC_VARIABLE_INPUT_TYPE> fec_variable_input_type);
 
-  // temporary
-  [[nodiscard]] int64_t get_n_injected_packets()const{
-    return nInjectedPackets;
-  }
-  [[nodiscard]] uint64_t get_n_injected_bytes()const{
-    return static_cast<uint64_t>(count_bytes_data_injected);
-  }
-  uint64_t get_current_injected_bits_per_second(){
-    return bitrate_calculator_injected_bytes.get_last_or_recalculate(count_bytes_data_injected,std::chrono::seconds(2));
-  }
-  uint64_t get_current_provided_bits_per_second(){
-    return bitrate_calculator_data_provided.get_last_or_recalculate(count_bytes_data_provided,std::chrono::seconds(2));
-  }
-  [[nodiscard]] uint64_t get_count_tx_injections_error_hint()const{
-    return count_tx_injections_error_hint;
-  }
-  // N of dropped packets, increases when both the internal driver queue and the extra 124 packets queue of the tx fill up
-  [[nodiscard]] uint64_t get_n_dropped_packets()const{
-      return m_n_dropped_packets;
-  }
-  // Other than bits per second, packets per second is also an important metric -
-  // Sending a lot of small packets for example should be avoided)
-  uint64_t get_current_packets_per_second(){
-    return _packets_per_second_calculator.get_last_or_recalculate(nInjectedPackets,std::chrono::seconds(2));
-  }
   std::size_t get_estimate_buffered_packets(){
     return m_data_queue.size_approx();
+  }
+  WBTxStats get_latest_stats(){
+    WBTxStats ret{};
+    ret.n_injected_packets=nInjectedPackets;
+    ret.n_injected_bytes=static_cast<uint64_t>(count_bytes_data_injected);
+    ret.current_injected_bits_per_second=bitrate_calculator_injected_bytes.get_last_or_recalculate(count_bytes_data_injected,std::chrono::seconds(2));
+    ret.current_provided_bits_per_second=bitrate_calculator_data_provided.get_last_or_recalculate(count_bytes_data_provided,std::chrono::seconds(2));
+    ret.count_tx_injections_error_hint=count_tx_injections_error_hint;
+    ret.n_dropped_packets=m_n_dropped_packets;
+    ret.current_injected_packets_per_second=_packets_per_second_calculator.get_last_or_recalculate(nInjectedPackets,std::chrono::seconds(2));
+    return ret;
   }
  private:
   // send the current session key via WIFI (located in mEncryptor)
