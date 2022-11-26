@@ -232,5 +232,10 @@ WBTxStats WBTransmitter::get_latest_stats() {
 }
 
 FECTxStats WBTransmitter::get_latest_fec_stats() {
-  return {};
+  FECTxStats ret{};
+  if(m_fec_encoder){
+    ret.curr_fec_encode_time=m_fec_encoder->get_current_fec_blk_encode_time();
+    ret.curr_fec_block_length=m_fec_encoder->get_current_fec_blk_sizes();
+  }
+  return ret;
 }

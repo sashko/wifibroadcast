@@ -132,7 +132,8 @@ class FECEncoder {
   std::atomic<uint32_t> m_curr_fec_overhead_perc;
   AvgCalculator m_fec_block_encode_time;
   MinMaxAvg<std::chrono::nanoseconds> m_curr_fec_block_encode_time{};
-  BaseAvgCalculator<uint32_t> m_block_sizes{};
+  BaseAvgCalculator<uint16_t> m_block_sizes{};
+  MinMaxAvg<uint16_t> m_curr_fec_block_sizes{};
  public:
   /**
    * encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback.
@@ -185,6 +186,7 @@ class FECEncoder {
     m_block_sizes.add(currNPrimaryFragments);
     if(m_block_sizes.get_delta_since_last_reset()>=std::chrono::seconds(1)){
       wifibroadcast::log::get_default()->debug("Block sizes: {}",m_block_sizes.getAvgReadable());
+      m_curr_fec_block_sizes=m_block_sizes.getMinMaxAvg();
       m_block_sizes.reset();
     }
     //wifibroadcast::log::get_default()->debug("Creating block ("<<currNPrimaryFragments<<":"<<currNPrimaryFragments+nSecondaryFragments<<")\n";
@@ -231,6 +233,9 @@ class FECEncoder {
   MinMaxAvg<std::chrono::nanoseconds> get_current_fec_blk_encode_time(){
     return m_curr_fec_block_encode_time;
   }
+  MinMaxAvg<uint16_t> get_current_fec_blk_sizes(){
+    return m_curr_fec_block_sizes;
+  }
 
   // returns true if the block_idx has reached its maximum
   // You want to send a new session key in this case
@@ -252,11 +257,6 @@ class FECEncoder {
   // (k: number of primary fragments, n: primary + secondary fragments)
   static unsigned int calculateN(const unsigned int k, const unsigned int percentage) {
     return k + calculate_n_secondary_fragments(k,percentage);
-  }
-  std::chrono::nanoseconds get_curr_fec_block_encode_time(){
-    auto ret=m_fec_block_encode_time.getAvg();
-    m_fec_block_encode_time.reset();
-    return ret;
   }
  private:
   // calculate proper nonce (such that the rx can decode it properly), then forward via callback
