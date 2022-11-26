@@ -118,17 +118,7 @@ class WBTransmitter {
   std::size_t get_estimate_buffered_packets(){
     return m_data_queue.size_approx();
   }
-  WBTxStats get_latest_stats(){
-    WBTxStats ret{};
-    ret.n_injected_packets=nInjectedPackets;
-    ret.n_injected_bytes=static_cast<uint64_t>(count_bytes_data_injected);
-    ret.current_injected_bits_per_second=bitrate_calculator_injected_bytes.get_last_or_recalculate(count_bytes_data_injected,std::chrono::seconds(2));
-    ret.current_provided_bits_per_second=bitrate_calculator_data_provided.get_last_or_recalculate(count_bytes_data_provided,std::chrono::seconds(2));
-    ret.count_tx_injections_error_hint=count_tx_injections_error_hint;
-    ret.n_dropped_packets=m_n_dropped_packets;
-    ret.current_injected_packets_per_second=_packets_per_second_calculator.get_last_or_recalculate(nInjectedPackets,std::chrono::seconds(2));
-    return ret;
-  }
+  WBTxStats get_latest_stats();
  private:
   // send the current session key via WIFI (located in mEncryptor)
   void sendSessionKey();
