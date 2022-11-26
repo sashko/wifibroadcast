@@ -131,6 +131,7 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
 }
 
 void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
+  m_console->debug("Changing mcs index to {}",mcs_index);
   m_radioTapHeaderParams.mcs_index=mcs_index;
   auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
   std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
