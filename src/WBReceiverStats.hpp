@@ -45,7 +45,7 @@ class RSSIForWifiCard {
   int32_t rssi_sum = 0;
   int8_t rssi_min = 0;
   int8_t rssi_max = 0;
-  int8_t last_rssi=0;
+  int8_t last_rssi=INT8_MIN;
 };
 static std::ostream& operator<<(std::ostream& strm, const RSSIForWifiCard& obj){
   std::stringstream ss;
