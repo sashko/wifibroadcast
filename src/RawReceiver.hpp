@@ -361,7 +361,14 @@ class MultiRxPcapReceiver {
       for (int i = 0; rc > 0 && i < mReceiverFDs.size(); i++) {
         if (mReceiverFDs[i].revents & (POLLERR | POLLNVAL)) {
           if(keep_running){
-            wifibroadcast::log::get_default()->warn(StringFormat::convert("RawReceiver error on pcap fds %d (wlan %s)",i,rxInterfaces[i].c_str()));
+            // we should only get errors here if the card is disconnected
+            m_n_receiver_errors++;
+            // limit logging here
+            const auto elapsed=std::chrono::steady_clock::now()-m_last_receiver_error_log;
+            if(elapsed>std::chrono::seconds(1)){
+              wifibroadcast::log::get_default()->warn(StringFormat::convert("RawReceiver errors %d on pcap fds %d (wlan %s)",m_n_receiver_errors.load(),i,rxInterfaces[i].c_str()));
+              m_last_receiver_error_log=std::chrono::steady_clock::now();
+            }
           }else{
             return;
           }
@@ -388,6 +395,8 @@ class MultiRxPcapReceiver {
   const PcapReceiver::PROCESS_PACKET_CALLBACK mCallbackData;
   // This callback is called regularly independent weather data was received or not
   const GENERIC_CALLBACK mCallbackLog;
+  std::atomic<uint64_t> m_n_receiver_errors;
+  std::chrono::steady_clock::time_point m_last_receiver_error_log=std::chrono::steady_clock::now();
  public:
 };
 
