@@ -79,7 +79,7 @@ struct WBRxStats{
   // includes FEC overhead
   uint64_t curr_incoming_bits_per_second =0;
   // current packet loss, in percent
-  int curr_packet_loss_percentage=-1;
+  int16_t curr_packet_loss_percentage=-1;
   // N of "big gaps", recalculated in regular intervals. Together with the packet loss
   // in percent this gives a good overview over the current quality of the link.
   // What exactly counts as a "big gap" cannot be exactly defined.
