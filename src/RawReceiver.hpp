@@ -18,7 +18,6 @@
 #include <arpa/inet.h>
 #include <pcap/pcap.h>
 #include <poll.h>
-#include <atomic>
 
 // This is a single header-only file you can use to build your own wifibroadcast link
 // It doesn't specify if / what FEC to use and so on
@@ -400,7 +399,7 @@ class MultiRxPcapReceiver {
   const PcapReceiver::PROCESS_PACKET_CALLBACK mCallbackData;
   // This callback is called regularly independent weather data was received or not
   const GENERIC_CALLBACK mCallbackLog;
-  std::atomic<uint64_t> m_n_receiver_errors;
+  std::atomic<uint32_t> m_n_receiver_errors{};
   std::chrono::steady_clock::time_point m_last_receiver_error_log=std::chrono::steady_clock::now();
  public:
 };
