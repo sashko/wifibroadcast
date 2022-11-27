@@ -18,6 +18,7 @@
 #include <arpa/inet.h>
 #include <pcap/pcap.h>
 #include <poll.h>
+#include <atomic>
 
 // This is a single header-only file you can use to build your own wifibroadcast link
 // It doesn't specify if / what FEC to use and so on
