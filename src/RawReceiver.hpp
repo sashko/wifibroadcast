@@ -333,6 +333,10 @@ class MultiRxPcapReceiver {
     }
     mReceivers.resize(0);
   }
+  // Those errors hint at a disconnected / crashed wifi card
+  uint64_t get_n_receiver_errors(){
+    return m_n_receiver_errors;
+  }
   // Runs until destructor or an error occurs
   void loop() {
     std::chrono::steady_clock::time_point log_send_ts{};
@@ -366,7 +370,7 @@ class MultiRxPcapReceiver {
             // limit logging here
             const auto elapsed=std::chrono::steady_clock::now()-m_last_receiver_error_log;
             if(elapsed>std::chrono::seconds(1)){
-              wifibroadcast::log::get_default()->warn(StringFormat::convert("RawReceiver errors %d on pcap fds %d (wlan %s)",m_n_receiver_errors.load(),i,rxInterfaces[i].c_str()));
+              wifibroadcast::log::get_default()->warn(StringFormat::convert("RawReceiver errors %d on pcap fds %d (wlan %s)",get_n_receiver_errors(),i,rxInterfaces[i].c_str()));
               m_last_receiver_error_log=std::chrono::steady_clock::now();
             }
           }else{

@@ -84,6 +84,8 @@ struct WBRxStats{
   // in percent this gives a good overview over the current quality of the link.
   // What exactly counts as a "big gap" cannot be exactly defined.
   int curr_n_of_big_gaps=-1;
+  // should only increase when the wifi card disconnects / crashes
+  uint64_t n_receiver_likely_disconnect_errors=0;
 };
 static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
   std::stringstream ss;

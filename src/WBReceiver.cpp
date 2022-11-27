@@ -80,6 +80,9 @@ void WBReceiver::recalculate_statistics() {
       m_received_bitrate_calculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
   wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
   wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;
+  if(receiver){
+    wb_rx_stats.n_receiver_likely_disconnect_errors=receiver->get_n_receiver_errors();
+  }
   std::optional<FECRxStats> fec_stream_stats=std::nullopt;
   if(mFECDDecoder){
     fec_stream_stats=mFECDDecoder->stats;
