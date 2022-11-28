@@ -141,7 +141,7 @@ static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAnte
 static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pkthdr &hdr, const uint8_t *pkt,const bool fixup_rssi_rtl8812au) {
   int pktlen = hdr.caplen;
   //
-  RadiotapHelper::debugRadiotapHeader(pkt,pktlen);
+  //RadiotapHelper::debugRadiotapHeader(pkt,pktlen);
   // Copy the value of this flag once present and process it after the loop is done
   uint8_t tmpCopyOfIEEE80211_RADIOTAP_FLAGS = 0;
   //RadiotapHelper::debugRadiotapHeader(pkt, pktlen);
