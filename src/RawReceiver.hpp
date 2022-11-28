@@ -227,7 +227,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   }
   ss<<"\nAntsignals:";
   for(const auto& antsignal : radiotap_antsignals){
-    ss<<antsignal<<",";
+    ss<<(int)antsignal<<",";
   }
   std::cout<<ss.str();
   return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck};
