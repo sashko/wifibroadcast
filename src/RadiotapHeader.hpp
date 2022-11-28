@@ -298,10 +298,11 @@ static void debugRadiotapHeader(const uint8_t *pkt, int pktlen) {
     if (ret) {
       continue;
     }
+    const int curr_arg_size=iterator.this_arg_size;
     /* see if this argument is something we can use */
     switch (iterator.this_arg_index) {
       case IEEE80211_RADIOTAP_TSFT:
-        ss << "IEEE80211_RADIOTAP_TSFT\n";
+        ss << "IEEE80211_RADIOTAP_TSFT:"<<curr_arg_size<<"\n";
         break;
       case IEEE80211_RADIOTAP_FLAGS:
         //ss<<"IEEE80211_RADIOTAP_FLAGS\n";
@@ -314,7 +315,7 @@ static void debugRadiotapHeader(const uint8_t *pkt, int pktlen) {
         // This field	contains a single signed 8-bit value that indicates
         //	     the RF signal power at the	antenna, in decibels difference	from 	     1mW.
         int8_t value=*(int8_t *) iterator.this_arg;
-        ss << "IEEE80211_RADIOTAP_DBM_ANTSIGNAL:" << (int) value << "\n";
+        ss << "IEEE80211_RADIOTAP_DBM_ANTSIGNAL:" << (int) value << "dBm size:"<<curr_arg_size<<"\n";
       }
         break;
       case IEEE80211_RADIOTAP_ANTENNA:
