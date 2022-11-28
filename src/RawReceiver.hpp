@@ -149,6 +149,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   // With AR9271 I get 39 as length of the radio-tap header
   // With my internal laptop wifi chip I get 36 as length of the radio-tap header.
   int ret = ieee80211_radiotap_iterator_init(&iterator, (ieee80211_radiotap_header *) pkt, pktlen, NULL);
+  // weird, unfortunately it is not really documented / specified how raditap reporting dBm values with multiple antennas works
   // we store all values reported by IEEE80211_RADIOTAP_ANTENNA in here
   // ? there can be multiple ?
   std::vector<uint8_t> radiotap_antennas;
