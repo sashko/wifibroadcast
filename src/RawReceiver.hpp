@@ -153,7 +153,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   // ? there can be multiple ?
   std::vector<uint8_t> radiotap_antennas;
   // and all values reported by IEEE80211_RADIOTAP_DBM_ANTSIGNAL in here
-  std::vector<uint8_t> radiotap_antsignals;
+  std::vector<int8_t> radiotap_antsignals;
 
   uint8_t currentAntenna = 0;
   // not confirmed yet, but one pcap packet might include stats for multiple antennas
