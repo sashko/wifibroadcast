@@ -181,8 +181,9 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
         radiotap_antennas.push_back(iterator.this_arg[0]);
         break;
       case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
-        allAntennaValues.push_back({currentAntenna, *((int8_t *) iterator.this_arg)});
-        radiotap_antsignals.push_back(iterator.this_arg[0]);
+        const int8_t value=*(int8_t*)iterator.this_arg;
+        allAntennaValues.push_back({currentAntenna,value});
+        radiotap_antsignals.push_back(value);
       }
         break;
       case IEEE80211_RADIOTAP_FLAGS:
