@@ -166,22 +166,15 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
     }
     /* see if this argument is something we can use */
     switch (iterator.this_arg_index) {
-      /*case IEEE80211_RADIOTAP_RATE:
-          // radiotap "rate" u8 is in
-          // 500kbps units, eg, 0x02=1Mbps
-      {
-          uint8_t pkt_rate = (*(uint8_t*)(iterator.this_arg))/2;
-          int rateInMbps=pkt_rate*2;
-          <<"Packet rate is "<<rateInMbps<<"\n";
-      }
-          break;*/
       case IEEE80211_RADIOTAP_ANTENNA:
         // RADIOTAP_DBM_ANTSIGNAL should come directly afterwards
         currentAntenna = iterator.this_arg[0];
         radiotap_antennas.push_back(iterator.this_arg[0]);
         break;
       case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
-        const int8_t value=*(int8_t*)iterator.this_arg;
+        int8_t value;
+        std::memcpy(&value,iterator.this_arg,1);
+        //const int8_t value=*(int8_t*)iterator.this_arg;
         allAntennaValues.push_back({currentAntenna,value});
         radiotap_antsignals.push_back(value);
       }
