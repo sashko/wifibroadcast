@@ -152,9 +152,9 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   // weird, unfortunately it is not really documented / specified how raditap reporting dBm values with multiple antennas works
   // we store all values reported by IEEE80211_RADIOTAP_ANTENNA in here
   // ? there can be multiple ?
-  std::vector<uint8_t> radiotap_antennas;
+  //std::vector<uint8_t> radiotap_antennas;
   // and all values reported by IEEE80211_RADIOTAP_DBM_ANTSIGNAL in here
-  std::vector<int8_t> radiotap_antsignals;
+  //std::vector<int8_t> radiotap_antsignals;
 
   uint8_t currentAntenna = 0;
   // not confirmed yet, but one pcap packet might include stats for multiple antennas
@@ -169,14 +169,18 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
       case IEEE80211_RADIOTAP_ANTENNA:
         // RADIOTAP_DBM_ANTSIGNAL should come directly afterwards
         currentAntenna = iterator.this_arg[0];
-        radiotap_antennas.push_back(iterator.this_arg[0]);
+        //radiotap_antennas.push_back(iterator.this_arg[0]);
         break;
       case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
         int8_t value;
         std::memcpy(&value,iterator.this_arg,1);
         //const int8_t value=*(int8_t*)iterator.this_arg;
-        allAntennaValues.push_back({currentAntenna,value});
-        radiotap_antsignals.push_back(value);
+        // Dirty fix for rtl8812au: just throw out any positive values for now
+        // (since we are in the receiver sensitivity level here, anything >= makes zero sense
+        if(value<0){
+          allAntennaValues.push_back({currentAntenna,value});
+          //radiotap_antsignals.push_back(value);
+        }
       }
         break;
       case IEEE80211_RADIOTAP_FLAGS:
@@ -215,7 +219,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   const uint8_t *payload = pkt + Ieee80211Header::SIZE_BYTES;
   const std::size_t payloadSize = (std::size_t) pktlen - Ieee80211Header::SIZE_BYTES;
   //
-  std::stringstream ss;
+  /*std::stringstream ss;
   ss<<"Antennas:";
   for(const auto& antenna : radiotap_antennas){
     ss<<(int)antenna<<",";
@@ -224,7 +228,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   for(const auto& antsignal : radiotap_antsignals){
     ss<<(int)antsignal<<",";
   }
-  std::cout<<ss.str();
+  std::cout<<ss.str();*/
   return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck};
 }
 }
