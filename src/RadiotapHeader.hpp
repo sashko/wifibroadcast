@@ -288,67 +288,81 @@ static void debugRadiotapHeader(const uint8_t *pkt, int pktlen) {
     std::cout << "malformed radiotap header (init returns " << ret << ")\n";
     return;
   }
-  std::cout << "Debuging Radiotap Header \n";
+  std::stringstream ss;
+  ss << "Debuging Radiotap Header \n";
   while (ret == 0) {
     ret = ieee80211_radiotap_iterator_next(&iterator);
     if (iterator.is_radiotap_ns) {
-      //std::cout<<"Is in namespace\n";
+      //ss<<"Is in namespace\n";
     }
     if (ret) {
       continue;
     }
     /* see if this argument is something we can use */
     switch (iterator.this_arg_index) {
-      case IEEE80211_RADIOTAP_TSFT:std::cout << "IEEE80211_RADIOTAP_TSFT\n";
+      case IEEE80211_RADIOTAP_TSFT:
+        ss << "IEEE80211_RADIOTAP_TSFT\n";
         break;
       case IEEE80211_RADIOTAP_FLAGS:
-        //std::cout<<"IEEE80211_RADIOTAP_FLAGS\n";
-        std::cout << toStringRadiotapFlags(*iterator.this_arg) << "\n";
+        //ss<<"IEEE80211_RADIOTAP_FLAGS\n";
+        ss << toStringRadiotapFlags(*iterator.this_arg) << "\n";
         break;
-      case IEEE80211_RADIOTAP_RATE:std::cout << "IEEE80211_RADIOTAP_RATE:" << (int) (*iterator.this_arg) << "\n";
+      case IEEE80211_RADIOTAP_RATE:
+        ss << "IEEE80211_RADIOTAP_RATE:" << (int) (*iterator.this_arg) << "\n";
         break;
-      case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
-        std::cout << "IEEE80211_RADIOTAP_DBM_ANTSIGNAL:" << (int) (*iterator.this_arg) << "\n";
+      case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
+        // This field	contains a single signed 8-bit value that indicates
+        //	     the RF signal power at the	antenna, in decibels difference	from 	     1mW.
+        int8_t value=*(int8_t *) iterator.this_arg;
+        ss << "IEEE80211_RADIOTAP_DBM_ANTSIGNAL:" << (int) value << "\n";
+      }
         break;
-      case IEEE80211_RADIOTAP_ANTENNA:std::cout << "IEEE80211_RADIOTAP_ANTENNA:" << (int) (*iterator.this_arg) << "\n";
+      case IEEE80211_RADIOTAP_ANTENNA:
+        ss << "IEEE80211_RADIOTAP_ANTENNA:" << (int) (*iterator.this_arg) << "\n";
         break;
       case IEEE80211_RADIOTAP_CHANNEL:
-        //std::cout<<"IEEE80211_RADIOTAP_CHANNEL\n";
+        //ss<<"IEEE80211_RADIOTAP_CHANNEL\n";
       {
         auto *frequency = (uint16_t *) iterator.this_arg;
         auto *flags = (uint16_t *) &iterator.this_arg[2];
-        std::cout << toStringRadiotapChannel(*frequency, *flags) << " \n";
+        ss << toStringRadiotapChannel(*frequency, *flags) << " \n";
       }
         break;
       case IEEE80211_RADIOTAP_MCS:
-        //std::cout<<"IEEE80211_RADIOTAP_MCS\n";
+        //ss<<"IEEE80211_RADIOTAP_MCS\n";
       {
         uint8_t known = iterator.this_arg[0];
         uint8_t flags = iterator.this_arg[1];
         uint8_t mcs = iterator.this_arg[2];
-        std::cout << toStringRadiotapMCS(known, flags, mcs) << "\n";
+        ss << toStringRadiotapMCS(known, flags, mcs) << "\n";
       }
         break;
       case IEEE80211_RADIOTAP_RX_FLAGS:
-        //std::cout<<"IEEE80211_RADIOTAP_RX_FLAGS\n";
-        std::cout << toStringRadiotapRXFlags(*iterator.this_arg) << "\n";
+        //ss<<"IEEE80211_RADIOTAP_RX_FLAGS\n";
+        ss << toStringRadiotapRXFlags(*iterator.this_arg) << "\n";
         break;
       case IEEE80211_RADIOTAP_TX_FLAGS:
-        //std::cout<<"IEEE80211_RADIOTAP_TX_FLAGS\n";
-        std::cout << toStringRadiotapTXFlags(*iterator.this_arg) << "\n";
+        //ss<<"IEEE80211_RADIOTAP_TX_FLAGS\n";
+        ss << toStringRadiotapTXFlags(*iterator.this_arg) << "\n";
         break;
-      case IEEE80211_RADIOTAP_AMPDU_STATUS:std::cout << "EEE80211_RADIOTAP_AMPDU_STATUS\n";
+      case IEEE80211_RADIOTAP_AMPDU_STATUS:
+        ss << "EEE80211_RADIOTAP_AMPDU_STATUS\n";
         break;
-      case IEEE80211_RADIOTAP_VHT:std::cout << "IEEE80211_RADIOTAP_VHT\n";
+      case IEEE80211_RADIOTAP_VHT:
+        ss << "IEEE80211_RADIOTAP_VHT\n";
         break;
-      case IEEE80211_RADIOTAP_TIMESTAMP:std::cout << "IEEE80211_RADIOTAP_TIMESTAMP\n";
+      case IEEE80211_RADIOTAP_TIMESTAMP:
+        ss << "IEEE80211_RADIOTAP_TIMESTAMP\n";
         break;
-      case IEEE80211_RADIOTAP_LOCK_QUALITY:std::cout << "IEEE80211_RADIOTAP_LOCK_QUALITY\n";
+      case IEEE80211_RADIOTAP_LOCK_QUALITY:
+        ss << "IEEE80211_RADIOTAP_LOCK_QUALITY\n";
         break;
-      default:std::cout << "Unknown radiotap argument:" << (int) iterator.this_arg_index << "\n";
+      default:
+        ss << "Unknown radiotap argument:" << (int) iterator.this_arg_index << "\n";
         break;
     }
   }  /* while more rt headers */
+  std::cout<<ss.str();
 }
 }
 
