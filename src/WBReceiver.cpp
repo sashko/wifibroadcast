@@ -106,7 +106,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
 #endif
   wb_rx_stats.count_p_all++;
   // The radio capture header precedes the 802.11 header.
-  const auto parsedPacket = RawReceiverHelper::processReceivedPcapPacket(hdr, pkt);
+  const auto parsedPacket = RawReceiverHelper::processReceivedPcapPacket(hdr, pkt,options.rtl8812au_rssi_fixup);
   if (parsedPacket == std::nullopt) {
     m_console->warn("Discarding packet due to pcap parsing error!");
     wb_rx_stats.count_p_bad++;

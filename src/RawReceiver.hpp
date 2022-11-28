@@ -138,7 +138,7 @@ static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAnte
 // Returns std::nullopt if radiotap was unable to parse the header
 // else return the *parsed information*
 // To avoid confusion it might help to treat this method as a big black Box :)
-static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pkthdr &hdr, const uint8_t *pkt,const bool fixup_rssi_rtl8812au= true) {
+static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pkthdr &hdr, const uint8_t *pkt,const bool fixup_rssi_rtl8812au) {
   int pktlen = hdr.caplen;
   //
   RadiotapHelper::debugRadiotapHeader(pkt,pktlen);

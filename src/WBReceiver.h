@@ -39,6 +39,8 @@ struct ROptions {
   std::optional<std::string> keypair = std::nullopt;
   // RX queue depth (max n of blocks that can be buffered in the rx pipeline)
   unsigned int rx_queue_depth=10;
+  // dirty, rssi on rtl8812au is "bugged", this discards the first rssi value reported by the card.
+  bool rtl8812au_rssi_fixup=false;
 };
 
 class WBReceiver {
