@@ -149,6 +149,12 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   // With AR9271 I get 39 as length of the radio-tap header
   // With my internal laptop wifi chip I get 36 as length of the radio-tap header.
   int ret = ieee80211_radiotap_iterator_init(&iterator, (ieee80211_radiotap_header *) pkt, pktlen, NULL);
+  // we store all values reported by IEEE80211_RADIOTAP_ANTENNA in here
+  // ? there can be multiple ?
+  std::vector<uint8_t> radiotap_antennas;
+  // and all values reported by IEEE80211_RADIOTAP_DBM_ANTSIGNAL in here
+  std::vector<uint8_t> radiotap_antsignals;
+
   uint8_t currentAntenna = 0;
   // not confirmed yet, but one pcap packet might include stats for multiple antennas
   std::vector<RssiForAntenna> allAntennaValues;
@@ -171,10 +177,11 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
       case IEEE80211_RADIOTAP_ANTENNA:
         // RADIOTAP_DBM_ANTSIGNAL should come directly afterwards
         currentAntenna = iterator.this_arg[0];
+        radiotap_antennas.push_back(iterator.this_arg[0]);
         break;
       case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
         allAntennaValues.push_back({currentAntenna, *((int8_t *) iterator.this_arg)});
-
+        radiotap_antsignals.push_back(iterator.this_arg[0]);
       }
         break;
       case IEEE80211_RADIOTAP_FLAGS:
@@ -212,6 +219,17 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   const Ieee80211Header *ieee80211Header = (Ieee80211Header *) pkt;
   const uint8_t *payload = pkt + Ieee80211Header::SIZE_BYTES;
   const std::size_t payloadSize = (std::size_t) pktlen - Ieee80211Header::SIZE_BYTES;
+  //
+  std::stringstream ss;
+  ss<<"Antennas:";
+  for(const auto& antenna : radiotap_antennas){
+    ss<<(int)antenna<<",";
+  }
+  ss<<"\nAntsignals:";
+  for(const auto& antsignal : radiotap_antsignals){
+    ss<<antsignal<<",";
+  }
+  std::cout<<ss.str();
   return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck};
 }
 }
