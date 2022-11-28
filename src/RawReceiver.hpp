@@ -140,6 +140,8 @@ static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAnte
 // To avoid confusion it might help to treat this method as a big black Box :)
 static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pkthdr &hdr, const uint8_t *pkt) {
   int pktlen = hdr.caplen;
+  //
+  RadiotapHelper::debugRadiotapHeader(pkt,pktlen);
   // Copy the value of this flag once present and process it after the loop is done
   uint8_t tmpCopyOfIEEE80211_RADIOTAP_FLAGS = 0;
   //RadiotapHelper::debugRadiotapHeader(pkt, pktlen);
@@ -170,10 +172,13 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
         // RADIOTAP_DBM_ANTSIGNAL should come directly afterwards
         currentAntenna = iterator.this_arg[0];
         break;
-      case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:
+      case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
         allAntennaValues.push_back({currentAntenna, *((int8_t *) iterator.this_arg)});
+
+      }
         break;
-      case IEEE80211_RADIOTAP_FLAGS:tmpCopyOfIEEE80211_RADIOTAP_FLAGS = *(uint8_t *) (iterator.this_arg);
+      case IEEE80211_RADIOTAP_FLAGS:
+        tmpCopyOfIEEE80211_RADIOTAP_FLAGS = *(uint8_t *) (iterator.this_arg);
         break;
       default:break;
     }
