@@ -138,7 +138,7 @@ static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAnte
 // Returns std::nullopt if radiotap was unable to parse the header
 // else return the *parsed information*
 // To avoid confusion it might help to treat this method as a big black Box :)
-static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pkthdr &hdr, const uint8_t *pkt) {
+static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pkthdr &hdr, const uint8_t *pkt,const bool fixup_rssi_rtl8812au= true) {
   int pktlen = hdr.caplen;
   //
   RadiotapHelper::debugRadiotapHeader(pkt,pktlen);
@@ -155,6 +155,8 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   //std::vector<uint8_t> radiotap_antennas;
   // and all values reported by IEEE80211_RADIOTAP_DBM_ANTSIGNAL in here
   //std::vector<int8_t> radiotap_antsignals;
+  // for rtl8812au fixup
+  bool is_first_reported_antenna_value= true;
 
   uint8_t currentAntenna = 0;
   // not confirmed yet, but one pcap packet might include stats for multiple antennas
@@ -175,11 +177,15 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
         int8_t value;
         std::memcpy(&value,iterator.this_arg,1);
         //const int8_t value=*(int8_t*)iterator.this_arg;
-        // Dirty fix for rtl8812au: just throw out any positive values for now
-        // (since we are in the receiver sensitivity level here, anything >= makes zero sense
-        if(value<0){
+        if(fixup_rssi_rtl8812au){
+          // Dirty fixup for rtl8812au: Throw out the first reported value
+          if(is_first_reported_antenna_value){
+            is_first_reported_antenna_value= false;
+          }else{
+            allAntennaValues.push_back({currentAntenna,value});
+          }
+        }else{
           allAntennaValues.push_back({currentAntenna,value});
-          //radiotap_antsignals.push_back(value);
         }
       }
         break;
