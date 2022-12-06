@@ -241,7 +241,7 @@ FECTxStats WBTransmitter::get_latest_fec_stats() {
   return ret;
 }
 
-void WBTransmitter::tmp_tmp_send_frame_fragments(
+void WBTransmitter::tmp_feed_frame_fragments(
     const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments) {
   for(const auto& fragment:frame_fragments){
     feedPacket(fragment->data(),fragment->size());
