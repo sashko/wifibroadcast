@@ -65,7 +65,7 @@ class UDPWBTransmitter {
     return *wbTransmitter;
   }
   void tmp_send_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments){
-    wbTransmitter->tmp_tmp_send_frame_fragments(frame_fragments);
+    wbTransmitter->tmp_feed_frame_fragments(frame_fragments);
   }
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;

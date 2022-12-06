@@ -130,6 +130,20 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
   }
 }
 
+void WBTransmitter::tmp_feed_frame_fragments(
+    const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments) {
+  for(const auto& fragment:frame_fragments){
+    count_bytes_data_provided+=fragment->size();
+    const bool res=m_data_queue.try_enqueue(fragment);
+    if(!res){
+      m_n_dropped_packets++;
+      // TODO not exactly the correct solution - include dropped packets in the seq nr, such that they are included
+      // in the loss (perc) on the ground
+      m_curr_seq_nr++;
+    }
+  }
+}
+
 void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
   m_console->debug("Changing mcs index to {}",mcs_index);
   m_radioTapHeaderParams.mcs_index=mcs_index;
@@ -239,11 +253,4 @@ FECTxStats WBTransmitter::get_latest_fec_stats() {
     ret.curr_fec_block_length=m_fec_encoder->get_current_fec_blk_sizes();
   }
   return ret;
-}
-
-void WBTransmitter::tmp_feed_frame_fragments(
-    const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments) {
-  for(const auto& fragment:frame_fragments){
-    feedPacket(fragment->data(),fragment->size());
-  }
 }
