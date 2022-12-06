@@ -21,6 +21,7 @@
 #include <utility>
 #include "HelperSources/SchedulingHelper.hpp"
 #include "HelperSources/RTPHelper.hpp"
+#include "BlockSize.h"
 
 
 WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> opt_console) :
@@ -144,13 +145,6 @@ void WBTransmitter::feedPacket(std::shared_ptr<std::vector<uint8_t>> packet) {
 void WBTransmitter::tmp_feed_frame_fragments(
     const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments) {
   // TODO calculate fitting block size(s)
-  /*const auto n_fragments=frame_fragments.size();
-  const auto max_block_size=20;
-  if(n_fragments<=max_block_size){
-    // Block of size n_fragments
-  }else{
-    int tmp=n_fragments % max_block_size;
-  }*/
   for(const auto& fragment:frame_fragments){
     feedPacket(fragment);
   }
