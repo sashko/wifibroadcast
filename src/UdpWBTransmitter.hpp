@@ -64,6 +64,9 @@ class UDPWBTransmitter {
   WBTransmitter& get_wb_tx(){
     return *wbTransmitter;
   }
+  void tmp_send_data(const uint8_t* data, int data_len){
+    wbTransmitter->feedPacket(data,data_len);
+  }
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;
   std::unique_ptr<SocketHelper::UDPReceiver> udpReceiver;
