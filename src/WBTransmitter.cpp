@@ -130,17 +130,29 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
   }
 }
 
+void WBTransmitter::feedPacket(std::shared_ptr<std::vector<uint8_t>> packet) {
+  count_bytes_data_provided+=packet->size();
+  const bool res=m_data_queue.try_enqueue(packet);
+  if(!res){
+    m_n_dropped_packets++;
+    // TODO not exactly the correct solution - include dropped packets in the seq nr, such that they are included
+    // in the loss (perc) on the ground
+    m_curr_seq_nr++;
+  }
+}
+
 void WBTransmitter::tmp_feed_frame_fragments(
     const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments) {
+  // TODO calculate fitting block size(s)
+  /*const auto n_fragments=frame_fragments.size();
+  const auto max_block_size=20;
+  if(n_fragments<=max_block_size){
+    // Block of size n_fragments
+  }else{
+    int tmp=n_fragments % max_block_size;
+  }*/
   for(const auto& fragment:frame_fragments){
-    count_bytes_data_provided+=fragment->size();
-    const bool res=m_data_queue.try_enqueue(fragment);
-    if(!res){
-      m_n_dropped_packets++;
-      // TODO not exactly the correct solution - include dropped packets in the seq nr, such that they are included
-      // in the loss (perc) on the ground
-      m_curr_seq_nr++;
-    }
+    feedPacket(fragment);
   }
 }
 

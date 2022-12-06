@@ -94,6 +94,7 @@ class WBTransmitter {
    * @param size packet data buffer size
    */
   void feedPacket(const uint8_t *buf, size_t size);
+  void feedPacket(std::shared_ptr<std::vector<uint8_t>> packet);
   void tmp_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments);
   /**
   * Create a verbose string that gives debugging information about the current state of this wb receiver.
