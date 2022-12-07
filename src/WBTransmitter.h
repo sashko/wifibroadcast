@@ -49,8 +49,6 @@ struct TxFecOptions{
   // is not agnostic of the incoming data anymore.
   // Set to 1 or greater for a fixed block length. With a fixed block length, you do not need to set the rtp video codec
   int fixed_k =8;
-  // only active when fixed_k==0
-  FEC_VARIABLE_INPUT_TYPE variable_input_type =FEC_VARIABLE_INPUT_TYPE::RTP_H264;
 };
 
 // Note: The UDP port is missing as an option here, since it is not an option for WFBTransmitter anymore.
@@ -115,7 +113,7 @@ class WBTransmitter {
   // Change the fec k parameter. Note that we only support changing the fec_k
   // (fixed or variable) if fec is enabled, NOT switching between fec enabled / disabled
   // (Since we use FEC enabled for video and FEC disabled for telemetry anyways)
-  void update_fec_k(int fec_k,std::optional<FEC_VARIABLE_INPUT_TYPE> fec_variable_input_type);
+  void update_fec_k(int fec_k);
 
   std::size_t get_estimate_buffered_packets(){
     return m_data_queue.size_approx();
