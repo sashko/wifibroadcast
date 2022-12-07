@@ -20,7 +20,6 @@
 
 #include <utility>
 #include "HelperSources/SchedulingHelper.hpp"
-#include "HelperSources/RTPHelper.hpp"
 #include "BlockSize.h"
 
 
