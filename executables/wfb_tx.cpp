@@ -30,58 +30,45 @@ int main(int argc, char *const *argv) {
 
   while ((opt = getopt(argc, argv, "K:k:p:u:r:B:G:S:L:M:n:")) != -1) {
 	switch (opt) {
-	  case 'K':options.keypair = optarg;
-		break;
-	  case 'k':
-                options.enable_fec=true;
-                if (std::string(optarg) == std::string("h264")){
-                  options.tx_fec_options.fixed_k =0;
-                  options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::RTP_H264;
-                }else if(std::string(optarg) == std::string("h265")){
-                  options.tx_fec_options.fixed_k =0;
-                  options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::RTP_H265;
-                }else if(std::string(optarg) == std::string("mjpeg")){
-                  options.tx_fec_options.fixed_k =0;
-                  options.tx_fec_options.variable_input_type =FEC_VARIABLE_INPUT_TYPE::RTP_MJPEG;
-                }else{
-                  const auto fec_fixed_k=std::stoi(optarg);
-                  if(fec_fixed_k<=0){
-                    options.enable_fec= false;
-                  }else{
-                    options.tx_fec_options.fixed_k =fec_fixed_k;
-                  }
-                }
-		break;
-	  case 'p':
-                options.tx_fec_options.overhead_percentage = std::stoi(optarg);
-		break;
-	  case 'u':udp_port = std::stoi(optarg);
-		break;
-	  case 'r':options.radio_port = std::stoi(optarg);
-		break;
-	  case 'B':wifiParams.bandwidth = std::stoi(optarg);
-		break;
-	  case 'G':wifiParams.short_gi = (optarg[0] == 's' || optarg[0] == 'S');
-		break;
-	  case 'S':wifiParams.stbc = std::stoi(optarg);
-		break;
-	  case 'L':wifiParams.ldpc = std::stoi(optarg);
-		break;
-	  case 'M':wifiParams.mcs_index = std::stoi(optarg);
-		break;
-	  case 'n':
-		std::cerr << "-n is deprecated. Please read https://github.com/Consti10/wifibroadcast/blob/master/README.md \n";
-		exit(1);
-	  default: /* '?' */
-	  show_usage:
-		fprintf(stderr,
-				"Usage: %s [-K tx_key] [-k FEC_K or rtp video codec as string, <0: disable fec] [-p FEC_PERCENTAGE] [-u udp_port] [-r radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] interface \n",
-				argv[0]);
-		fprintf(stderr, "Radio MTU: %lu\n", (unsigned long)FEC_MAX_PAYLOAD_SIZE);
-		fprintf(stderr, "WFB version "
-						WFB_VERSION
-						"\n");
-		exit(1);
+          case 'K':options.keypair = optarg;
+            break;
+          case 'k':{
+            const auto fec_k=std::stoi(optarg);
+            if(fec_k>=0){
+              options.enable_fec= true;
+              options.tx_fec_options.fixed_k=fec_k;
+            }
+          }break;
+          case 'p':
+            options.tx_fec_options.overhead_percentage = std::stoi(optarg);
+            break;
+          case 'u':udp_port = std::stoi(optarg);
+            break;
+          case 'r':options.radio_port = std::stoi(optarg);
+            break;
+          case 'B':wifiParams.bandwidth = std::stoi(optarg);
+            break;
+          case 'G':wifiParams.short_gi = (optarg[0] == 's' || optarg[0] == 'S');
+            break;
+          case 'S':wifiParams.stbc = std::stoi(optarg);
+            break;
+          case 'L':wifiParams.ldpc = std::stoi(optarg);
+            break;
+          case 'M':wifiParams.mcs_index = std::stoi(optarg);
+            break;
+          case 'n':
+            std::cerr << "-n is deprecated. Please read https://github.com/Consti10/wifibroadcast/blob/master/README.md \n";
+            exit(1);
+          default: /* '?' */
+          show_usage:
+            fprintf(stderr,
+                    "Usage: %s [-K tx_key] [-k FEC_K or 0 for variable fec] [-p FEC_PERCENTAGE] [-u udp_port] [-r radio_port] [-B bandwidth] [-G guard_interval] [-S stbc] [-L ldpc] [-M mcs_index] interface \n",
+                    argv[0]);
+            fprintf(stderr, "Radio MTU: %lu\n", (unsigned long)FEC_MAX_PAYLOAD_SIZE);
+            fprintf(stderr, "WFB version "
+                    WFB_VERSION
+                            "\n");
+            exit(1);
 	}
   }
   if (optind >= argc) {
