@@ -224,7 +224,7 @@ void WBTransmitter::update_fec_k(int fec_k) {
     m_console->warn("Cannot update_fec_k, fec disabled");
     return;
   }
-  if(fec_k<0){
+  if(fec_k<0 || fec_k>MAX_N_P_FRAGMENTS_PER_BLOCK){
     m_console->warn("Invalid fec_k value {}",fec_k);
     return;
   }
