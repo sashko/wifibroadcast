@@ -93,7 +93,7 @@ class WBTransmitter {
    */
   void feedPacket(const uint8_t *buf, size_t size,std::optional<bool> end_block=std::nullopt);
   void feedPacket(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block);
-  void tmp_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments);
+  void tmp_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments,bool use_fixed_fec_instead=false);
   /**
   * Create a verbose string that gives debugging information about the current state of this wb receiver.
    * Since this one only reads, it is safe to call from any thread.

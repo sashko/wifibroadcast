@@ -148,14 +148,19 @@ void WBTransmitter::feedPacket(std::shared_ptr<std::vector<uint8_t>> packet,std:
 }
 
 void WBTransmitter::tmp_feed_frame_fragments(
-    const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments) {
-  // TODO calculate fitting block size(s)
+    const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments,bool use_fixed_fec_instead) {
+  // TODO calculate best fitting block size(s)
   for(int i=0;i<frame_fragments.size();i++){
+    std::optional<bool> end_block=std::nullopt;
     if(i==frame_fragments.size()-1){
-      feedPacket(frame_fragments[i],true);
+      end_block=true;
     }else{
-      feedPacket(frame_fragments[i],false);
+      end_block=false;
     }
+    if(use_fixed_fec_instead){
+      end_block=std::nullopt;
+    }
+    feedPacket(frame_fragments[i],end_block);
   }
 }
 
