@@ -10,7 +10,13 @@ By doing so I was able to reduce latency quite a lot (even though the fix was on
 write simple unit tests that don't require a wifi card.
 I also added some new features,listed:
 #### 1) variable block size:
-If you are transmitting h264,h265 or mjpeg video, automatically end a block with the end of each frame. This reduces latency and can increase resiliency against packet loss
+Allow different block size(s) on consecutive fec blocks in a data stream (in contrast to specifying the block size once at startup, but then not changing
+it in the same session).
+If you are transmitting h264,h265 or mjpeg video,each frame might consist of a varying number of rtp-fragments.
+Encoding each frame in one FEC block (or more than 1 FEC block if the n of sub-fragments in this frame is too high)
+Eliminates the issue of a possible stuck frame if FEC needs to be applied, and can increase resiliency against packet loss
+(since we now can do bigger blocks than before and the scenario where one block contains parts of the previous and current frame cannot happen anymore).
+In the future, we could also do things like protecting key frames more than other frames or similar.
 #### 2) disable FEC:
 For telemetry or RC data, FEC doesn't really make sense. By disabling FEC you get the same properties as "true UDP".
 #### 3) simplified settings:
