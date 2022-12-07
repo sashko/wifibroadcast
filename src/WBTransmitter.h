@@ -93,7 +93,7 @@ class WBTransmitter {
    * @param buf packet data buffer
    * @param size packet data buffer size
    */
-  void feedPacket(const uint8_t *buf, size_t size);
+  void feedPacket(const uint8_t *buf, size_t size,std::optional<bool> end_block=std::nullopt);
   void feedPacket(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block);
   void tmp_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments);
   /**

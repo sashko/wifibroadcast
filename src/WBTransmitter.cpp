@@ -119,12 +119,12 @@ std::string WBTransmitter::createDebugState() const {
   return ss.str();
 }
 
-void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
+void WBTransmitter::feedPacket(const uint8_t *buf, size_t size,std::optional<bool> end_block) {
   count_bytes_data_provided+=size;
   auto packet=std::make_shared<std::vector<uint8_t>>(buf,buf+size);
   auto item=std::make_shared<Item>();
   item->data=packet;
-  item->end_block=std::nullopt;
+  item->end_block=end_block;
   const bool res=m_data_queue.try_enqueue(item);
   if(!res){
     m_n_dropped_packets++;
@@ -194,26 +194,16 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size,std::optional<bo
   // this calls a callback internally
   if (kEnableFec) {
     if(end_block.has_value()){
+      // Variable FEC k (block size)
       m_fec_encoder->encodePacket(buf, size, end_block.value());
-    }else{
-      if (m_tx_fec_options.fixed_k == 0) {
-        // variable k
-        bool endBlock = false;
-        if (m_tx_fec_options.variable_input_type == FEC_VARIABLE_INPUT_TYPE::RTP_H264) {
-          endBlock = RTPLockup::h264_end_block(buf, size);
-        } else {
-          endBlock = RTPLockup::h265_end_block(buf, size);
-        }
-        m_fec_encoder->encodePacket(buf, size, endBlock);
-      } else {
-        // fixed k
-        m_fec_encoder->encodePacket(buf, size);
-      }
-      if (m_fec_encoder->resetOnOverflow()) {
-        // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
-        m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-        sendSessionKey();
-      }
+    }else {
+      // Fixed FEC k (block size)
+      m_fec_encoder->encodePacket(buf, size);
+    }
+    if (m_fec_encoder->resetOnOverflow()) {
+      // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
+      m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
+      sendSessionKey();
     }
   } else {
     m_fec_disabled_encoder->encodePacket(buf, size);
