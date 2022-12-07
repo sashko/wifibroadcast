@@ -41,7 +41,7 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
   m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   if (kEnableFec) {
     // for variable k we manually specify when to end the block, of course we cannot do more than what the FEC impl. supports
-    // and / or what the max compute allows (NOTE: exponentially with increasing length).
+    // and / or what the max compute allows (NOTE: compute increases exponentially with increasing length).
     const int kMax= options.tx_fec_options.fixed_k > 0 ? options.tx_fec_options.fixed_k : MAX_N_P_FRAGMENTS_PER_BLOCK;
     m_console->info("fec enabled, kMax:{}",kMax);
     m_fec_encoder = std::make_unique<FECEncoder>(kMax, options.tx_fec_options.overhead_percentage);
