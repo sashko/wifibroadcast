@@ -48,6 +48,7 @@ if(COMPILER_SUPPORTS_MAVX2)
         target_compile_options(wifibroadcast PRIVATE ${WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_X86})
         # I do not know why, but using target_compile_options seems to be not enough ...
         add_compile_options(${WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_X86})
+        target_compile_definitions(wifibroadcast PUBLIC WIFIBROADCAST_HAS_X86_AVX2)
     endif()
 endif()
 # NEON if supported and option WB_ENABLE_SIMD_OPTIMIZATIONS is true
@@ -58,6 +59,7 @@ if(COMPILER_SUPPORTS_NEON)
         target_compile_options(wifibroadcast PRIVATE ${WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_ARM})
         # I do not know why, but using target_compile_options seems to be not enough ...
         add_compile_options(${WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_ARM})
+        target_compile_definitions(wifibroadcast PUBLIC WIFIBROADCAST_HAS_ARM_NEON)
     endif()
 endif()
 ## FEC Optimizations end ---------------------------------

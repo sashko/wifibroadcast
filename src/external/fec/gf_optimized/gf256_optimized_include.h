@@ -30,7 +30,9 @@
 #endif
 
 //#define FEC_GF256_USE_X86_SSSE3
-//#define FEC_GF256_USE_ARM_NEON
+#ifdef WIFIBROADCAST_HAS_ARM_NEON
+#define FEC_GF256_USE_ARM_NEON
+#endif
 
 // include the optimized methods if enabled
 #ifdef FEC_GF256_USE_ARM_NEON
