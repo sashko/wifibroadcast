@@ -27,6 +27,7 @@ int main(int argc, char *const *argv) {
   RadiotapHeader::UserSelectableParams wifiParams{20, false, 0, false, 1};
 
   std::cout << "MAX_PAYLOAD_SIZE:" << FEC_MAX_PAYLOAD_SIZE << "\n";
+  print_optimization_method();
 
   while ((opt = getopt(argc, argv, "K:k:p:u:r:B:G:S:L:M:n:")) != -1) {
     switch (opt) {
