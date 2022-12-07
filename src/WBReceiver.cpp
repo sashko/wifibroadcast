@@ -237,6 +237,9 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
           const double loss_perc=static_cast<double>(x_n_missing_packets)/static_cast<double>(n_total_packets)*100.0;
           x_curr_packet_loss_perc=static_cast<int16_t>(std::lround(loss_perc));
           //m_console->debug("Packet loss:{} % {} %",x_curr_packet_loss_perc,loss_perc);
+        }else{
+          // We did not get any packets in the last x seconds
+          x_curr_packet_loss_perc=-1;
         }
         x_curr_n_of_big_gaps=x_n_big_gaps_since_last;
         x_n_big_gaps_since_last=0;
