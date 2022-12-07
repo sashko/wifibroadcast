@@ -122,7 +122,10 @@ std::string WBTransmitter::createDebugState() const {
 void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
   count_bytes_data_provided+=size;
   auto packet=std::make_shared<std::vector<uint8_t>>(buf,buf+size);
-  const bool res=m_data_queue.try_enqueue(packet);
+  auto item=std::make_shared<Item>();
+  item->data=packet;
+  item->end_block=std::nullopt;
+  const bool res=m_data_queue.try_enqueue(item);
   if(!res){
     m_n_dropped_packets++;
     // TODO not exactly the correct solution - include dropped packets in the seq nr, such that they are included
@@ -131,9 +134,12 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size) {
   }
 }
 
-void WBTransmitter::feedPacket(std::shared_ptr<std::vector<uint8_t>> packet) {
+void WBTransmitter::feedPacket(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block) {
   count_bytes_data_provided+=packet->size();
-  const bool res=m_data_queue.try_enqueue(packet);
+  auto item=std::make_shared<Item>();
+  item->data=packet;
+  item->end_block=end_block;
+  const bool res=m_data_queue.try_enqueue(item);
   if(!res){
     m_n_dropped_packets++;
     // TODO not exactly the correct solution - include dropped packets in the seq nr, such that they are included
@@ -145,8 +151,12 @@ void WBTransmitter::feedPacket(std::shared_ptr<std::vector<uint8_t>> packet) {
 void WBTransmitter::tmp_feed_frame_fragments(
     const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments) {
   // TODO calculate fitting block size(s)
-  for(const auto& fragment:frame_fragments){
-    feedPacket(fragment);
+  for(int i=0;i<frame_fragments.size();i++){
+    if(i==frame_fragments.size()-1){
+      feedPacket(frame_fragments[i],true);
+    }else{
+      feedPacket(frame_fragments[i],false);
+    }
   }
 }
 
@@ -161,15 +171,15 @@ void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
 void WBTransmitter::loop_process_data() {
   SchedulingHelper::setThreadParamsMaxRealtime();
   static constexpr std::int64_t timeout_usecs=100*1000;
-  std::shared_ptr<std::vector<uint8_t>> packet;
+  std::shared_ptr<Item> packet;
   while (m_process_data_thread_run){
     if(m_data_queue.wait_dequeue_timed(packet,timeout_usecs)){
-      feedPacket2(packet->data(),packet->size());
+      feedPacket2(packet->data->data(),packet->data->size(),packet->end_block);
     }
   }
 }
 
-void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
+void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size,std::optional<bool> end_block) {
   if (size <= 0 || size > FEC_MAX_PAYLOAD_SIZE) {
     m_console->warn("Fed packet with incompatible size:",size);
     return;
@@ -183,23 +193,27 @@ void WBTransmitter::feedPacket2(const uint8_t *buf, size_t size) {
   }
   // this calls a callback internally
   if (kEnableFec) {
-    if (m_tx_fec_options.fixed_k == 0) {
-      // variable k
-      bool endBlock = false;
-      if (m_tx_fec_options.variable_input_type == FEC_VARIABLE_INPUT_TYPE::RTP_H264) {
-        endBlock = RTPLockup::h264_end_block(buf, size);
+    if(end_block.has_value()){
+      m_fec_encoder->encodePacket(buf, size, end_block.value());
+    }else{
+      if (m_tx_fec_options.fixed_k == 0) {
+        // variable k
+        bool endBlock = false;
+        if (m_tx_fec_options.variable_input_type == FEC_VARIABLE_INPUT_TYPE::RTP_H264) {
+          endBlock = RTPLockup::h264_end_block(buf, size);
+        } else {
+          endBlock = RTPLockup::h265_end_block(buf, size);
+        }
+        m_fec_encoder->encodePacket(buf, size, endBlock);
       } else {
-        endBlock = RTPLockup::h265_end_block(buf, size);
+        // fixed k
+        m_fec_encoder->encodePacket(buf, size);
       }
-      m_fec_encoder->encodePacket(buf, size, endBlock);
-    } else {
-      // fixed k
-      m_fec_encoder->encodePacket(buf, size);
-    }
-    if (m_fec_encoder->resetOnOverflow()) {
-      // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
-      m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-      sendSessionKey();
+      if (m_fec_encoder->resetOnOverflow()) {
+        // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways
+        m_encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
+        sendSessionKey();
+      }
     }
   } else {
     m_fec_disabled_encoder->encodePacket(buf, size);

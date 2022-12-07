@@ -94,7 +94,7 @@ class WBTransmitter {
    * @param size packet data buffer size
    */
   void feedPacket(const uint8_t *buf, size_t size);
-  void feedPacket(std::shared_ptr<std::vector<uint8_t>> packet);
+  void feedPacket(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block);
   void tmp_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments);
   /**
   * Create a verbose string that gives debugging information about the current state of this wb receiver.
@@ -177,13 +177,17 @@ class WBTransmitter {
   std::atomic<uint16_t> m_curr_seq_nr=0;
   uint64_t m_n_dropped_packets=0;
  private:
+  struct Item{
+    std::optional<bool> end_block;
+    std::shared_ptr<std::vector<uint8_t>> data;
+  };
   // extra data queue, to smooth out input from udp port AND more importantly, have a queue we can reason about
   // in contrast to the linux udp socket buffer, which we cannot get any information about.
-  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<std::vector<uint8_t>>> m_data_queue{128};
+  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<Item>> m_data_queue{128};
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;
   void loop_process_data();
-  void feedPacket2(const uint8_t *buf, size_t size);
+  void feedPacket2(const uint8_t *buf, size_t size,std::optional<bool> end_block);
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_TRANSMITTER_H
