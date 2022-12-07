@@ -19,6 +19,7 @@ int main(int argc, char *const *argv) {
   ROptions options{};
   int client_udp_port = 5600;
   std::string client_addr = "127.0.0.1";// default to localhost
+  print_optimization_method();
 
   while ((opt = getopt(argc, argv, "K:c:u:r:n:k:")) != -1) {
     switch (opt) {
