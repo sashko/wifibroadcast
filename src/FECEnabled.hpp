@@ -656,13 +656,13 @@ class FECDecoder {
       if (block.allPrimaryFragmentsCanBeRecovered()) {
         const auto before_encode=std::chrono::steady_clock::now();
         stats.count_fragments_recovered += block.reconstructAllMissingData();
+        stats.count_blocks_recovered++;
         m_fec_decode_time.add(std::chrono::steady_clock::now()-before_encode);
         if(m_fec_decode_time.get_delta_since_last_reset()>std::chrono::seconds(1)){
           //wifibroadcast::log::get_default()->debug("FEC decode took {}",m_fec_decode_time.getAvgReadable());
           stats.curr_fec_decode_time=m_fec_decode_time.getMinMaxAvg();
           m_fec_decode_time.reset();
         }
-        stats.count_blocks_recovered++;
         forwardMissingPrimaryFragmentsIfAvailable(block);
         assert(block.allPrimaryFragmentsHaveBeenForwarded());
         // remove block when done with it
