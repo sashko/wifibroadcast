@@ -167,7 +167,7 @@ void WBTransmitter::tmp_feed_frame_fragments(
 void WBTransmitter::tmp_split_and_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments,const int max_block_size) {
   auto blocks=blocksize::split_frame_if_needed(frame_fragments,max_block_size);
   for(auto& block:blocks){
-    m_console->debug("Has {} blocks",block.size());
+    m_console->debug("max {} Has {} blocks",max_block_size,block.size());
     tmp_feed_frame_fragments(block, false);
   }
 }
