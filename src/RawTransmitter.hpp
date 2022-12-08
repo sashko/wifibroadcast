@@ -91,6 +91,7 @@ static pcap_t *openTxWithPcap(const std::string &wlan,bool do_not_set_timeout) {
   if (pcap_set_snaplen(p, 4096) != 0) wifibroadcast::log::get_default()->warn("set_snaplen failed");
   if (pcap_set_promisc(p, 1) != 0) wifibroadcast::log::get_default()->warn("set_promisc failed");
   //if (pcap_set_rfmon(p, 1) !=0) wifibroadcast::log::get_default()->warn("set_rfmon failed";
+  // Used to be -1 at some point, which is undefined behaviour. -1 can cause issues on older kernels, according to @Pete
   const int timeout_ms=10;
   if (pcap_set_timeout(p, timeout_ms) != 0) wifibroadcast::log::get_default()->warn("set_timeout {} failed",timeout_ms);
   //if (pcap_set_buffer_size(p, 2048) !=0) wifibroadcast::log::get_default()->warn("set_buffer_size failed";
