@@ -82,7 +82,7 @@ createRadiotapPacket(const RadiotapHeader &radiotapHeader,
 }
 
 // copy paste from svpcom
-static pcap_t *openTxWithPcap(const std::string &wlan,bool do_not_set_timeout) {
+static pcap_t *openTxWithPcap(const std::string &wlan) {
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_t *p = pcap_create(wlan.c_str(), errbuf);
   if (p == nullptr) {
@@ -121,8 +121,8 @@ class IRawPacketInjector {
 // that properly opens / closes the interface on construction/destruction
 class PcapTransmitter : public IRawPacketInjector {
  public:
-  explicit PcapTransmitter(const std::string &wlan,bool do_not_set_timeout) {
-    ppcap = RawTransmitterHelper::openTxWithPcap(wlan,do_not_set_timeout);
+  explicit PcapTransmitter(const std::string &wlan) {
+    ppcap = RawTransmitterHelper::openTxWithPcap(wlan);
   }
   ~PcapTransmitter() {
     pcap_close(ppcap);
