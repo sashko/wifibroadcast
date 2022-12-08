@@ -19,9 +19,9 @@
 #include "WBTransmitter.h"
 
 #include <utility>
-#include "HelperSources/SchedulingHelper.hpp"
-#include "BlockSize.h"
 
+#include "BlockSizeHelper.hpp"
+#include "HelperSources/SchedulingHelper.hpp"
 
 WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeaderParams, TOptions options1,std::shared_ptr<spdlog::logger> opt_console) :
     options(std::move(options1)),
@@ -163,6 +163,15 @@ void WBTransmitter::tmp_feed_frame_fragments(
     feedPacket(frame_fragments[i],end_block);
   }
 }
+
+void WBTransmitter::tmp_split_and_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments,const int max_block_size) {
+  auto blocks=blocksize::split_frame_if_needed(frame_fragments,max_block_size);
+  for(auto& block:blocks){
+    m_console->debug("Has {} blocks",block.size());
+    tmp_feed_frame_fragments(block, false);
+  }
+}
+
 
 void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
   m_console->debug("Changing mcs index to {}",mcs_index);
