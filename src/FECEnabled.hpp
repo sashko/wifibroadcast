@@ -654,6 +654,7 @@ class FECDecoder {
         return;
       }
       if (block.allPrimaryFragmentsCanBeRecovered()) {
+        // apply fec for this block
         const auto before_encode=std::chrono::steady_clock::now();
         stats.count_fragments_recovered += block.reconstructAllMissingData();
         stats.count_blocks_recovered++;
