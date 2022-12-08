@@ -82,7 +82,7 @@ createRadiotapPacket(const RadiotapHeader &radiotapHeader,
 }
 
 // copy paste from svpcom
-static pcap_t *openTxWithPcap(const std::string &wlan) {
+static pcap_t *openTxWithPcap(const std::string &wlan,bool do_not_set_timeout) {
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_t *p = pcap_create(wlan.c_str(), errbuf);
   if (p == nullptr) {
@@ -91,7 +91,8 @@ static pcap_t *openTxWithPcap(const std::string &wlan) {
   if (pcap_set_snaplen(p, 4096) != 0) wifibroadcast::log::get_default()->warn("set_snaplen failed");
   if (pcap_set_promisc(p, 1) != 0) wifibroadcast::log::get_default()->warn("set_promisc failed");
   //if (pcap_set_rfmon(p, 1) !=0) wifibroadcast::log::get_default()->warn("set_rfmon failed";
-  if (pcap_set_timeout(p, -1) != 0) wifibroadcast::log::get_default()->warn("set_timeout failed");
+  const int timeout_ms=10;
+  if (pcap_set_timeout(p, timeout_ms) != 0) wifibroadcast::log::get_default()->warn("set_timeout {} failed",timeout_ms);
   //if (pcap_set_buffer_size(p, 2048) !=0) wifibroadcast::log::get_default()->warn("set_buffer_size failed";
   // NOTE: Immediate not needed on TX
   if (pcap_activate(p) != 0){
@@ -119,8 +120,8 @@ class IRawPacketInjector {
 // that properly opens / closes the interface on construction/destruction
 class PcapTransmitter : public IRawPacketInjector {
  public:
-  explicit PcapTransmitter(const std::string &wlan) {
-    ppcap = RawTransmitterHelper::openTxWithPcap(wlan);
+  explicit PcapTransmitter(const std::string &wlan,bool do_not_set_timeout) {
+    ppcap = RawTransmitterHelper::openTxWithPcap(wlan,do_not_set_timeout);
   }
   ~PcapTransmitter() {
     pcap_close(ppcap);
