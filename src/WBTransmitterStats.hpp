@@ -2,8 +2,8 @@
 // Created by consti10 on 26.11.22.
 //
 
-#ifndef WIFIBROADCAST_SRC_WBTRANSMITTERSTATS_H_
-#define WIFIBROADCAST_SRC_WBTRANSMITTERSTATS_H_
+#ifndef WIFIBROADCAST_SRC_WBTRANSMITTERSTATS_HPP_
+#define WIFIBROADCAST_SRC_WBTRANSMITTERSTATS_HPP_
 
 struct WBTxStats{
   int64_t n_injected_packets;
@@ -25,4 +25,4 @@ struct FECTxStats{
   MinMaxAvg<uint16_t> curr_fec_block_length{};
 };
 
-#endif  // WIFIBROADCAST_SRC_WBTRANSMITTERSTATS_H_
+#endif  // WIFIBROADCAST_SRC_WBTRANSMITTERSTATS_HPP_

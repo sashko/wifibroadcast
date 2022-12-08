@@ -32,7 +32,7 @@
 #include "wifibroadcast.hpp"
 //#include <atomic>
 #include "../readerwriterqueue/readerwritercircularbuffer.h"
-#include "WBTransmitterStats.h"
+#include "WBTransmitterStats.hpp"
 
 // dynamic fec block size, NONE = use fixed k value
 enum class FEC_VARIABLE_INPUT_TYPE {RTP_H264, RTP_H265, RTP_MJPEG };
