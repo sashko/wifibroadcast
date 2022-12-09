@@ -66,10 +66,17 @@ class UDPWBReceiver {
   WBReceiver& get_wb_rx(){
     return *wbReceiver;
   }
+  void tmp_register_cb(SocketHelper::UDPReceiver::OUTPUT_DATA_CALLBACK cb){
+    m_cb=cb;
+  }
+  SocketHelper::UDPReceiver::OUTPUT_DATA_CALLBACK m_cb;
  private:
   // forwards the data to all registered udp forwarder instances.
   void onNewData(const uint8_t *payload, const std::size_t payloadSize) {
     udpMultiForwarder->forwardPacketViaUDP(payload, payloadSize);
+    if(m_cb){
+      m_cb(payload,payloadSize);
+    }
   }
   std::unique_ptr<SocketHelper::UDPMultiForwarder> udpMultiForwarder;
   std::unique_ptr<WBReceiver> wbReceiver;
