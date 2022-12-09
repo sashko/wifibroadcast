@@ -80,4 +80,23 @@ class UDPWBReceiver {
   bool _anyDataReceived=false;
 };
 
+// Tmp, dirty
+class AsyncWBReceiver : public WBReceiver{
+ public:
+  AsyncWBReceiver(ROptions options1,WBReceiver::OUTPUT_DATA_CALLBACK cb): WBReceiver(options1,cb){
+  }
+  void start_async(){
+    backgroundThread = std::make_unique<std::thread>(&AsyncWBReceiver::x_loop, this);
+  }
+  void stop_async(){
+    WBReceiver::stop_looping();
+    backgroundThread->join();
+  }
+  void x_loop(){
+    WBReceiver::loop();
+  }
+ private:
+  std::unique_ptr<std::thread> backgroundThread;
+};
+
 #endif  // WIFIBROADCAST_SRC_UDPWBRECEIVER_H_
