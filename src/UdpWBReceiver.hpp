@@ -83,14 +83,19 @@ class UDPWBReceiver {
 // Tmp, dirty
 class AsyncWBReceiver : public WBReceiver{
  public:
-  AsyncWBReceiver(ROptions options1,WBReceiver::OUTPUT_DATA_CALLBACK cb): WBReceiver(options1,cb){
+  AsyncWBReceiver(ROptions options1,WBReceiver::OUTPUT_DATA_CALLBACK cb): WBReceiver(std::move(options1),std::move(cb)){
+  }
+  ~AsyncWBReceiver(){
+    stop_async();
   }
   void start_async(){
     backgroundThread = std::make_unique<std::thread>(&AsyncWBReceiver::x_loop, this);
   }
   void stop_async(){
     WBReceiver::stop_looping();
-    backgroundThread->join();
+    if(backgroundThread){
+      backgroundThread->join();
+    }
   }
   void x_loop(){
     WBReceiver::loop();
