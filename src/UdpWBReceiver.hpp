@@ -54,6 +54,9 @@ class UDPWBReceiver {
   void removeForwarder(std::string client_addr, int client_udp_port) {
     udpMultiForwarder->removeForwarder(client_addr, client_udp_port);
   }
+  [[nodiscard]] bool anyDataReceived()const{
+    return _anyDataReceived;
+  }
   WBReceiver& get_wb_rx(){
     return *wbReceiver;
   }
