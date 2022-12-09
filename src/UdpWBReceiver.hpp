@@ -54,15 +54,6 @@ class UDPWBReceiver {
   void removeForwarder(std::string client_addr, int client_udp_port) {
     udpMultiForwarder->removeForwarder(client_addr, client_udp_port);
   }
-  [[nodiscard]] std::string createDebug() const {
-    return wbReceiver->createDebugState();
-  }
-  [[nodiscard]] bool anyDataReceived()const{
-    return _anyDataReceived;
-  }
-  [[nodiscard]] WBReceiverStats get_latest_stats()const{
-    return wbReceiver->get_latest_stats();
-  }
   WBReceiver& get_wb_rx(){
     return *wbReceiver;
   }

@@ -86,7 +86,7 @@ int main(int argc, char *const *argv) {
     UDPWBTransmitter udpwbTransmitter{wifiParams, options, SocketHelper::ADDRESS_LOCALHOST, udp_port};
     udpwbTransmitter.runInBackground();
     while (true){
-      std::cout << udpwbTransmitter.createDebug();
+      std::cout << udpwbTransmitter.get_wb_tx().createDebugState();
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   } catch (std::runtime_error &e) {

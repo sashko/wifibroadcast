@@ -48,19 +48,6 @@ class UDPWBTransmitter {
   void stopBackground(){
     udpReceiver->stopBackground();
   }
-  [[nodiscard]] std::string createDebug() const {
-    return wbTransmitter->createDebugState();
-  }
-  // temporary
-  void update_mcs_index(uint8_t mcs_index){
-    wbTransmitter->update_mcs_index(mcs_index);
-  }
-  WBTxStats get_latest_stats(){
-    return wbTransmitter->get_latest_stats();
-  }
-  std::size_t get_estimate_buffered_packets(){
-    return wbTransmitter->get_estimate_buffered_packets();
-  }
   WBTransmitter& get_wb_tx(){
     return *wbTransmitter;
   }

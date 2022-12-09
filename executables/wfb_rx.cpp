@@ -65,7 +65,7 @@ int main(int argc, char *const *argv) {
     UDPWBReceiver udpwbReceiver{options, client_addr, client_udp_port};
     udpwbReceiver.runInBackground();
     while (true){
-      std::cout << udpwbReceiver.createDebug();
+      std::cout << udpwbReceiver.get_wb_rx().createDebugState();
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   } catch (std::runtime_error &e) {
