@@ -81,6 +81,8 @@ class UDPWBReceiver {
 };
 
 // Tmp, dirty
+// Just a quick wrapper around WBReceiver that runs in creates its own thread to pull data
+// To make migration from UDP to callbacks easier in OpenHD
 class AsyncWBReceiver : public WBReceiver{
  public:
   AsyncWBReceiver(ROptions options1,WBReceiver::OUTPUT_DATA_CALLBACK cb): WBReceiver(std::move(options1),std::move(cb)){
