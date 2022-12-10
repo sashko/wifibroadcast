@@ -80,6 +80,10 @@ class WBReceiver {
    * Thread-safe and guaranteed to not block for a significant amount of time
    */
   WBReceiverStats get_latest_stats();
+  // used by the scan channels feature
+  void reset_count_p_decryption_ok(){
+    wb_rx_stats.count_p_decryption_ok=0;
+  }
  private:
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::shared_ptr<spdlog::logger> m_console;
