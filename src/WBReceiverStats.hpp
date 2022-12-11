@@ -6,6 +6,7 @@
 #define WIFIBROADCAST_OPENHDSTATISTICSWRITER_H
 
 #include <cstdint>
+#include <optional>
 
 #include "HelperSources/TimeHelper.hpp"
 
