@@ -87,6 +87,12 @@ class WBReceiver {
   void reset_count_p_all(){
     wb_rx_stats.count_p_all=0;
   }
+  void reset_all_count_p_stats(){
+    wb_rx_stats.count_p_all=0;
+    wb_rx_stats.count_p_bad=0;
+    wb_rx_stats.count_p_decryption_err=0;
+    wb_rx_stats.count_p_decryption_ok=0;
+  }
  private:
   const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::shared_ptr<spdlog::logger> m_console;
