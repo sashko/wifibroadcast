@@ -75,11 +75,11 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
   switch (link_encap) {
     case DLT_PRISM_HEADER:
       wifibroadcast::log::get_default()->debug("{} has DLT_PRISM_HEADER Encap",wlan);
-      program = StringFormat::convert("!(radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x)", radio_port);
+      program = StringFormat::convert("radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x", radio_port);
       break;
     case DLT_IEEE802_11_RADIO:
       wifibroadcast::log::get_default()->debug("{} has DLT_IEEE802_11_RADIO Encap",wlan);
-      program = StringFormat::convert("!(ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x)", radio_port);
+      program = StringFormat::convert("ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x", radio_port);
       break;
     default:{
       wifibroadcast::log::get_default()->error("unknown encapsulation on {}", wlan.c_str());
