@@ -398,7 +398,7 @@ class MultiRxPcapReceiver {
             // limit logging here
             const auto elapsed=std::chrono::steady_clock::now()-m_last_receiver_error_log;
             if(elapsed>std::chrono::seconds(1)){
-              wifibroadcast::log::get_default()->warn(StringFormat::convert("RawReceiver errors %d on pcap fds %d (wlan %s)",get_n_receiver_errors(),i,rxInterfaces[i].c_str()));
+              wifibroadcast::log::get_default()->warn("RawReceiver errors {} on pcap fds {} (wlan {})",get_n_receiver_errors(),i,rxInterfaces[i]);
               m_last_receiver_error_log=std::chrono::steady_clock::now();
             }
           }else{
