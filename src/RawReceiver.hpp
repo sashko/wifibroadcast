@@ -411,11 +411,7 @@ class MultiRxPcapReceiver {
     }else{
       ss<<"Assigned radio_port:"<<m_options.radio_port;
     }
-    ss << " Assigned WLAN(s):[";
-    for (const auto &s: m_options.rxInterfaces) {
-      ss << s << ",";
-    }
-    ss << "]";
+    ss<<" Assigned WLAN(s):"<<StringHelper::string_vec_as_string(m_options.rxInterfaces);
     ss << " LOG_INTERVAL(ms)" << (int) m_options.log_interval.count();
     wifibroadcast::log::get_default()->debug(ss.str());
 

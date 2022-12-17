@@ -19,7 +19,7 @@ ForeignPacketsReceiver::ForeignPacketsReceiver(std::vector<std::string> wlans,st
   options.logCallback=cb2;
   options.log_interval=std::chrono::milliseconds(100);
   options.radio_port=-1;
-  options.excluded_radio_ports=openhd_radio_ports;
+  options.excluded_radio_ports=m_openhd_radio_ports;
   m_receiver=std::make_unique<MultiRxPcapReceiver>(options);
   m_receiver->loop();
   m_thread=std::make_unique<std::thread>(&ForeignPacketsReceiver::m_loop, this);

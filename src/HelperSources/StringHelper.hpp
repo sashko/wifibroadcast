@@ -23,6 +23,16 @@ class StringHelper {
     return ss.str();
   }
 
+  static std::string string_vec_as_string(const std::vector<std::string>& v){
+    std::stringstream ss;
+    ss << "[";
+    for (const auto i: v) {
+      ss << i << ",";
+    }
+    ss << "]";
+    return ss.str();
+  }
+
   template<typename T, std::size_t S>
   static std::string arrayAsString(const std::array<T, S> &a) {
     std::stringstream ss;
