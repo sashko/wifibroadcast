@@ -44,6 +44,10 @@ void ForeignPacketsReceiver::on_foreign_packet(const uint8_t wlan_idx,const pcap
   }
   m_n_foreign_packets++;
   m_n_foreign_bytes+=static_cast<int64_t>(parsedPacket->payloadSize);
+  Stats new_stats{};
+  new_stats.curr_received_pps=static_cast<int>(m_foreign_packets_pps_calc.get_last_or_recalculate(m_n_foreign_packets,std::chrono::seconds(1)));
+  new_stats.curr_received_bps=static_cast<int>(m_foreign_packets_bps_calc.get_last_or_recalculate(m_n_foreign_bytes,std::chrono::seconds(1)));
+  m_curr_stats=new_stats;
 }
 
 void ForeignPacketsReceiver::m_loop() {
@@ -51,8 +55,5 @@ void ForeignPacketsReceiver::m_loop() {
 }
 
 ForeignPacketsReceiver::Stats ForeignPacketsReceiver::get_current_stats() {
-  Stats ret{};
-  ret.curr_received_pps=static_cast<int>(m_foreign_packets_pps_calc.get_last_or_recalculate(m_n_foreign_packets,std::chrono::seconds(1)));
-  ret.curr_received_bps=static_cast<int>(m_foreign_packets_bps_calc.get_last_or_recalculate(m_n_foreign_bytes,std::chrono::seconds(1)));
-  return ret;
+  return m_curr_stats;
 }
