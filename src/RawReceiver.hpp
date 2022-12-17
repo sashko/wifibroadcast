@@ -119,10 +119,10 @@ static void set_pcap_filer2(const std::string &wlan,pcap_t* ppcap,const std::vec
 // copy paste from svpcom
 // I think this one opens the rx interface with pcap and then sets a filter such that only packets pass through for the selected radio port
 static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
-  pcap_t *ppcap;
+  pcap_t *ppcap= nullptr;
   char errbuf[PCAP_ERRBUF_SIZE];
   ppcap = pcap_create(wlan.c_str(), errbuf);
-  if (ppcap == NULL) {
+  if (ppcap == nullptr) {
     wifibroadcast::log::get_default()->error("Unable to open interface {} in pcap: {}", wlan.c_str(), errbuf);
   }
   iteratePcapTimestamps(ppcap);
