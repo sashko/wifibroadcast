@@ -47,26 +47,19 @@ static void iteratePcapTimestamps(pcap_t *ppcap) {
 
 
 static std::string create_program_everything_except_excluded(const std::string &wlan,const int link_encap,const std::vector<int>& exclued_radio_ports){
+  assert(link_encap==DLT_PRISM_HEADER || link_encap==DLT_IEEE802_11_RADIO);
   std::stringstream ss;
   ss<<"!(";
-  switch (link_encap) {
-    case DLT_PRISM_HEADER:{
-      assert(true);
+  bool last=false;
+  for(int i=0;i<exclued_radio_ports.size();i++){
+    last = (i==exclued_radio_ports.size()-1);
+    if(link_encap==DLT_PRISM_HEADER){
+      ss<<StringFormat::convert("(radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x)",exclued_radio_ports.at(i));
+    }else{
+      ss<<StringFormat::convert("(ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x)",exclued_radio_ports.at(i));
     }
-    break;
-    case DLT_IEEE802_11_RADIO:{
-      bool last=false;
-      for(int i=0;i<exclued_radio_ports.size();i++){
-        last = (i==exclued_radio_ports.size()-1);
-        ss<<StringFormat::convert("(ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x)",exclued_radio_ports.at(i));
-        if(!last){
-          ss<<" || ";
-        }
-      }
-    }
-    break;
-    default:{
-      assert(true);
+    if(!last){
+      ss<<" || ";
     }
   }
   ss<<")";
@@ -109,6 +102,7 @@ static void set_pcap_filer2(const std::string &wlan,pcap_t* ppcap,const std::vec
   const int link_encap = pcap_datalink(ppcap);
   struct bpf_program bpfprogram{};
   const std::string program= create_program_everything_except_excluded(wlan,link_encap,exclued_radio_ports);
+  wifibroadcast::log::get_default()->debug("Program [{}]",program);
   if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
     wifibroadcast::log::get_default()->error("Unable to compile [{}] {}", program.c_str(), pcap_geterr(ppcap));
   }
