@@ -405,7 +405,13 @@ class MultiRxPcapReceiver {
     mReceiverFDs.resize(N_RECEIVERS);
     memset(mReceiverFDs.data(), '\0', mReceiverFDs.size() * sizeof(pollfd));
     std::stringstream ss;
-    ss << "MultiRxPcapReceiver" << " Assigned ID: " << m_options.radio_port << " Assigned WLAN(s):[";
+    ss << "MultiRxPcapReceiver ";
+    if(m_options.radio_port==-1){
+      ss<<"Excluded radio_ports:"<<m_options.excluded_radio_ports.size();
+    }else{
+      ss<<"Assigned radio_port:"<<m_options.radio_port;
+    }
+    ss << " Assigned WLAN(s):[";
     for (const auto &s: m_options.rxInterfaces) {
       ss << s << ",";
     }
