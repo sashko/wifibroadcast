@@ -9,6 +9,7 @@
 #include "HelperSources/TimeHelper.hpp"
 #include "Ieee80211Header.hpp"
 #include "RadiotapHeader.hpp"
+#include "wifibroadcast-spdlog.h"
 
 #include <functional>
 #include <unordered_map>
@@ -40,6 +41,81 @@ static void iteratePcapTimestamps(pcap_t *ppcap) {
   }
   pcap_free_tstamp_types(availableTimestamps);
 }
+
+
+static std::string create_program_everything_except_excluded(const std::string &wlan,const int link_encap,const std::vector<int>& exclued_radio_ports){
+  std::stringstream ss;
+  ss<<"!(";
+  switch (link_encap) {
+    case DLT_PRISM_HEADER:{
+      assert(true);
+    }
+    break;
+    case DLT_IEEE802_11_RADIO:{
+      bool last=false;
+      for(int i=0;i<exclued_radio_ports.size();i++){
+        last = (i==exclued_radio_ports.size()-1);
+        ss<<StringFormat::convert("(ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x)",exclued_radio_ports.at(i));
+        if(!last){
+          ss<<" || ";
+        }
+      }
+    }
+    break;
+    default:{
+      assert(true);
+    }
+  }
+  ss<<")";
+  return ss.str();
+}
+
+static std::string create_program_specific_port_only(const std::string &wlan,const int link_encap,const int radio_port){
+  std::string program;
+  switch (link_encap) {
+    case DLT_PRISM_HEADER:
+      wifibroadcast::log::get_default()->debug("{} has DLT_PRISM_HEADER Encap",wlan);
+      program = StringFormat::convert("radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x", radio_port);
+      break;
+    case DLT_IEEE802_11_RADIO:
+      wifibroadcast::log::get_default()->debug("{} has DLT_IEEE802_11_RADIO Encap",wlan);
+      program = StringFormat::convert("ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x", radio_port);
+      break;
+    default:{
+      wifibroadcast::log::get_default()->error("unknown encapsulation on {}", wlan.c_str());
+    }
+  }
+  return program;
+}
+
+
+static void set_pcap_filer(const std::string &wlan,pcap_t* ppcap,const int radio_port){
+  const int link_encap = pcap_datalink(ppcap);
+  struct bpf_program bpfprogram{};
+  const std::string program= create_program_specific_port_only(wlan,link_encap,radio_port);
+  if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
+    wifibroadcast::log::get_default()->error("Unable to compile [{}] {}", program.c_str(), pcap_geterr(ppcap));
+  }
+  if (pcap_setfilter(ppcap, &bpfprogram) == -1) {
+    wifibroadcast::log::get_default()->error("Unable to set filter [{}] {}", program.c_str(), pcap_geterr(ppcap));
+  }
+  pcap_freecode(&bpfprogram);
+}
+
+static void set_pcap_filer2(const std::string &wlan,pcap_t* ppcap,const std::vector<int>& exclued_radio_ports){
+  const int link_encap = pcap_datalink(ppcap);
+  struct bpf_program bpfprogram{};
+  const std::string program= create_program_everything_except_excluded(wlan,link_encap,exclued_radio_ports);
+  if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
+    wifibroadcast::log::get_default()->error("Unable to compile [{}] {}", program.c_str(), pcap_geterr(ppcap));
+  }
+  if (pcap_setfilter(ppcap, &bpfprogram) == -1) {
+    wifibroadcast::log::get_default()->error("Unable to set filter [{}] {}", program.c_str(), pcap_geterr(ppcap));
+  }
+  pcap_freecode(&bpfprogram);
+}
+
+
 // copy paste from svpcom
 // I think this one opens the rx interface with pcap and then sets a filter such that only packets pass through for the selected radio port
 static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
@@ -69,31 +145,11 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
     wifibroadcast::log::get_default()->error("set_nonblock failed: {}",
                                        errbuf);
   }
-  int link_encap = pcap_datalink(ppcap);
-  struct bpf_program bpfprogram{};
-  std::string program;
-  switch (link_encap) {
-    case DLT_PRISM_HEADER:
-      wifibroadcast::log::get_default()->debug("{} has DLT_PRISM_HEADER Encap",wlan);
-      program = StringFormat::convert("radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x", radio_port);
-      break;
-    case DLT_IEEE802_11_RADIO:
-      wifibroadcast::log::get_default()->debug("{} has DLT_IEEE802_11_RADIO Encap",wlan);
-      program = StringFormat::convert("ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x", radio_port);
-      break;
-    default:{
-      wifibroadcast::log::get_default()->error("unknown encapsulation on {}", wlan.c_str());
-    }
-  }
-  if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
-    wifibroadcast::log::get_default()->error("Unable to compile {} {}", program.c_str(), pcap_geterr(ppcap));
-  }
-  if (pcap_setfilter(ppcap, &bpfprogram) == -1) {
-    wifibroadcast::log::get_default()->error("Unable to set filter {} {}", program.c_str(), pcap_geterr(ppcap));
-  }
-  pcap_freecode(&bpfprogram);
+  set_pcap_filer(wlan,ppcap,radio_port);
   return ppcap;
 }
+
+
 struct RssiForAntenna {
   // which antenna the value refers to
   const uint8_t antennaIdx;
