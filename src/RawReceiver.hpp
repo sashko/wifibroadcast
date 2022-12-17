@@ -21,6 +21,7 @@
 #include "Ieee80211Header.hpp"
 #include "RadiotapHeader.hpp"
 #include "wifibroadcast-spdlog.h"
+#include "pcap_helper.h"
 
 // This is a single header-only file you can use to build your own wifibroadcast
 // link
@@ -29,23 +30,12 @@
 // stuff that helps for receiving data with pcap
 namespace RawReceiverHelper {
 
-static std::string pcap_tstamp_types_to_string(int* ts_types,int n){
-  std::stringstream ss;
-  ss<<"[";
-  for(int i=0;i<n;i++){
-    const char *name = pcap_tstamp_type_val_to_name(ts_types[i]);
-    const char *description = pcap_tstamp_type_val_to_description(ts_types[i]);
-    ss<<name<<"="<<description<<",";
-  }
-  ss<<"]";
-  return ss.str();
-}
 
 // Set timestamp type to PCAP_TSTAMP_HOST if available
 static void iteratePcapTimestamps(pcap_t *ppcap) {
   int *availableTimestamps;
   const int nTypes = pcap_list_tstamp_types(ppcap, &availableTimestamps);
-  wifibroadcast::log::get_default()->debug("TS types:{}", pcap_tstamp_types_to_string(availableTimestamps,nTypes));
+  wifibroadcast::log::get_default()->debug("TS types:{}", wifibroadcast::pcap_helper::tstamp_types_to_string(availableTimestamps,nTypes));
   //"N available timestamp types "<<nTypes<<"\n";
   for (int i = 0; i < nTypes; i++) {
     if (availableTimestamps[i] == PCAP_TSTAMP_HOST) {
@@ -93,7 +83,6 @@ static std::string create_program_specific_port_only(const std::string &wlan,con
   }
   return program;
 }
-
 
 static void set_pcap_filer(const std::string &wlan,pcap_t* ppcap,const int radio_port){
   const int link_encap = pcap_datalink(ppcap);
