@@ -407,7 +407,7 @@ class MultiRxPcapReceiver {
     std::stringstream ss;
     ss << "MultiRxPcapReceiver ";
     if(m_options.radio_port==-1){
-      ss<<"Excluded radio_ports:"<<m_options.excluded_radio_ports.size();
+      ss<<"Excluded radio_ports:"<<StringHelper::vectorAsString(m_options.excluded_radio_ports);
     }else{
       ss<<"Assigned radio_port:"<<m_options.radio_port;
     }
