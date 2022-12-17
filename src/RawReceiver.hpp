@@ -145,6 +145,7 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
     wifibroadcast::log::get_default()->error("set_nonblock failed: {}",
                                        errbuf);
   }
+  // only let messages with the right radio port through
   set_pcap_filer(wlan,ppcap,radio_port);
   return ppcap;
 }
