@@ -53,6 +53,6 @@ void ForeignPacketsReceiver::m_loop() {
 ForeignPacketsReceiver::Stats ForeignPacketsReceiver::get_current_stats() {
   Stats ret{};
   ret.curr_received_pps=static_cast<int>(m_foreign_packets_pps_calc.get_last_or_recalculate(m_n_foreign_packets,std::chrono::seconds(1)));
-  ret.curr_received_pps=static_cast<int>(m_foreign_packets_bps_calc.get_last_or_recalculate(m_n_foreign_bytes,std::chrono::seconds(1)));
+  ret.curr_received_bps=static_cast<int>(m_foreign_packets_bps_calc.get_last_or_recalculate(m_n_foreign_bytes,std::chrono::seconds(1)));
   return ret;
 }
