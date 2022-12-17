@@ -16,14 +16,27 @@
 // most likely because of the radio port - we really need to migrate to a single rx instance for all cards
 class ForeignPacketsReceiver {
  public:
-  explicit ForeignPacketsReceiver(std::vector<std::string> wlans,std::vector<int> openhd_radio_ports);
+  explicit ForeignPacketsReceiver(std::vector<std::string> wlans,std::vector<int> openhd_radio_ports,std::shared_ptr<spdlog::logger> console= nullptr);
   ~ForeignPacketsReceiver();
+  struct Stats{
+    int curr_received_pps;
+    int curr_received_bps;
+    std::string to_string()const{
+      return fmt::format("curr pps:{}, curr bps:{}",curr_received_pps,curr_received_bps);
+    }
+  };
+  Stats get_current_stats();
  private:
   void on_foreign_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
   void m_loop();
+  std::shared_ptr<spdlog::logger> m_console;
   std::unique_ptr<MultiRxPcapReceiver> m_receiver;
   std::vector<int> m_openhd_radio_ports;
   std::unique_ptr<std::thread> m_thread;
+  int64_t m_n_foreign_packets=0;
+  int64_t m_n_foreign_bytes=0;
+  BitrateCalculator m_foreign_packets_bps_calc{};
+  PacketsPerSecondCalculator m_foreign_packets_pps_calc{};
 };
 
 #endif  // WIFIBROADCAST_SRC_FOREIGNPACKETSRECEIVER_H_
