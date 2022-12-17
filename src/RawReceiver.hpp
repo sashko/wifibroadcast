@@ -314,6 +314,13 @@ class PcapReceiver {
     RawReceiverHelper::set_pcap_filer(wlan,ppcap,RADIO_PORT);
     fd = pcap_get_selectable_fd(ppcap);
   }
+  // Exp
+  PcapReceiver(const std::string &wlan, int wlan_idx, std::vector<int> excluded_radio_ports, PROCESS_PACKET_CALLBACK callback)
+      : WLAN_NAME(wlan), WLAN_IDX(wlan_idx), RADIO_PORT(-1), mCallback(callback) {
+    ppcap = RawReceiverHelper::openRxWithPcap(wlan);
+    RawReceiverHelper::set_pcap_filer2(wlan,ppcap,excluded_radio_ports);
+    fd = pcap_get_selectable_fd(ppcap);
+  }
   ~PcapReceiver() {
     close(fd);
     pcap_close(ppcap);
@@ -375,8 +382,8 @@ class MultiRxPcapReceiver {
   typedef std::function<void()> GENERIC_CALLBACK;
   struct Options{
     std::vector<std::string> rxInterfaces;
-    //std::variant<int,std::vector<uint16_t>> filter;
-    uint16_t radio_port;
+    int radio_port;
+    std::vector<int> excluded_radio_ports;
     std::chrono::milliseconds log_interval;
     // this callback is called with the received packets from pcap
     // NOTE 1: If you are using only wifi card as RX: I personally did not see any packet reordering with my wifi adapters, but according to svpcom this would be possible
@@ -407,7 +414,11 @@ class MultiRxPcapReceiver {
     wifibroadcast::log::get_default()->debug(ss.str());
 
     for (int i = 0; i < N_RECEIVERS; i++) {
-      mReceivers[i] = std::make_unique<PcapReceiver>(m_options.rxInterfaces[i], i, m_options.radio_port, m_options.dataCallback);
+      if(m_options.radio_port==-1){
+        mReceivers[i] = std::make_unique<PcapReceiver>(m_options.rxInterfaces[i], i, m_options.excluded_radio_ports, m_options.dataCallback);
+      }else{
+        mReceivers[i] = std::make_unique<PcapReceiver>(m_options.rxInterfaces[i], i, m_options.radio_port, m_options.dataCallback);
+      }
       mReceiverFDs[i].fd = mReceivers[i]->getfd();
       mReceiverFDs[i].events = POLLIN;
     }
