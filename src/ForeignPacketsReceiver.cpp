@@ -24,6 +24,12 @@ ForeignPacketsReceiver::ForeignPacketsReceiver(std::vector<std::string> wlans,st
   m_thread=std::make_unique<std::thread>(&ForeignPacketsReceiver::m_loop, this);
 }
 
+ForeignPacketsReceiver::~ForeignPacketsReceiver() {
+  m_receiver->stop();
+  if(m_thread->joinable())m_thread->join();
+  m_thread= nullptr;
+}
+
 void ForeignPacketsReceiver::on_foreign_packet(const uint8_t wlan_idx,const pcap_pkthdr &hdr,const uint8_t *pkt) {
   wifibroadcast::log::get_default()->debug("X got packet");
 }
