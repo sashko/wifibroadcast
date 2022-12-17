@@ -118,10 +118,9 @@ static void set_pcap_filer2(const std::string &wlan,pcap_t* ppcap,const std::vec
   pcap_freecode(&bpfprogram);
 }
 
-
 // copy paste from svpcom
 // I think this one opens the rx interface with pcap and then sets a filter such that only packets pass through for the selected radio port
-static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
+static pcap_t *openRxWithPcap(const std::string &wlan) {
   pcap_t *ppcap= nullptr;
   char errbuf[PCAP_ERRBUF_SIZE];
   ppcap = pcap_create(wlan.c_str(), errbuf);
@@ -148,8 +147,6 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
     wifibroadcast::log::get_default()->error("set_nonblock failed: {}",
                                        errbuf);
   }
-  // only let messages with the right radio port through
-  set_pcap_filer(wlan,ppcap,radio_port);
   return ppcap;
 }
 
@@ -313,7 +310,8 @@ class PcapReceiver {
   // This constructor only takes one wlan (aka one wlan adapter)
   PcapReceiver(const std::string &wlan, int wlan_idx, int radio_port, PROCESS_PACKET_CALLBACK callback)
       : WLAN_NAME(wlan), WLAN_IDX(wlan_idx), RADIO_PORT(radio_port), mCallback(callback) {
-    ppcap = RawReceiverHelper::openRxWithPcap(wlan, RADIO_PORT);
+    ppcap = RawReceiverHelper::openRxWithPcap(wlan);
+    RawReceiverHelper::set_pcap_filer(wlan,ppcap,RADIO_PORT);
     fd = pcap_get_selectable_fd(ppcap);
   }
   ~PcapReceiver() {
@@ -372,10 +370,6 @@ class PcapReceiver {
 };
 
 // This class supports more than one Receiver (aka multiple wlan adapters)
-// 3 Callbacks to register:
-// 1) the PROCESS_PACKET_CALLBACK. You can find out from which wifi card this packet came by @param wlan_idx
-// 2) mCallbackLog: callback that is called in regular intervals, independent of weather data was received or not
-// 3) mCallbackFlush: callback that is called when no data has been received for n ms
 class MultiRxPcapReceiver {
  public:
   typedef std::function<void()> GENERIC_CALLBACK;
@@ -386,8 +380,7 @@ class MultiRxPcapReceiver {
     std::chrono::milliseconds log_interval;
     // this callback is called with the received packets from pcap
     // NOTE 1: If you are using only wifi card as RX: I personally did not see any packet reordering with my wifi adapters, but according to svpcom this would be possible
-    // NOTE 2: If you are using more than one wifi card as RX, There are probably duplicate packets and packets do not arrive in order. E.g. the following is possible:
-    // You get packet nr 0,1,2,3 from card 1 | then you get packet 0,2,3 from card 2
+    // NOTE 2: If you are using more than one wifi card as RX, There are probably duplicate packets and packets do not arrive in order.
     PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback;
     // This callback is called regularly independent weather data was received or not
     GENERIC_CALLBACK logCallback;
@@ -398,8 +391,8 @@ class MultiRxPcapReceiver {
    * @param log_interval the log callback is called in the interval specified by @param log_interval
    * @param flush_interval the flush callback is called every time no data has been received for more than @param flush_interval milliseconds
    */
-  explicit MultiRxPcapReceiver(Options options11) :
-    m_options(std::move(options11)) {
+  explicit MultiRxPcapReceiver(Options options) :
+    m_options(std::move(options)) {
     const auto N_RECEIVERS = m_options.rxInterfaces.size();
     mReceivers.resize(N_RECEIVERS);
     mReceiverFDs.resize(N_RECEIVERS);
