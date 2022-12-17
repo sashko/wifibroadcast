@@ -14,6 +14,7 @@
 // Helper - get (most likely all) packets that are not coming from a running openhd instance,
 // but rather someone else talking on this channel.
 // most likely because of the radio port - we really need to migrate to a single rx instance for all cards
+// but for now, it is enough for us.
 class ForeignPacketsReceiver {
  public:
   explicit ForeignPacketsReceiver(std::vector<std::string> wlans,std::vector<int> openhd_radio_ports,std::shared_ptr<spdlog::logger> console= nullptr);
