@@ -6,7 +6,7 @@
 
 #include <utility>
 
-ForeignPacketsReceiver::ForeignPacketsReceiver(std::vector<std::string> wlans,std::vector<uint16_t> openhd_radio_ports):
+ForeignPacketsReceiver::ForeignPacketsReceiver(std::vector<std::string> wlans,std::vector<int> openhd_radio_ports):
   m_openhd_radio_ports(std::move(openhd_radio_ports)) {
   auto cb=[this](const uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt){
     on_foreign_packet(wlan_idx,hdr,pkt);
