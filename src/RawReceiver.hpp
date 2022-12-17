@@ -5,22 +5,25 @@
 #ifndef WIFIBROADCAST_RAWRECEIVER_H
 #define WIFIBROADCAST_RAWRECEIVER_H
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <pcap/pcap.h>
+#include <poll.h>
+#include <sys/socket.h>
+
+#include <cstdint>
+#include <functional>
+#include <unordered_map>
+#include <variant>
+
 #include "HelperSources/Helper.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "Ieee80211Header.hpp"
 #include "RadiotapHeader.hpp"
 #include "wifibroadcast-spdlog.h"
 
-#include <functional>
-#include <unordered_map>
-#include <cstdint>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <pcap/pcap.h>
-#include <poll.h>
-
-// This is a single header-only file you can use to build your own wifibroadcast link
+// This is a single header-only file you can use to build your own wifibroadcast
+// link
 // It doesn't specify if / what FEC to use and so on
 
 // stuff that helps for receiving data with pcap
@@ -376,37 +379,42 @@ class PcapReceiver {
 class MultiRxPcapReceiver {
  public:
   typedef std::function<void()> GENERIC_CALLBACK;
+  struct Options{
+    std::vector<std::string> rxInterfaces;
+    //std::variant<int,std::vector<uint16_t>> filter;
+    uint16_t radio_port;
+    std::chrono::milliseconds log_interval;
+    // this callback is called with the received packets from pcap
+    // NOTE 1: If you are using only wifi card as RX: I personally did not see any packet reordering with my wifi adapters, but according to svpcom this would be possible
+    // NOTE 2: If you are using more than one wifi card as RX, There are probably duplicate packets and packets do not arrive in order. E.g. the following is possible:
+    // You get packet nr 0,1,2,3 from card 1 | then you get packet 0,2,3 from card 2
+    PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback;
+    // This callback is called regularly independent weather data was received or not
+    GENERIC_CALLBACK logCallback;
+  };
   /**
    * @param rxInterfaces list of wifi adapters to listen on
    * @param radio_port  radio port (aka stream ID) to filter packets for
    * @param log_interval the log callback is called in the interval specified by @param log_interval
    * @param flush_interval the flush callback is called every time no data has been received for more than @param flush_interval milliseconds
    */
-  explicit MultiRxPcapReceiver(std::vector<std::string> rxInterfaces1,
-                               const int radio_port,
-                               const std::chrono::milliseconds log_interval,
-                               PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback,
-                               GENERIC_CALLBACK logCallback) :
-      rxInterfaces(std::move(rxInterfaces1)),
-      radio_port(radio_port),
-      log_interval(log_interval),
-      mCallbackData(std::move(dataCallback)),
-      mCallbackLog(std::move(logCallback)) {
-    const auto N_RECEIVERS = rxInterfaces.size();
+  explicit MultiRxPcapReceiver(Options options11) :
+    m_options(std::move(options11)) {
+    const auto N_RECEIVERS = m_options.rxInterfaces.size();
     mReceivers.resize(N_RECEIVERS);
     mReceiverFDs.resize(N_RECEIVERS);
     memset(mReceiverFDs.data(), '\0', mReceiverFDs.size() * sizeof(pollfd));
     std::stringstream ss;
-    ss << "MultiRxPcapReceiver" << " Assigned ID: " << radio_port << " Assigned WLAN(s):[";
-    for (const auto &s: rxInterfaces) {
+    ss << "MultiRxPcapReceiver" << " Assigned ID: " << m_options.radio_port << " Assigned WLAN(s):[";
+    for (const auto &s: m_options.rxInterfaces) {
       ss << s << ",";
     }
     ss << "]";
-    ss << " LOG_INTERVAL(ms)" << (int) log_interval.count();
+    ss << " LOG_INTERVAL(ms)" << (int) m_options.log_interval.count();
     wifibroadcast::log::get_default()->debug(ss.str());
 
     for (int i = 0; i < N_RECEIVERS; i++) {
-      mReceivers[i] = std::make_unique<PcapReceiver>(rxInterfaces[i], i, radio_port, mCallbackData);
+      mReceivers[i] = std::make_unique<PcapReceiver>(m_options.rxInterfaces[i], i, m_options.radio_port, m_options.dataCallback);
       mReceiverFDs[i].fd = mReceivers[i]->getfd();
       mReceiverFDs[i].events = POLLIN;
     }
@@ -427,7 +435,7 @@ class MultiRxPcapReceiver {
     std::chrono::steady_clock::time_point log_send_ts{};
     while (keep_running) {
       auto cur_ts = std::chrono::steady_clock::now();
-      const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
+      const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(m_options.log_interval).count();
       int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(), timeoutMS);
 
       if (rc < 0) {
@@ -438,8 +446,10 @@ class MultiRxPcapReceiver {
       cur_ts = std::chrono::steady_clock::now();
 
       if (cur_ts >= log_send_ts) {
-        mCallbackLog();
-        log_send_ts = std::chrono::steady_clock::now() + log_interval;
+        if(m_options.logCallback){
+          m_options.logCallback();
+        }
+        log_send_ts = std::chrono::steady_clock::now() + m_options.log_interval;
       }
 
       if (rc == 0) {
@@ -455,7 +465,7 @@ class MultiRxPcapReceiver {
             // limit logging here
             const auto elapsed=std::chrono::steady_clock::now()-m_last_receiver_error_log;
             if(elapsed>std::chrono::seconds(1)){
-              wifibroadcast::log::get_default()->warn("RawReceiver errors {} on pcap fds {} (wlan {})",get_n_receiver_errors(),i,rxInterfaces[i]);
+              wifibroadcast::log::get_default()->warn("RawReceiver errors {} on pcap fds {} (wlan {})",get_n_receiver_errors(),i,m_options.rxInterfaces[i]);
               m_last_receiver_error_log=std::chrono::steady_clock::now();
             }
           }else{
@@ -472,18 +482,9 @@ class MultiRxPcapReceiver {
   }
  private:
   bool keep_running=true;
-  const std::vector<std::string> rxInterfaces;
-  const int radio_port;
-  const std::chrono::milliseconds log_interval;
+  const Options m_options;
   std::vector<std::unique_ptr<PcapReceiver>> mReceivers;
   std::vector<pollfd> mReceiverFDs;
-  // this callback is called with the received packets from pcap
-  // NOTE 1: If you are using only wifi card as RX: I personally did not see any packet reordering with my wifi adapters, but according to svpcom this would be possible
-  // NOTE 2: If you are using more than one wifi card as RX, There are probably duplicate packets and packets do not arrive in order. E.g. the following is possible:
-  // You get packet nr 0,1,2,3 from card 1 | then you get packet 0,2,3 from card 2
-  const PcapReceiver::PROCESS_PACKET_CALLBACK mCallbackData;
-  // This callback is called regularly independent weather data was received or not
-  const GENERIC_CALLBACK mCallbackLog;
   std::atomic<uint32_t> m_n_receiver_errors{};
   std::chrono::steady_clock::time_point m_last_receiver_error_log=std::chrono::steady_clock::now();
  public:

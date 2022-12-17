@@ -13,7 +13,13 @@ ForeignPacketsReceiver::ForeignPacketsReceiver(std::vector<std::string> wlans,st
   };
   auto cb2=[this](){
   };
-  m_receiver=std::make_unique<MultiRxPcapReceiver>(wlans,100,std::chrono::milliseconds(100),cb,cb2);
+  MultiRxPcapReceiver::Options options;
+  options.rxInterfaces=wlans;
+  options.dataCallback=cb;
+  options.logCallback=cb2;
+  options.log_interval=std::chrono::milliseconds(100);
+  options.radio_port=100;
+  m_receiver=std::make_unique<MultiRxPcapReceiver>(options);
   m_receiver->loop();
   m_thread=std::make_unique<std::thread>(&ForeignPacketsReceiver::m_loop, this);
 }
