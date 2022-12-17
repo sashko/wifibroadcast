@@ -36,7 +36,7 @@ ForeignPacketsReceiver::~ForeignPacketsReceiver() {
 }
 
 void ForeignPacketsReceiver::on_foreign_packet(const uint8_t wlan_idx,const pcap_pkthdr &hdr,const uint8_t *pkt) {
-  m_console->debug("X got packet");
+  //m_console->debug("X got packet");
   const auto parsedPacket = RawReceiverHelper::processReceivedPcapPacket(hdr, pkt,false);
   if(!parsedPacket.has_value()){
     m_console->warn("Discarding packet due to pcap parsing error!");
