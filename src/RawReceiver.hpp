@@ -28,15 +28,26 @@
 
 // stuff that helps for receiving data with pcap
 namespace RawReceiverHelper {
-// call before pcap_activate
+
+static std::string pcap_tstamp_types_to_string(int* ts_types,int n){
+  std::stringstream ss;
+  ss<<"[";
+  for(int i=0;i<n;i++){
+    const char *name = pcap_tstamp_type_val_to_name(ts_types[i]);
+    const char *description = pcap_tstamp_type_val_to_description(ts_types[i]);
+    ss<<name<<"="<<description<<",";
+  }
+  ss<<"]";
+  return ss.str();
+}
+
+// Set timestamp type to PCAP_TSTAMP_HOST if available
 static void iteratePcapTimestamps(pcap_t *ppcap) {
   int *availableTimestamps;
   const int nTypes = pcap_list_tstamp_types(ppcap, &availableTimestamps);
+  wifibroadcast::log::get_default()->debug("TS types:{}", pcap_tstamp_types_to_string(availableTimestamps,nTypes));
   //"N available timestamp types "<<nTypes<<"\n";
   for (int i = 0; i < nTypes; i++) {
-    const char *name = pcap_tstamp_type_val_to_name(availableTimestamps[i]);
-    const char *description = pcap_tstamp_type_val_to_description(availableTimestamps[i]);
-    //<<"Name: "<<std::string(name)<<" Description: "<<std::string(description)<<"\n";
     if (availableTimestamps[i] == PCAP_TSTAMP_HOST) {
       wifibroadcast::log::get_default()->debug("Setting timestamp to host");
       pcap_set_tstamp_type(ppcap, PCAP_TSTAMP_HOST);
@@ -50,9 +61,8 @@ static std::string create_program_everything_except_excluded(const std::string &
   assert(link_encap==DLT_PRISM_HEADER || link_encap==DLT_IEEE802_11_RADIO);
   std::stringstream ss;
   ss<<"!(";
-  bool last=false;
   for(int i=0;i<exclued_radio_ports.size();i++){
-    last = (i==exclued_radio_ports.size()-1);
+    const bool last = (i==exclued_radio_ports.size()-1);
     if(link_encap==DLT_PRISM_HEADER){
       ss<<StringFormat::convert("(radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x)",exclued_radio_ports.at(i));
     }else{
@@ -112,14 +122,15 @@ static void set_pcap_filer2(const std::string &wlan,pcap_t* ppcap,const std::vec
   pcap_freecode(&bpfprogram);
 }
 
-// copy paste from svpcom
-// I think this one opens the rx interface with pcap and then sets a filter such that only packets pass through for the selected radio port
-static pcap_t *openRxWithPcap(const std::string &wlan) {
+// creates a pcap handle for the given wlan and sets common params for wb
+// returns nullptr on failure, a valid pcap handle otherwise
+static pcap_t *helper_open_pcap_rx(const std::string &wlan) {
   pcap_t *ppcap= nullptr;
   char errbuf[PCAP_ERRBUF_SIZE];
   ppcap = pcap_create(wlan.c_str(), errbuf);
   if (ppcap == nullptr) {
     wifibroadcast::log::get_default()->error("Unable to open interface {} in pcap: {}", wlan.c_str(), errbuf);
+    return nullptr;
   }
   iteratePcapTimestamps(ppcap);
   if (pcap_set_snaplen(ppcap, 4096) != 0) wifibroadcast::log::get_default()->error("set_snaplen failed");
@@ -130,16 +141,13 @@ static pcap_t *openRxWithPcap(const std::string &wlan) {
   // Important: Without enabling this mode pcap buffers quite a lot of packets starting with version 1.5.0 !
   // https://www.tcpdump.org/manpages/pcap_set_immediate_mode.3pcap.html
   if (pcap_set_immediate_mode(ppcap, true) != 0){
-    wifibroadcast::log::get_default()->warn("pcap_set_immediate_mode failed: {}",
-                                               pcap_geterr(ppcap));
+    wifibroadcast::log::get_default()->warn("pcap_set_immediate_mode failed: {}",pcap_geterr(ppcap));
   }
   if (pcap_activate(ppcap) != 0){
-    wifibroadcast::log::get_default()->error("pcap_activate failed: {}",
-                                       pcap_geterr(ppcap));
+    wifibroadcast::log::get_default()->error("pcap_activate failed: {}",pcap_geterr(ppcap));
   }
   if (pcap_setnonblock(ppcap, 1, errbuf) != 0){
-    wifibroadcast::log::get_default()->error("set_nonblock failed: {}",
-                                       errbuf);
+    wifibroadcast::log::get_default()->error("set_nonblock failed: {}",errbuf);
   }
   return ppcap;
 }
@@ -304,14 +312,14 @@ class PcapReceiver {
   // This constructor only takes one wlan (aka one wlan adapter)
   PcapReceiver(const std::string &wlan, int wlan_idx, int radio_port, PROCESS_PACKET_CALLBACK callback)
       : WLAN_NAME(wlan), WLAN_IDX(wlan_idx), RADIO_PORT(radio_port), mCallback(callback) {
-    ppcap = RawReceiverHelper::openRxWithPcap(wlan);
+    ppcap = RawReceiverHelper::helper_open_pcap_rx(wlan);
     RawReceiverHelper::set_pcap_filer(wlan,ppcap,RADIO_PORT);
     fd = pcap_get_selectable_fd(ppcap);
   }
   // Exp
   PcapReceiver(const std::string &wlan, int wlan_idx, std::vector<int> excluded_radio_ports, PROCESS_PACKET_CALLBACK callback)
       : WLAN_NAME(wlan), WLAN_IDX(wlan_idx), RADIO_PORT(-1), mCallback(callback) {
-    ppcap = RawReceiverHelper::openRxWithPcap(wlan);
+    ppcap = RawReceiverHelper::helper_open_pcap_rx(wlan);
     RawReceiverHelper::set_pcap_filer2(wlan,ppcap,excluded_radio_ports);
     fd = pcap_get_selectable_fd(ppcap);
   }
