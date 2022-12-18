@@ -15,6 +15,7 @@
 #include <functional>
 #include <unordered_map>
 #include <variant>
+#include <optional>
 
 #include "HelperSources/Helper.hpp"
 #include "HelperSources/TimeHelper.hpp"
