@@ -271,6 +271,7 @@ class UDPReceiver {
     //saddr.sin_addr.s_addr = inet_addr(client_addr.c_str());
     inet_aton(destIp.c_str(), (in_addr *) &saddr.sin_addr.s_addr);
     saddr.sin_port = htons((uint16_t)  destPort);
+    // send from the currently bound UDP port to the destination address
     const auto ret=sendto(mSocket, packet, packetSize, 0, (const struct sockaddr *) &saddr,
                             sizeof(saddr));
     if(ret <0 || ret != packetSize){

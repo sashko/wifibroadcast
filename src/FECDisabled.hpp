@@ -17,7 +17,8 @@
 #include <functional>
 #include <map>
 
-// FEC Disabled is an optional user input (K==0). In this case, These 2 classes are used.
+// FEC Disabled is used for telemetry data in OpenHD.
+// We have different requirements on packet loss and/or packet reordering for this type of data stream.
 
 // usage of nonce: Simple, uint64_t number increasing with each packet
 class FECDisabledEncoder {
@@ -45,32 +46,32 @@ class FECDisabledDecoder {
  private:
   // Add a limit here to not allocate infinite amounts of memory
   static constexpr std::size_t FEC_DISABLED_MAX_SIZE_OF_MAP = 100;
-  std::map<uint64_t, void *> fecDisabledMapOfReceivedSeqNr;
-  bool firstEverPacket = true;
+  std::map<uint64_t, void *> m_known_sequence_numbers;
+  bool first_ever_packet = true;
  public:
   //No duplicates, but packets out of order are possible
   //counting lost packets doesn't work in this mode. It should be done by the upper level
   //saves the last FEC_DISABLED_MAX_SIZE_OF_MAP sequence numbers. If the sequence number of a new packet is already inside the map, it is discarded (duplicate)
   void processRawDataBlockFecDisabled(const uint64_t packetSeq, const std::vector<uint8_t> &decrypted) {
     assert(mSendDecodedPayloadCallback);
-    if (firstEverPacket) {
+    if (first_ever_packet) {
       // first ever packet. Map should be empty
-      fecDisabledMapOfReceivedSeqNr.clear();
+      m_known_sequence_numbers.clear();
       mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-      fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
-      firstEverPacket = false;
+      m_known_sequence_numbers.insert({packetSeq, nullptr});
+      first_ever_packet = false;
     }
     // check if packet is already known (inside the map)
-    const auto search = fecDisabledMapOfReceivedSeqNr.find(packetSeq);
-    if (search == fecDisabledMapOfReceivedSeqNr.end()) {
+    const auto search = m_known_sequence_numbers.find(packetSeq);
+    if (search == m_known_sequence_numbers.end()) {
       // if packet is not in the map it was not yet received(unless it is older than MAX_SIZE_OF_MAP, but that is basically impossible)
       mSendDecodedPayloadCallback(decrypted.data(), decrypted.size());
-      fecDisabledMapOfReceivedSeqNr.insert({packetSeq, nullptr});
+      m_known_sequence_numbers.insert({packetSeq, nullptr});
     }// else this is a duplicate
     // house keeping, do not increase size to infinity
-    if (fecDisabledMapOfReceivedSeqNr.size() >= FEC_DISABLED_MAX_SIZE_OF_MAP - 1) {
+    if (m_known_sequence_numbers.size() >= FEC_DISABLED_MAX_SIZE_OF_MAP - 1) {
       // remove oldest element
-      fecDisabledMapOfReceivedSeqNr.erase(fecDisabledMapOfReceivedSeqNr.begin());
+      m_known_sequence_numbers.erase(m_known_sequence_numbers.begin());
     }
   }
 };

@@ -5,34 +5,40 @@
 #ifndef WIFIBROADCAST_RAWRECEIVER_H
 #define WIFIBROADCAST_RAWRECEIVER_H
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <pcap/pcap.h>
+#include <poll.h>
+#include <sys/socket.h>
+
+#include <cstdint>
+#include <functional>
+#include <unordered_map>
+#include <variant>
+#include <optional>
+
 #include "HelperSources/Helper.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "Ieee80211Header.hpp"
 #include "RadiotapHeader.hpp"
+#include "wifibroadcast-spdlog.h"
+#include "pcap_helper.h"
 
-#include <functional>
-#include <unordered_map>
-#include <cstdint>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <pcap/pcap.h>
-#include <poll.h>
-
-// This is a single header-only file you can use to build your own wifibroadcast link
+// This is a single header-only file you can use to build your own wifibroadcast
+// link
 // It doesn't specify if / what FEC to use and so on
 
 // stuff that helps for receiving data with pcap
 namespace RawReceiverHelper {
-// call before pcap_activate
+
+
+// Set timestamp type to PCAP_TSTAMP_HOST if available
 static void iteratePcapTimestamps(pcap_t *ppcap) {
   int *availableTimestamps;
   const int nTypes = pcap_list_tstamp_types(ppcap, &availableTimestamps);
+  wifibroadcast::log::get_default()->debug("TS types:{}", wifibroadcast::pcap_helper::tstamp_types_to_string(availableTimestamps,nTypes));
   //"N available timestamp types "<<nTypes<<"\n";
   for (int i = 0; i < nTypes; i++) {
-    const char *name = pcap_tstamp_type_val_to_name(availableTimestamps[i]);
-    const char *description = pcap_tstamp_type_val_to_description(availableTimestamps[i]);
-    //<<"Name: "<<std::string(name)<<" Description: "<<std::string(description)<<"\n";
     if (availableTimestamps[i] == PCAP_TSTAMP_HOST) {
       wifibroadcast::log::get_default()->debug("Setting timestamp to host");
       pcap_set_tstamp_type(ppcap, PCAP_TSTAMP_HOST);
@@ -40,37 +46,28 @@ static void iteratePcapTimestamps(pcap_t *ppcap) {
   }
   pcap_free_tstamp_types(availableTimestamps);
 }
-// copy paste from svpcom
-// I think this one opens the rx interface with pcap and then sets a filter such that only packets pass through for the selected radio port
-static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
-  pcap_t *ppcap;
-  char errbuf[PCAP_ERRBUF_SIZE];
-  ppcap = pcap_create(wlan.c_str(), errbuf);
-  if (ppcap == NULL) {
-    wifibroadcast::log::get_default()->error("Unable to open interface {} in pcap: {}", wlan.c_str(), errbuf);
+
+
+static std::string create_program_everything_except_excluded(const std::string &wlan,const int link_encap,const std::vector<int>& exclued_radio_ports){
+  assert(link_encap==DLT_PRISM_HEADER || link_encap==DLT_IEEE802_11_RADIO);
+  std::stringstream ss;
+  ss<<"!(";
+  for(int i=0;i<exclued_radio_ports.size();i++){
+    const bool last = (i==exclued_radio_ports.size()-1);
+    if(link_encap==DLT_PRISM_HEADER){
+      ss<<StringFormat::convert("(radio[0x4a:4]==0x13223344 && radio[0x4e:2] == 0x55%.2x)",exclued_radio_ports.at(i));
+    }else{
+      ss<<StringFormat::convert("(ether[0x0a:4]==0x13223344 && ether[0x0e:2] == 0x55%.2x)",exclued_radio_ports.at(i));
+    }
+    if(!last){
+      ss<<" || ";
+    }
   }
-  iteratePcapTimestamps(ppcap);
-  if (pcap_set_snaplen(ppcap, 4096) != 0) wifibroadcast::log::get_default()->error("set_snaplen failed");
-  if (pcap_set_promisc(ppcap, 1) != 0) wifibroadcast::log::get_default()->error("set_promisc failed");
-  //if (pcap_set_rfmon(ppcap, 1) !=0) wifibroadcast::log::get_default()->error("set_rfmon failed");
-  if (pcap_set_timeout(ppcap, -1) != 0) wifibroadcast::log::get_default()->error("set_timeout failed");
-  //if (pcap_set_buffer_size(ppcap, 2048) !=0) wifibroadcast::log::get_default()->error("set_buffer_size failed");
-  // Important: Without enabling this mode pcap buffers quite a lot of packets starting with version 1.5.0 !
-  // https://www.tcpdump.org/manpages/pcap_set_immediate_mode.3pcap.html
-  if (pcap_set_immediate_mode(ppcap, true) != 0){
-    wifibroadcast::log::get_default()->warn("pcap_set_immediate_mode failed: {}",
-                                               pcap_geterr(ppcap));
-  }
-  if (pcap_activate(ppcap) != 0){
-    wifibroadcast::log::get_default()->error("pcap_activate failed: {}",
-                                       pcap_geterr(ppcap));
-  }
-  if (pcap_setnonblock(ppcap, 1, errbuf) != 0){
-    wifibroadcast::log::get_default()->error("set_nonblock failed: {}",
-                                       errbuf);
-  }
-  int link_encap = pcap_datalink(ppcap);
-  struct bpf_program bpfprogram{};
+  ss<<")";
+  return ss.str();
+}
+
+static std::string create_program_specific_port_only(const std::string &wlan,const int link_encap,const int radio_port){
   std::string program;
   switch (link_encap) {
     case DLT_PRISM_HEADER:
@@ -85,15 +82,67 @@ static pcap_t *openRxWithPcap(const std::string &wlan, const int radio_port) {
       wifibroadcast::log::get_default()->error("unknown encapsulation on {}", wlan.c_str());
     }
   }
+  return program;
+}
+
+static void set_pcap_filer(const std::string &wlan,pcap_t* ppcap,const int radio_port){
+  const int link_encap = pcap_datalink(ppcap);
+  struct bpf_program bpfprogram{};
+  const std::string program= create_program_specific_port_only(wlan,link_encap,radio_port);
   if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
-    wifibroadcast::log::get_default()->error("Unable to compile {} {}", program.c_str(), pcap_geterr(ppcap));
+    wifibroadcast::log::get_default()->error("Unable to compile [{}] {}", program.c_str(), pcap_geterr(ppcap));
   }
   if (pcap_setfilter(ppcap, &bpfprogram) == -1) {
-    wifibroadcast::log::get_default()->error("Unable to set filter {} {}", program.c_str(), pcap_geterr(ppcap));
+    wifibroadcast::log::get_default()->error("Unable to set filter [{}] {}", program.c_str(), pcap_geterr(ppcap));
   }
   pcap_freecode(&bpfprogram);
+}
+
+static void set_pcap_filer2(const std::string &wlan,pcap_t* ppcap,const std::vector<int>& exclued_radio_ports){
+  const int link_encap = pcap_datalink(ppcap);
+  struct bpf_program bpfprogram{};
+  const std::string program= create_program_everything_except_excluded(wlan,link_encap,exclued_radio_ports);
+  wifibroadcast::log::get_default()->debug("Program [{}]",program);
+  if (pcap_compile(ppcap, &bpfprogram, program.c_str(), 1, 0) == -1) {
+    wifibroadcast::log::get_default()->error("Unable to compile [{}] {}", program.c_str(), pcap_geterr(ppcap));
+  }
+  if (pcap_setfilter(ppcap, &bpfprogram) == -1) {
+    wifibroadcast::log::get_default()->error("Unable to set filter [{}] {}", program.c_str(), pcap_geterr(ppcap));
+  }
+  pcap_freecode(&bpfprogram);
+}
+
+// creates a pcap handle for the given wlan and sets common params for wb
+// returns nullptr on failure, a valid pcap handle otherwise
+static pcap_t *helper_open_pcap_rx(const std::string &wlan) {
+  pcap_t *ppcap= nullptr;
+  char errbuf[PCAP_ERRBUF_SIZE];
+  ppcap = pcap_create(wlan.c_str(), errbuf);
+  if (ppcap == nullptr) {
+    wifibroadcast::log::get_default()->error("Unable to open interface {} in pcap: {}", wlan.c_str(), errbuf);
+    return nullptr;
+  }
+  iteratePcapTimestamps(ppcap);
+  if (pcap_set_snaplen(ppcap, 4096) != 0) wifibroadcast::log::get_default()->error("set_snaplen failed");
+  if (pcap_set_promisc(ppcap, 1) != 0) wifibroadcast::log::get_default()->error("set_promisc failed");
+  //if (pcap_set_rfmon(ppcap, 1) !=0) wifibroadcast::log::get_default()->error("set_rfmon failed");
+  if (pcap_set_timeout(ppcap, -1) != 0) wifibroadcast::log::get_default()->error("set_timeout failed");
+  //if (pcap_set_buffer_size(ppcap, 2048) !=0) wifibroadcast::log::get_default()->error("set_buffer_size failed");
+  // Important: Without enabling this mode pcap buffers quite a lot of packets starting with version 1.5.0 !
+  // https://www.tcpdump.org/manpages/pcap_set_immediate_mode.3pcap.html
+  if (pcap_set_immediate_mode(ppcap, true) != 0){
+    wifibroadcast::log::get_default()->warn("pcap_set_immediate_mode failed: {}",pcap_geterr(ppcap));
+  }
+  if (pcap_activate(ppcap) != 0){
+    wifibroadcast::log::get_default()->error("pcap_activate failed: {}",pcap_geterr(ppcap));
+  }
+  if (pcap_setnonblock(ppcap, 1, errbuf) != 0){
+    wifibroadcast::log::get_default()->error("set_nonblock failed: {}",errbuf);
+  }
   return ppcap;
 }
+
+
 struct RssiForAntenna {
   // which antenna the value refers to
   const uint8_t antennaIdx;
@@ -253,7 +302,15 @@ class PcapReceiver {
   // This constructor only takes one wlan (aka one wlan adapter)
   PcapReceiver(const std::string &wlan, int wlan_idx, int radio_port, PROCESS_PACKET_CALLBACK callback)
       : WLAN_NAME(wlan), WLAN_IDX(wlan_idx), RADIO_PORT(radio_port), mCallback(callback) {
-    ppcap = RawReceiverHelper::openRxWithPcap(wlan, RADIO_PORT);
+    ppcap = RawReceiverHelper::helper_open_pcap_rx(wlan);
+    RawReceiverHelper::set_pcap_filer(wlan,ppcap,RADIO_PORT);
+    fd = pcap_get_selectable_fd(ppcap);
+  }
+  // Exp
+  PcapReceiver(const std::string &wlan, int wlan_idx, std::vector<int> excluded_radio_ports, PROCESS_PACKET_CALLBACK callback)
+      : WLAN_NAME(wlan), WLAN_IDX(wlan_idx), RADIO_PORT(-1), mCallback(callback) {
+    ppcap = RawReceiverHelper::helper_open_pcap_rx(wlan);
+    RawReceiverHelper::set_pcap_filer2(wlan,ppcap,excluded_radio_ports);
     fd = pcap_get_selectable_fd(ppcap);
   }
   ~PcapReceiver() {
@@ -312,44 +369,50 @@ class PcapReceiver {
 };
 
 // This class supports more than one Receiver (aka multiple wlan adapters)
-// 3 Callbacks to register:
-// 1) the PROCESS_PACKET_CALLBACK. You can find out from which wifi card this packet came by @param wlan_idx
-// 2) mCallbackLog: callback that is called in regular intervals, independent of weather data was received or not
-// 3) mCallbackFlush: callback that is called when no data has been received for n ms
 class MultiRxPcapReceiver {
  public:
   typedef std::function<void()> GENERIC_CALLBACK;
+  struct Options{
+    std::vector<std::string> rxInterfaces;
+    int radio_port;
+    std::vector<int> excluded_radio_ports;
+    std::chrono::milliseconds log_interval;
+    // this callback is called with the received packets from pcap
+    // NOTE 1: If you are using only wifi card as RX: I personally did not see any packet reordering with my wifi adapters, but according to svpcom this would be possible
+    // NOTE 2: If you are using more than one wifi card as RX, There are probably duplicate packets and packets do not arrive in order.
+    PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback;
+    // This callback is called regularly independent weather data was received or not
+    GENERIC_CALLBACK logCallback;
+  };
   /**
    * @param rxInterfaces list of wifi adapters to listen on
    * @param radio_port  radio port (aka stream ID) to filter packets for
    * @param log_interval the log callback is called in the interval specified by @param log_interval
    * @param flush_interval the flush callback is called every time no data has been received for more than @param flush_interval milliseconds
    */
-  explicit MultiRxPcapReceiver(std::vector<std::string> rxInterfaces1,
-                               const int radio_port,
-                               const std::chrono::milliseconds log_interval,
-                               PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback,
-                               GENERIC_CALLBACK logCallback) :
-      rxInterfaces(std::move(rxInterfaces1)),
-      radio_port(radio_port),
-      log_interval(log_interval),
-      mCallbackData(std::move(dataCallback)),
-      mCallbackLog(std::move(logCallback)) {
-    const auto N_RECEIVERS = rxInterfaces.size();
+  explicit MultiRxPcapReceiver(Options options) :
+    m_options(std::move(options)) {
+    const auto N_RECEIVERS = m_options.rxInterfaces.size();
     mReceivers.resize(N_RECEIVERS);
     mReceiverFDs.resize(N_RECEIVERS);
     memset(mReceiverFDs.data(), '\0', mReceiverFDs.size() * sizeof(pollfd));
     std::stringstream ss;
-    ss << "MultiRxPcapReceiver" << " Assigned ID: " << radio_port << " Assigned WLAN(s):[";
-    for (const auto &s: rxInterfaces) {
-      ss << s << ",";
+    ss << "MultiRxPcapReceiver ";
+    if(m_options.radio_port==-1){
+      ss<<"Excluded radio_ports:"<<StringHelper::vectorAsString(m_options.excluded_radio_ports);
+    }else{
+      ss<<"Assigned radio_port:"<<m_options.radio_port;
     }
-    ss << "]";
-    ss << " LOG_INTERVAL(ms)" << (int) log_interval.count();
+    ss<<" Assigned WLAN(s):"<<StringHelper::string_vec_as_string(m_options.rxInterfaces);
+    ss << " LOG_INTERVAL(ms)" << (int) m_options.log_interval.count();
     wifibroadcast::log::get_default()->debug(ss.str());
 
     for (int i = 0; i < N_RECEIVERS; i++) {
-      mReceivers[i] = std::make_unique<PcapReceiver>(rxInterfaces[i], i, radio_port, mCallbackData);
+      if(m_options.radio_port==-1){
+        mReceivers[i] = std::make_unique<PcapReceiver>(m_options.rxInterfaces[i], i, m_options.excluded_radio_ports, m_options.dataCallback);
+      }else{
+        mReceivers[i] = std::make_unique<PcapReceiver>(m_options.rxInterfaces[i], i, m_options.radio_port, m_options.dataCallback);
+      }
       mReceiverFDs[i].fd = mReceivers[i]->getfd();
       mReceiverFDs[i].events = POLLIN;
     }
@@ -370,7 +433,7 @@ class MultiRxPcapReceiver {
     std::chrono::steady_clock::time_point log_send_ts{};
     while (keep_running) {
       auto cur_ts = std::chrono::steady_clock::now();
-      const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(log_interval).count();
+      const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(m_options.log_interval).count();
       int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(), timeoutMS);
 
       if (rc < 0) {
@@ -381,8 +444,10 @@ class MultiRxPcapReceiver {
       cur_ts = std::chrono::steady_clock::now();
 
       if (cur_ts >= log_send_ts) {
-        mCallbackLog();
-        log_send_ts = std::chrono::steady_clock::now() + log_interval;
+        if(m_options.logCallback){
+          m_options.logCallback();
+        }
+        log_send_ts = std::chrono::steady_clock::now() + m_options.log_interval;
       }
 
       if (rc == 0) {
@@ -398,7 +463,7 @@ class MultiRxPcapReceiver {
             // limit logging here
             const auto elapsed=std::chrono::steady_clock::now()-m_last_receiver_error_log;
             if(elapsed>std::chrono::seconds(1)){
-              wifibroadcast::log::get_default()->warn(StringFormat::convert("RawReceiver errors %d on pcap fds %d (wlan %s)",get_n_receiver_errors(),i,rxInterfaces[i].c_str()));
+              wifibroadcast::log::get_default()->warn("RawReceiver errors {} on pcap fds {} (wlan {})",get_n_receiver_errors(),i,m_options.rxInterfaces[i]);
               m_last_receiver_error_log=std::chrono::steady_clock::now();
             }
           }else{
@@ -415,18 +480,9 @@ class MultiRxPcapReceiver {
   }
  private:
   bool keep_running=true;
-  const std::vector<std::string> rxInterfaces;
-  const int radio_port;
-  const std::chrono::milliseconds log_interval;
+  const Options m_options;
   std::vector<std::unique_ptr<PcapReceiver>> mReceivers;
   std::vector<pollfd> mReceiverFDs;
-  // this callback is called with the received packets from pcap
-  // NOTE 1: If you are using only wifi card as RX: I personally did not see any packet reordering with my wifi adapters, but according to svpcom this would be possible
-  // NOTE 2: If you are using more than one wifi card as RX, There are probably duplicate packets and packets do not arrive in order. E.g. the following is possible:
-  // You get packet nr 0,1,2,3 from card 1 | then you get packet 0,2,3 from card 2
-  const PcapReceiver::PROCESS_PACKET_CALLBACK mCallbackData;
-  // This callback is called regularly independent weather data was received or not
-  const GENERIC_CALLBACK mCallbackLog;
   std::atomic<uint32_t> m_n_receiver_errors{};
   std::chrono::steady_clock::time_point m_last_receiver_error_log=std::chrono::steady_clock::now();
  public:

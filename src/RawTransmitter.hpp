@@ -19,7 +19,7 @@
 #include <chrono>
 #include <optional>
 #include <poll.h>
-#include <pcap.h>
+#include "pcap_helper.h"
 
 // This is a single header-only file you can use to build your own wifibroadcast link
 // It doesn't specify if / what FEC to use and so on
@@ -98,11 +98,12 @@ static pcap_t *openTxWithPcap(const std::string &wlan) {
   // NOTE: Immediate not needed on TX
   if (pcap_activate(p) != 0){
     wifibroadcast::log::get_default()->error("pcap_activate failed: {}",
-                                       pcap_geterr(p));
+                                             pcap_geterr(p));
   }
   //if (pcap_setnonblock(p, 1, errbuf) != 0) wifibroadcast::log::get_default()->warn(string_format("set_nonblock failed: %s", errbuf));
   return p;
 }
+
 }
 
 class IRawPacketInjector {

@@ -16,8 +16,24 @@ class StringHelper {
   static std::string vectorAsString(const std::vector<T> &v) {
     std::stringstream ss;
     ss << "[";
-    for (const auto i: v) {
-      ss << (int) i << ",";
+    for(int i=0;i<v.size();i++){
+      ss << std::to_string(i);
+      if(i!=v.size()-1){
+        ss<<",";
+      }
+    }
+    ss << "]";
+    return ss.str();
+  }
+
+  static std::string string_vec_as_string(const std::vector<std::string>& v){
+    std::stringstream ss;
+    ss << "[";
+    for(int i=0;i<v.size();i++){
+      ss << i;
+      if(i!=v.size()-1){
+        ss<<",";
+      }
     }
     ss << "]";
     return ss.str();
@@ -27,8 +43,11 @@ class StringHelper {
   static std::string arrayAsString(const std::array<T, S> &a) {
     std::stringstream ss;
     ss << "[";
-    for (const auto i: a) {
-      ss << (int) i << ",";
+    for(int i=0;i<a.size();i++){
+      ss << std::to_string(i);
+      if(i!=a.size()-1){
+        ss<<",";
+      }
     }
     ss << "]";
     return ss.str();
