@@ -219,6 +219,10 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     const WBDataHeader &wbDataHeader = *((WBDataHeader *) packetPayload);
     assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
     wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
+    //
+    m_seq_nr_debugger.sequenceNumber(wbDataHeader.sequence_number_extra);
+    m_seq_nr_debugger.debug_in_intervals();
+
     if(x_last_seq_nr==-1){
       x_last_seq_nr=wbDataHeader.sequence_number_extra;
     }else{

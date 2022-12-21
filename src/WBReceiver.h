@@ -21,6 +21,7 @@
 #include "FECEnabled.hpp"
 #include "HelperSources/Helper.hpp"
 #include "HelperSources/TimeHelper.hpp"
+#include "HelperSources/SequenceNumberDebugger.hpp"
 #include "RawReceiver.hpp"
 #include "WBReceiverStats.hpp"
 #include "wifibroadcast-spdlog.h"
@@ -113,6 +114,7 @@ class WBReceiver {
   std::mutex m_last_stats_mutex;
   WBReceiverStats m_last_stats{};
   void set_latest_stats(WBReceiverStats new_stats);
+  SequenceNumberDebugger m_seq_nr_debugger;
  public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
   // time between <packet arrives at pcap processing queue> <<->> <packet is pulled out of pcap by RX>
