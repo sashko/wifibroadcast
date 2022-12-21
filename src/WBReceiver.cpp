@@ -70,7 +70,7 @@ void WBReceiver::recalculate_statistics() {
   wb_rx_stats.curr_incoming_bits_per_second =
       m_received_bitrate_calculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
   wb_rx_stats.curr_packet_loss_percentage=m_seq_nr_helper.get_current_loss_percent();
-  wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;
+  wb_rx_stats.curr_n_of_big_gaps=0;
   if(receiver){
     wb_rx_stats.n_receiver_likely_disconnect_errors=receiver->get_n_receiver_errors();
   }
