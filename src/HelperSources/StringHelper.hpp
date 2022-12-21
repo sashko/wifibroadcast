@@ -17,7 +17,7 @@ class StringHelper {
     std::stringstream ss;
     ss << "[";
     for(int i=0;i<v.size();i++){
-      ss << std::to_string(i);
+      ss << std::to_string(v[i]);
       if(i!=v.size()-1){
         ss<<",";
       }
@@ -30,7 +30,7 @@ class StringHelper {
     std::stringstream ss;
     ss << "[";
     for(int i=0;i<v.size();i++){
-      ss << i;
+      ss << v[i];
       if(i!=v.size()-1){
         ss<<",";
       }

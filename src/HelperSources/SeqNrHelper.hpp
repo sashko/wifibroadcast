@@ -39,9 +39,6 @@ class Helper{
       m_n_received_packets++;
       store_gap(diff-1);
       //m_console->debug("Diff:{}",diff);
-      if(diff>=MIN_SIZE_BIG_GAP){
-        m_n_big_gaps_since_last++;
-      }
     }else{
       m_n_received_packets++;
     }
@@ -63,12 +60,10 @@ class Helper{
  private:
   int m_last_seq_nr=-1;
   static constexpr int MAX_N_STORED_GAPS=1000;
-  static constexpr auto MIN_SIZE_BIG_GAP=8;
   std::vector<int> m_gaps;
  private:
   int m_n_received_packets=0;
   int m_n_missing_packets=0;
-  int m_n_big_gaps_since_last=0;
   std::chrono::steady_clock::time_point m_last_log;
 };
 
