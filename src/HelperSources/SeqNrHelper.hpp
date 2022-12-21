@@ -44,7 +44,8 @@ class Helper{
       // as an example, a diff of 2 means one packet is missing.
       m_n_missing_packets+=diff-1;
       m_n_received_packets++;
-      store_gap(diff-1);
+      // can be usefully for debugging
+      //store_gap(diff-1);
       //m_console->debug("Diff:{}",diff);
     }else{
       m_n_received_packets++;
@@ -63,7 +64,7 @@ class Helper{
         //m_curr_packet_loss=static_cast<int16_t>(std::lround(loss_perc));
         // we always round up the packet loss
         m_curr_packet_loss=static_cast<int16_t>(std::ceil(loss_perc));
-        wifibroadcast::log::get_default()->debug("Packet loss:{} % {} %",m_curr_packet_loss,loss_perc);
+        //wifibroadcast::log::get_default()->debug("Packet loss:{} % {} %",m_curr_packet_loss,loss_perc);
       }else{
         // We did not get any packets in the last x seconds
         m_curr_packet_loss=-1;
