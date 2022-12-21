@@ -53,6 +53,7 @@ class Helper{
     if(elasped>std::chrono::seconds(1)){
       wifibroadcast::log::get_default()->debug("Gaps: {}",StringHelper::vectorAsString(m_gaps));
       m_gaps.resize(0);
+      m_last_log=std::chrono::steady_clock::now();
     }
     if(m_gaps.size()>=MAX_N_STORED_GAPS){
       m_gaps.resize(0);
