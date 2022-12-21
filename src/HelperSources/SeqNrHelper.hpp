@@ -54,6 +54,7 @@ class Helper{
     recalculate_loss_if_needed();
   }
   // recalculate the loss in percentage in fixed intervals
+  // resets the received and missing packet count
   void recalculate_loss_if_needed(){
     if(std::chrono::steady_clock::now()-m_last_loss_perc_recalculation>std::chrono::seconds(2)){
       m_last_loss_perc_recalculation=std::chrono::steady_clock::now();
