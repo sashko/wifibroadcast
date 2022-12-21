@@ -20,7 +20,7 @@ static int diff_between_packets(int last_packet,int curr_packet){
   }
 }
 
-// Helper for calculating statistics for a link with a rolling uint16_t sequence number
+// Helper for calculating statistics for a link with a rolling (wrap around) uint16_t sequence number
 class Helper{
  public:
   Helper(){
@@ -45,6 +45,7 @@ class Helper{
     }else{
       m_n_received_packets++;
     }
+    m_last_seq_nr=seq_nr;
   }
  private:
   void store_gap(int gap_size){
