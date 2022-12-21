@@ -122,15 +122,6 @@ class WBReceiver {
   AvgCalculator avgPcapToApplicationLatency;
   AvgCalculator2 avgLatencyBeaconPacketLatency;
 #endif
- private:
-  int x_last_seq_nr=-1;
-  int x_n_received_packets=0;
-  int x_n_missing_packets=0;
-  std::chrono::steady_clock::time_point x_last_rec=std::chrono::steady_clock::now();
-  int16_t x_curr_packet_loss_perc=-1;
-  static constexpr auto MIN_SIZE_BIG_GAP=8;
-  int x_curr_n_of_big_gaps=-1;
-  int x_n_big_gaps_since_last=0;
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_RECEIVER_H

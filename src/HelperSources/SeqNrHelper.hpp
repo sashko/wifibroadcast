@@ -5,6 +5,9 @@
 #ifndef WIFIBROADCAST_SRC_HELPERSOURCES_SEQNRHELPER_H_
 #define WIFIBROADCAST_SRC_HELPERSOURCES_SEQNRHELPER_H_
 
+#include <atomic>
+#include <memory>
+
 namespace seq_nr{
 
 static int diff_between_packets(int last_packet,int curr_packet){
@@ -25,6 +28,10 @@ class Helper{
  public:
   Helper(){
     m_gaps.reserve(MAX_N_STORED_GAPS);
+    m_curr_packet_loss=-1;
+  }
+  int16_t get_current_loss_percent(){
+    return m_curr_packet_loss;
   }
   void on_new_sequence_number(uint16_t seq_nr){
     if(m_last_seq_nr==-1){
@@ -43,6 +50,25 @@ class Helper{
       m_n_received_packets++;
     }
     m_last_seq_nr=seq_nr;
+    recalculate_loss_if_needed();
+  }
+  // recalculate the loss in percentage in fixed intervals
+  void recalculate_loss_if_needed(){
+    if(std::chrono::steady_clock::now()-m_last_loss_perc_recalculation>std::chrono::seconds(2)){
+      m_last_loss_perc_recalculation=std::chrono::steady_clock::now();
+      const auto n_total_packets=m_n_received_packets+m_n_missing_packets;
+      //m_console->debug("x_n_missing_packets:{} x_n_received_packets:{} n_total_packets:{}",x_n_missing_packets,x_n_received_packets,n_total_packets);
+      if(n_total_packets>=1){
+        const double loss_perc=static_cast<double>(m_n_missing_packets)/static_cast<double>(n_total_packets)*100.0;
+        m_curr_packet_loss=static_cast<int16_t>(std::lround(loss_perc));
+        //m_console->debug("Packet loss:{} % {} %",x_curr_packet_loss_perc,loss_perc);
+      }else{
+        // We did not get any packets in the last x seconds
+        m_curr_packet_loss=-1;
+      }
+      m_n_received_packets=0;
+      m_n_missing_packets=0;
+    }
   }
  private:
   void store_gap(int gap_size){
@@ -65,6 +91,8 @@ class Helper{
   int m_n_received_packets=0;
   int m_n_missing_packets=0;
   std::chrono::steady_clock::time_point m_last_log;
+  std::chrono::steady_clock::time_point m_last_loss_perc_recalculation=std::chrono::steady_clock::now();
+  std::atomic<int16_t> m_curr_packet_loss{};
 };
 
 }

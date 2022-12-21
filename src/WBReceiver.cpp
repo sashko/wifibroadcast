@@ -69,7 +69,7 @@ std::string WBReceiver::createDebugState() const {
 void WBReceiver::recalculate_statistics() {
   wb_rx_stats.curr_incoming_bits_per_second =
       m_received_bitrate_calculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
-  wb_rx_stats.curr_packet_loss_percentage=x_curr_packet_loss_perc;
+  wb_rx_stats.curr_packet_loss_percentage=m_seq_nr_helper.get_current_loss_percent();
   wb_rx_stats.curr_n_of_big_gaps=x_curr_n_of_big_gaps;
   if(receiver){
     wb_rx_stats.n_receiver_likely_disconnect_errors=receiver->get_n_receiver_errors();
@@ -208,40 +208,6 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
     //
     m_seq_nr_helper.on_new_sequence_number(wbDataHeader.sequence_number_extra);
-
-    if(x_last_seq_nr==-1){
-      x_last_seq_nr=wbDataHeader.sequence_number_extra;
-    }else{
-      const auto diff= seq_nr::diff_between_packets(x_last_seq_nr,wbDataHeader.sequence_number_extra);
-      if(diff>1){
-        // as an example, a diff of 2 means one packet is missing.
-        x_n_missing_packets+=diff-1;
-        //m_console->debug("Diff:{}",diff);
-        if(diff>=MIN_SIZE_BIG_GAP){
-          x_n_big_gaps_since_last++;
-        }
-      }else{
-        x_n_received_packets++;
-      }
-      if(std::chrono::steady_clock::now()-x_last_rec>std::chrono::seconds(2)){
-        x_last_rec=std::chrono::steady_clock::now();
-        auto n_total_packets=x_n_received_packets+x_n_missing_packets;
-        //m_console->debug("x_n_missing_packets:{} x_n_received_packets:{} n_total_packets:{}",x_n_missing_packets,x_n_received_packets,n_total_packets);
-        if(n_total_packets>=1){
-          const double loss_perc=static_cast<double>(x_n_missing_packets)/static_cast<double>(n_total_packets)*100.0;
-          x_curr_packet_loss_perc=static_cast<int16_t>(std::lround(loss_perc));
-          //m_console->debug("Packet loss:{} % {} %",x_curr_packet_loss_perc,loss_perc);
-        }else{
-          // We did not get any packets in the last x seconds
-          x_curr_packet_loss_perc=-1;
-        }
-        x_curr_n_of_big_gaps=x_n_big_gaps_since_last;
-        x_n_big_gaps_since_last=0;
-        x_n_received_packets=0;
-        x_n_missing_packets=0;
-      }
-      x_last_seq_nr=wbDataHeader.sequence_number_extra;
-    }
     const auto decryptedPayload = mDecryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
                                                            packetPayloadSize - sizeof(WBDataHeader), wbDataHeader);
     if (decryptedPayload == std::nullopt) {
