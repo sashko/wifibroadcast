@@ -29,19 +29,6 @@
 #include <sstream>
 #include <utility>
 
-static int diff_between_packets(int last_packet,int curr_packet){
-  if(last_packet==curr_packet){
-    wifibroadcast::log::get_default()->debug("Duplicate?!");
-  }
-  if(curr_packet<last_packet){
-    // We probably have overflown the uin16_t range
-    const auto diff=curr_packet+UINT16_MAX+1-last_packet;
-    return diff;
-  }else{
-    return curr_packet-last_packet;
-  }
-}
-
 WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback,std::shared_ptr<spdlog::logger> console) :
     options(std::move(options1)),
     mDecryptor(options.keypair),
@@ -220,13 +207,12 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
     wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
     //
-    m_seq_nr_debugger.sequenceNumber(wbDataHeader.sequence_number_extra);
-    m_seq_nr_debugger.debug_in_intervals();
+    m_seq_nr_helper.on_new_sequence_number(wbDataHeader.sequence_number_extra);
 
     if(x_last_seq_nr==-1){
       x_last_seq_nr=wbDataHeader.sequence_number_extra;
     }else{
-      const auto diff= diff_between_packets(x_last_seq_nr,wbDataHeader.sequence_number_extra);
+      const auto diff= seq_nr::diff_between_packets(x_last_seq_nr,wbDataHeader.sequence_number_extra);
       if(diff>1){
         // as an example, a diff of 2 means one packet is missing.
         x_n_missing_packets+=diff-1;
