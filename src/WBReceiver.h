@@ -21,6 +21,8 @@
 #include "FECEnabled.hpp"
 #include "HelperSources/Helper.hpp"
 #include "HelperSources/TimeHelper.hpp"
+#include "HelperSources/SequenceNumberDebugger.hpp"
+#include "HelperSources/SeqNrHelper.hpp"
 #include "RawReceiver.hpp"
 #include "WBReceiverStats.hpp"
 #include "wifibroadcast-spdlog.h"
@@ -113,21 +115,13 @@ class WBReceiver {
   std::mutex m_last_stats_mutex;
   WBReceiverStats m_last_stats{};
   void set_latest_stats(WBReceiverStats new_stats);
+  seq_nr::Helper m_seq_nr_helper;
  public:
 #ifdef ENABLE_ADVANCED_DEBUGGING
   // time between <packet arrives at pcap processing queue> <<->> <packet is pulled out of pcap by RX>
   AvgCalculator avgPcapToApplicationLatency;
   AvgCalculator2 avgLatencyBeaconPacketLatency;
 #endif
- private:
-  int x_last_seq_nr=-1;
-  int x_n_received_packets=0;
-  int x_n_missing_packets=0;
-  std::chrono::steady_clock::time_point x_last_rec=std::chrono::steady_clock::now();
-  int16_t x_curr_packet_loss_perc=-1;
-  static constexpr auto MIN_SIZE_BIG_GAP=8;
-  int x_curr_n_of_big_gaps=-1;
-  int x_n_big_gaps_since_last=0;
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_RECEIVER_H
