@@ -61,7 +61,7 @@ class Helper{
       if(n_total_packets>=1){
         const double loss_perc=static_cast<double>(m_n_missing_packets)/static_cast<double>(n_total_packets)*100.0;
         m_curr_packet_loss=static_cast<int16_t>(std::lround(loss_perc));
-        //m_console->debug("Packet loss:{} % {} %",x_curr_packet_loss_perc,loss_perc);
+        wifibroadcast::log::get_default()->debug("Packet loss:{} % {} %",m_curr_packet_loss,loss_perc);
       }else{
         // We did not get any packets in the last x seconds
         m_curr_packet_loss=-1;
