@@ -83,7 +83,8 @@ class RadiotapHeader {
     // https://en.wikipedia.org/wiki/Low-density_parity-check_code#:~:text=In%20information%20theory%2C%20a%20low,subclass%20of%20the%20bipartite%20graph).
     bool ldpc = false;
     // https://www.digitalairwireless.com/articles/blog/demystifying-modulation-and-coding-scheme-mcs-index-values
-    int mcs_index = 1;
+    // https://mcsindex.com/
+    int mcs_index = 3;
   };
   // Make sure that this is the only constructor
   explicit RadiotapHeader(const UserSelectableParams &params) {
