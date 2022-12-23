@@ -40,7 +40,8 @@ struct ROptions {
   // make optional for ease of use - with no keypair given the default "seed" is used
   std::optional<std::string> keypair = std::nullopt;
   // RX queue depth (max n of blocks that can be buffered in the rx pipeline)
-  unsigned int rx_queue_depth=10;
+  // Use 1 if you have a single RX card, since anything else can result in stuttering (but might/is required for multiple rx card(s))
+  unsigned int rx_queue_depth=1;
   // dirty, rssi on rtl8812au is "bugged", this discards the first rssi value reported by the card.
   bool rtl8812au_rssi_fixup=false;
 };
