@@ -29,7 +29,7 @@ class UDPWBTransmitter {
                                                               client_udp_port,
                                                               [this](const uint8_t *payload,
                                                                      const std::size_t payloadSize) {
-                                                                wbTransmitter->feedPacket(payload, payloadSize);
+          wbTransmitter->enqueue_packet(payload, payloadSize);
                                                               },wanted_recv_buff_size);
   }
   /**

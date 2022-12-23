@@ -118,7 +118,7 @@ std::string WBTransmitter::createDebugState() const {
   return ss.str();
 }
 
-void WBTransmitter::feedPacket(const uint8_t *buf, size_t size,std::optional<bool> end_block) {
+bool WBTransmitter::enqueue_packet(const uint8_t *buf, size_t size,std::optional<bool> end_block) {
   count_bytes_data_provided+=size;
   auto packet=std::make_shared<std::vector<uint8_t>>(buf,buf+size);
   auto item=std::make_shared<Item>();
@@ -131,9 +131,10 @@ void WBTransmitter::feedPacket(const uint8_t *buf, size_t size,std::optional<boo
     // in the loss (perc) on the ground
     m_curr_seq_nr++;
   }
+  return res;
 }
 
-void WBTransmitter::feedPacket(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block) {
+bool WBTransmitter::enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block) {
   count_bytes_data_provided+=packet->size();
   auto item=std::make_shared<Item>();
   item->data=packet;
@@ -145,11 +146,12 @@ void WBTransmitter::feedPacket(std::shared_ptr<std::vector<uint8_t>> packet,std:
     // in the loss (perc) on the ground
     m_curr_seq_nr++;
   }
+  return res;
 }
 
 void WBTransmitter::tmp_feed_frame_fragments(
     const std::vector<std::shared_ptr<std::vector<uint8_t>>> &frame_fragments,bool use_fixed_fec_instead) {
-  // TODO calculate best fitting block size(s)
+  // we calculated the best fit and fragmented the frame before calling this method
   for(int i=0;i<frame_fragments.size();i++){
     std::optional<bool> end_block=std::nullopt;
     if(i==frame_fragments.size()-1){
@@ -160,7 +162,10 @@ void WBTransmitter::tmp_feed_frame_fragments(
     if(use_fixed_fec_instead){
       end_block=std::nullopt;
     }
-    feedPacket(frame_fragments[i],end_block);
+    enqueue_packet(frame_fragments[i], end_block);
+    // TODO
+    // If we fail on any fragment while enqueueing a frame, there is no point in enqueueing the rest of the frame,
+    // since the rx cannot do anything with a partial frame missing a fragment anyways
   }
 }
 

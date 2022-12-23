@@ -91,8 +91,9 @@ class WBTransmitter {
    * @param buf packet data buffer
    * @param size packet data buffer size
    */
-  void feedPacket(const uint8_t *buf, size_t size,std::optional<bool> end_block=std::nullopt);
-  void feedPacket(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block);
+  bool enqueue_packet(const uint8_t *buf, size_t size,std::optional<bool> end_block= std::nullopt);
+  bool enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block);
+  // feed already properly fragmented (ready for fec) packets
   void tmp_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments,
                                 bool use_fixed_fec_instead);
   // Split frame into more than 1 fec block if it is too big to do the computation in one FEC block
