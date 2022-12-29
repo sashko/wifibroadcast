@@ -34,8 +34,6 @@
 #include "../readerwriterqueue/readerwritercircularbuffer.h"
 #include "WBTransmitterStats.hpp"
 
-// dynamic fec block size, NONE = use fixed k value
-enum class FEC_VARIABLE_INPUT_TYPE {RTP_H264, RTP_H265, RTP_MJPEG };
 
 // the following settings are only needed if fec is enabled
 struct TxFecOptions{
@@ -184,7 +182,7 @@ class WBTransmitter {
     std::optional<bool> end_block;
     std::shared_ptr<std::vector<uint8_t>> data;
   };
-  // extra data queue, to smooth out input from udp port AND more importantly, have a queue we can reason about
+  // extra data queue, to smooth out data stream spikes AND more importantly, have a queue we can reason about
   // in contrast to the linux udp socket buffer, which we cannot get any information about.
   moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<Item>> m_data_queue{128};
   std::unique_ptr<std::thread> m_process_data_thread;
