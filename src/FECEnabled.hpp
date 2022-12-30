@@ -136,6 +136,16 @@ class FECEncoder {
   MinMaxAvg<uint16_t> m_curr_fec_block_sizes{};
  public:
   /**
+   * Helper for encoding a FEC "block", note that @param fragments size needs to be <=m_curr_fec_k_max
+   */
+  void tmp_encode_block(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments){
+    for(int i=0;i<fragments.size();i++){
+      const bool end_block=i==fragments.size()-1;
+      const auto res=encodePacket(fragments[i]->data(),fragments[i]->size(),end_block);
+      assert(end_block==res);
+    }
+  }
+  /**
    * encode packet such that it can be decoded by FECDecoder. Data is forwarded via the callback.
    * @param endBlock if true, the FEC step is applied immediately
    * else, the FEC step is only applied if reaching m_curr_fec_k_max

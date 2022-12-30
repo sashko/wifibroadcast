@@ -60,6 +60,8 @@ struct TOptions {
   std::optional<std::string> keypair = std::nullopt;
   // wlan interface to send packets with
   std::string wlan;
+  // weather you are going to call the enqueue block or enqueue packet method
+  bool use_block_queue=false;
   // Even though setting the fec_k parameter / n of primary fragments creates similar characteristics as a link
   // without fec, we have a special impl. when fec is disabled, since there we allow packets out of order and with fec_k == 1 you'd have
   // packet re-ordering / packets out of order are not possible.
@@ -74,7 +76,6 @@ class WBTransmitter {
    * Each instance has to be assigned with a Unique ID to differentiate between streams on the RX
    * It does all the FEC encoding & encryption for this stream, then uses PcapTransmitter to inject the generated packets
    * FEC can be either enabled or disabled.
-   * When run as an executable from the command line, a UDPReceiver is created for forwarding data to an instance of this class.
    * @param radiotapHeader the radiotap header that is used for injecting, contains configurable data like the mcs index.
    * @param options1 options for this instance, some of them are forwarded to the receiver instance.
    */
@@ -82,28 +83,25 @@ class WBTransmitter {
   WBTransmitter(const WBTransmitter &) = delete;
   WBTransmitter &operator=(const WBTransmitter &) = delete;
   ~WBTransmitter();
+ public:
   /**
-   * feed a new packet to this instance.
-   * Depending on the selected mode, this might add FEC packets or similar.
-   * If the packet size exceeds the max packet size, the packet is dropped.
-   * @param buf packet data buffer
-   * @param size packet data buffer size
+   * Enqueue a packet to be processed. If FEC is enabled, additional FEC packets will be generated when fec_k is reached.
+   * @param packet the packet (data) to enqueue
+   * @return true on success (space in the packet queue), false otherwise
    */
-  bool enqueue_packet(const uint8_t *buf, size_t size,std::optional<bool> end_block= std::nullopt);
-  bool enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet,std::optional<bool> end_block);
-  // feed already properly fragmented (ready for fec) packets
-  void tmp_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments,
-                                bool use_fixed_fec_instead);
-  // Split frame into more than 1 fec block if it is too big to do the computation in one FEC block
-  void tmp_split_and_feed_frame_fragments(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& frame_fragments,
-                                          int max_block_size);
+  bool try_enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet);
   /**
-  * Create a verbose string that gives debugging information about the current state of this wb receiver.
+   * Enqueue a block (most likely a frame) to be processed, FEC needs to be enabled in this mode.
+   * If the n of fragments exceeds @param max_block_size, the block is split into one or more sub-blocks.
+   * @return true on success (space in the block queue), false otherwise
+   */
+  bool try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,int max_block_size);
+  /**
+   * Create a verbose string that gives debugging information about the current state of this wb receiver.
    * Since this one only reads, it is safe to call from any thread.
-   * Note that this one doesn't print to stdout.
-  * @return a string without new line at the end.
-  */
-  [[nodiscard]] std::string createDebugState() const;
+   * @return a string about the state, without a newline on the end.
+   */
+  [[nodiscard]] std::string createDebugState()const;
 
   // These are for updating parameters at run time
   // change the mcs index (will be applied on the next enqueued packet)
@@ -119,18 +117,18 @@ class WBTransmitter {
   void update_fec_k(int fec_k);
 
   std::size_t get_estimate_buffered_packets(){
-    return m_data_queue.size_approx();
+    return m_packet_queue.size_approx();
   }
   WBTxStats get_latest_stats();
   // only valid when actually doing FEC
   FECTxStats get_latest_fec_stats();
  private:
-  // send the current session key via WIFI (located in mEncryptor)
-  void sendSessionKey();
+  // send the current session key via wifibroadcast (located in mEncryptor)
+  void send_session_key();
   // for the FEC encoder
-  void sendFecPrimaryOrSecondaryFragment(uint64_t nonce, const uint8_t *payload, size_t payloadSize);
+  void encrypt_and_send_packet(uint64_t nonce, const uint8_t *payload,size_t payloadSize);
   // send packet by prefixing data with the current IEE and Radiotap header
-  void sendPacket(const AbstractWBPacket &abstractWbPacket);
+  void send_packet(const AbstractWBPacket &abstractWbPacket);
   const TOptions options;
   const bool kEnableFec;
   // only used if FEC is enabled
@@ -149,46 +147,56 @@ class WBTransmitter {
   // this one never changes,also used as a header for injected packets.
   RadiotapHeader::UserSelectableParams m_radioTapHeaderParams;
   std::mutex m_radiotapHeaderMutex;
-  RadiotapHeader mRadiotapHeader;
-  uint16_t ieee80211_seq = 0;
+  RadiotapHeader m_radiotap_header;
+  uint16_t m_ieee80211_seq = 0;
   // statistics for console
   // n of packets fed to the instance
-  int64_t nInputPackets = 0;
+  int64_t m_n_input_packets = 0;
   // n of actually injected packets
-  int64_t nInjectedPackets = 0;
+  int64_t m_n_injected_packets = 0;
   // n of injected session key packets
-  int64_t nInjectedSessionKeypackets=0;
+  int64_t m_n_injected_sess_packets =0;
   // count of bytes we got passed (aka for example, what the video encoder produced - does not include FEC)
-  uint64_t count_bytes_data_provided=0;
-  BitrateCalculator bitrate_calculator_data_provided{};
+  uint64_t m_count_bytes_data_provided =0;
+  BitrateCalculator m_bitrate_calculator_data_provided{};
   // count of bytes we injected into the wifi card
-  uint64_t count_bytes_data_injected=0;
+  uint64_t m_count_bytes_data_injected =0;
   // a tx error is thrown if injecting the packet takes longer than MAX_SANE_INJECTION_TIME,
   // which hints at a overflowing tx queue (unfortunately I don't know a way to directly get the tx queue yet)
   // However, this hint can be misleading - for example, during testing (MCS set to 3) and with about 5MBit/s video after FEC
   // I get about 5 tx error(s) per second with my atheros, but it works fine. This workaround also seems to not work at all
   // with the RTL8812au.
-  uint64_t count_tx_injections_error_hint=0;
+  uint64_t m_count_tx_injections_error_hint =0;
   static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
   BitrateCalculator bitrate_calculator_injected_bytes{};
-  PacketsPerSecondCalculator _packets_per_second_calculator{};
-  std::chrono::steady_clock::time_point session_key_announce_ts{};
-  WBSessionKeyPacket sessionKeyPacket;
+  PacketsPerSecondCalculator m_packets_per_second_calculator{};
+  std::chrono::steady_clock::time_point m_session_key_announce_ts{};
+  WBSessionKeyPacket m_sess_key_packet;
   //
   std::atomic<uint16_t> m_curr_seq_nr=0;
   uint64_t m_n_dropped_packets=0;
  private:
-  struct Item{
-    std::optional<bool> end_block;
+  // We have two data queues with a slightly different layout (depending on the selected operating mode)
+  struct EnqueuedPacket {
     std::shared_ptr<std::vector<uint8_t>> data;
   };
-  // extra data queue, to smooth out data stream spikes AND more importantly, have a queue we can reason about
-  // in contrast to the linux udp socket buffer, which we cannot get any information about.
-  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<Item>> m_data_queue{128};
+  struct EnqueuedBlock {
+    int max_block_size;
+    std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
+  };
+  // Used if use_block_queue==false, in OpenHD, used for telemetry data
+  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>> m_packet_queue{128};
+  // Used if use_block_queue==true, in OpenHD, used for video data
+  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>> m_block_queue{2};
+  // The thread that consumes the provided packets or blocks, set to sched param realtime
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;
   void loop_process_data();
-  void feedPacket2(const uint8_t *buf, size_t size,std::optional<bool> end_block);
+  // The session key is sent in regular intervalls as long as the tx instance is active (data is coming in)
+  void announce_session_key_if_needed();
+  //
+  void process_packet(const std::shared_ptr<std::vector<uint8_t>>& data);
+  void process_fec_block(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& fragments,int max_block_size);
 };
 
 #endif //CONSTI10_WIFIBROADCAST_WB_TRANSMITTER_H
