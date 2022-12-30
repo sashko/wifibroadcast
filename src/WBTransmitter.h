@@ -86,12 +86,14 @@ class WBTransmitter {
  public:
   /**
    * Enqueue a packet to be processed. If FEC is enabled, additional FEC packets will be generated when fec_k is reached.
+   * Guaranteed to return immediately.
    * @param packet the packet (data) to enqueue
    * @return true on success (space in the packet queue), false otherwise
    */
   bool try_enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet);
   /**
    * Enqueue a block (most likely a frame) to be processed, FEC needs to be enabled in this mode.
+   * Guaranteed to return immediately.
    * If the n of fragments exceeds @param max_block_size, the block is split into one or more sub-blocks.
    * @return true on success (space in the block queue), false otherwise
    */
@@ -116,8 +118,8 @@ class WBTransmitter {
   // (Since we use FEC enabled for video and FEC disabled for telemetry anyways)
   void update_fec_k(int fec_k);
 
-  std::size_t get_estimate_buffered_packets(){
-    return m_packet_queue.size_approx();
+  std::size_t get_estimate_buffered_elements(){
+    return options.use_block_queue ? m_block_queue->size_approx() : m_packet_queue->size_approx();
   }
   WBTxStats get_latest_stats();
   // only valid when actually doing FEC
@@ -185,9 +187,9 @@ class WBTransmitter {
     std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
   };
   // Used if use_block_queue==false, in OpenHD, used for telemetry data
-  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>> m_packet_queue{128};
+  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>> m_packet_queue;
   // Used if use_block_queue==true, in OpenHD, used for video data
-  moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>> m_block_queue{2};
+  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>> m_block_queue;
   // The thread that consumes the provided packets or blocks, set to sched param realtime
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;

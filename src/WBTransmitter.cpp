@@ -53,6 +53,11 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
     m_fec_disabled_encoder->outputDataCallback =
         notstd::bind_front(&WBTransmitter::encrypt_and_send_packet, this);
   }
+  if(options.use_block_queue){
+    m_block_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>>(2);
+  }else{
+    m_packet_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>>(128);
+  }
   // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
   m_sess_key_packet.IS_FEC_ENABLED = kEnableFec;
   // send session key a couple of times on startup to make it more likely an already running rx picks it up immediately
@@ -84,7 +89,7 @@ bool WBTransmitter::try_enqueue_packet(std::shared_ptr<std::vector<uint8_t>> pac
   m_count_bytes_data_provided +=packet->size();
   auto item=std::make_shared<EnqueuedPacket>();
   item->data=packet;
-  const bool res= m_packet_queue.try_enqueue(item);
+  const bool res= m_packet_queue->try_enqueue(item);
   if(!res){
     m_n_dropped_packets++;
     // TODO not exactly the correct solution - include dropped packets in the seq nr, such that they are included
@@ -107,7 +112,7 @@ bool WBTransmitter::try_enqueue_block(std::vector<std::shared_ptr<std::vector<ui
   auto item=std::make_shared<EnqueuedBlock>();
   item->fragments=fragments;
   item->max_block_size=max_block_size;
-  const bool res= m_block_queue.try_enqueue(item);
+  const bool res= m_block_queue->try_enqueue(item);
   if(!res){
     m_n_dropped_packets+=fragments.size();
     m_curr_seq_nr+=fragments.size();
@@ -169,14 +174,14 @@ void WBTransmitter::loop_process_data() {
   if(options.use_block_queue){
     std::shared_ptr<EnqueuedBlock> frame;
     while (m_process_data_thread_run){
-      if(m_block_queue.wait_dequeue_timed(frame,timeout_usecs)){
+      if(m_block_queue->wait_dequeue_timed(frame,timeout_usecs)){
         process_fec_block(frame->fragments, frame->max_block_size);
       }
     }
   }else{
     std::shared_ptr<EnqueuedPacket> packet;
     while (m_process_data_thread_run){
-      if(m_packet_queue.wait_dequeue_timed(packet,timeout_usecs)){
+      if(m_packet_queue->wait_dequeue_timed(packet,timeout_usecs)){
         process_packet(packet->data);
       }
     }
