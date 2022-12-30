@@ -194,7 +194,7 @@ class WBTransmitter {
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;
   void loop_process_data();
-  // The session key is sent in regular intervalls as long as the tx instance is active (data is coming in)
+  // The session key is sent in regular intervals as long as the tx instance is active (data is coming in)
   void announce_session_key_if_needed();
   //
   void process_packet(const std::shared_ptr<std::vector<uint8_t>>& data);
