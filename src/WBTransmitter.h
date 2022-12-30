@@ -62,6 +62,10 @@ struct TOptions {
   std::string wlan;
   // weather you are going to call the enqueue block or enqueue packet method
   bool use_block_queue=false;
+  // size of packet data queue
+  int packet_data_queue_size=64;
+  // size of block / frame data queue
+  int block_data_queue_size=2;
   // Even though setting the fec_k parameter / n of primary fragments creates similar characteristics as a link
   // without fec, we have a special impl. when fec is disabled, since there we allow packets out of order and with fec_k == 1 you'd have
   // packet re-ordering / packets out of order are not possible.
