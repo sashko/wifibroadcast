@@ -8,6 +8,7 @@
 #include "RawTransmitter.hpp"
 #include "readerwriterqueue/readerwritercircularbuffer.h"
 
+// TODO unimplemented right now, migrate
 // Can be used by multiple WB TX / RX instance(s)
 // This has the benefit that all packets go through a single class instance,
 // which makes counting total n of packets or reasoning about packets in the tx queue much easier.
