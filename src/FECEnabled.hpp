@@ -91,7 +91,7 @@ static constexpr const uint16_t
     MAX_TOTAL_FRAGMENTS_PER_BLOCK = MAX_N_P_FRAGMENTS_PER_BLOCK + MAX_N_S_FRAGMENTS_PER_BLOCK;
 
 // For dynamic block sizes, we switched to a FEC overhead "percentage" value.
-// e.g. the final data throughput ~= original data troughput * fec overhead percentage
+// e.g. the final data throughput ~= original data throughput * fec overhead percentage
 static uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,uint32_t fec_overhead_perc){
   if(fec_overhead_perc<=0)return 0;
   return std::lroundf(static_cast<float>(n_primary_fragments) * static_cast<float>(fec_overhead_perc) / 100.0f);
