@@ -118,7 +118,7 @@ class IRawPacketInjector {
 };
 
 // Pcap Transmitter injects packets into the wifi adapter using pcap
-// It does not specify what the payload is and therefore is just a really small wrapper around the pcap interface
+// It does not specify what the payload is and therefore is just a tiny wrapper around the pcap interface
 // that properly opens / closes the interface on construction/destruction
 class PcapTransmitter : public IRawPacketInjector {
  public:

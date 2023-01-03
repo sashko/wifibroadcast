@@ -24,13 +24,14 @@ class UDPWBTransmitter {
                    const std::string &client_addr,
                    int client_udp_port,
                    std::optional<int> wanted_recv_buff_size=std::nullopt) {
+    options1.use_block_queue= false;
     wbTransmitter = std::make_unique<WBTransmitter>(radiotapHeaderParams, std::move(options1));
     udpReceiver = std::make_unique<SocketHelper::UDPReceiver>(client_addr,
-                                                              client_udp_port,
-                                                              [this](const uint8_t *payload,
-                                                                     const std::size_t payloadSize) {
-          wbTransmitter->enqueue_packet(payload, payloadSize);
-                                                              },wanted_recv_buff_size);
+        client_udp_port,
+        [this](const uint8_t *payload,
+               const std::size_t payloadSize) {
+          on_new_udp_packet(payload,payloadSize);
+        },wanted_recv_buff_size);
   }
   /**
    * Loop until an error occurs.
@@ -54,6 +55,10 @@ class UDPWBTransmitter {
  private:
   std::unique_ptr<WBTransmitter> wbTransmitter;
   std::unique_ptr<SocketHelper::UDPReceiver> udpReceiver;
+  void on_new_udp_packet(const uint8_t *payload,const std::size_t payloadSize){
+    auto shared=std::make_shared<std::vector<uint8_t>>(payload,payload+payloadSize);
+    wbTransmitter->try_enqueue_packet(shared);
+  }
 };
 
 
