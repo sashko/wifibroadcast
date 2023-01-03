@@ -254,9 +254,16 @@ void WBTransmitter::process_packet(const std::shared_ptr<std::vector<uint8_t>>& 
 void WBTransmitter::process_fec_block(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& fragments,const int max_block_size) {
   assert(kEnableFec);
   announce_session_key_if_needed();
-  auto blocks=blocksize::split_frame_if_needed(fragments,max_block_size);
-  for(auto& block:blocks){
-    m_fec_encoder->tmp_encode_block(block);
+  if(m_tx_fec_options.fixed_k==0){
+    auto blocks=blocksize::split_frame_if_needed(fragments,max_block_size);
+    for(auto& block:blocks){
+      m_fec_encoder->tmp_encode_block(block);
+    }
+  }else{
+    // No alignment of blocks with frame
+    for(auto& fragment:fragments){
+      m_fec_encoder->encodePacket(fragment->data(),fragment->size());
+    }
   }
   if (m_fec_encoder->resetOnOverflow()) {
     // running out of sequence numbers should never happen during the lifetime of the TX instance, but handle it properly anyways

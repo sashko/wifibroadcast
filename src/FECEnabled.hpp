@@ -142,8 +142,7 @@ class FECEncoder {
     for(int i=0;i<fragments.size();i++){
       const bool end_block=i==fragments.size()-1;
       const auto res=encodePacket(fragments[i]->data(),fragments[i]->size(),end_block);
-      // does not hold true if you do not use variable block length for video (do not do that ;))
-      //assert(end_block==res);
+      assert(end_block==res);
     }
   }
   /**
