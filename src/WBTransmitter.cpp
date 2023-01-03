@@ -175,6 +175,7 @@ void WBTransmitter::loop_process_data() {
     std::shared_ptr<EnqueuedBlock> frame;
     while (m_process_data_thread_run){
       if(m_block_queue->wait_dequeue_timed(frame,timeout_usecs)){
+        m_console->debug("FEC block queue time:{}",MyTimeHelper::R(std::chrono::steady_clock::now()-frame->enqueue_time_point));
         process_fec_block(frame->fragments, frame->max_block_size);
       }
     }

@@ -186,6 +186,7 @@ class WBTransmitter {
     std::shared_ptr<std::vector<uint8_t>> data;
   };
   struct EnqueuedBlock {
+    std::chrono::steady_clock::time_point enqueue_time_point=std::chrono::steady_clock::now();
     int max_block_size;
     std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
   };
