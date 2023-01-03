@@ -49,6 +49,7 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
 }
 
 void WBReceiver::loop() {
+  SchedulingHelper::setThreadParamsMaxRealtime();
   receiver->loop();
 }
 
