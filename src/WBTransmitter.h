@@ -30,7 +30,6 @@
 #include "RawTransmitter.hpp"
 #include "wifibroadcast-spdlog.h"
 #include "wifibroadcast.hpp"
-//#include <atomic>
 #include "../readerwriterqueue/readerwritercircularbuffer.h"
 #include "WBTransmitterStats.hpp"
 
