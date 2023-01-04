@@ -114,7 +114,7 @@ class Decryptor {
       }
       fclose(fp);
     }
-    memset(session_key.data(), '\0', sizeof(session_key));
+    memset(session_key.data(), 0, sizeof(session_key));
   }
  private:
   // use this one if you are worried about CPU usage when using encryption

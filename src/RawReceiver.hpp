@@ -395,7 +395,7 @@ class MultiRxPcapReceiver {
     const auto N_RECEIVERS = m_options.rxInterfaces.size();
     mReceivers.resize(N_RECEIVERS);
     mReceiverFDs.resize(N_RECEIVERS);
-    memset(mReceiverFDs.data(), '\0', mReceiverFDs.size() * sizeof(pollfd));
+    memset(mReceiverFDs.data(), 0, mReceiverFDs.size() * sizeof(pollfd));
     std::stringstream ss;
     ss << "MultiRxPcapReceiver ";
     if(m_options.radio_port==-1){

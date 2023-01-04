@@ -166,7 +166,7 @@ class FECEncoder {
     // zero out the remaining bytes such that FEC always sees zeroes
     // same is done on the rx. These zero bytes are never transmitted via wifi
     const auto writtenDataSize = sizeof(FECPayloadHdr) + buff_size;
-    memset(blockBuffer[currFragmentIdx].data() + writtenDataSize, '\0', FEC_MAX_PACKET_SIZE - writtenDataSize);
+    memset(blockBuffer[currFragmentIdx].data() + writtenDataSize, 0, FEC_MAX_PACKET_SIZE - writtenDataSize);
 
     // check if we need to end the block right now (aka do FEC step on tx)
     const int currNPrimaryFragments = currFragmentIdx + 1;
@@ -351,7 +351,7 @@ class RxBlock {
     // write the data (doesn't matter if FEC data or correction packet)
     memcpy(blockBuffer[fecNonce.fragmentIdx].data(), data, dataLen);
     // set the rest to zero such that FEC works
-    memset(blockBuffer[fecNonce.fragmentIdx].data() + dataLen, '\0', FEC_MAX_PACKET_SIZE - dataLen);
+    memset(blockBuffer[fecNonce.fragmentIdx].data() + dataLen, 0, FEC_MAX_PACKET_SIZE - dataLen);
     // mark it as available
     fragment_map[fecNonce.fragmentIdx] = FragmentStatus::AVAILABLE;
     if (fecNonce.flag == 0) {
