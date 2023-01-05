@@ -28,6 +28,8 @@ extern "C" {
 #include <iostream>
 #include <cassert>
 
+#include "wifibroadcast-spdlog.h"
+
 // everything must be in little endian byte order http://www.radiotap.org/
 static_assert(__BYTE_ORDER == __LITTLE_ENDIAN, "This code is written for little endian only !");
 
@@ -282,11 +284,11 @@ static std::string toStringRadiotapMCS(uint8_t known, uint8_t flags, uint8_t mcs
   return ss.str();
 }
 
-static void debugRadiotapHeader(const uint8_t *pkt, int pktlen) {
+static void debugRadiotapHeader(const uint8_t *pkt, int pktlen, std::shared_ptr<spdlog::logger> console= wifibroadcast::log::get_default()) {
   struct ieee80211_radiotap_iterator iterator{};
   int ret = ieee80211_radiotap_iterator_init(&iterator, (ieee80211_radiotap_header *) pkt, pktlen, NULL);
   if (ret) {
-    std::cout << "malformed radiotap header (init returns " << ret << ")\n";
+    console->warn("ill-formed ieee80211_radiotap header {}",ret);
     return;
   }
   std::stringstream ss;
@@ -364,7 +366,7 @@ static void debugRadiotapHeader(const uint8_t *pkt, int pktlen) {
         break;
     }
   }  /* while more rt headers */
-  std::cout<<ss.str();
+  console->debug("{}",ss.str().c_str());
 }
 }
 

@@ -157,6 +157,8 @@ struct ParsedRxPcapPacket {
   const std::size_t payloadSize;
   // Atheros forwards frames even though the fcs check failed ( this packet is corrupted)
   const bool frameFailedFCSCheck;
+  // driver might not support that
+  std::optional<uint16_t> mcs_index=std::nullopt;
 };
 static std::string all_rssi_to_string(const std::vector<RssiForAntenna>& all_rssi){
   std::stringstream ss;
@@ -206,6 +208,8 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   //std::vector<int8_t> radiotap_antsignals;
   // for rtl8812au fixup
   bool is_first_reported_antenna_value= true;
+  //
+  std::optional<uint16_t> mcs_index=std::nullopt;
 
   uint8_t currentAntenna = 0;
   // not confirmed yet, but one pcap packet might include stats for multiple antennas
@@ -240,6 +244,16 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
         break;
       case IEEE80211_RADIOTAP_FLAGS:
         tmpCopyOfIEEE80211_RADIOTAP_FLAGS = *(uint8_t *) (iterator.this_arg);
+        break;
+      case IEEE80211_RADIOTAP_MCS:
+      {
+        uint8_t known = iterator.this_arg[0];
+        uint8_t flags = iterator.this_arg[1];
+        uint8_t mcs = iterator.this_arg[2];
+        if(known & IEEE80211_RADIOTAP_MCS_HAVE_MCS){
+          mcs_index=static_cast<uint16_t>(mcs);
+        }
+      }
         break;
       default:break;
     }
@@ -284,7 +298,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
     ss<<(int)antsignal<<",";
   }
   std::cout<<ss.str();*/
-  return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck};
+  return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck,mcs_index};
 }
 }
 

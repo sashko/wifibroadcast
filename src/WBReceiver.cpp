@@ -154,6 +154,9 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
   }else{
     m_console->warn("wlan idx out of bounds");
   }
+  if(parsedPacket->mcs_index.has_value()){
+    wb_rx_stats.last_received_packet_mcs_index=parsedPacket->mcs_index.value();
+  }
 
   //RawTransmitterHelper::writeAntennaStats(antenna_stat, WLAN_IDX, parsedPacket->antenna, parsedPacket->rssi);
   //const Ieee80211Header* tmpHeader=parsedPacket->ieee80211Header;

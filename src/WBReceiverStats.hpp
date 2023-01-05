@@ -88,6 +88,8 @@ struct WBRxStats{
   int curr_n_of_big_gaps=-1;
   // should only increase when the wifi card disconnects / crashes
   uint64_t n_receiver_likely_disconnect_errors=0;
+  // mcs index on the most recent received packet, if the card supports reporting it
+  int last_received_packet_mcs_index=-1;
 };
 static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
   std::stringstream ss;
