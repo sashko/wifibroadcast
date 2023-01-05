@@ -30,8 +30,8 @@
 #include "RawTransmitter.hpp"
 #include "wifibroadcast-spdlog.h"
 #include "wifibroadcast.hpp"
-#include "../readerwriterqueue/readerwritercircularbuffer.h"
-#include "../concurrentqueue/blockingconcurrentqueue.h"
+#include "../moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
+#include "../moodycamel/concurrentqueue/blockingconcurrentqueue.h"
 #include "WBTransmitterStats.hpp"
 
 
