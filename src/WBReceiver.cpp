@@ -210,8 +210,11 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     const WBDataHeader &wbDataHeader = *((WBDataHeader *) packetPayload);
     assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
     wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
-    //
-    m_seq_nr_helper.on_new_sequence_number(wbDataHeader.sequence_number_extra);
+    // this type of packet loss counting can only be done per card, since it cannot deal with duplicates and/or reordering
+    // TODO implement me properly
+    if(wlan_idx==0){
+      m_seq_nr_helper.on_new_sequence_number(wbDataHeader.sequence_number_extra);
+    }
     const auto decryptedPayload = mDecryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
                                                            packetPayloadSize - sizeof(WBDataHeader), wbDataHeader);
     if (decryptedPayload == std::nullopt) {
