@@ -72,6 +72,7 @@ struct TOptions {
   bool enable_fec= true;
   // the following settings are only needed if fec is enabled
   TxFecOptions tx_fec_options{};
+  // for development, log time items spend in the data queue (it should be close to 0)
   bool log_time_spent_in_atomic_queue=false;
 };
 
