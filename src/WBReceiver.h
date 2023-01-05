@@ -59,10 +59,8 @@ class WBReceiver {
   WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback,std::shared_ptr<spdlog::logger> console= nullptr);
   WBReceiver(const WBReceiver &) = delete;
   WBReceiver &operator=(const WBReceiver &) = delete;
-  void processPacket(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
   // dump statistics
   void recalculate_statistics();
-  const ROptions options;
   /**
    * Process incoming data packets as long as nothing goes wrong (nothing should go wrong as long
    * as the computer does not crash or the wifi card disconnects).
@@ -96,6 +94,23 @@ class WBReceiver {
     m_wb_rx_stats.count_p_decryption_ok=0;
   }
  private:
+  /**
+   * Process a packet received via pcap from any of the rx wifi card(s).
+   * This is always called by the same thread.
+   * @param wlan_idx the wifi card this packet was received on
+   * @param hdr, @param pkt the packet (pcap packet layout)
+   */
+  void process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
+  /**
+   * called every time we receive a session key packet
+   */
+  void process_received_session_key_packet(const WBSessionKeyPacket &sessionKeyPacket);
+  /**
+   * called every time we receive a data packet
+   */
+  void process_received_data_packet(uint8_t wlan_idx,const uint8_t *pkt_payload,size_t pkt_payload_size);
+ private:
+  const ROptions m_options;
   std::shared_ptr<spdlog::logger> m_console;
   Decryptor m_decryptor;
   std::array<RSSIForWifiCard, MAX_RX_INTERFACES> m_rssi_per_card;

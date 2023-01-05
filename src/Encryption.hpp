@@ -126,10 +126,8 @@ class Decryptor {
   std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> session_key{};
  public:
   // return true if a new session was detected (The same session key can be sent multiple times by the tx)
-  bool onNewPacketSessionKeyData(std::array<uint8_t, crypto_box_NONCEBYTES> &sessionKeyNonce,
-                                 std::array<uint8_t,
-                                            crypto_aead_chacha20poly1305_KEYBYTES
-                                                + crypto_box_MACBYTES> &sessionKeyData) {
+  bool onNewPacketSessionKeyData(const std::array<uint8_t, crypto_box_NONCEBYTES> &sessionKeyNonce,
+                                 const std::array<uint8_t,crypto_aead_chacha20poly1305_KEYBYTES+ crypto_box_MACBYTES> &sessionKeyData) {
     std::array<uint8_t, sizeof(session_key)> new_session_key{};
     if (crypto_box_open_easy(new_session_key.data(),
                              sessionKeyData.data(), sessionKeyData.size(),
