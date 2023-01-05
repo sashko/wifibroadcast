@@ -72,6 +72,7 @@ struct TOptions {
   bool enable_fec= true;
   // the following settings are only needed if fec is enabled
   TxFecOptions tx_fec_options{};
+  bool log_time_spent_in_atomic_queue=false;
 };
 
 class WBTransmitter {
@@ -183,9 +184,12 @@ class WBTransmitter {
   //
   std::atomic<uint16_t> m_curr_seq_nr=0;
   uint64_t m_n_dropped_packets=0;
+  // Time fragments / blocks spend in the non-blocking atomic queue.
+  AvgCalculator m_queue_time_calculator;
  private:
   // We have two data queues with a slightly different layout (depending on the selected operating mode)
   struct EnqueuedPacket {
+    std::chrono::steady_clock::time_point enqueue_time_point=std::chrono::steady_clock::now();
     std::shared_ptr<std::vector<uint8_t>> data;
   };
   struct EnqueuedBlock {

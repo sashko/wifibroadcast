@@ -175,7 +175,13 @@ void WBTransmitter::loop_process_data() {
     std::shared_ptr<EnqueuedBlock> frame;
     while (m_process_data_thread_run){
       if(m_block_queue->wait_dequeue_timed(frame,timeout_usecs)){
-        //m_console->debug("FEC block queue time:{}",MyTimeHelper::R(std::chrono::steady_clock::now()-frame->enqueue_time_point));
+        m_queue_time_calculator.add(std::chrono::steady_clock::now()-frame->enqueue_time_point);
+        if(m_queue_time_calculator.get_delta_since_last_reset()>std::chrono::seconds(1)){
+          if(options.log_time_spent_in_atomic_queue){
+            m_console->debug("Time in queue {}",m_queue_time_calculator.getAvgReadable());
+          }
+          m_queue_time_calculator.reset();
+        }
         process_fec_block(frame->fragments, frame->max_block_size);
       }
     }
@@ -183,6 +189,13 @@ void WBTransmitter::loop_process_data() {
     std::shared_ptr<EnqueuedPacket> packet;
     while (m_process_data_thread_run){
       if(m_packet_queue->wait_dequeue_timed(packet,timeout_usecs)){
+        m_queue_time_calculator.add(std::chrono::steady_clock::now()-packet->enqueue_time_point);
+        if(m_queue_time_calculator.get_delta_since_last_reset()>std::chrono::seconds(1)){
+          if(options.log_time_spent_in_atomic_queue){
+            m_console->debug("Time in queue {}",m_queue_time_calculator.getAvgReadable());
+          }
+          m_queue_time_calculator.reset();
+        }
         process_packet(packet->data);
       }
     }
