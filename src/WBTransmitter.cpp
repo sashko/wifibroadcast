@@ -54,9 +54,9 @@ WBTransmitter::WBTransmitter(RadiotapHeader::UserSelectableParams radioTapHeader
         notstd::bind_front(&WBTransmitter::encrypt_and_send_packet, this);
   }
   if(options.use_block_queue){
-    m_block_queue=std::make_unique<moodycamel::BlockingConcurrentQueue<std::shared_ptr<EnqueuedBlock>>>(options.block_data_queue_size);
+    m_block_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>>(options.block_data_queue_size);
   }else{
-    m_packet_queue=std::make_unique<moodycamel::BlockingConcurrentQueue<std::shared_ptr<EnqueuedPacket>>>(options.packet_data_queue_size);
+    m_packet_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>>(options.packet_data_queue_size);
   }
   // the rx needs to know if FEC is enabled or disabled. Note, both variable and fixed fec counts as FEC enabled
   m_sess_key_packet.IS_FEC_ENABLED = kEnableFec;

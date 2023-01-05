@@ -93,7 +93,7 @@ class WBTransmitter {
   /**
    * Enqueue a packet to be processed. If FEC is enabled, additional FEC packets will be generated when fec_k is reached.
    * Guaranteed to return immediately.
-   * Thread-safe.
+   * This method is not thread-safe.
    * @param packet the packet (data) to enqueue
    * @return true on success (space in the packet queue), false otherwise
    */
@@ -101,7 +101,7 @@ class WBTransmitter {
   /**
    * Enqueue a block (most likely a frame) to be processed, FEC needs to be enabled in this mode.
    * Guaranteed to return immediately.
-   * Thread-safe.
+   * This method is not thread-safe.
    * If the n of fragments exceeds @param max_block_size, the block is split into one or more sub-blocks.
    * @return true on success (space in the block queue), false otherwise
    */
@@ -199,9 +199,9 @@ class WBTransmitter {
     std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
   };
   // Used if use_block_queue==false, in OpenHD, used for telemetry data
-  std::unique_ptr<moodycamel::BlockingConcurrentQueue<std::shared_ptr<EnqueuedPacket>>> m_packet_queue;
+  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>> m_packet_queue;
   // Used if use_block_queue==true, in OpenHD, used for video data
-  std::unique_ptr<moodycamel::BlockingConcurrentQueue<std::shared_ptr<EnqueuedBlock>>> m_block_queue;
+  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>> m_block_queue;
   // The thread that consumes the provided packets or blocks, set to sched param realtime
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;
