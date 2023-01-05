@@ -227,10 +227,11 @@ void WBReceiver::process_received_session_key_packet(const WBSessionKeyPacket &s
 void WBReceiver::process_received_data_packet(uint8_t wlan_idx,const uint8_t *pkt_payload,const size_t pkt_payload_size) {
   const WBDataHeader &wbDataHeader = *((WBDataHeader *)pkt_payload);
   assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
-  // this type of packet loss counting can only be done per card, since it cannot deal with duplicates and/or reordering
-  // TODO implement me properly, some of those stats only work with one rx card so far
+  //TODO implement me properly, some of those stats only work with one rx card so far
   if(wlan_idx==0){
+    // Otherwise, we get the bitrate from all cards together
     m_wb_rx_stats.count_bytes_data_received+= pkt_payload_size;
+    // this type of packet loss counting can only be done per card, since it cannot deal with duplicates and/or reordering
     m_seq_nr_helper.on_new_sequence_number(wbDataHeader.sequence_number_extra);
   }
   const auto decryptedPayload = m_decryptor.decryptPacket(wbDataHeader.nonce, pkt_payload + sizeof(WBDataHeader),
