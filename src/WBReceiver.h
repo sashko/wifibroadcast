@@ -85,34 +85,32 @@ class WBReceiver {
   WBReceiverStats get_latest_stats();
   // used by the scan channels feature
   void reset_count_p_decryption_ok(){
-    wb_rx_stats.count_p_decryption_ok=0;
+    m_wb_rx_stats.count_p_decryption_ok=0;
   }
-  void reset_count_p_all(){
-    wb_rx_stats.count_p_all=0;
+  void reset_count_p_all(){ m_wb_rx_stats.count_p_all=0;
   }
   void reset_all_count_p_stats(){
-    wb_rx_stats.count_p_all=0;
-    wb_rx_stats.count_p_bad=0;
-    wb_rx_stats.count_p_decryption_err=0;
-    wb_rx_stats.count_p_decryption_ok=0;
+    m_wb_rx_stats.count_p_all=0;
+    m_wb_rx_stats.count_p_bad=0;
+    m_wb_rx_stats.count_p_decryption_err=0;
+    m_wb_rx_stats.count_p_decryption_ok=0;
   }
  private:
-  const std::chrono::steady_clock::time_point INIT_TIME = std::chrono::steady_clock::now();
   std::shared_ptr<spdlog::logger> m_console;
-  Decryptor mDecryptor;
-  std::array<RSSIForWifiCard, MAX_RX_INTERFACES> rssiForWifiCard;
-  WBRxStats wb_rx_stats{};
+  Decryptor m_decryptor;
+  std::array<RSSIForWifiCard, MAX_RX_INTERFACES> m_rssi_per_card;
+  WBRxStats m_wb_rx_stats{};
   // for calculating the current rx bitrate
   BitrateCalculator m_received_bitrate_calculator{};
   //We know that once we get the first session key packet
   bool IS_FEC_ENABLED = false;
   // On the rx, either one of those two is active at the same time. NOTE: nullptr until the first session key packet
-  std::unique_ptr<FECDecoder> mFECDDecoder = nullptr;
-  std::unique_ptr<FECDisabledDecoder> mFECDisabledDecoder = nullptr;
+  std::unique_ptr<FECDecoder> m_fec_decoder = nullptr;
+  std::unique_ptr<FECDisabledDecoder> m_fec_disabled_decoder = nullptr;
   //Ieee80211HeaderSeqNrCounter mSeqNrCounter;
   // Callback that is called with the decoded data
-  const OUTPUT_DATA_CALLBACK mOutputDataCallback;
-  std::unique_ptr<MultiRxPcapReceiver> receiver;
+  const OUTPUT_DATA_CALLBACK m_output_data_callback;
+  std::unique_ptr<MultiRxPcapReceiver> m_multi_pcap_receiver;
   std::mutex m_last_stats_mutex;
   WBReceiverStats m_last_stats{};
   void set_latest_stats(WBReceiverStats new_stats);

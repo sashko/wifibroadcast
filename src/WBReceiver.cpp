@@ -31,8 +31,8 @@
 
 WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callback,std::shared_ptr<spdlog::logger> console) :
     options(std::move(options1)),
-    mDecryptor(options.keypair),
-    mOutputDataCallback(std::move(output_data_callback)) {
+      m_decryptor(options.keypair),
+      m_output_data_callback(std::move(output_data_callback)) {
   if(!console){
     m_console=wifibroadcast::log::create_or_get("wb_rx"+std::to_string(options.radio_port));
   }else{
@@ -44,42 +44,44 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
   multi_rx_options.logCallback=notstd::bind_front(&WBReceiver::recalculate_statistics, this);
   multi_rx_options.log_interval=std::chrono::seconds (1);
   multi_rx_options.radio_port=options.radio_port;
-  receiver = std::make_unique<MultiRxPcapReceiver>(multi_rx_options);
+  m_multi_pcap_receiver = std::make_unique<MultiRxPcapReceiver>(multi_rx_options);
   m_console->info("WFB-RX RADIO_PORT: {}",(int) options.radio_port);
 }
 
 void WBReceiver::loop() {
   SchedulingHelper::setThreadParamsMaxRealtime();
-  receiver->loop();
+  m_multi_pcap_receiver->loop();
 }
 
-void WBReceiver::stop_looping() {
-  receiver->stop();
+void WBReceiver::stop_looping() { m_multi_pcap_receiver->stop();
 }
 
 std::string WBReceiver::createDebugState() const {
   std::stringstream ss;
-  ss<<wb_rx_stats<<"\n";
-  if(mFECDDecoder){
-    auto stats=mFECDDecoder->stats;
+  ss<< m_wb_rx_stats <<"\n";
+  if(m_fec_decoder){
+    auto stats= m_fec_decoder->stats;
     ss<<stats<<"\n";
   }
   return ss.str();
 }
 
 void WBReceiver::recalculate_statistics() {
-  wb_rx_stats.curr_incoming_bits_per_second =
-      m_received_bitrate_calculator.recalculateSinceLast(wb_rx_stats.count_bytes_data_received);
-  wb_rx_stats.curr_packet_loss_percentage=m_seq_nr_helper.get_current_loss_percent();
-  wb_rx_stats.curr_n_of_big_gaps=0;
-  if(receiver){
-    wb_rx_stats.n_receiver_likely_disconnect_errors=receiver->get_n_receiver_errors();
+  m_wb_rx_stats.curr_incoming_bits_per_second =
+      m_received_bitrate_calculator.recalculateSinceLast(
+          m_wb_rx_stats.count_bytes_data_received);
+  m_wb_rx_stats.curr_packet_loss_percentage=m_seq_nr_helper.get_current_loss_percent();
+  m_wb_rx_stats.curr_n_of_big_gaps=0;
+  if(m_multi_pcap_receiver){
+    m_wb_rx_stats.n_receiver_likely_disconnect_errors=
+        m_multi_pcap_receiver->get_n_receiver_errors();
   }
   std::optional<FECRxStats> fec_stream_stats=std::nullopt;
-  if(mFECDDecoder){
-    fec_stream_stats=mFECDDecoder->stats;
+  if(m_fec_decoder){
+    fec_stream_stats= m_fec_decoder->stats;
   }
-  WBReceiverStats all_wb_rx_stats{options.radio_port,rssiForWifiCard,wb_rx_stats,fec_stream_stats};
+  WBReceiverStats all_wb_rx_stats{options.radio_port, m_rssi_per_card,
+                                  m_wb_rx_stats,fec_stream_stats};
   set_latest_stats(all_wb_rx_stats);
   // it is actually much more understandable when I use the absolute values for the logging
 #ifdef ENABLE_ADVANCED_DEBUGGING
@@ -96,48 +98,48 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
   const auto latency=std::chrono::system_clock::now() -tmp;
   avgPcapToApplicationLatency.add(latency);
 #endif
-  wb_rx_stats.count_p_all++;
+  m_wb_rx_stats.count_p_all++;
   // The radio capture header precedes the 802.11 header.
   const auto parsedPacket = RawReceiverHelper::processReceivedPcapPacket(hdr, pkt,options.rtl8812au_rssi_fixup);
   if (parsedPacket == std::nullopt) {
     m_console->warn("Discarding packet due to pcap parsing error!");
-    wb_rx_stats.count_p_bad++;
+    m_wb_rx_stats.count_p_bad++;
     return;
   }
   if (parsedPacket->frameFailedFCSCheck) {
     m_console->warn("Discarding packet due to bad FCS!");
-    wb_rx_stats.count_p_bad++;
+    m_wb_rx_stats.count_p_bad++;
     return;
   }
   if (!parsedPacket->ieee80211Header->isDataFrame()) {
     // we only process data frames
     m_console->warn("Got packet that is not a data packet {}",(int) parsedPacket->ieee80211Header->getFrameControl());
-    wb_rx_stats.count_p_bad++;
+    m_wb_rx_stats.count_p_bad++;
     return;
   }
   if (parsedPacket->ieee80211Header->getRadioPort() != options.radio_port) {
     // If we have the proper filter on pcap only packets with the right radiotap port should pass through
     m_console->warn("Got packet with wrong radio port ",(int) parsedPacket->ieee80211Header->getRadioPort());
     //RadiotapHelper::debugRadiotapHeader(pkt,hdr.caplen);
-    wb_rx_stats.count_p_bad++;
+    m_wb_rx_stats.count_p_bad++;
     return;
   }
   // All these edge cases should NEVER happen if using a proper tx/rx setup and the wifi driver isn't complete crap
   if (parsedPacket->payloadSize <= 0) {
     m_console->warn("Discarding packet due to no actual payload !");
-    wb_rx_stats.count_p_bad++;
+    m_wb_rx_stats.count_p_bad++;
     return;
   }
   if (parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
     m_console->warn("Discarding packet due to payload exceeding max {}",(int) parsedPacket->payloadSize);
-    wb_rx_stats.count_p_bad++;
+    m_wb_rx_stats.count_p_bad++;
     return;
   }
   if (parsedPacket->allAntennaValues.size() > MAX_N_ANTENNAS_PER_WIFI_CARD) {
     m_console->warn( "Wifi card with {} antennas",parsedPacket->allAntennaValues.size());
   }
-  if(wlan_idx <rssiForWifiCard.size()){
-    auto &thisWifiCard = rssiForWifiCard.at(wlan_idx);
+  if(wlan_idx < m_rssi_per_card.size()){
+    auto &thisWifiCard = m_rssi_per_card.at(wlan_idx);
     //m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
     const auto best_rssi=RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
     //m_console->debug("best_rssi:{}",(int)best_rssi);
@@ -148,7 +150,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
     m_console->warn("wlan idx out of bounds");
   }
   if(parsedPacket->mcs_index.has_value()){
-    wb_rx_stats.last_received_packet_mcs_index=parsedPacket->mcs_index.value();
+    m_wb_rx_stats.last_received_packet_mcs_index=parsedPacket->mcs_index.value();
   }
 
   //RawTransmitterHelper::writeAntennaStats(antenna_stat, WLAN_IDX, parsedPacket->antenna, parsedPacket->rssi);
@@ -167,72 +169,72 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
   if (packetPayload[0] == WFB_PACKET_KEY) {
     if (packetPayloadSize != WBSessionKeyPacket::SIZE_BYTES) {
       m_console->warn("invalid session key packet");
-      wb_rx_stats.count_p_bad++;
+      m_wb_rx_stats.count_p_bad++;
       return;
     }
     WBSessionKeyPacket &sessionKeyPacket = *((WBSessionKeyPacket *) parsedPacket->payload);
-    if (mDecryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)) {
+    if (m_decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)) {
       m_console->debug("Initializing new session. IS_FEC_ENABLED:{} ",(int)sessionKeyPacket.IS_FEC_ENABLED);
       // We got a new session key (aka a session key that has not been received yet)
-      wb_rx_stats.count_p_decryption_ok++;
+      m_wb_rx_stats.count_p_decryption_ok++;
       IS_FEC_ENABLED = sessionKeyPacket.IS_FEC_ENABLED;
       auto callback = [this](const uint8_t *payload, std::size_t payloadSize) {
-        if (mOutputDataCallback != nullptr) {
-          mOutputDataCallback(payload, payloadSize);
+        if (m_output_data_callback != nullptr) {
+          m_output_data_callback(payload, payloadSize);
         } else {
           m_console->debug("No data callback registered");
         }
       };
       if (IS_FEC_ENABLED) {
-        mFECDDecoder = std::make_unique<FECDecoder>(options.rx_queue_depth,MAX_TOTAL_FRAGMENTS_PER_BLOCK);
-        mFECDDecoder->mSendDecodedPayloadCallback = callback;
+        m_fec_decoder = std::make_unique<FECDecoder>(options.rx_queue_depth,MAX_TOTAL_FRAGMENTS_PER_BLOCK);
+        m_fec_decoder->mSendDecodedPayloadCallback = callback;
       } else {
-        mFECDisabledDecoder = std::make_unique<FECDisabledDecoder>();
-        mFECDisabledDecoder->mSendDecodedPayloadCallback = callback;
+        m_fec_disabled_decoder = std::make_unique<FECDisabledDecoder>();
+        m_fec_disabled_decoder->mSendDecodedPayloadCallback = callback;
       }
     } else {
-      wb_rx_stats.count_p_decryption_ok++;
+      m_wb_rx_stats.count_p_decryption_ok++;
     }
     return;
   } else if (packetPayload[0] == WFB_PACKET_DATA) {
     if (packetPayloadSize < sizeof(WBDataHeader) + sizeof(FECPayloadHdr)) {
       m_console->warn("Too short packet (fec header missing)");
-      wb_rx_stats.count_p_bad++;
+      m_wb_rx_stats.count_p_bad++;
       return;
     }
     const WBDataHeader &wbDataHeader = *((WBDataHeader *) packetPayload);
     assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
-    wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
+    m_wb_rx_stats.count_bytes_data_received+=packetPayloadSize;
     // this type of packet loss counting can only be done per card, since it cannot deal with duplicates and/or reordering
     // TODO implement me properly
     if(wlan_idx==0){
       m_seq_nr_helper.on_new_sequence_number(wbDataHeader.sequence_number_extra);
     }
-    const auto decryptedPayload = mDecryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
+    const auto decryptedPayload = m_decryptor.decryptPacket(wbDataHeader.nonce, packetPayload + sizeof(WBDataHeader),
                                                            packetPayloadSize - sizeof(WBDataHeader), wbDataHeader);
     if (decryptedPayload == std::nullopt) {
       //m_console->warn("unable to decrypt packet :",std::to_string(wbDataHeader.nonce));
-      wb_rx_stats.count_p_decryption_err++;
+      m_wb_rx_stats.count_p_decryption_err++;
       return;
     }
 
-    wb_rx_stats.count_p_decryption_ok++;
+    m_wb_rx_stats.count_p_decryption_ok++;
 
     assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
     if (IS_FEC_ENABLED) {
-      if (!mFECDDecoder) {
+      if (!m_fec_decoder) {
         m_console->warn("FEC K,N is not set yet (enabled)");
         return;
       }
-      if (!mFECDDecoder->validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)) {
-        wb_rx_stats.count_p_bad++;
+      if (!m_fec_decoder->validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)) {
+        m_wb_rx_stats.count_p_bad++;
       }
     } else {
-      if (!mFECDisabledDecoder) {
+      if (!m_fec_disabled_decoder) {
         m_console->warn("FEC K,N is not set yet(disabled)");
         return;
       }
-      mFECDisabledDecoder->processRawDataBlockFecDisabled(wbDataHeader.nonce, *decryptedPayload);
+      m_fec_disabled_decoder->processRawDataBlockFecDisabled(wbDataHeader.nonce, *decryptedPayload);
     }
   }
 #ifdef ENABLE_ADVANCED_DEBUGGING
@@ -248,7 +250,7 @@ void WBReceiver::processPacket(const uint8_t wlan_idx, const pcap_pkthdr &hdr, c
 #endif
   else {
     m_console->warn("Unknown packet type {}",(int) packetPayload[0]);
-    wb_rx_stats.count_p_bad += 1;
+    m_wb_rx_stats.count_p_bad += 1;
     return;
   }
 }
