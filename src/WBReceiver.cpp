@@ -92,6 +92,7 @@ void WBReceiver::recalculate_statistics() {
 }
 
 void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt) {
+  assert(wlan_idx<m_options.rxInterfaces.size());
 #ifdef ENABLE_ADVANCED_DEBUGGING
   const auto tmp=GenericHelper::timevalToTimePointSystemClock(hdr.ts);
   const auto latency=std::chrono::system_clock::now() -tmp;
