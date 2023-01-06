@@ -47,6 +47,7 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
   multi_rx_options.regulary_cb_interval =std::chrono::seconds (1);
   multi_rx_options.radio_port= m_options.radio_port;
   m_multi_pcap_receiver = std::make_unique<MultiRxPcapReceiver>(multi_rx_options);
+  recalculate_statistics();
   m_console->info("WFB-RX RADIO_PORT: {}",(int)m_options.radio_port);
 }
 
@@ -269,7 +270,7 @@ void WBReceiver::process_received_data_packet(uint8_t wlan_idx,const uint8_t *pk
 
 void WBReceiver::set_latest_stats(WBReceiverStats new_stats) {
   std::lock_guard<std::mutex> lock(m_last_stats_mutex);
-  m_last_stats=new_stats;
+  m_last_stats=std::move(new_stats);
 }
 
 WBReceiverStats WBReceiver::get_latest_stats(){
