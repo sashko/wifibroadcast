@@ -38,6 +38,8 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
     m_console=console;
   }
   assert(m_options.rxInterfaces.size()<=MAX_RX_INTERFACES);
+  assert(!m_options.rxInterfaces.empty());
+  m_stats_per_card.resize(m_options.rxInterfaces.size());
   MultiRxPcapReceiver::Options multi_rx_options;
   multi_rx_options.rxInterfaces= m_options.rxInterfaces;
   multi_rx_options.dataCallback=notstd::bind_front(&WBReceiver::process_received_packet, this);
@@ -81,7 +83,7 @@ void WBReceiver::recalculate_statistics() {
   if(m_fec_decoder){
     fec_stream_stats= m_fec_decoder->stats;
   }
-  WBReceiverStats all_wb_rx_stats{m_options.radio_port, m_rssi_per_card,
+  WBReceiverStats all_wb_rx_stats{m_options.radio_port, m_stats_per_card,
                                   m_wb_rx_stats,fec_stream_stats};
   set_latest_stats(all_wb_rx_stats);
   // it is actually much more understandable when I use the absolute values for the logging
@@ -142,13 +144,15 @@ void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hd
     m_console->warn( "Wifi card with {} antennas",parsedPacket->allAntennaValues.size());
   }
   {
-    auto &thisWifiCard = m_rssi_per_card.at(wlan_idx);
+    auto &this_wifi_card_stats = m_stats_per_card.at(wlan_idx);
+    auto& rssi_for_this_card=this_wifi_card_stats.rssi_for_wifi_card;
     //m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
     const auto best_rssi=RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
     //m_console->debug("best_rssi:{}",(int)best_rssi);
     if(best_rssi.has_value()){
-      thisWifiCard.addRSSI(best_rssi.value());
+      rssi_for_this_card.addRSSI(best_rssi.value());
     }
+    this_wifi_card_stats.count_received_packets++;
   }
 
   if(parsedPacket->mcs_index.has_value()){

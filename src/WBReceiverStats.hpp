@@ -129,9 +129,9 @@ static std::ostream& operator<<(std::ostream& strm, const FECRxStats& obj){
 struct WBReceiverStats {
   // the unique stream ID this data refers to
   uint8_t radio_port = 0;
-  // min max and avg rssi for each wifi card since the last call.
-  // if count_all for a card at position N is 0 nothing has been received on this card from the last call (or the card at position N is not used for this instance)
-  std::array<RSSIForWifiCard, 8> rssiPerCard{};
+  // stats per each rx card, size depends on with how many cards you configured the rx
+  // first element is the first given rx card, and so on.
+  std::vector<StatsPerRxCard> stats_per_card;
   // Available regardless if FEC is enabled or disabled
   WBRxStats wb_rx_stats;
   // only if FEC enabled

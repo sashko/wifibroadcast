@@ -113,7 +113,7 @@ class WBReceiver {
   const ROptions m_options;
   std::shared_ptr<spdlog::logger> m_console;
   Decryptor m_decryptor;
-  std::array<RSSIForWifiCard, MAX_RX_INTERFACES> m_rssi_per_card;
+  std::vector<StatsPerRxCard> m_stats_per_card;
   WBRxStats m_wb_rx_stats{};
   // for calculating the current rx bitrate
   BitrateCalculator m_received_bitrate_calculator{};
