@@ -390,13 +390,13 @@ class MultiRxPcapReceiver {
     std::vector<std::string> rxInterfaces;
     int radio_port;
     std::vector<int> excluded_radio_ports;
-    std::chrono::milliseconds log_interval;
     // this callback is called with the received packets from pcap
     // NOTE 1: If you are using only wifi card as RX: I personally did not see any packet reordering with my wifi adapters, but according to svpcom this would be possible
     // NOTE 2: If you are using more than one wifi card as RX, There are probably duplicate packets and packets do not arrive in order.
     PcapReceiver::PROCESS_PACKET_CALLBACK dataCallback;
-    // This callback is called regularly independent weather data was received or not
-    GENERIC_CALLBACK logCallback;
+    // This callback is called regularly even when no packets are received
+    GENERIC_CALLBACK regulary_called_cb;
+    std::chrono::milliseconds regulary_cb_interval=std::chrono::milliseconds(1000);
   };
   /**
    * @param rxInterfaces list of wifi adapters to listen on
@@ -418,7 +418,7 @@ class MultiRxPcapReceiver {
       ss<<"Assigned radio_port:"<<m_options.radio_port;
     }
     ss<<" Assigned WLAN(s):"<<StringHelper::string_vec_as_string(m_options.rxInterfaces);
-    ss << " LOG_INTERVAL(ms)" << (int) m_options.log_interval.count();
+    ss << " LOG_INTERVAL(ms)" << (int) m_options.regulary_cb_interval.count();
     wifibroadcast::log::get_default()->debug(ss.str());
 
     for (int i = 0; i < N_RECEIVERS; i++) {
@@ -447,7 +447,7 @@ class MultiRxPcapReceiver {
     std::chrono::steady_clock::time_point log_send_ts{};
     while (keep_running) {
       auto cur_ts = std::chrono::steady_clock::now();
-      const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(m_options.log_interval).count();
+      const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(m_options.regulary_cb_interval).count();
       int rc = poll(mReceiverFDs.data(), mReceiverFDs.size(), timeoutMS);
 
       if (rc < 0) {
@@ -458,10 +458,10 @@ class MultiRxPcapReceiver {
       cur_ts = std::chrono::steady_clock::now();
 
       if (cur_ts >= log_send_ts) {
-        if(m_options.logCallback){
-          m_options.logCallback();
+        if(m_options.regulary_called_cb){
+          m_options.regulary_called_cb();
         }
-        log_send_ts = std::chrono::steady_clock::now() + m_options.log_interval;
+        log_send_ts = std::chrono::steady_clock::now() + m_options.regulary_cb_interval;
       }
 
       if (rc == 0) {

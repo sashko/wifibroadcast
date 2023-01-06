@@ -40,8 +40,8 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
   MultiRxPcapReceiver::Options multi_rx_options;
   multi_rx_options.rxInterfaces= m_options.rxInterfaces;
   multi_rx_options.dataCallback=notstd::bind_front(&WBReceiver::process_received_packet, this);
-  multi_rx_options.logCallback=notstd::bind_front(&WBReceiver::recalculate_statistics, this);
-  multi_rx_options.log_interval=std::chrono::seconds (1);
+  multi_rx_options.regulary_called_cb =notstd::bind_front(&WBReceiver::recalculate_statistics, this);
+  multi_rx_options.regulary_cb_interval =std::chrono::seconds (1);
   multi_rx_options.radio_port= m_options.radio_port;
   m_multi_pcap_receiver = std::make_unique<MultiRxPcapReceiver>(multi_rx_options);
   m_console->info("WFB-RX RADIO_PORT: {}",(int)m_options.radio_port);

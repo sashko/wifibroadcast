@@ -21,8 +21,8 @@ ForeignPacketsReceiver::ForeignPacketsReceiver(std::vector<std::string> wlans,st
   MultiRxPcapReceiver::Options options;
   options.rxInterfaces=wlans;
   options.dataCallback=cb;
-  options.logCallback=cb2;
-  options.log_interval=std::chrono::milliseconds(100);
+  options.regulary_called_cb =cb2;
+  options.regulary_cb_interval =std::chrono::milliseconds(100);
   options.radio_port=-1;
   options.excluded_radio_ports=m_openhd_radio_ports;
   m_receiver=std::make_unique<MultiRxPcapReceiver>(options);
