@@ -56,6 +56,10 @@ static std::ostream& operator<<(std::ostream& strm, const RSSIForWifiCard& obj){
   strm<<ss.str();
   return strm;
 }
+struct StatsPerRxCard{
+  RSSIForWifiCard rssi_for_wifi_card{};
+  uint64_t count_received_packets=0;
+};
 
 static std::string bitrate_to_string(uint64_t bits_per_second){
   const double mBits_per_second=static_cast<double>(bits_per_second)/(1000*1000);

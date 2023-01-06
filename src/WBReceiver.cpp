@@ -37,6 +37,7 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
   }else{
     m_console=console;
   }
+  assert(m_options.rxInterfaces.size()<=MAX_RX_INTERFACES);
   MultiRxPcapReceiver::Options multi_rx_options;
   multi_rx_options.rxInterfaces= m_options.rxInterfaces;
   multi_rx_options.dataCallback=notstd::bind_front(&WBReceiver::process_received_packet, this);
@@ -52,7 +53,8 @@ void WBReceiver::loop() {
   m_multi_pcap_receiver->loop();
 }
 
-void WBReceiver::stop_looping() { m_multi_pcap_receiver->stop();
+void WBReceiver::stop_looping() {
+  m_multi_pcap_receiver->stop();
 }
 
 std::string WBReceiver::createDebugState() const {
@@ -93,6 +95,7 @@ void WBReceiver::recalculate_statistics() {
 
 void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt) {
   assert(wlan_idx<m_options.rxInterfaces.size());
+  assert(wlan_idx<MAX_RX_INTERFACES);
 #ifdef ENABLE_ADVANCED_DEBUGGING
   const auto tmp=GenericHelper::timevalToTimePointSystemClock(hdr.ts);
   const auto latency=std::chrono::system_clock::now() -tmp;
@@ -138,7 +141,7 @@ void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hd
   if (parsedPacket->allAntennaValues.size() > MAX_N_ANTENNAS_PER_WIFI_CARD) {
     m_console->warn( "Wifi card with {} antennas",parsedPacket->allAntennaValues.size());
   }
-  if(wlan_idx < m_rssi_per_card.size()){
+  {
     auto &thisWifiCard = m_rssi_per_card.at(wlan_idx);
     //m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
     const auto best_rssi=RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
@@ -146,9 +149,8 @@ void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hd
     if(best_rssi.has_value()){
       thisWifiCard.addRSSI(best_rssi.value());
     }
-  }else{
-    m_console->warn("wlan idx out of bounds");
   }
+
   if(parsedPacket->mcs_index.has_value()){
     m_wb_rx_stats.last_received_packet_mcs_index=parsedPacket->mcs_index.value();
   }
