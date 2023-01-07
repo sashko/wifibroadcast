@@ -114,8 +114,11 @@ class WBTransmitter {
   [[nodiscard]] std::string createDebugState()const;
 
   // These are for updating parameters at run time
-  // change the mcs index (will be applied on the next enqueued packet)
+  // change the mcs index (will be applied on the next transmitted packet)
   void update_mcs_index(uint8_t mcs_index);
+
+  // change the channel width (will be applied on the next transmitted packet)
+  void update_channel_width(int width_mhz);
 
   // change the fec percentage value (will be applied on the next fec step)
   // only valid if fec is enabled

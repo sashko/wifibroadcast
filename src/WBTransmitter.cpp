@@ -161,8 +161,16 @@ std::string WBTransmitter::createDebugState()const{
 
 
 void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
-  m_console->debug("Changing mcs index to {}",mcs_index);
+  m_console->debug("update_mcs_index {}",mcs_index);
   m_radioTapHeaderParams.mcs_index=mcs_index;
+  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
+  std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
+  m_radiotap_header =newRadioTapHeader;
+}
+
+void WBTransmitter::update_channel_width(int width_mhz) {
+  m_console->debug("update_channel_width {}",width_mhz);
+  m_radioTapHeaderParams.bandwidth=width_mhz;
   auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
   std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
   m_radiotap_header =newRadioTapHeader;
