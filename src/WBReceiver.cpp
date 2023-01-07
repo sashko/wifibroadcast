@@ -47,6 +47,7 @@ WBReceiver::WBReceiver(ROptions options1, OUTPUT_DATA_CALLBACK output_data_callb
   multi_rx_options.regulary_cb_interval =std::chrono::seconds (1);
   multi_rx_options.radio_port= m_options.radio_port;
   m_multi_pcap_receiver = std::make_unique<MultiRxPcapReceiver>(multi_rx_options);
+  // init with default value(s)
   recalculate_statistics();
   m_console->info("WFB-RX RADIO_PORT: {}",(int)m_options.radio_port);
 }
