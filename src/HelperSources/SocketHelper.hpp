@@ -48,6 +48,11 @@ struct UDPConfig{
   const std::string ip;
   const int port;
 };
+
+static std::string ip_port_as_string(const std::string ip,int port){
+  return ip+":"+std::to_string(port);
+}
+
 static const std::string ADDRESS_LOCALHOST = "127.0.0.1";
 static const std::string ADDRESS_NULL="0.0.0.0";
 // returns the current socket receive timeout
@@ -160,9 +165,8 @@ class UDPForwarder {
     const auto ret=sendto(sockfd, packet, packetSize, 0, (const struct sockaddr *) &saddr,
                             sizeof(saddr));
     if(ret <0 || ret != packetSize){
-      std::stringstream ss;
-      ss<<"Error sending packet of size:"<<packetSize<<" to "<<client_addr<<":"<<client_udp_port<<" code:"<<ret<<" "<<strerror(errno);
-      wifibroadcast::log::get_default()->warn(ss.str());
+      wifibroadcast::log::get_default()->warn("Error sending packet of size:{} to {} code:{} {}",
+                                              packetSize,ip_port_as_string(client_addr,client_udp_port),ret, strerror(errno));
     }
   }
  private:
@@ -275,9 +279,8 @@ class UDPReceiver {
     const auto ret=sendto(mSocket, packet, packetSize, 0, (const struct sockaddr *) &saddr,
                             sizeof(saddr));
     if(ret <0 || ret != packetSize){
-      std::stringstream ss;
-      ss<<"Error sending packet of size:"<<packetSize<<" to "<<destIp<<":"<<destPort<<" code:"<<ret<<" "<<strerror(errno);
-      wifibroadcast::log::get_default()->warn(ss.str());
+      wifibroadcast::log::get_default()->warn("Error sending packet of size:{} to {} code:{} {}",
+                                              packetSize,ip_port_as_string(destIp,destPort),ret, strerror(errno));
     }
   }
   void stopLooping() {
