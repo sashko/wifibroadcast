@@ -54,7 +54,8 @@ static std::string ip_port_as_string(const std::string ip,int port){
 }
 
 static const std::string ADDRESS_LOCALHOST = "127.0.0.1";
-static const std::string ADDRESS_NULL="0.0.0.0";
+static const std::string ADDRESS_ANY="0.0.0.0";
+
 // returns the current socket receive timeout
 static std::chrono::nanoseconds getCurrentSocketReceiveTimeout(int socketFd) {
   timeval tv{};
