@@ -76,8 +76,11 @@ target_link_libraries(wifibroadcast PUBLIC ${sodium_LIBRARY_RELEASE})
 # for some reason, we also need to manually link pthread
 find_package(Threads REQUIRED)
 target_link_libraries(wifibroadcast PUBLIC Threads::Threads)
-
-find_package(spdlog REQUIRED)
+# spdlog might be already exist as a target in OpenHD - only use package manager's spdlog if needed
+if(NOT TARGET spdlog)
+    message(STATUS "spdlog needs to be installed locally on the system")
+    find_package(spdlog REQUIRED)
+endif()
 target_link_libraries(wifibroadcast PRIVATE spdlog::spdlog)
 
 SET(WB_TARGET_LINK_LIBRARIES wifibroadcast)
