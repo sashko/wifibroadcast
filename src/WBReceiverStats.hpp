@@ -77,6 +77,7 @@ struct WBRxStats{
   // n of received packets that are bad for any reason
   uint64_t count_p_bad = 0;
   // encryption stats
+  uint64_t count_p_decryption_session_key=0;
   uint64_t count_p_decryption_err = 0;
   uint64_t count_p_decryption_ok = 0;
   // n of total received bytes, before FEC decoding
@@ -99,8 +100,9 @@ struct WBRxStats{
 };
 static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
   std::stringstream ss;
-  ss<<"WBRxStats{all:"<<obj.count_p_all<<",bad:"<<obj.count_p_bad<<",decrypt_err:"<<obj.count_p_decryption_err
-     <<",decrypt_ok:"<<obj.count_p_decryption_ok<<",bytes:"<<obj.count_bytes_data_received
+  ss<<"WBRxStats{all:"<<obj.count_p_all<<",bad:"<<obj.count_p_bad
+     <<"decrypt["<<obj.count_p_decryption_session_key<<",err:"<<obj.count_p_decryption_err<<",ok:"<<obj.count_p_decryption_ok<<"]"
+     <<",bytes:"<<obj.count_bytes_data_received
      <<",bitrate:"<<bitrate_to_string(obj.curr_incoming_bits_per_second)
      <<",loss:"<<obj.curr_packet_loss_percentage
      <<",mcs:"<<obj.last_received_packet_mcs_index

@@ -215,7 +215,7 @@ void WBReceiver::process_received_session_key_packet(const WBSessionKeyPacket &s
   if (m_decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)) {
     m_console->debug("Initializing new session. IS_FEC_ENABLED:{} ",(int)sessionKeyPacket.IS_FEC_ENABLED);
     // We got a new session key (aka a session key that has not been received yet)
-    m_wb_rx_stats.count_p_decryption_ok++;
+    m_wb_rx_stats.count_p_decryption_session_key++;
     IS_FEC_ENABLED = sessionKeyPacket.IS_FEC_ENABLED;
     auto callback = [this](const uint8_t *payload, std::size_t payloadSize) {
       if (m_output_data_callback != nullptr) {
@@ -231,8 +231,6 @@ void WBReceiver::process_received_session_key_packet(const WBSessionKeyPacket &s
       m_fec_disabled_decoder = std::make_unique<FECDisabledDecoder>();
       m_fec_disabled_decoder->mSendDecodedPayloadCallback = callback;
     }
-  } else {
-    m_wb_rx_stats.count_p_decryption_ok++;
   }
 }
 
