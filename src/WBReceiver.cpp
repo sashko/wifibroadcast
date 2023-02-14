@@ -174,6 +174,7 @@ void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hd
     }
     const auto success=process_received_data_packet(wlan_idx,pkt_payload,pkt_payload_size);
     if(success){
+      // We only use known "good" packets for those stats.
       auto &this_wifi_card_stats = m_stats_per_card.at(wlan_idx);
       auto& rssi_for_this_card=this_wifi_card_stats.rssi_for_wifi_card;
       //m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
