@@ -281,3 +281,7 @@ WBReceiverStats WBReceiver::get_latest_stats(){
   std::lock_guard<std::mutex> lock(m_last_stats_mutex);
   return m_last_stats;
 }
+
+void WBReceiver::reset_all_rx_stats() {
+  m_wb_rx_stats=WBRxStats{};
+}

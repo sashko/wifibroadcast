@@ -82,17 +82,7 @@ class WBReceiver {
    */
   WBReceiverStats get_latest_stats();
   // used by the scan channels feature
-  void reset_count_p_decryption_ok(){
-    m_wb_rx_stats.count_p_decryption_ok=0;
-  }
-  void reset_count_p_all(){ m_wb_rx_stats.count_p_all=0;
-  }
-  void reset_all_count_p_stats(){
-    m_wb_rx_stats.count_p_all=0;
-    m_wb_rx_stats.count_p_bad=0;
-    m_wb_rx_stats.count_p_decryption_err=0;
-    m_wb_rx_stats.count_p_decryption_ok=0;
-  }
+  void reset_all_rx_stats();
  private:
   /**
    * Process a packet received via pcap from any of the rx wifi card(s).
