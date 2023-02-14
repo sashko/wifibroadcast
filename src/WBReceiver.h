@@ -96,9 +96,10 @@ class WBReceiver {
    */
   void process_received_session_key_packet(const WBSessionKeyPacket &sessionKeyPacket);
   /**
-   * called every time we receive a data packet
+   * called every time we receive a data packet. Returns true if the packet could be decrypted &
+   * processed by either the fec enabled or disabled impl.
    */
-  void process_received_data_packet(uint8_t wlan_idx,const uint8_t *pkt_payload,size_t pkt_payload_size);
+  bool process_received_data_packet(uint8_t wlan_idx,const uint8_t *pkt_payload,size_t pkt_payload_size);
  private:
   const ROptions m_options;
   std::shared_ptr<spdlog::logger> m_console;

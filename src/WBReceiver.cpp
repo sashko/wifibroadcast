@@ -145,25 +145,6 @@ void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hd
   if (parsedPacket->allAntennaValues.size() > MAX_N_ANTENNAS_PER_WIFI_CARD) {
     m_console->warn( "Wifi card with {} antennas",parsedPacket->allAntennaValues.size());
   }
-  {
-    auto &this_wifi_card_stats = m_stats_per_card.at(wlan_idx);
-    auto& rssi_for_this_card=this_wifi_card_stats.rssi_for_wifi_card;
-    //m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
-    const auto best_rssi=RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
-    //m_console->debug("best_rssi:{}",(int)best_rssi);
-    if(best_rssi.has_value()){
-      rssi_for_this_card.addRSSI(best_rssi.value());
-    }
-    this_wifi_card_stats.count_received_packets++;
-  }
-
-  if(parsedPacket->mcs_index.has_value()){
-    m_wb_rx_stats.last_received_packet_mcs_index=parsedPacket->mcs_index.value();
-  }
-  if(parsedPacket->channel_width.has_value()){
-    m_wb_rx_stats.last_received_packet_channel_width=parsedPacket->channel_width.value();
-  }
-
   //RawTransmitterHelper::writeAntennaStats(antenna_stat, WLAN_IDX, parsedPacket->antenna, parsedPacket->rssi);
   //const Ieee80211Header* tmpHeader=parsedPacket->ieee80211Header;
   //std::cout<<"RADIO_PORT"<<(int)tmpHeader->getRadioPort()<<" IEEE_SEQ_NR "<<(int)tmpHeader->getSequenceNumber()<<"\n";
@@ -191,7 +172,24 @@ void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hd
       m_wb_rx_stats.count_p_bad++;
       return;
     }
-    process_received_data_packet(wlan_idx,pkt_payload,pkt_payload_size);
+    const auto success=process_received_data_packet(wlan_idx,pkt_payload,pkt_payload_size);
+    if(success){
+      auto &this_wifi_card_stats = m_stats_per_card.at(wlan_idx);
+      auto& rssi_for_this_card=this_wifi_card_stats.rssi_for_wifi_card;
+      //m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
+      const auto best_rssi=RawReceiverHelper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
+      //m_console->debug("best_rssi:{}",(int)best_rssi);
+      if(best_rssi.has_value()){
+        rssi_for_this_card.addRSSI(best_rssi.value());
+      }
+      this_wifi_card_stats.count_received_packets++;
+      if(parsedPacket->mcs_index.has_value()){
+        m_wb_rx_stats.last_received_packet_mcs_index=parsedPacket->mcs_index.value();
+      }
+      if(parsedPacket->channel_width.has_value()){
+        m_wb_rx_stats.last_received_packet_channel_width=parsedPacket->channel_width.value();
+      }
+    }
   }
 #ifdef ENABLE_ADVANCED_DEBUGGING
     else if(payload[0]==WFB_PACKET_LATENCY_BEACON){

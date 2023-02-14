@@ -93,9 +93,9 @@ struct WBRxStats{
   int curr_n_of_big_gaps=-1;
   // should only increase when the wifi card disconnects / crashes
   uint64_t n_receiver_likely_disconnect_errors=0;
-  // mcs index on the most recent received packet, if the card supports reporting it
+  // mcs index on the most recent okay data packet, if the card supports reporting it
   int last_received_packet_mcs_index=-1;
-  // channel width (20Mhz or 40Mhz) on the most recent received packet, if the card supports reporting it
+  // channel width (20Mhz or 40Mhz) on the most recent received okay data packet, if the card supports reporting it
   int last_received_packet_channel_width=-1;
 };
 static std::ostream& operator<<(std::ostream& strm, const WBRxStats& obj){
