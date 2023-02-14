@@ -232,7 +232,7 @@ void WBReceiver::process_received_session_key_packet(const WBSessionKeyPacket &s
   }
 }
 
-void WBReceiver::process_received_data_packet(uint8_t wlan_idx,const uint8_t *pkt_payload,const size_t pkt_payload_size) {
+bool WBReceiver::process_received_data_packet(uint8_t wlan_idx,const uint8_t *pkt_payload,const size_t pkt_payload_size) {
   const WBDataHeader &wbDataHeader = *((WBDataHeader *)pkt_payload);
   assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
   //TODO implement me properly, some of those stats only work with one rx card so far
@@ -247,14 +247,14 @@ void WBReceiver::process_received_data_packet(uint8_t wlan_idx,const uint8_t *pk
   if (decryptedPayload == std::nullopt) {
     //m_console->warn("unable to decrypt packet :",std::to_string(wbDataHeader.nonce));
     m_wb_rx_stats.count_p_decryption_err++;
-    return;
+    return false;
   }
   m_wb_rx_stats.count_p_decryption_ok++;
   assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
   if (IS_FEC_ENABLED) {
     if (!m_fec_decoder) {
       m_console->warn("FEC K,N is not set yet (enabled)");
-      return;
+      return false;
     }
     if (!m_fec_decoder->validateAndProcessPacket(wbDataHeader.nonce, *decryptedPayload)) {
       m_wb_rx_stats.count_p_bad++;
@@ -262,10 +262,11 @@ void WBReceiver::process_received_data_packet(uint8_t wlan_idx,const uint8_t *pk
   } else {
     if (!m_fec_disabled_decoder) {
       m_console->warn("FEC K,N is not set yet(disabled)");
-      return;
+      return false;
     }
     m_fec_disabled_decoder->processRawDataBlockFecDisabled(wbDataHeader.nonce, *decryptedPayload);
   }
+  return true;
 }
 
 void WBReceiver::set_latest_stats(WBReceiverStats new_stats) {
