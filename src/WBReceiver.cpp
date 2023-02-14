@@ -160,6 +160,9 @@ void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hd
   if(parsedPacket->mcs_index.has_value()){
     m_wb_rx_stats.last_received_packet_mcs_index=parsedPacket->mcs_index.value();
   }
+  if(parsedPacket->channel_width.has_value()){
+    m_wb_rx_stats.last_received_packet_channel_width=parsedPacket->channel_width.value();
+  }
 
   //RawTransmitterHelper::writeAntennaStats(antenna_stat, WLAN_IDX, parsedPacket->antenna, parsedPacket->rssi);
   //const Ieee80211Header* tmpHeader=parsedPacket->ieee80211Header;

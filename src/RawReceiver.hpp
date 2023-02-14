@@ -159,6 +159,8 @@ struct ParsedRxPcapPacket {
   const bool frameFailedFCSCheck;
   // driver might not support that
   std::optional<uint16_t> mcs_index=std::nullopt;
+  // driver might not support that
+  std::optional<uint16_t> channel_width=std::nullopt;
 };
 static std::string all_rssi_to_string(const std::vector<RssiForAntenna>& all_rssi){
   std::stringstream ss;
@@ -210,6 +212,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   bool is_first_reported_antenna_value= true;
   //
   std::optional<uint16_t> mcs_index=std::nullopt;
+  std::optional<uint16_t> channel_width=std::nullopt;
 
   uint8_t currentAntenna = 0;
   // not confirmed yet, but one pcap packet might include stats for multiple antennas
@@ -252,6 +255,21 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
         uint8_t mcs = iterator.this_arg[2];
         if(known & IEEE80211_RADIOTAP_MCS_HAVE_MCS){
           mcs_index=static_cast<uint16_t>(mcs);
+        }
+        if (known & IEEE80211_RADIOTAP_MCS_HAVE_BW) {
+          const uint8_t bandwidth = flags & IEEE80211_RADIOTAP_MCS_BW_MASK;
+          switch (bandwidth) {
+            case IEEE80211_RADIOTAP_MCS_BW_20:
+            case IEEE80211_RADIOTAP_MCS_BW_20U:
+            case IEEE80211_RADIOTAP_MCS_BW_20L:
+              channel_width=static_cast<uint16_t>(20);
+              break;
+            case IEEE80211_RADIOTAP_MCS_BW_40:
+              channel_width=static_cast<uint16_t>(40);
+              break;
+            default:
+              break ;
+          }
         }
       }
         break;
@@ -298,7 +316,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
     ss<<(int)antsignal<<",";
   }
   std::cout<<ss.str();*/
-  return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck,mcs_index};
+  return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck,mcs_index,channel_width};
 }
 }
 

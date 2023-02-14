@@ -241,6 +241,7 @@ static std::string toStringRadiotapTXFlags(const uint16_t txFlags) {
   ss << "]";
   return ss.str();
 }
+
 // http://www.radiotap.org/fields/MCS.html
 static std::string toStringRadiotapMCS(uint8_t known, uint8_t flags, uint8_t mcs) {
   std::stringstream ss;
