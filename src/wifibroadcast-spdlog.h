@@ -9,8 +9,6 @@
 #include <spdlog/spdlog.h>
 #include <mutex>
 
-namespace spd=spdlog;
-
 namespace wifibroadcast::log{
 
 static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_name){
@@ -19,7 +17,7 @@ static std::shared_ptr<spdlog::logger> create_or_get(const std::string& logger_n
   auto ret = spdlog::get(logger_name);
   if (ret == nullptr) {
     auto created = spdlog::stdout_color_mt(logger_name);
-    created->set_level(spd::level::debug);
+    created->set_level(spdlog::level::debug);
     assert(created);
     return created;
   }
