@@ -65,4 +65,4 @@ run ./build_cmake.sh
 ### Building / using the test program
 go into latencyTesting/SimpleTestProgram\
 Then run make\
-You can now loopUntilError the tx on one card, the rx on another card and use the test program to measure throughput,latency,packet loss and more
+You can now loopUntilError the tx on one card, the rx on another card and use the test program to measure throughput,latency,packet loss and more.
