@@ -144,6 +144,7 @@ class WBTransmitter {
   // send packet by prefixing data with the current IEE and Radiotap header
   void send_packet(const AbstractWBPacket &abstractWbPacket);
   // After calling this method, the injected packets will use a different radiotap header
+  // I'd like to use an atomic instead of mutex, but unfortunately some compilers don't eat atomic struct
   void threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams& params);
   const TOptions options;
   const bool kEnableFec;
@@ -160,7 +161,8 @@ class WBTransmitter {
   Encryptor m_encryptor;
   // Header for injected packets
   Ieee80211Header mIeee80211Header;
-  // this one never changes,also used as a header for injected packets.
+  // this one might change dynamically during run time, used as a header for injected packets.
+  // Modifications at run time need to be atomic, though (for now, there is a corresponding mutex for that)
   RadiotapHeader::UserSelectableParams m_radioTapHeaderParams;
   std::mutex m_radiotapHeaderMutex;
   RadiotapHeader m_radiotap_header;
