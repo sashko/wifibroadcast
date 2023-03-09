@@ -159,21 +159,23 @@ std::string WBTransmitter::createDebugState()const{
   return fmt::format("Tx in:{} out:{}:{}", m_n_input_packets,nInjectedDataPackets, m_n_injected_sess_packets);
 }
 
+void WBTransmitter::threadsafe_update_radiotap_header(
+    const RadiotapHeader::UserSelectableParams& params) {
+  auto newRadioTapHeader=RadiotapHeader{params};
+  std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
+  m_radiotap_header =newRadioTapHeader;
+}
 
 void WBTransmitter::update_mcs_index(uint8_t mcs_index) {
   m_console->debug("update_mcs_index {}",mcs_index);
   m_radioTapHeaderParams.mcs_index=mcs_index;
-  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
-  std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
-  m_radiotap_header =newRadioTapHeader;
+  threadsafe_update_radiotap_header(m_radioTapHeaderParams);
 }
 
 void WBTransmitter::update_channel_width(int width_mhz) {
   m_console->debug("update_channel_width {}",width_mhz);
   m_radioTapHeaderParams.bandwidth=width_mhz;
-  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
-  std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
-  m_radiotap_header =newRadioTapHeader;
+  threadsafe_update_radiotap_header(m_radioTapHeaderParams);
 }
 
 void WBTransmitter::update_stbc(int stbc) {
@@ -183,9 +185,17 @@ void WBTransmitter::update_stbc(int stbc) {
     return ;
   }
   m_radioTapHeaderParams.stbc=stbc;
-  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
-  std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
-  m_radiotap_header =newRadioTapHeader;
+  threadsafe_update_radiotap_header(m_radioTapHeaderParams);
+}
+
+void WBTransmitter::update_guard_interval(bool short_gi) {
+  m_radioTapHeaderParams.short_gi=short_gi;
+  threadsafe_update_radiotap_header(m_radioTapHeaderParams);
+}
+
+void WBTransmitter::update_ldpc(bool ldpc) {
+  m_radioTapHeaderParams.ldpc=ldpc;
+  threadsafe_update_radiotap_header(m_radioTapHeaderParams);
 }
 
 void WBTransmitter::loop_process_data() {

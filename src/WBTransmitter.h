@@ -113,16 +113,13 @@ class WBTransmitter {
    */
   [[nodiscard]] std::string createDebugState()const;
 
-  // These are for updating parameters at run time
-  // change the mcs index (will be applied on the next transmitted packet)
+  // These are for updating parameters at run time. They will be applied on the next injected packet.
+  // They are generally thread-safe. See RadiotapHeader for more information on what these parameters do.
   void update_mcs_index(uint8_t mcs_index);
-
-  // change the channel width (will be applied on the next transmitted packet)
   void update_channel_width(int width_mhz);
-
-  // change the STBC value (0 is disable), see the radiotap header for more info.
-  // applied on the next injected packet
   void update_stbc(int stbc);
+  void update_guard_interval(bool short_gi);
+  void update_ldpc(bool ldpc);
 
   // change the fec percentage value (will be applied on the next fec step)
   // only valid if fec is enabled
@@ -146,6 +143,8 @@ class WBTransmitter {
   void encrypt_and_send_packet(uint64_t nonce, const uint8_t *payload,size_t payloadSize);
   // send packet by prefixing data with the current IEE and Radiotap header
   void send_packet(const AbstractWBPacket &abstractWbPacket);
+  // After calling this method, the injected packets will use a different radiotap header
+  void threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams& params);
   const TOptions options;
   const bool kEnableFec;
   // only used if FEC is enabled
