@@ -120,6 +120,10 @@ class WBTransmitter {
   // change the channel width (will be applied on the next transmitted packet)
   void update_channel_width(int width_mhz);
 
+  // change the STBC value (0 is disable), see the radiotap header for more info.
+  // applied on the next injected packet
+  void update_stbc(int stbc);
+
   // change the fec percentage value (will be applied on the next fec step)
   // only valid if fec is enabled
   void update_fec_percentage(uint32_t fec_percentage);

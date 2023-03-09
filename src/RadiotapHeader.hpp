@@ -96,7 +96,7 @@ class RadiotapHeader {
     if (!(params.bandwidth == 20 || params.bandwidth == 40)) {
       throw std::runtime_error(StringFormat::convert("Unsupported bandwidth: %d", params.bandwidth));
     }
-    if (!(params.stbc == 0 || params.stbc == 1 || params.stbc == 2)) {
+    if (!(params.stbc == 0 || params.stbc == 1 || params.stbc == 2 || params.stbc == 3)) {
       throw std::runtime_error(StringFormat::convert("Unsupported STBC: %d", params.stbc));
     }
     // size is fixed here

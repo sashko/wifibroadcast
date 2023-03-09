@@ -176,6 +176,18 @@ void WBTransmitter::update_channel_width(int width_mhz) {
   m_radiotap_header =newRadioTapHeader;
 }
 
+void WBTransmitter::update_stbc(int stbc) {
+  m_console->debug("update_stbc {}",stbc);
+  if(stbc<0 || stbc> 3){
+    m_console->warn("Invalid stbc index");
+    return ;
+  }
+  m_radioTapHeaderParams.stbc=stbc;
+  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
+  std::lock_guard<std::mutex> guard(m_radiotapHeaderMutex);
+  m_radiotap_header =newRadioTapHeader;
+}
+
 void WBTransmitter::loop_process_data() {
   SchedulingHelper::setThreadParamsMaxRealtime();
   static constexpr std::int64_t timeout_usecs=100*1000;
