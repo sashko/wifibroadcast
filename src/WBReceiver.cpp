@@ -236,13 +236,6 @@ void WBReceiver::process_received_session_key_packet(const WBSessionKeyPacket &s
 bool WBReceiver::process_received_data_packet(uint8_t wlan_idx,const uint8_t *pkt_payload,const size_t pkt_payload_size) {
   const WBDataHeader &wbDataHeader = *((WBDataHeader *)pkt_payload);
   assert(wbDataHeader.packet_type == WFB_PACKET_DATA);
-  //TODO implement me properly, some of those stats only work with one rx card so far
-  if(wlan_idx==0){
-    // Otherwise, we get the bitrate from all cards together
-    m_wb_rx_stats.count_bytes_data_received+= pkt_payload_size;
-    // this type of packet loss counting can only be done per card, since it cannot deal with duplicates and/or reordering
-    m_seq_nr_helper.on_new_sequence_number(wbDataHeader.sequence_number_extra);
-  }
   const auto decryptedPayload = m_decryptor.decryptPacket(wbDataHeader.nonce, pkt_payload + sizeof(WBDataHeader),
                                                           pkt_payload_size - sizeof(WBDataHeader), wbDataHeader);
   if (decryptedPayload == std::nullopt) {
@@ -252,6 +245,13 @@ bool WBReceiver::process_received_data_packet(uint8_t wlan_idx,const uint8_t *pk
   }
   m_wb_rx_stats.count_p_decryption_ok++;
   assert(decryptedPayload->size() <= FEC_MAX_PACKET_SIZE);
+  //TODO implement me properly, some of those stats only work with one rx card so far
+  if(wlan_idx==0){
+    // Otherwise, we get the bitrate from all cards together
+    m_wb_rx_stats.count_bytes_data_received+= pkt_payload_size;
+    // this type of packet loss counting can only be done per card, since it cannot deal with duplicates and/or reordering
+    m_seq_nr_helper.on_new_sequence_number(wbDataHeader.sequence_number_extra);
+  }
   if (IS_FEC_ENABLED) {
     if (!m_fec_decoder) {
       m_console->warn("FEC K,N is not set yet (enabled)");
