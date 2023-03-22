@@ -90,10 +90,8 @@ void WBReceiver::recalculate_statistics() {
   set_latest_stats(all_wb_rx_stats);
   // it is actually much more understandable when I use the absolute values for the logging
 #ifdef ENABLE_ADVANCED_DEBUGGING
+  m_console->debug("avgPcapToApplicationLatency: {}",avgPcapToApplicationLatency.getAvgReadable());
   std::cout<<"avgPcapToApplicationLatency: "<<avgPcapToApplicationLatency.getAvgReadable()<<"\n";
-  //std::cout<<"avgLatencyBeaconPacketLatency"<<avgLatencyBeaconPacketLatency.getAvgReadable()<<"\n";
-  //std::cout<<"avgLatencyBeaconPacketLatencyX:"<<avgLatencyBeaconPacketLatency.getNValuesLowHigh(20)<<"\n";
-  //std::cout<<"avgLatencyPacketInQueue"<<avgLatencyPacketInQueue.getAvgReadable()<<"\n";
 #endif
 }
 
@@ -193,15 +191,14 @@ void WBReceiver::process_received_packet(uint8_t wlan_idx, const pcap_pkthdr &hd
     }
   }
 #ifdef ENABLE_ADVANCED_DEBUGGING
-    else if(payload[0]==WFB_PACKET_LATENCY_BEACON){
-        // for testing only. It won't work if the tx and rx are running on different systems
-            assert(payloadSize==sizeof(LatencyTestingPacket));
-            const LatencyTestingPacket* latencyTestingPacket=(LatencyTestingPacket*)payload;
-            const auto timestamp=std::chrono::time_point<std::chrono::steady_clock>(std::chrono::nanoseconds(latencyTestingPacket->timestampNs));
-            const auto latency=std::chrono::steady_clock::now()-timestamp;
-            //std::cout<<"Packet latency on this system is "<<std::chrono::duration_cast<std::chrono::nanoseconds>(latency).count()<<"\n";
-            avgLatencyBeaconPacketLatency.add(latency);
-    }
+  else if(pkt_payload[0]==WFB_PACKET_LATENCY_BEACON){
+    // for testing only. It won't work if the tx and rx are running on different systems
+    assert(pkt_payload_size==sizeof(LatencyTestingPacket));
+    const LatencyTestingPacket* latencyTestingPacket=(LatencyTestingPacket*)pkt_payload;
+    const auto timestamp=std::chrono::time_point<std::chrono::steady_clock>(std::chrono::nanoseconds(latencyTestingPacket->timestampNs));
+    const auto beacon_latency=std::chrono::steady_clock::now()-timestamp;
+    avgLatencyBeaconPacketLatency.add(beacon_latency);
+  }
 #endif
   else {
     m_console->warn("Unknown packet type {}",(int)pkt_payload[0]);
