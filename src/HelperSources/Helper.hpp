@@ -209,7 +209,7 @@ static constexpr timeval durationToTimeval(nanoseconds dur) {
   const auto secs = duration_cast<seconds>(dur);
   dur -= secs;
   const auto us = duration_cast<microseconds>(dur);
-  return timeval{secs.count(), us.count()};
+  return timeval{secs.count(), (long int)us.count()};
 }
 }
 
