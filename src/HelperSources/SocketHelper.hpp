@@ -5,24 +5,7 @@
 #ifndef WIFIBROADCAST_SOCKETHELPER_HPP
 #define WIFIBROADCAST_SOCKETHELPER_HPP
 
-#include "Helper.hpp"
-#include <cstdio>
-#include <cstdlib>
-#include <cerrno>
-#include <resolv.h>
-#include <cstring>
-#include <utime.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <endian.h>
-#include <fcntl.h>
-#include <ctime>
-#include <sys/mman.h>
-#include <string>
-#include <utility>
-#include <vector>
-#include <chrono>
-#include <cstdarg>
+#include <list>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -31,16 +14,11 @@
 #include <termio.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
-#include <iostream>
-#include <memory>
-#include <cassert>
-#include <functional>
-#include <thread>
-#include <algorithm>
-#include <atomic>
-#include <list>
-#include <mutex>
 #include <optional>
+#include <unistd.h>
+
+#include "Helper.hpp"
+#include "TimeHelper.hpp"
 #include "../wifibroadcast-spdlog.h"
 
 namespace SocketHelper {
@@ -63,14 +41,14 @@ static std::chrono::nanoseconds getCurrentSocketReceiveTimeout(int socketFd) {
   auto res = getsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &tv, &len);
   assert(res == 0);
   assert(len == sizeof(tv));
-  return GenericHelper::timevalToDuration(tv);
+  return MyTimeHelper::timevalToDuration(tv);
 }
 // set the receive timeout on the socket
 // throws runtime exception if this step fails (should never fail on linux)
 static void setSocketReceiveTimeout(int socketFd, const std::chrono::nanoseconds timeout) {
   const auto currentTimeout = getCurrentSocketReceiveTimeout(socketFd);
   if (currentTimeout != timeout) {
-    auto tv = GenericHelper::durationToTimeval(timeout);
+    auto tv =  MyTimeHelper::durationToTimeval(timeout);
     if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
       std::stringstream ss;
       ss<<"Cannot set socket timeout "<<timeout.count();
@@ -260,8 +238,9 @@ class UDPReceiver {
       } else {
         // this can also come from the shutdown, in which case it is not an error.
         // But this way we break out of the loop.
-        wifibroadcast::log::get_default()->warn("Got message length of: {}",message_length);
-        receiving = false;
+        if(receiving){
+          wifibroadcast::log::get_default()->warn("Got message length of: {}",message_length);
+        }
       }
     }
     wifibroadcast::log::get_default()->debug("UDP end");
@@ -295,6 +274,7 @@ class UDPReceiver {
       wifibroadcast::log::get_default()->warn("Receiver thread is already running or has not been properly stopped");
       return;
     }
+    receiving= true;
     receiverThread = std::make_unique<std::thread>(&UDPReceiver::loopUntilError, this);
   }
   void stopBackground() {

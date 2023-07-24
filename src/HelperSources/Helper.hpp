@@ -5,55 +5,15 @@
 #ifndef WIFIBROADCAST_HELPER_H
 #define WIFIBROADCAST_HELPER_H
 
-#include "StringHelper.hpp"
-
-#include <cstdio>
-#include <cstdlib>
-#include <cerrno>
-#include <resolv.h>
-#include <cstring>
-#include <utime.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <endian.h>
-#include <fcntl.h>
-#include <ctime>
-#include <sys/mman.h>
-#include <string>
-#include <vector>
 #include <chrono>
-#include <cstdarg>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netinet/ether.h>
-#include <netpacket/packet.h>
-#include <termio.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <iostream>
 #include <memory>
 #include <cassert>
-#include <functional>
-#include <thread>
+#include <cstring>
 #include <algorithm>
-#include <thread>
+
+#include "StringHelper.hpp"
 
 // Generic "Helper" code that does not depend on anything else other than the std libraries
-
-namespace StringFormat {
-static std::string convert(const char *format, ...) {
-  va_list args;
-  va_start(args, format);
-  size_t size = vsnprintf(nullptr, 0, format, args) + 1; // Extra space for '\0'
-  va_end(args);
-  std::unique_ptr<char[]> buf(new char[size]);
-  va_start(args, format);
-  vsnprintf(buf.get(), size, format, args);
-  va_end(args);
-  return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
-}
-}
 
 namespace GenericHelper {
 // fill buffer with random bytes
@@ -79,16 +39,31 @@ static std::vector<uint8_t> createRandomDataBuffer(const ssize_t sizeBytes) {
 static std::shared_ptr<std::vector<uint8_t>> createRandomDataBuffer2(const ssize_t sizeBytes) {
   return std::make_shared<std::vector<uint8_t>>(createRandomDataBuffer(sizeBytes));
 }
-// Create a buffer filled with random data where size is chosen Randomly between [minSizeB,...,maxSizeB]
-static std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB, const ssize_t maxSizeB) {
-  // https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
+
+// Create a random number in range  [min,...,max]
+// https://stackoverflow.com/questions/12657962/how-do-i-generate-a-random-number-between-two-variables-that-i-have-stored
+static ssize_t create_random_number_between(const ssize_t minSizeB, const ssize_t maxSizeB){
   const auto sizeBytes = rand() % (maxSizeB - minSizeB + 1) + minSizeB;
   assert(sizeBytes <= maxSizeB);
   assert(sizeBytes >= minSizeB);
   if (minSizeB == maxSizeB) {
     assert(sizeBytes == minSizeB);
   }
-  return createRandomDataBuffer(sizeBytes);
+  return sizeBytes;
+}
+
+static std::vector<std::shared_ptr<std::vector<uint8_t>>> convert_vec_of_vec_to_shared(std::vector<std::vector<uint8_t>> in){
+  std::vector<std::shared_ptr<std::vector<uint8_t>>> ret;
+  for(auto data:in){
+    std::shared_ptr<std::vector<uint8_t>> shared=std::make_shared<std::vector<uint8_t>>(data.begin(),data.end());
+    ret.push_back(shared);
+  }
+  return ret;
+}
+
+// Create a buffer filled with random data where size is chosen Randomly between [minSizeB,...,maxSizeB]
+static std::vector<uint8_t> createRandomDataBuffer(const ssize_t minSizeB, const ssize_t maxSizeB) {
+  return createRandomDataBuffer(create_random_number_between(minSizeB,maxSizeB));
 }
 // create n random data buffers with size [minSizeB,...,maxSizeB]
 static std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t nBuffers,
@@ -101,6 +76,19 @@ static std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size
   }
   return buffers;
 }
+static std::vector<std::shared_ptr<std::vector<uint8_t>>> createRandomDataBuffers_shared(const std::size_t nBuffers,
+                                                                 const std::size_t minSizeB,
+                                                                 const std::size_t maxSizeB) {
+  assert(minSizeB >= 0);
+  std::vector<std::shared_ptr<std::vector<uint8_t>>> buffers;
+  for (std::size_t i = 0; i < nBuffers; i++) {
+    auto buf=GenericHelper::createRandomDataBuffer(minSizeB,maxSizeB);
+    auto buf_shared=std::make_shared<std::vector<uint8_t>>(buf.begin(),buf.end());
+    buffers.push_back(buf_shared);
+  }
+  return buffers;
+}
+
 template<std::size_t size>
 static std::vector<std::array<uint8_t, size>> createRandomDataBuffers(const std::size_t nBuffers) {
   std::vector<std::array<uint8_t, size>> ret(nBuffers);
@@ -120,6 +108,13 @@ static void assertVectorsEqual(const std::vector<uint8_t> &sb, const std::vector
   assert(sb.size() == rb.size());
   const int result = memcmp(sb.data(), rb.data(), sb.size());
   assert(result == 0);
+}
+static void assertVectorsOfVectorsEqual(const std::vector<std::vector<uint8_t>> &sbl, const std::vector<std::vector<uint8_t>> &rbl){
+  for(int i=0;i<sbl.size();i++){
+    const auto& sb=sbl[i];
+    const auto& rb=rbl[i];
+    assertVectorsEqual(sb,rb);
+  }
 }
 template<std::size_t S>
 static void assertArraysEqual(const std::array<uint8_t, S> &sb, const std::array<uint8_t, S> &rb) {
@@ -151,6 +146,12 @@ static std::vector<unsigned int> createIndices(const std::size_t nIndices) {
     ret[i] = i;
   }
   return ret;
+}
+static bool vec_contains(std::vector<unsigned int> indices,int index){
+  for(const auto i:indices){
+    if(i==index)return true;
+  }
+  return false;
 }
 template<std::size_t S>
 static std::vector<uint8_t *> convertToP(std::vector<std::array<uint8_t, S>> &buff,
@@ -189,22 +190,6 @@ static std::vector<unsigned int> findMissingIndices(const std::vector<unsigned i
   }
   return indicesMissing;
 }
-using namespace std::chrono;
-static constexpr nanoseconds timevalToDuration(timeval tv) {
-  auto duration = seconds{tv.tv_sec}
-      + microseconds{tv.tv_usec};
-  return duration_cast<nanoseconds>(duration);
-}
-static constexpr time_point<system_clock, nanoseconds>
-timevalToTimePointSystemClock(timeval tv) {
-  return time_point<system_clock, nanoseconds>{
-      duration_cast<system_clock::duration>(timevalToDuration(tv))};
-}
-static constexpr time_point<steady_clock, nanoseconds>
-timevalToTimePointSteadyClock(timeval tv) {
-  return time_point<steady_clock, nanoseconds>{
-      duration_cast<steady_clock::duration>(timevalToDuration(tv))};
-}
 static constexpr timeval durationToTimeval(nanoseconds dur) {
   const auto secs = duration_cast<seconds>(dur);
   dur -= secs;
@@ -212,26 +197,6 @@ static constexpr timeval durationToTimeval(nanoseconds dur) {
   return timeval{secs.count(), (long int)us.count()};
 }
 }
-
-//https://stackoverflow.com/questions/66588729/is-there-an-alternative-to-stdbind-that-doesnt-require-placeholders-if-functi/66640702#66640702
-namespace notstd {
-template<class F, class...Args>
-auto inline bind_front(F &&f, Args &&...args) {
-  return [f = std::forward<F>(f), tup = std::make_tuple(std::forward<Args>(args)...)](auto &&... more_args)
-      -> decltype(auto) {
-    return std::apply([&](auto &&...args) -> decltype(auto) {
-      return std::invoke(f, decltype(args)(args)..., decltype(more_args)(more_args)...);
-    }, tup);
-  };
-}
-}
-/*#include <linux/wireless.h>
-#include <ifaddrs.h>
-#include <linux/nl80211.h>
-#include <linux/netlink.h>
-
-namespace Experiment{
-}*/
 
 
 

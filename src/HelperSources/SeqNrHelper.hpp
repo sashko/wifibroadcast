@@ -7,10 +7,11 @@
 
 #include <atomic>
 #include <memory>
+#include "../wifibroadcast-spdlog.h"
 
 namespace seq_nr{
 
-static int diff_between_packets(int last_packet,int curr_packet){
+static int diff_between_packets_rolling_uint16_t(int last_packet,int curr_packet){
   if(last_packet==curr_packet){
     wifibroadcast::log::get_default()->debug("Duplicate in seq nr, invalid usage");
   }
@@ -30,8 +31,16 @@ class Helper{
     m_gaps.reserve(MAX_N_STORED_GAPS);
     m_curr_packet_loss=-1;
   }
+  void reset(){
+    m_last_seq_nr=-1;
+    //m_curr_packet_loss=-1;
+    //m_curr_gaps_counter=-1;
+  }
   int16_t get_current_loss_percent(){
     return m_curr_packet_loss;
+  }
+  int16_t get_current_gaps_counter(){
+    return m_curr_gaps_counter;
   }
   void on_new_sequence_number(uint16_t seq_nr){
     if(m_last_seq_nr==-1){
@@ -39,7 +48,8 @@ class Helper{
       m_last_seq_nr=seq_nr;
       return;
     }
-    const auto diff= diff_between_packets(m_last_seq_nr,seq_nr);
+    const auto diff=
+        diff_between_packets_rolling_uint16_t(m_last_seq_nr, seq_nr);
     if(diff>1){
       // as an example, a diff of 2 means one packet is missing.
       m_n_missing_packets+=diff-1;
@@ -47,12 +57,14 @@ class Helper{
       // can be usefully for debugging
       //store_gap(diff-1);
       //m_console->debug("Diff:{}",diff);
+      store_gap2(diff);
     }else{
       m_n_received_packets++;
     }
     m_last_seq_nr=seq_nr;
     recalculate_loss_if_needed();
   }
+ private:
   // recalculate the loss in percentage in fixed intervals
   // resets the received and missing packet count
   void recalculate_loss_if_needed(){
@@ -74,7 +86,6 @@ class Helper{
       m_n_missing_packets=0;
     }
   }
- private:
   void store_gap(int gap_size){
     m_gaps.push_back(gap_size);
     const auto elasped=std::chrono::steady_clock::now()-m_last_log;
@@ -87,16 +98,31 @@ class Helper{
       m_gaps.resize(0);
     }
   }
+  void store_gap2(int gap_size){
+    if(gap_size>=GAP_SIZE_COUNTS_AS_BIG_GAP){
+      m_n_big_gaps++;
+    }
+    const auto elapsed=std::chrono::steady_clock::now()-m_last_big_gaps_counter_recalculation;
+    if(elapsed>=std::chrono::seconds(1)){
+      m_curr_gaps_counter=(int16_t)m_n_big_gaps;
+      m_n_big_gaps=0;
+      m_last_big_gaps_counter_recalculation=std::chrono::steady_clock::now();
+    }
+  }
  private:
   int m_last_seq_nr=-1;
   static constexpr int MAX_N_STORED_GAPS=1000;
   std::vector<int> m_gaps;
+  static constexpr int GAP_SIZE_COUNTS_AS_BIG_GAP=10;
  private:
   int m_n_received_packets=0;
   int m_n_missing_packets=0;
+  int m_n_big_gaps=0;
   std::chrono::steady_clock::time_point m_last_log;
   std::chrono::steady_clock::time_point m_last_loss_perc_recalculation=std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point m_last_big_gaps_counter_recalculation=std::chrono::steady_clock::now();
   std::atomic<int16_t> m_curr_packet_loss{};
+  std::atomic<int16_t> m_curr_gaps_counter{};
 };
 
 }

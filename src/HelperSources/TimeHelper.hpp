@@ -54,6 +54,37 @@ static std::string timeSamplesAsString(const std::vector<std::chrono::nanosecond
   }
   return ss.str();
 }
+static std::chrono::system_clock::time_point
+to_time_point_system_clock(timeval tv){
+  using namespace std::chrono;
+  return system_clock::time_point{seconds{tv.tv_sec} + microseconds{tv.tv_usec}};
+}
+static int get_curr_time_ms(){
+  auto now=std::chrono::steady_clock::now();
+  return (int)std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+}
+using namespace std::chrono;
+static constexpr nanoseconds timevalToDuration(timeval tv) {
+  auto duration = seconds{tv.tv_sec}
+                  + microseconds{tv.tv_usec};
+  return duration_cast<nanoseconds>(duration);
+}
+static constexpr time_point<system_clock, nanoseconds>
+timevalToTimePointSystemClock(timeval tv) {
+  return time_point<system_clock, nanoseconds>{
+      duration_cast<system_clock::duration>(timevalToDuration(tv))};
+}
+static constexpr time_point<steady_clock, nanoseconds>
+timevalToTimePointSteadyClock(timeval tv) {
+  return time_point<steady_clock, nanoseconds>{
+      duration_cast<steady_clock::duration>(timevalToDuration(tv))};
+}
+static constexpr timeval durationToTimeval(nanoseconds dur) {
+  const auto secs = duration_cast<seconds>(dur);
+  dur -= secs;
+  const auto us = duration_cast<microseconds>(dur);
+  return timeval{secs.count(), us.count()};
+}
 };
 template<typename T>
 struct MinMaxAvg{
@@ -332,7 +363,7 @@ class RelativeCalculator {
 };
 
 class BitrateCalculator{
- public:
+ private:
   // return: current bitrate in bits per second.
   // aka bits received since last call / time delta since last call.
   uint64_t recalculateSinceLast(const uint64_t curr_bytes_received){
@@ -349,6 +380,9 @@ class BitrateCalculator{
       return 0;
     }
   }
+ public:
+  // returns bits per second -
+  // calculated in the given interval
   uint64_t get_last_or_recalculate(uint64_t curr_bytes_received,const std::chrono::steady_clock::duration& time_between_recalculations=std::chrono::seconds(2)){
     if(std::chrono::steady_clock::now()-last_time>=time_between_recalculations){
       curr_bits_per_second= recalculateSinceLast(curr_bytes_received);
@@ -362,7 +396,7 @@ class BitrateCalculator{
 };
 
 class PacketsPerSecondCalculator{
- public:
+ private:
   // return current packets per second
   // aka packets since last call / time delta since last call
   uint64_t recalculateSinceLast(uint64_t curr_packets){
@@ -379,6 +413,7 @@ class PacketsPerSecondCalculator{
       return 0;
     }
   }
+ public:
   uint64_t get_last_or_recalculate(uint64_t curr_packets,const std::chrono::steady_clock::duration& time_between_recalculations=std::chrono::seconds(2)){
     if(std::chrono::steady_clock::now()-last_time>=time_between_recalculations){
       curr_packets_per_second= recalculateSinceLast(curr_packets);

@@ -12,18 +12,26 @@
 #include <sodium.h>
 #include "wifibroadcast-spdlog.h"
 
-// Single Header file that can be used to add encryption to a lossy unidirectional link
-// Other than encryption, (which might not seem important to the average user) this also adds packet validation, e.g. makes it impossible
-// to receive data from a non-OpenHD wlan device
+// Single Header file that can be used to add encryption+packet validation
+// (Or packet validation only to save CPU resources)
+// to a lossy unidirectional link
+// Packet validation is quite important, to make sure only openhd packets (and not standard wifi packets) are used in OpenHD
 
 // For developing or when encryption is not important, you can use this default seed to
 // create deterministic rx and tx keys
 static const std::array<unsigned char, crypto_box_SEEDBYTES> DEFAULT_ENCRYPTION_SEED = {0};
 
+static_assert(crypto_onetimeauth_BYTES==crypto_aead_chacha20poly1305_ABYTES);
+// Encryption (or packet validation) adds this many bytes to the end of the message
+static constexpr auto ENCRYPTION_ADDITIONAL_VALIDATION_DATA=crypto_aead_chacha20poly1305_ABYTES;
+
 class Encryptor {
  public:
-  // enable a default deterministic encryption key by using std::nullopt
-  // else, pass path to file with encryption keys
+  /**
+   *
+   * @param keypair encryption key, otherwise enable a default deterministic encryption key by using std::nullopt
+   * @param DISABLE_ENCRYPTION_FOR_PERFORMANCE only validate, do not encrypt (less CPU usage)
+   */
   explicit Encryptor(std::optional<std::string> keypair, const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE = false)
       : DISABLE_ENCRYPTION_FOR_PERFORMANCE(DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
     if (keypair == std::nullopt) {
@@ -33,15 +41,15 @@ class Encryptor {
     } else {
       FILE *fp;
       if ((fp = fopen(keypair->c_str(), "r")) == nullptr) {
-        throw std::runtime_error(StringFormat::convert("Unable to open %s: %s", keypair->c_str(), strerror(errno)));
+        throw std::runtime_error(fmt::format("Unable to open {}: {}", keypair->c_str(), strerror(errno)));
       }
       if (fread(tx_secretkey.data(), crypto_box_SECRETKEYBYTES, 1, fp) != 1) {
         fclose(fp);
-        throw std::runtime_error(StringFormat::convert("Unable to read tx secret key: %s", strerror(errno)));
+        throw std::runtime_error(fmt::format("Unable to read tx secret key: {}", strerror(errno)));
       }
       if (fread(rx_publickey.data(), crypto_box_PUBLICKEYBYTES, 1, fp) != 1) {
         fclose(fp);
-        throw std::runtime_error(StringFormat::convert("Unable to read rx public key: %s", strerror(errno)));
+        throw std::runtime_error(fmt::format("Unable to read rx public key: {}", strerror(errno)));
       }
       fclose(fp);
     }
@@ -57,29 +65,33 @@ class Encryptor {
       throw std::runtime_error("Unable to make session key!");
     }
   }
-  // Encrypt the payload using a public nonce. (aka sequence number)
-  // The nonce is not included in the raw encrypted payload, but used for the checksum stuff to make sure packet cannot be tampered with
-  // @param ad: Header that is included for calculating the checksum, but it is up to the application to also transmit the header,
-  // presumably right in front of the actual payload
-  template<class T>
-  std::vector<uint8_t> encryptPacket(const uint64_t nonce,
-                                     const uint8_t *payload,
-                                     std::size_t payloadSize,
-                                     const T &ad) {
-    if (DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
-      return std::vector<uint8_t>(payload, payload + payloadSize);
+  /**
+   * Encrypt the given message of size @param src_len
+   * (Or if encryption is enable, only calculate the message sign)
+   * and write the (encrypted) data and validation data into dest.
+   * Returns written data size (msg payload plus sign data)
+   */
+  int encrypt2(const uint64_t nonce,const uint8_t *src,std::size_t src_len,uint8_t* dest){
+    if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
+      memcpy(dest,src, src_len);
+      uint8_t* sign=dest+src_len;
+      crypto_onetimeauth(sign,src,src_len,session_key.data());
+      return src_len+crypto_onetimeauth_BYTES;
     }
-    std::vector<uint8_t> encryptedData = std::vector<uint8_t>(payloadSize + crypto_aead_chacha20poly1305_ABYTES);
     long long unsigned int ciphertext_len;
-    crypto_aead_chacha20poly1305_encrypt(encryptedData.data(), &ciphertext_len,
-                                         payload, payloadSize,
-                                         (uint8_t *) &ad, sizeof(ad),
+    crypto_aead_chacha20poly1305_encrypt(dest, &ciphertext_len,
+                                         src, src_len,
+                                         (uint8_t *)nullptr, 0,
                                          nullptr,
-                                         (uint8_t *) (&nonce), session_key.data());
-    // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated
-    // (the documentation says 'write up to n bytes' but they probably mean (write exactly n bytes unless an error occurs)
-    assert(encryptedData.size() == ciphertext_len);
-    return encryptedData;
+                                         (uint8_t *) &nonce, session_key.data());
+    return (int)ciphertext_len;
+  }
+  // For easy use - returns a buffer including (encrypted) payload plus validation data
+  std::shared_ptr<std::vector<uint8_t>> encrypt3(const uint64_t nonce,const uint8_t *src,std::size_t src_len){
+    auto ret=std::make_shared<std::vector<uint8_t>>(src_len + ENCRYPTION_ADDITIONAL_VALIDATION_DATA);
+    const auto size=encrypt2(nonce,src,src_len,ret->data());
+    assert(size==ret->size());
+    return ret;
   }
  private:
   // tx->rx keypair
@@ -88,6 +100,7 @@ class Encryptor {
   std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> session_key{};
   // use this one if you are worried about CPU usage when using encryption
   const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
+  //static_assert(crypto_onetimeauth_BYTES);
 };
 
 class Decryptor {
@@ -102,15 +115,15 @@ class Decryptor {
     } else {
       FILE *fp;
       if ((fp = fopen(keypair->c_str(), "r")) == nullptr) {
-        throw std::runtime_error(StringFormat::convert("Unable to open %s: %s", keypair->c_str(), strerror(errno)));
+        throw std::runtime_error(fmt::format("Unable to open {}: {}", keypair->c_str(), strerror(errno)));
       }
       if (fread(rx_secretkey.data(), crypto_box_SECRETKEYBYTES, 1, fp) != 1) {
         fclose(fp);
-        throw std::runtime_error(StringFormat::convert("Unable to read rx secret key: %s", strerror(errno)));
+        throw std::runtime_error(fmt::format("Unable to read rx secret key: {}", strerror(errno)));
       }
       if (fread(tx_publickey.data(), crypto_box_PUBLICKEYBYTES, 1, fp) != 1) {
         fclose(fp);
-        throw std::runtime_error(StringFormat::convert("Unable to read tx public key: %s", strerror(errno)));
+        throw std::runtime_error(fmt::format("Unable to read tx public key: {}", strerror(errno)));
       }
       fclose(fp);
     }
@@ -145,32 +158,45 @@ class Decryptor {
     }
     return false;
   }
-
-  // returns decrypted data on success
-  // NOTE: Don't forget to substract the "extradata" from raw received packet (to get payload)
-  template<class T>
-  std::optional<std::vector<uint8_t>> decryptPacket(const uint64_t nonce,
-                                                    const uint8_t *encryptedPayload,
-                                                    std::size_t encryptedPayloadSize,
-                                                    const T &ad) {
-    if (DISABLE_ENCRYPTION_FOR_PERFORMANCE) {
-      return std::vector<uint8_t>(encryptedPayload, encryptedPayload + encryptedPayloadSize);
+  /**
+   * Decrypt (or validate only if encryption is disabled) the given message
+   * and writes the original message content into dest.
+   * Returns true on success, false otherwise (false== the message is not a valid message)
+   */
+  bool decrypt2(const uint64_t& nonce,const uint8_t* encrypted,int encrypted_size,uint8_t* dest){
+    if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
+      const auto payload_size=encrypted_size-crypto_onetimeauth_BYTES;
+      assert(payload_size>0);
+      const uint8_t* sign=encrypted+payload_size;
+      //const int res=crypto_auth_hmacsha256_verify(sign,msg,payload_size,session_key.data());
+      const int res=crypto_onetimeauth_verify(sign,encrypted,payload_size,session_key.data());
+      if(res!=-1){
+        memcpy(dest,encrypted,payload_size);
+        return true;
+      }
+      return false;
     }
-    std::vector<uint8_t> decrypted;
-    decrypted.resize(encryptedPayloadSize - crypto_aead_chacha20poly1305_ABYTES);
-
-    long long unsigned int decrypted_len;
-    const unsigned long long int cLen = encryptedPayloadSize;
-
-    if (crypto_aead_chacha20poly1305_decrypt(decrypted.data(), &decrypted_len,
-                                             nullptr,
-                                             encryptedPayload, cLen,
-                                             (uint8_t *) &ad, sizeof(ad),
-                                             (uint8_t *) (&nonce), session_key.data()) != 0) {
-      return std::nullopt;
+    unsigned long long mlen;
+    int res=crypto_aead_chacha20poly1305_decrypt(dest, &mlen,
+                                                   nullptr,
+                                                   encrypted, encrypted_size,
+                                                   nullptr,0,
+                                                   (uint8_t *) (&nonce), session_key.data());
+    return res!=-1;
+  }
+  std::shared_ptr<std::vector<uint8_t>> decrypt3(const uint64_t& nonce,const uint8_t* encrypted,int encrypted_size){
+    auto ret=std::make_shared<std::vector<uint8_t>>(encrypted_size - get_additional_payload_size());
+    const auto res= decrypt2(nonce,encrypted,encrypted_size,ret->data());
+    if(res){
+      return ret;
     }
-    assert(decrypted.size() == decrypted_len);
-    return decrypted;
+    return nullptr;
+  }
+  int get_additional_payload_size() const{
+    if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
+      return crypto_onetimeauth_BYTES;
+    }
+    return crypto_aead_chacha20poly1305_ABYTES;
   }
 };
 
