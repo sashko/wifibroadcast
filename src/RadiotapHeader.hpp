@@ -34,6 +34,10 @@ extern "C" {
 static_assert(__BYTE_ORDER == __LITTLE_ENDIAN, "This code is written for little endian only !");
 
 namespace Radiotap {
+
+static constexpr auto MCS_MAX=31;
+static constexpr auto MCS_MIN=0;
+
 // https://stackoverflow.com/questions/47981/how-do-you-set-clear-and-toggle-a-single-bit
 // http://www.radiotap.org/
 static uint32_t writePresenceBitfield(const std::vector<ieee80211_radiotap_presence> &valuesToBePresent) {
@@ -90,7 +94,7 @@ class RadiotapHeader {
   };
   // Make sure that this is the only constructor
   explicit RadiotapHeader(const UserSelectableParams &params) {
-    if (params.mcs_index < 0 || params.mcs_index > 7) {
+    if (params.mcs_index < Radiotap::MCS_MIN || params.mcs_index > Radiotap::MCS_MAX) {
       throw std::runtime_error(fmt::format("Unsupported MCS index {}", params.mcs_index));
     }
     if (!(params.bandwidth == 20 || params.bandwidth == 40)) {
