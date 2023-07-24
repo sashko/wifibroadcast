@@ -33,6 +33,9 @@ target_link_libraries(example_hello ${WB_TARGET_LINK_LIBRARIES})
 add_executable(example_udp executables/example_udp.cpp)
 target_link_libraries(example_udp ${WB_TARGET_LINK_LIBRARIES})
 
+add_executable(injection_rate_test executables/injection_rate_test.cpp)
+target_link_libraries(injection_rate_test ${WB_TARGET_LINK_LIBRARIES})
+
 # When it is a static library, we don't need to install it.
 # But if it is a shared library, we need to install it.
 #install(TARGETS wifibroadcast DESTINATION lib)
