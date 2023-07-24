@@ -67,8 +67,9 @@ class Encryptor {
   }
   /**
    * Encrypt the given message of size @param src_len
-   * (Or if encryption is enable, only calculate the message sign)
-   * and write the (encrypted) data and validation data into dest.
+   * (Or if encryption is disabled, only calculate the message sign)
+   * and write the (encrypted) data appended by the validation data into dest
+   * @param dest needs to point to a memory region at least @param src_len + 16 bytes big
    * Returns written data size (msg payload plus sign data)
    */
   int encrypt2(const uint64_t nonce,const uint8_t *src,std::size_t src_len,uint8_t* dest){
@@ -162,6 +163,7 @@ class Decryptor {
    * Decrypt (or validate only if encryption is disabled) the given message
    * and writes the original message content into dest.
    * Returns true on success, false otherwise (false== the message is not a valid message)
+   * @param dest needs to be at least @param encrypted - 16 bytes big.
    */
   bool decrypt2(const uint64_t& nonce,const uint8_t* encrypted,int encrypted_size,uint8_t* dest){
     if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
