@@ -117,13 +117,25 @@ static Validation validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int 
   const auto txstats = txrx->get_tx_stats();
   auto ret=Validation{txstats.count_tx_injections_error_hint,stream_generator->n_times_cannot_keep_up_wanted_pps};
   if(ret.count_tx_injections_error_hint>0 || ret.n_times_cannot_keep_up_wanted_pps>10){
-    m_console->info("MCS {} didn't pass {} measured {}-{}",pps,
+    m_console->info("MCS {} didn't pass {} measured {}-{}",mcs,pps,
                     txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
+    m_console->info("{}",WBTxRx::tx_stats_to_string(txstats));
   }else{
-    m_console->info("MCS {} passed {} measured {}-{}",pps,
+    m_console->info("MCS {} passed {} measured {}-{}",mcs,pps,
                     txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
+    m_console->info("{}",WBTxRx::tx_stats_to_string(txstats));
   }
   return ret;
+}
+static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,bool is_40mhz= false){
+  txrx->tx_update_channel_width(is_40mhz ? 40 : 20);
+  for(int mcs=0;mcs<12;mcs++){
+    const auto rate=wifibroadcast::get_practical_rate_5G(mcs);
+    const auto rate_kbits=(is_40mhz ? rate.rate_40mhz_kbits : rate.rate_20mhz_kbits);
+    const auto rate_bps=rate_kbits*1000;
+    const auto pps=rate_bps / (TEST_PACKETS_SIZE*8);
+    validate_specific_rate(txrx,mcs,pps);
+  }
 }
 
 
@@ -235,10 +247,12 @@ int main(int argc, char *const *argv) {
   const auto res_20mhz= calculate_rough(txrx,20);
   print_test_results_rough(res_20mhz);
   print_test_results_and_theoretical(res_20mhz, false);*/
-  txrx->tx_update_channel_width(40);
+  /*txrx->tx_update_channel_width(40);
   const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
-  print_test_results_and_theoretical(res_40mhz, true);
+  print_test_results_and_theoretical(res_40mhz, true);*/
+  validate_rtl8812au_rates(txrx, false);
+
   /*const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
   m_console->info("20Mhz:");

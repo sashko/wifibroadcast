@@ -40,7 +40,7 @@ static Rate get_theoretical_rate_5G(int mcs){
   return {-1,-1};
 }
 
-static std::vector<Rate> openhd_rtl8812au_5G_rates() {
+static std::vector<Rate> openhd_rtl8812au_5G_practical_rates() {
   return {
       // theoretical:6.5 | 13.5
       // max injection rate possible measured on the bench: 5.7 | 10.4
@@ -95,6 +95,15 @@ static std::vector<Rate> openhd_rtl8812au_5G_rates() {
       Rate{30000, 30000},
   };
 }
+
+static Rate get_practical_rate_5G(int mcs){
+  const auto rates=openhd_rtl8812au_5G_practical_rates();
+  if(mcs<rates.size() && mcs>=0){
+    return rates[mcs];
+  }
+  return {-1,-1};
+}
+
 
 
 }
