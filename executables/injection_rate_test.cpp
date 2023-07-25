@@ -94,12 +94,10 @@ static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,const 
   m_console->info("MCS {} max {} {}",mcs,stats.curr_packets_per_second,StringHelper::bitrate_readable(stats.curr_bits_per_second_excluding_overhead));
 }
 
-struct Validation{
-  int count_tx_injections_error_hint;
-  int n_times_cannot_keep_up_wanted_pps;
-};
-static Validation validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int mcs,const int pps){
+static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int mcs,const int rate_kbits){
   auto m_console=wifibroadcast::log::create_or_get("main");
+  const auto rate_bps=(rate_kbits*1000)+10; // add a bit more to actually hit the target
+  const auto pps=rate_bps / (TEST_PACKETS_SIZE*8);
   m_console->info("Validating {} - {}", mcs,pps);
   txrx->tx_update_mcs_index(mcs);
   auto tx_cb=[&txrx](const uint8_t* data,int data_len){
@@ -112,27 +110,31 @@ static Validation validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int 
   stream_generator->start();
   std::this_thread::sleep_for(std::chrono::seconds(10));
   const auto txstats = txrx->get_tx_stats();
-  auto ret=Validation{txstats.count_tx_injections_error_hint,stream_generator->n_times_cannot_keep_up_wanted_pps};
-  if(ret.count_tx_injections_error_hint>0 || ret.n_times_cannot_keep_up_wanted_pps>10){
-    m_console->info("MCS {} didn't pass {} measured {}-{}",mcs,pps,
+  std::stringstream ss;
+  if(txstats.count_tx_injections_error_hint>0 || stream_generator->n_times_cannot_keep_up_wanted_pps>10){
+    ss<<fmt::format("MCS {} didn't pass {}/{} measured {}-{}\n",mcs,
+                      StringHelper::bitrate_readable(rate_bps),pps,
                     txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
-    m_console->info("{}",WBTxRx::tx_stats_to_string(txstats));
+    ss<<fmt::format("{}",WBTxRx::tx_stats_to_string(txstats));
   }else{
-    m_console->info("MCS {} passed {} measured {}-{}",mcs,pps,
+    ss<<fmt::format("MCS {} passed {}/{} measured {}-{}\n",mcs,
+                      StringHelper::bitrate_readable(rate_bps),pps,
                     txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
-    m_console->info("{}",WBTxRx::tx_stats_to_string(txstats));
+    ss<<fmt::format("{}",WBTxRx::tx_stats_to_string(txstats));
   }
-  return ret;
+  m_console->info(ss.str());
+  return ss.str();
 }
 static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,const bool is_40mhz){
   txrx->tx_update_channel_width(is_40mhz ? 40 : 20);
-  for(int mcs=0;mcs<12;mcs++){
+  std::stringstream log;
+  for(int mcs=0;mcs<4;mcs++){
     const auto rate=wifibroadcast::get_practical_rate_5G(mcs);
     const auto rate_kbits=(is_40mhz ? rate.rate_40mhz_kbits : rate.rate_20mhz_kbits);
-    const auto rate_bps=rate_kbits*1000;
-    const auto pps=rate_bps / (TEST_PACKETS_SIZE*8);
-    validate_specific_rate(txrx,mcs,pps);
+    const auto res=validate_specific_rate(txrx,mcs,rate_kbits);
+    log<<res<<"\n";
   }
+  wifibroadcast::log::get_default()->debug("{}",log.str());
 }
 
 
@@ -269,12 +271,12 @@ int main(int argc, char *const *argv) {
   };
   txrx->rx_register_callback(cb);
 
-  long_test(txrx, false);
+  //long_test(txrx, false);
 
   //test_rates_and_print_results(txrx, false);
   //test_rates_and_print_results(txrx, true);
 
-  //validate_rtl8812au_rates(txrx, false);
+  validate_rtl8812au_rates(txrx, false);
 
   /*const auto res_40mhz= all_mcs_increase_pps_until_fail(txrx);
   print_test_results_rough(res_40mhz);

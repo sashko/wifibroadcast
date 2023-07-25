@@ -45,5 +45,12 @@ static void setThreadParamsMaxRealtime(pthread_t target) {
 static void setThreadParamsMaxRealtime() {
   setThreadParamsMaxRealtime(pthread_self());
 }
+
+static bool check_root() {
+  const auto uid = getuid();
+  const bool root = uid ? false : true;
+  return root;
+}
+
 }
 #endif //WIFIBROADCAST_SCHEDULINGHELPER_H

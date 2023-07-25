@@ -24,6 +24,7 @@
 
 /**
  * Encoder and Decoder pair for FEC protected block / packet based data streaming.
+ * adds sizeof(FECPayloadHdr) to each fec primary or secondary packet.
  */
 
 static_assert(__BYTE_ORDER == __LITTLE_ENDIAN, "This code is written for little endian only !");

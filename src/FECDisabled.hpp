@@ -21,7 +21,7 @@
 
 // FEC Disabled is used for telemetry data in OpenHD.
 // We have different requirements on packet loss and/or packet reordering for this type of data stream.
-// Adds sizeof(FECDisabledHeader) ovverhead
+// Adds sizeof(FECDisabledHeader) overhead
 // received packets are quaranteed to be forwarded with the following properties:
 // No doplicates
 // packets out of order are possible

@@ -17,6 +17,12 @@ WBTxRx::WBTxRx(std::vector<std::string> wifi_cards,Options options1)
   assert(!m_wifi_cards.empty());
   m_console=wifibroadcast::log::create_or_get("WBTxRx");
   m_console->debug(" cards:{} set_direction:{}",StringHelper::string_vec_as_string(m_wifi_cards),m_options.set_direction);
+  // Common error - not run as root
+  if(!SchedulingHelper::check_root()){
+    std::cerr<<"wifibroadcast needs root"<<std::endl;
+    m_console->warn("wifibroadcast needs root");
+    assert(false);
+  }
   m_receive_pollfds.resize(m_wifi_cards.size());
   m_rx_stats_per_card.resize(m_wifi_cards.size());
   m_card_is_disconnected.resize(m_wifi_cards.size());
