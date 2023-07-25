@@ -201,7 +201,7 @@ int main(int argc, char *const *argv) {
   options_txrx.rtl8812au_rssi_fixup= true;
   //options_txrx.set_direction= false;
   options_txrx.log_all_received_validated_packets= false;
-  options_txrx.disable_encryption= true;
+  options_txrx.enable_encryption= false;
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
   // No idea if and what effect stbc and ldpc have on the rate, but openhd enables them if possible by default
@@ -231,14 +231,14 @@ int main(int argc, char *const *argv) {
   print_test_results_rough(res_lgi);*/
   //m_console->info("Short guard");
   //print_test_results_rough(res_sgi);
-  txrx->tx_update_channel_width(20);
+  /*txrx->tx_update_channel_width(20);
   const auto res_20mhz= calculate_rough(txrx,20);
   print_test_results_rough(res_20mhz);
-  print_test_results_and_theoretical(res_20mhz, false);
-  /*txrx->tx_update_channel_width(40);
+  print_test_results_and_theoretical(res_20mhz, false);*/
+  txrx->tx_update_channel_width(40);
   const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
-  print_test_results_and_theoretical(res_40mhz, true);*/
+  print_test_results_and_theoretical(res_40mhz, true);
   /*const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
   m_console->info("20Mhz:");

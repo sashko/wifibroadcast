@@ -54,6 +54,8 @@ int main(int argc, char *const *argv) {
   //options_txrx.set_direction= false;
   options_txrx.set_direction= pcap_setdirection;
   options_txrx.log_all_received_validated_packets= true;
+  // For easier debugging
+  options_txrx.enable_encryption= false;
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
 
