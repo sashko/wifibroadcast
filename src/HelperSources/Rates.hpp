@@ -40,20 +40,21 @@ static Rate get_theoretical_rate_5G(int mcs){
   return {-1,-1};
 }
 
+// Those values come from running the "increase bitrate until tx errors" test 3 times and taking the lowest (sensible) value of those runs
 static std::vector<Rate> openhd_rtl8812au_5G_practical_rates() {
   return {
-      Rate{5600 ,0}, // MCS 0
-      Rate{11000,0}, // MCS 1
-      Rate{15000,0}, // MCS 2
-      Rate{19000,0}, // MCS 3
-      Rate{26000,0}, // MCS 4
-      Rate{26000,0}, // MCS 5
-      Rate{32000,0}, // MCS 6
-      Rate{38000,0}, // MCS 7
-      Rate{11000 ,0}, // MCS 8
-      Rate{19000,0}, // MCS 9
-      Rate{27000,0}, // MCS 10
-      Rate{32000,0}, // MCS 11
+      Rate{5600 ,11700}, // MCS 0
+      Rate{11000,20600}, // MCS 1
+      Rate{15000,28400}, // MCS 2
+      Rate{19000,33400}, // MCS 3
+      Rate{26000,36900}, // MCS 4
+      Rate{26000,43500}, // MCS 5
+      Rate{32000,48000}, // MCS 6
+      Rate{38000,53000}, // MCS 7
+      Rate{11000,16700}, // MCS 8
+      Rate{19000,30000}, // MCS 9
+      Rate{27000,37000}, // MCS 10
+      Rate{32000,51000}, // MCS 11
   };
 }
 

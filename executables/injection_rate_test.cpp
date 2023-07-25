@@ -269,7 +269,7 @@ int main(int argc, char *const *argv) {
   };
   txrx->rx_register_callback(cb);
 
-  long_test(txrx, true);
+  long_test(txrx, false);
 
   //test_rates_and_print_results(txrx, false);
   //test_rates_and_print_results(txrx, true);
