@@ -62,7 +62,7 @@ class DummyStreamGenerator{
         n_times_cannot_keep_up_wanted_pps++;
       }
       while (std::chrono::steady_clock::now()<=next_packet_tp){
-        // busy sleep
+        // busy wait
       }
     }
   }

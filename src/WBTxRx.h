@@ -124,11 +124,15 @@ class WBTxRx {
    // Statistics
    struct TxStats{
      int64_t n_injected_packets=0;
-     int64_t n_injected_bytes=0;
+     // excluding wifi / radiotap / encryption overhead
+     int64_t n_injected_bytes_excluding_overhead =0;
+     // including wifi / radiotap / encryption overhead
+     int64_t n_injected_bytes_including_overhead =0;
      // tx errors, first sign the tx can't keep up with the provided bitrate
      int32_t count_tx_injections_error_hint=0;
      int curr_packets_per_second=-1;
-     int curr_bits_per_second=-1;
+     int curr_bits_per_second_excluding_overhead=-1;
+     int curr_bits_per_second_including_overhead=-1;
    };
    struct RxStats{
      // Total count of received packets / bytes - can be from another wb tx, but also from someone else using wifi
@@ -240,7 +244,8 @@ class WBTxRx {
   static constexpr auto HIGHEST_RSSI_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
   bool m_disable_all_transmissions= false;
   std::vector<bool> m_card_is_disconnected;
-  BitrateCalculator m_tx_bitrate_calculator{};
+  BitrateCalculator m_tx_bitrate_calculator_excluding_overhead{};
+  BitrateCalculator m_tx_bitrate_calculator_including_overhead{};
   PacketsPerSecondCalculator m_tx_packets_per_second_calculator{};
   BitrateCalculator m_rx_bitrate_calculator{};
   PacketsPerSecondCalculator m_rx_packets_per_second_calculator{};

@@ -108,7 +108,8 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
     m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet.size(),len_injected, pcap_geterr(tx));
   }else{
-    m_tx_stats.n_injected_bytes+=packet_size;
+    m_tx_stats.n_injected_bytes_excluding_overhead += data_len;
+    m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
     m_tx_stats.n_injected_packets++;
   }
   announce_session_key_if_needed();
@@ -453,7 +454,10 @@ void WBTxRx::tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSele
 }
 
 WBTxRx::TxStats WBTxRx::get_tx_stats() {
-    m_tx_stats.curr_bits_per_second=m_tx_bitrate_calculator.get_last_or_recalculate(m_tx_stats.n_injected_bytes);
+    m_tx_stats.curr_bits_per_second_excluding_overhead=
+      m_tx_bitrate_calculator_excluding_overhead.get_last_or_recalculate(m_tx_stats.n_injected_bytes_excluding_overhead);
+    m_tx_stats.curr_bits_per_second_including_overhead=
+        m_tx_bitrate_calculator_including_overhead.get_last_or_recalculate(m_tx_stats.n_injected_bytes_including_overhead);
     m_tx_stats.curr_packets_per_second=m_tx_packets_per_second_calculator.get_last_or_recalculate(m_tx_stats.n_injected_packets);
     return m_tx_stats;
 }
@@ -490,9 +494,11 @@ bool WBTxRx::get_card_has_disconnected(int card_idx) {
   return m_card_is_disconnected[card_idx];
 }
 std::string WBTxRx::tx_stats_to_string(const WBTxRx::TxStats& data) {
-  return fmt::format("TxStats[injected packets:{} bytes:{} tx errors:{} pps:{} bps:{}]",
-                     data.n_injected_packets,data.n_injected_bytes,data.count_tx_injections_error_hint,
-                     data.curr_packets_per_second,data.curr_bits_per_second);
+  return fmt::format("TxStats[injected packets:{} bytes:{} tx errors:{} pps:{} bps:{}-{}]",
+                     data.n_injected_packets,data.n_injected_bytes_including_overhead,data.count_tx_injections_error_hint,
+                     data.curr_packets_per_second,
+                     StringHelper::bitrate_readable(data.curr_bits_per_second_excluding_overhead),
+                     StringHelper::bitrate_readable(data.curr_bits_per_second_including_overhead));
 }
 std::string WBTxRx::rx_stats_to_string(const WBTxRx::RxStats& data) {
   return fmt::format("RxStats[packets any:{} session:{} decrypted:{} Loss:{} pps:{} bps:{}]",
@@ -503,5 +509,6 @@ std::string WBTxRx::rx_stats_to_string(const WBTxRx::RxStats& data) {
 void WBTxRx::tx_reset_stats() {
   m_tx_stats=TxStats{};
   m_tx_packets_per_second_calculator.reset();
-  m_tx_bitrate_calculator.reset();
+  m_tx_bitrate_calculator_excluding_overhead.reset();
+  m_tx_bitrate_calculator_including_overhead.reset();
 }
