@@ -411,9 +411,9 @@ class PacketsPerSecondCalculator{
     const auto deltaPackets=curr_packets-packets_last_time;
     last_time=now;
     packets_last_time=curr_packets;
-    const auto deltaTimeMilliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime).count();
-    if(deltaTimeMilliseconds>0){
-      const auto packets_per_second=(deltaPackets*1000 / deltaTimeMilliseconds);
+    const auto delta_time_us=std::chrono::duration_cast<std::chrono::microseconds>(deltaTime).count();
+    if(delta_time_us>0 && deltaPackets>0){
+      const auto packets_per_second=(deltaPackets*1000*1000 / delta_time_us);
       return packets_per_second;
     }else{
       return 0;
