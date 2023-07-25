@@ -45,12 +45,18 @@ class Ieee80211Header {
   // write the port re-using the MAC address (which is unused for broadcast)
   // write sequence number (not used on rx right now)
   void writeParams(const uint8_t radioPort, const uint16_t seqenceNumber) {
+    write_radio_port(radioPort);
+    write_ieee80211_seq_nr(seqenceNumber);
+  }
+  void write_ieee80211_seq_nr(const uint16_t seq_nr){
+    data[FRAME_SEQ_LB] = seq_nr & 0xff;
+    data[FRAME_SEQ_HB] = (seq_nr >> 8) & 0xff;
+  }
+  void write_radio_port(const uint8_t radioPort){
     data[SRC_MAC_LASTBYTE] = radioPort;
     data[DST_MAC_LASTBYTE] = radioPort;
-    //setSequenceControl({0,seqenceNumber});
-    data[FRAME_SEQ_LB] = seqenceNumber & 0xff;
-    data[FRAME_SEQ_HB] = (seqenceNumber >> 8) & 0xff;
   }
+
   uint8_t getRadioPort() const {
     return data[SRC_MAC_LASTBYTE];
   }

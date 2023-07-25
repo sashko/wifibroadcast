@@ -72,13 +72,14 @@ static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int
       result.pass_bps_measured=last_passed_bps_measured;
       result.fail_pps_set=pps;
       result.fail_pps_measured=txstats.curr_packets_per_second;
-      result.fail_bps_measured=txstats.curr_bits_per_second;
+      result.fail_bps_measured=txstats.curr_bits_per_second_excluding_overhead;
       return result;
     }else{
-      m_console->info("MCS {} passed {} - measured {} {}", mcs,pps,txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second));
+      m_console->info("MCS {} passed {} - measured {} {}", mcs,pps,txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
+      m_console->info("{}",WBTxRx::tx_stats_to_string(txstats));
       last_passed_pps_set=pps;
       last_passed_pps_measured=txstats.curr_packets_per_second;
-      last_passed_bps_measured=txstats.curr_bits_per_second;
+      last_passed_bps_measured=txstats.curr_bits_per_second_excluding_overhead;
     }
   }
   //assert(false);
@@ -117,10 +118,10 @@ static Validation validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int 
   auto ret=Validation{txstats.count_tx_injections_error_hint,stream_generator->n_times_cannot_keep_up_wanted_pps};
   if(ret.count_tx_injections_error_hint>0 || ret.n_times_cannot_keep_up_wanted_pps>10){
     m_console->info("MCS {} didn't pass {} measured {}-{}",pps,
-                    txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second));
+                    txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
   }else{
     m_console->info("MCS {} passed {} measured {}-{}",pps,
-                    txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second));
+                    txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
   }
   return ret;
 }
