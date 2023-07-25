@@ -16,6 +16,8 @@
 
 
 //static constexpr auto TEST_PACKETS_SIZE=1024;
+// Video in openhd is fragmented into packets of this size - and in general, is by far the biggest bitrate producer
+// Therefore, we use this packet size during testing - Note that a smaller packet size reduces bitrate due to more overhead.
 static constexpr auto TEST_PACKETS_SIZE=1440;
 
 struct TestResult {
@@ -148,7 +150,7 @@ static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx){
   // Since we use increasing MCS, start where the last measurement failed to speed up testing
   int pps_start=500;
 
-  for(int mcs=0;mcs< 4;mcs++) {
+  for(int mcs=0;mcs< 12;mcs++) {
     auto res = increase_pps_until_fail(txrx,mcs, pps_start, 100);
     print_test_results_rough({res});
     pps_start = res.pass_pps_set;
