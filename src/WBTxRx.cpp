@@ -107,6 +107,7 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   if (len_injected != (int) packet.size()) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
     m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet.size(),len_injected, pcap_geterr(tx));
+    m_tx_stats.count_tx_errors++;
   }else{
     m_tx_stats.n_injected_bytes_excluding_overhead += data_len;
     m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
