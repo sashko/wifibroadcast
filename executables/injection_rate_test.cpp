@@ -151,9 +151,6 @@ static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx){
   int pps_start=500;
 
   for(int mcs=0;mcs< 12;mcs++) {
-    auto res = increase_pps_until_fail(txrx,mcs, pps_start, 100);
-    print_test_results_rough({res});
-    pps_start = res.pass_pps_set;
     // at MCS8 we loop around regarding rate
     if(mcs % 8 ==0){
       pps_start=500;
@@ -162,6 +159,10 @@ static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx){
       m_console->warn("Didn't pass a prev. rate");
       pps_start=500;
     }
+    auto res = increase_pps_until_fail(txrx,mcs, pps_start, 100);
+    print_test_results_rough({res});
+    // start where the last mcs successfully passed
+    pps_start = res.pass_pps_set;
     ret.push_back(res);
     /*auto res_rough_fine= increase_pps_until_fail_fine_adjust(txrx,mcs,pps_start,400);
     auto rough=res_rough_fine.rough;
