@@ -113,12 +113,12 @@ static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int
   std::stringstream ss;
   if(txstats.count_tx_injections_error_hint>0 || stream_generator->n_times_cannot_keep_up_wanted_pps>10){
     ss<<fmt::format("MCS {} didn't pass {}/{} measured {}-{}\n",mcs,
-                      StringHelper::bitrate_readable(rate_bps),pps,
+                      pps,StringHelper::bitrate_readable(rate_bps),
                     txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
     ss<<fmt::format("{}",WBTxRx::tx_stats_to_string(txstats));
   }else{
     ss<<fmt::format("MCS {} passed {}/{} measured {}-{}\n",mcs,
-                      StringHelper::bitrate_readable(rate_bps),pps,
+                      pps,StringHelper::bitrate_readable(rate_bps),
                     txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
     //ss<<fmt::format("{}",WBTxRx::tx_stats_to_string(txstats));
   }
@@ -128,13 +128,13 @@ static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int
 static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,const bool is_40mhz){
   txrx->tx_update_channel_width(is_40mhz ? 40 : 20);
   std::stringstream log;
-  for(int mcs=0;mcs<4;mcs++){
+  for(int mcs=0;mcs<12;mcs++){
     const auto rate=wifibroadcast::get_practical_rate_5G(mcs);
     const auto rate_kbits=(is_40mhz ? rate.rate_40mhz_kbits : rate.rate_20mhz_kbits);
     const auto res=validate_specific_rate(txrx,mcs,rate_kbits);
     log<<res<<"\n";
   }
-  wifibroadcast::log::get_default()->debug("{}",log.str());
+  wifibroadcast::log::get_default()->debug("\n{}",log.str());
 }
 
 
