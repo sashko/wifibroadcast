@@ -56,6 +56,7 @@ static RoughTestResult increase_rate_until_fail(std::shared_ptr<WBTxRx> txrx,con
       // TX errors
       m_console->info("Got TX errors at set:{} actual: {} pps {} pps", pps,txstats.curr_packets_per_second,txstats.curr_packets_per_second);
       RoughTestResult result{};
+      result.mcs_index=mcs;
       result.pass_pps_set=last_passed_pps_set;
       result.pass_pps_measured=last_passed_pps_measured;
       result.pass_bps_measured=last_passed_bps_measured;
