@@ -61,7 +61,7 @@ class DummyStreamGenerator{
         //wifibroadcast::log::get_default()->warn("Cannot keep up with the wanted tx pps");
         n_times_cannot_keep_up_wanted_pps++;
       }
-      while (std::chrono::steady_clock::now()<=next_packet_tp){
+      while (std::chrono::steady_clock::now()<next_packet_tp){
         // busy wait
       }
     }

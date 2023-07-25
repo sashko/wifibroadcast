@@ -127,7 +127,7 @@ static Validation validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int 
   }
   return ret;
 }
-static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,bool is_40mhz= false){
+static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,const bool is_40mhz){
   txrx->tx_update_channel_width(is_40mhz ? 40 : 20);
   for(int mcs=0;mcs<12;mcs++){
     const auto rate=wifibroadcast::get_practical_rate_5G(mcs);
