@@ -243,15 +243,17 @@ int main(int argc, char *const *argv) {
   print_test_results_rough(res_lgi);*/
   //m_console->info("Short guard");
   //print_test_results_rough(res_sgi);
-  /*txrx->tx_update_channel_width(20);
+
+  txrx->tx_update_channel_width(20);
   const auto res_20mhz= calculate_rough(txrx,20);
   print_test_results_rough(res_20mhz);
-  print_test_results_and_theoretical(res_20mhz, false);*/
+  print_test_results_and_theoretical(res_20mhz, false);
+
   /*txrx->tx_update_channel_width(40);
   const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
   print_test_results_and_theoretical(res_40mhz, true);*/
-  validate_rtl8812au_rates(txrx, false);
+  //validate_rtl8812au_rates(txrx, false);
 
   /*const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
