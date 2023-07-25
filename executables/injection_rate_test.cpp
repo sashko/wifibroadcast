@@ -120,7 +120,7 @@ static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int
     ss<<fmt::format("MCS {} passed {}/{} measured {}-{}\n",mcs,
                       StringHelper::bitrate_readable(rate_bps),pps,
                     txstats.curr_packets_per_second,StringHelper::bitrate_readable(txstats.curr_bits_per_second_excluding_overhead));
-    ss<<fmt::format("{}",WBTxRx::tx_stats_to_string(txstats));
+    //ss<<fmt::format("{}",WBTxRx::tx_stats_to_string(txstats));
   }
   m_console->info(ss.str());
   return ss.str();
