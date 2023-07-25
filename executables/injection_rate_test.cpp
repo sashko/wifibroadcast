@@ -38,7 +38,9 @@ static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int
   int last_passed_pps_set=0;
   int last_passed_pps_measured=0;
   int last_passed_bps_measured=0;
-  for(int pps=pps_start;pps<5*1000;pps+=pps_increment) {
+  // 7*1000 packets per second are a lot (way over 50MBit/s) but we can reach it in ideal scenarios
+  // have a limit here though to not run infinitely
+  for(int pps=pps_start;pps<7*1000;pps+=pps_increment) {
     auto tx_cb=[&txrx](const uint8_t* data,int data_len){
       txrx->tx_inject_packet(10,data,data_len);
     };
@@ -144,7 +146,7 @@ static void print_test_results_and_theoretical(const std::vector<TestResult>& te
   }
 }
 
-static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx){
+static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx,const int pps_increment=100){
   std::vector<TestResult> ret;
 
   auto m_console=wifibroadcast::log::create_or_get("main");
@@ -160,7 +162,7 @@ static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx){
       m_console->warn("Didn't pass a prev. rate");
       pps_start=500;
     }
-    auto res = increase_pps_until_fail(txrx,mcs, pps_start, 100);
+    auto res = increase_pps_until_fail(txrx,mcs, pps_start, pps_increment);
     print_test_results_rough({res});
     // start where the last mcs successfully passed
     pps_start = res.pass_pps_set;
@@ -228,14 +230,14 @@ int main(int argc, char *const *argv) {
   print_test_results_rough(res_lgi);*/
   //m_console->info("Short guard");
   //print_test_results_rough(res_sgi);
-  /*txrx->tx_update_channel_width(20);
-  const auto res_20mhz= calculate_rough(txrx);
+  txrx->tx_update_channel_width(20);
+  const auto res_20mhz= calculate_rough(txrx,20);
   print_test_results_rough(res_20mhz);
-  print_test_results_and_theoretical(res_20mhz, false);*/
-  txrx->tx_update_channel_width(40);
+  print_test_results_and_theoretical(res_20mhz, false);
+  /*txrx->tx_update_channel_width(40);
   const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
-  print_test_results_and_theoretical(res_40mhz, true);
+  print_test_results_and_theoretical(res_40mhz, true);*/
   /*const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
   m_console->info("20Mhz:");
