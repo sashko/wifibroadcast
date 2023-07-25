@@ -50,15 +50,6 @@ static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int
     txrx->tx_reset_stats();
     stream_generator->start();
     m_console->info("Testing MCS {} with {} pps", mcs, pps);
-    /*const auto begin=std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(5)){
-      auto txstats=txrx->get_tx_stats();
-      if(txstats.count_tx_injections_error_hint>0 || stream_generator->n_times_cannot_keep_up_wanted_pps>20){
-        // stop early
-        break ;
-      }
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }*/
     std::this_thread::sleep_for(std::chrono::seconds(3));
     const auto txstats = txrx->get_tx_stats();
     if (txstats.count_tx_injections_error_hint > 0 || stream_generator->n_times_cannot_keep_up_wanted_pps>10 ) {
@@ -200,19 +191,25 @@ void long_test(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
   txrx->tx_update_channel_width(freq_w);
   const auto res_first= calculate_rough(txrx,50);
   const auto res_second= calculate_rough(txrx,50);
+  const auto res_third= calculate_rough(txrx,50);
   m_console->info("First run:");
   print_test_results_rough(res_first);
   m_console->info("Second run:");
   print_test_results_rough(res_second);
+  m_console->info("Third run:");
+  print_test_results_rough(res_third);
   m_console->info("---------------------------");
   m_console->info("First run:");
   print_test_results_and_theoretical(res_first, use_40mhz);
   m_console->info("Second run:");
   print_test_results_and_theoretical(res_second, use_40mhz);
+  m_console->info("Third run:");
+  print_test_results_and_theoretical(res_third, use_40mhz);
   for(int i=0;i<res_first.size();i++){
-    m_console->info("MCS {} possible {}--{}",res_first.at(i).mcs_index,
+    m_console->info("MCS {} possible {}--{}--{}",res_first.at(i).mcs_index,
                     StringHelper::bitrate_readable(res_first.at(i).pass_bps_measured),
-                    StringHelper::bitrate_readable(res_second.at(i).pass_bps_measured));
+                    StringHelper::bitrate_readable(res_second.at(i).pass_bps_measured),
+                    StringHelper::bitrate_readable(res_third.at(i).pass_bps_measured));
   }
 }
 
@@ -271,7 +268,7 @@ int main(int argc, char *const *argv) {
   //m_console->info("Short guard");
   //print_test_results_rough(res_sgi);
 
-  long_test(txrx, false);
+  long_test(txrx, true);
 
   /*txrx->tx_update_channel_width(20);
   const auto res_20mhz= calculate_rough(txrx,20);

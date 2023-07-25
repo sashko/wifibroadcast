@@ -307,7 +307,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
         // Same for iee80211 seq nr
         uint16_t iee_seq_nr=parsedPacket->ieee80211Header->getSequenceNumber();
         m_seq_nr_helper_iee80211.on_new_sequence_number(iee_seq_nr);
-        m_console->debug("IEE SEQ NR PACKET LOSS {}",m_seq_nr_helper_iee80211.get_current_loss_percent());
+        //m_console->debug("IEE SEQ NR PACKET LOSS {}",m_seq_nr_helper_iee80211.get_current_loss_percent());
       }
       // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
       if(m_wifi_cards.size()>1 && m_options.enable_auto_switch_tx_card){
@@ -502,8 +502,9 @@ bool WBTxRx::get_card_has_disconnected(int card_idx) {
   return m_card_is_disconnected[card_idx];
 }
 std::string WBTxRx::tx_stats_to_string(const WBTxRx::TxStats& data) {
-  return fmt::format("TxStats[injected packets:{} bytes:{} tx errors:{} pps:{} bps:{}-{}]",
-                     data.n_injected_packets,data.n_injected_bytes_including_overhead,data.count_tx_injections_error_hint,
+  return fmt::format("TxStats[injected packets:{} bytes:{} tx errors:{}-{} pps:{} bps:{}-{}]",
+                     data.n_injected_packets,data.n_injected_bytes_including_overhead,
+                     data.count_tx_injections_error_hint,data.count_tx_errors,
                      data.curr_packets_per_second,
                      StringHelper::bitrate_readable(data.curr_bits_per_second_excluding_overhead),
                      StringHelper::bitrate_readable(data.curr_bits_per_second_including_overhead));

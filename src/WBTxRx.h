@@ -131,13 +131,14 @@ class WBTxRx {
      int64_t n_injected_bytes_excluding_overhead =0;
      // including wifi / radiotap / encryption overhead
      int64_t n_injected_bytes_including_overhead =0;
+     // recalculated in X second intervals
+     int curr_packets_per_second=-1;
+     int curr_bits_per_second_excluding_overhead=-1;
+     int curr_bits_per_second_including_overhead=-1;
      // tx error hint, first sign the tx can't keep up with the provided bitrate
      int32_t count_tx_injections_error_hint=0;
      // actual tx errors
      int32_t count_tx_errors=0;
-     int curr_packets_per_second=-1;
-     int curr_bits_per_second_excluding_overhead=-1;
-     int curr_bits_per_second_including_overhead=-1;
    };
    struct RxStats{
      // Total count of received packets / bytes - can be from another wb tx, but also from someone else using wifi

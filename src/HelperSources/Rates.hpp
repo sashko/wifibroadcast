@@ -46,14 +46,14 @@ static std::vector<Rate> openhd_rtl8812au_5G_practical_rates() {
       Rate{11000,0}, // MCS 1
       Rate{15000,0}, // MCS 2
       Rate{19000,0}, // MCS 3
-      Rate{26120,0}, // MCS 4
-      Rate{33230,0}, // MCS 5
-      Rate{33330,0}, // MCS 6
-      Rate{36060,0}, // MCS 7
-      Rate{5530 ,0}, // MCS 8
-      Rate{11480,0}, // MCS 9
-      Rate{13810,0}, // MCS 10
-      Rate{14240,0}, // MCS 11
+      Rate{26000,0}, // MCS 4
+      Rate{26000,0}, // MCS 5
+      Rate{32000,0}, // MCS 6
+      Rate{38000,0}, // MCS 7
+      Rate{11000 ,0}, // MCS 8
+      Rate{19000,0}, // MCS 9
+      Rate{27000,0}, // MCS 10
+      Rate{32000,0}, // MCS 11
   };
 }
 
