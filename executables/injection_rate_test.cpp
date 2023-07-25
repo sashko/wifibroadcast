@@ -156,12 +156,14 @@ static void print_test_results_and_theoretical(const std::vector<TestResult>& te
   }
 }
 
-static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int pps_increment){
+static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int pps_increment,const int max_mcs=12){
+  assert(max_mcs>=0);
+  assert(max_mcs<=32);
   std::vector<TestResult> ret;
   auto m_console=wifibroadcast::log::create_or_get("main");
   // Since we use increasing MCS, start where the last measurement failed to speed up testing
   int pps_start=500;
-  for(int mcs=0;mcs< 3;mcs++) {
+  for(int mcs=0;mcs< max_mcs;mcs++) {
     // at MCS8 we loop around regarding rate
     if(mcs % 8 ==0){
       pps_start=500;
@@ -189,9 +191,10 @@ void long_test(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
   const int freq_w=use_40mhz ? 40 : 20;
   m_console->info("Long test {}",freq_w);
   txrx->tx_update_channel_width(freq_w);
-  const auto res_first= all_mcs_increase_pps_until_fail(txrx, 50);
-  const auto res_second= all_mcs_increase_pps_until_fail(txrx, 50);
-  const auto res_third= all_mcs_increase_pps_until_fail(txrx, 50);
+  const int mcs_max=12;
+  const auto res_first= all_mcs_increase_pps_until_fail(txrx, 50,mcs_max);
+  const auto res_second= all_mcs_increase_pps_until_fail(txrx, 50,mcs_max);
+  const auto res_third= all_mcs_increase_pps_until_fail(txrx, 50,mcs_max);
   m_console->info("First run:");
   print_test_results_rough(res_first);
   m_console->info("Second run:");
@@ -266,22 +269,12 @@ int main(int argc, char *const *argv) {
   };
   txrx->rx_register_callback(cb);
 
-  /*txrx->tx_update_guard_interval(false);
-  const auto res_lgi= calculate_rough(txrx);
-  txrx->tx_update_guard_interval(true);
-  //const auto res_sgi= all_mcs_increase_pps_until_fail(txrx);
-  m_console->info("ROUGH TEST RESULTS");
-  m_console->info("Long guard");
-  print_test_results_rough(res_lgi);*/
-  //m_console->info("Short guard");
-  //print_test_results_rough(res_sgi);
-
   long_test(txrx, true);
 
   //test_rates_and_print_results(txrx, false);
   //test_rates_and_print_results(txrx, true);
 
-  validate_rtl8812au_rates(txrx, false);
+  //validate_rtl8812au_rates(txrx, false);
 
   /*const auto res_40mhz= all_mcs_increase_pps_until_fail(txrx);
   print_test_results_rough(res_40mhz);
