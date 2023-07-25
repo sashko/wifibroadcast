@@ -77,6 +77,7 @@ class WBTxRx {
    * radiotap_header,ieee_80211_header,nonce (64 bit), encrypted data, encryption prefix
    * A increasing nonce is used for each packet, and is used for packet validation
    * on the receiving side.
+   * NOTE: Encryption and/or validation adds a fixed amount of overhead to each injected packet !
    * @param radioPort used to multiplex more than one data stream, the radio port is written into the IEE80211 header
    * @param data the packet payload
    * @param data_len the packet payload length
@@ -227,6 +228,7 @@ class WBTxRx {
   static constexpr auto RADIO_PORT_SESSION_KEY_PACKETS=25;
   // for calculating the packet loss on the rx side
   seq_nr::Helper m_seq_nr_helper;
+  seq_nr::Helper m_seq_nr_helper_iee80211;
   // for calculating the loss per rx card (when multiple rx cards are used)
   std::vector<std::shared_ptr<seq_nr::Helper>> m_seq_nr_per_card;
   OUTPUT_DATA_CALLBACK m_output_cb= nullptr;

@@ -85,16 +85,22 @@ static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int
   //assert(false);
   return {mcs,0,0,0,0,0};
 }
-struct TestResultRoughFine{
-  TestResult rough;
-  TestResult fine;
-};
-static TestResultRoughFine increase_pps_until_fail_fine_adjust(std::shared_ptr<WBTxRx> txrx,const int mcs,const int pps_start,const int pps_increment){
-  auto res_rough= increase_pps_until_fail(txrx,mcs,pps_start,pps_increment);
-  const auto fine_pps_start=res_rough.pass_pps_set;
-  const auto fine_pps_increment=pps_increment / 8;
-  auto res_fine= increase_pps_until_fail(txrx,mcs,res_rough.pass_pps_set,pps_increment);
-  return {res_rough,res_fine};
+
+static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,const int mcs){
+  auto m_console=wifibroadcast::log::create_or_get("main");
+  m_console->info("Testing MCS {}", mcs);
+  txrx->tx_update_mcs_index(mcs);
+  auto tx_cb=[&txrx](const uint8_t* data,int data_len){
+    txrx->tx_inject_packet(10,data,data_len);
+  };
+  auto stream_generator=std::make_unique<DummyStreamGenerator>(tx_cb,TEST_PACKETS_SIZE);
+  stream_generator->set_target_pps(10*1000);
+  std::this_thread::sleep_for(std::chrono::seconds(1));  // give driver time to empty queue
+  txrx->tx_reset_stats();
+  stream_generator->start();
+  std::this_thread::sleep_for(std::chrono::seconds(4));
+  auto stats=txrx->get_tx_stats();
+  m_console->info("MCS {} max {} {}",mcs,stats.curr_packets_per_second,StringHelper::bitrate_readable(stats.curr_bits_per_second_excluding_overhead));
 }
 
 struct Validation{
@@ -159,13 +165,11 @@ static void print_test_results_and_theoretical(const std::vector<TestResult>& te
   }
 }
 
-static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx,const int pps_increment=100){
+static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx,const int pps_increment){
   std::vector<TestResult> ret;
-
   auto m_console=wifibroadcast::log::create_or_get("main");
   // Since we use increasing MCS, start where the last measurement failed to speed up testing
   int pps_start=500;
-
   for(int mcs=0;mcs< 12;mcs++) {
     // at MCS8 we loop around regarding rate
     if(mcs % 8 ==0){
@@ -187,6 +191,29 @@ static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx,cons
     ret.push_back(fine);*/
   }
   return ret;
+}
+
+void long_test(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
+  auto m_console=wifibroadcast::log::create_or_get("main");
+  const int freq_w=use_40mhz ? 40 : 20;
+  m_console->info("Long test {}",freq_w);
+  txrx->tx_update_channel_width(freq_w);
+  const auto res_first= calculate_rough(txrx,50);
+  const auto res_second= calculate_rough(txrx,50);
+  m_console->info("First run:");
+  print_test_results_rough(res_first);
+  m_console->info("Second run:");
+  print_test_results_rough(res_second);
+  m_console->info("---------------------------");
+  m_console->info("First run:");
+  print_test_results_and_theoretical(res_first, use_40mhz);
+  m_console->info("Second run:");
+  print_test_results_and_theoretical(res_second, use_40mhz);
+  for(int i=0;i<res_first.size();i++){
+    m_console->info("MCS {} possible {}--{}",res_first.at(i).mcs_index,
+                    StringHelper::bitrate_readable(res_first.at(i).pass_bps_measured),
+                    StringHelper::bitrate_readable(res_second.at(i).pass_bps_measured));
+  }
 }
 
 int main(int argc, char *const *argv) {
@@ -244,10 +271,12 @@ int main(int argc, char *const *argv) {
   //m_console->info("Short guard");
   //print_test_results_rough(res_sgi);
 
-  txrx->tx_update_channel_width(20);
+  long_test(txrx, false);
+
+  /*txrx->tx_update_channel_width(20);
   const auto res_20mhz= calculate_rough(txrx,20);
   print_test_results_rough(res_20mhz);
-  print_test_results_and_theoretical(res_20mhz, false);
+  print_test_results_and_theoretical(res_20mhz, false);*/
 
   /*txrx->tx_update_channel_width(40);
   const auto res_40mhz= calculate_rough(txrx);

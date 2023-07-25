@@ -42,10 +42,10 @@ static Rate get_theoretical_rate_5G(int mcs){
 
 static std::vector<Rate> openhd_rtl8812au_5G_practical_rates() {
   return {
-      Rate{6160 ,0}, // MCS 0
-      Rate{11050,0}, // MCS 1
-      Rate{15720,0}, // MCS 2
-      Rate{16790,0}, // MCS 3
+      Rate{5600 ,0}, // MCS 0
+      Rate{11000,0}, // MCS 1
+      Rate{15000,0}, // MCS 2
+      Rate{19000,0}, // MCS 3
       Rate{26120,0}, // MCS 4
       Rate{33230,0}, // MCS 5
       Rate{33330,0}, // MCS 6
@@ -54,58 +54,6 @@ static std::vector<Rate> openhd_rtl8812au_5G_practical_rates() {
       Rate{11480,0}, // MCS 9
       Rate{13810,0}, // MCS 10
       Rate{14240,0}, // MCS 11
-
-      // theoretical:6.5 | 13.5
-      // max injection rate possible measured on the bench: 5.7 | 10.4
-      /*Rate{
-          5700 - 1000,   // minus 1MBit/s
-          14000 - 3000,  // minus 3MBit/s
-      },
-      // theoretical:13 | 27
-      // max injection rate possible measured on the bench: 10.8 | 18.8
-      Rate{
-          10800 - 1000,  // minus 1MBit/s
-          18800 - 3500,  // minus 3.5MBit/s
-      },
-      //@Norbert: Successfully flown on MCS2 and 7MBit/s video, aka 8.4MBit/s after FEC
-      // theoretical:19.5 | 40.5
-      // max injection rate possible measured on the bench: 15.2 | 26.6
-      Rate{
-          15200 - 2000,  // minus 2MBit/s
-          26600 - 4000,  // minus 4MBit/s
-      },
-      // theoretical:26 | 54
-      // max injection rate possible measured on the bench: 19.2 | 30+ (out of capabilities of encoder)
-      Rate{
-          19200 - 3000,  // minus 3MBit/s
-          30000 - 5000,  // minus 5MBit/s
-      },
-      // In general, we only use / recommend MCS 0..3
-      // theoretical:39
-      {17000, 30000},
-      // theoretical:52
-      Rate{23000, 30000},
-      // theoretical:58.5
-      Rate{30000, 30000},
-      // theoretical:65
-      Rate{30000, 30000},
-      //
-      // MCS 8 == MCS 0 with 2 spatial streams
-      //
-      // theoretical 13 | 27
-      // measured: ~11.7 | 22.1
-      Rate{11700 - 3000, 22100 - 4000},
-      // theoretical 26 | 54
-      // measured: ~21 | 30+
-      Rate{21000 - 3000, 32000 - 4000},
-      // theoretical 39 | 81
-      // measured: ~22 | none
-      // here we already pretty much reach the limit what encoding hw (rpi) can do
-      Rate{22000 - 3000, 30000},
-      // theoretical 52 | 108
-      Rate{30000, 30000},
-      // theoretical 78 | 162
-      Rate{30000, 30000},*/
   };
 }
 

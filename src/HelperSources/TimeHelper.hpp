@@ -370,11 +370,12 @@ class BitrateCalculator{
     const auto now=std::chrono::steady_clock::now();
     const auto deltaTime=now-last_time;
     const auto deltaBytes=curr_bytes_received-bytes_last_time;
+    const auto delta_bits=deltaBytes*8;
     last_time=now;
     bytes_last_time=curr_bytes_received;
-    const auto deltaTimeMilliseconds=std::chrono::duration_cast<std::chrono::milliseconds>(deltaTime).count();
-    if(deltaTimeMilliseconds>0){
-      const auto bits_per_second=(deltaBytes*8*1000 / deltaTimeMilliseconds);
+    const auto delta_time_us=std::chrono::duration_cast<std::chrono::microseconds>(deltaTime).count();
+    if(delta_time_us>0 && delta_bits>0){
+      const auto bits_per_second=(delta_bits*1000*1000 / delta_time_us);
       return bits_per_second;
     }else{
       return 0;

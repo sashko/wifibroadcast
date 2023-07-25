@@ -303,6 +303,12 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
       if(parsedPacket->channel_width.has_value()){
         m_rx_stats.last_received_packet_channel_width=parsedPacket->channel_width.value();
       }
+      {
+        // Same for iee80211 seq nr
+        uint16_t iee_seq_nr=parsedPacket->ieee80211Header->getSequenceNumber();
+        m_seq_nr_helper_iee80211.on_new_sequence_number(iee_seq_nr);
+        m_console->debug("IEE SEQ NR PACKET LOSS {}",m_seq_nr_helper_iee80211.get_current_loss_percent());
+      }
       // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
       if(m_wifi_cards.size()>1 && m_options.enable_auto_switch_tx_card){
         const auto elapsed=std::chrono::steady_clock::now()-m_last_highest_rssi_adjustment_tp;
