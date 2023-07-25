@@ -133,13 +133,14 @@ static void print_test_results_rough(const std::vector<TestResult>& test_results
                      result.fail_pps_set,result.fail_pps_measured,StringHelper::bitrate_readable(result.fail_bps_measured));
   }
 }
-static void print_test_results_and_theoretical(const std::vector<TestResult>& test_results){
+static void print_test_results_and_theoretical(const std::vector<TestResult>& test_results,bool is_40mhz){
   auto m_console=wifibroadcast::log::create_or_get("main");
   for(const auto& result: test_results){
     const auto theoretical=wifibroadcast::get_theoretical_rate_5G(result.mcs_index);
+    const int rate_kbits=is_40mhz ? theoretical.rate_40mhz_kbits : theoretical.rate_20mhz_kbits;
     m_console->debug("MCS {} PASSED {}--{}",result.mcs_index,
                      StringHelper::bitrate_readable(result.pass_bps_measured),
-                     StringHelper::bitrate_readable(theoretical.rate_20mhz_kbits*1000));
+                     StringHelper::bitrate_readable(rate_kbits*1000));
   }
 }
 
@@ -227,10 +228,14 @@ int main(int argc, char *const *argv) {
   print_test_results_rough(res_lgi);*/
   //m_console->info("Short guard");
   //print_test_results_rough(res_sgi);
-  txrx->tx_update_channel_width(20);
+  /*txrx->tx_update_channel_width(20);
   const auto res_20mhz= calculate_rough(txrx);
   print_test_results_rough(res_20mhz);
-  print_test_results_and_theoretical(res_20mhz);
+  print_test_results_and_theoretical(res_20mhz, false);*/
+  txrx->tx_update_channel_width(40);
+  const auto res_40mhz= calculate_rough(txrx);
+  print_test_results_rough(res_40mhz);
+  print_test_results_and_theoretical(res_40mhz, true);
   /*const auto res_40mhz= calculate_rough(txrx);
   print_test_results_rough(res_40mhz);
   m_console->info("20Mhz:");

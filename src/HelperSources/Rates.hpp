@@ -26,10 +26,10 @@ static std::vector<Rate> theoretical_rates_5G(){
       Rate{52000,10800},//mcs5
       Rate{58500,12150},//mcs6
       Rate{65000,13500},//mcs7
-      Rate{13000,27000}, //mcs8  (VHT0)
-      Rate{26000,54000}, //mcs9  (VHT1)
-      Rate{39000,81000}, //mcs10 (VHT2)
-      Rate{52000,108000},//mcs11 (VHT3)
+      Rate{13000,27000}, //mcs8  (VHT0 + SS2)
+      Rate{26000,54000}, //mcs9  (VHT1 + SS2)
+      Rate{39000,81000}, //mcs10 (VHT2 + SS2)
+      Rate{52000,108000},//mcs11 (VHT3 + SS2)
   };
 }
 static Rate get_theoretical_rate_5G(int mcs){
