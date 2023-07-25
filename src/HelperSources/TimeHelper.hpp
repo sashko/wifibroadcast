@@ -389,6 +389,11 @@ class BitrateCalculator{
     }
     return curr_bits_per_second;
   }
+  void reset(){
+    bytes_last_time=0;
+    last_time=std::chrono::steady_clock::now();
+    curr_bits_per_second=0;
+  }
  private:
   uint64_t bytes_last_time=0;
   std::chrono::steady_clock::time_point last_time=std::chrono::steady_clock::now();
@@ -419,6 +424,11 @@ class PacketsPerSecondCalculator{
       curr_packets_per_second= recalculateSinceLast(curr_packets);
     }
     return curr_packets_per_second;
+  }
+  void reset(){
+    packets_last_time=0;
+    last_time=std::chrono::steady_clock::now();
+    curr_packets_per_second=0;
   }
  private:
   uint64_t packets_last_time=0;

@@ -68,9 +68,13 @@ class RandomBufferPot {
     auto index = sequenceNumber % m_buffers.size();
     return m_buffers.at(index);
   }
+  std::shared_ptr<std::vector<uint8_t>> get_next_buffer() {
+    return getBuffer(++m_seq_nr);
+  }
  private:
   std::vector<std::shared_ptr<std::vector<uint8_t>>> m_buffers;
   //static constexpr const uint32_t SEED=12345;
+  int m_seq_nr=0;
 };
 
 #endif //WIFIBROADCAST_RANDOMBUFFERPOT_H

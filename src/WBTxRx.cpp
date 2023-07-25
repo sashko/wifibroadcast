@@ -499,3 +499,9 @@ std::string WBTxRx::rx_stats_to_string(const WBTxRx::RxStats& data) {
                          data.count_p_any,data.n_received_valid_session_key_packets,data.count_p_valid,
                          data.curr_packet_loss,data.curr_packets_per_second,data.curr_bits_per_second);
 }
+
+void WBTxRx::tx_reset_stats() {
+  m_tx_stats=TxStats{};
+  m_tx_packets_per_second_calculator.reset();
+  m_tx_bitrate_calculator.reset();
+}

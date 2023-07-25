@@ -163,6 +163,8 @@ class WBTxRx {
    RxStatsPerCard get_rx_stats_for_card(int card_index);
    // used by openhd during frequency scan
    void rx_reset_stats();
+   // used by the rate adjustment test executable
+   void tx_reset_stats();
    // OpenHD displays whatever card is currently transmitting in the OSD
    int get_curr_active_tx_card_idx();
    // Used by OpenHD to do "passive mode" on a GCS

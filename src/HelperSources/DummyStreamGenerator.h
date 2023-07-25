@@ -10,16 +10,20 @@
 #include <cstdint>
 
 #include "RandomBufferPot.hpp"
+#include "SchedulingHelper.hpp"
 
 
 class DummyStreamGenerator{
  public:
   typedef std::function<void(const uint8_t* data,int data_len)> OUTPUT_DATA_CALLBACK;
 
-  DummyStreamGenerator(OUTPUT_DATA_CALLBACK cb,int packet_size):
-                                                                   m_cb(cb),m_packet_size(packet_size){
-    m_random_buffer_pot=std::make_unique<RandomBufferPot>(100,packet_size);
+  DummyStreamGenerator(OUTPUT_DATA_CALLBACK cb,int packet_size)
+      : m_cb(cb),m_packet_size(packet_size){
+    m_random_buffer_pot=std::make_unique<RandomBufferPot>(1000,m_packet_size);
   };
+  ~DummyStreamGenerator(){
+    stop();
+  }
 
   void set_target_pps(int pps){
     m_target_pps=pps;
@@ -39,14 +43,20 @@ class DummyStreamGenerator{
     }
   }
   void loop_generate_data(){
+    SchedulingHelper::setThreadParamsMaxRealtime();
     std::chrono::steady_clock::time_point last_packet=std::chrono::steady_clock::now();
-    int seq=0;
+    const uint64_t delay_betwee_packets_ns=1000*1000*1000 / m_target_pps;
+    const auto delay_between_packets=std::chrono::nanoseconds(delay_betwee_packets_ns);
+    wifibroadcast::log::get_default()->debug("Target pps:{} delta between packets:{}",m_target_pps,MyTimeHelper::R(delay_between_packets));
     while (!m_terminate){
-      const auto delay_between_packets=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(1))/m_target_pps;
-      auto buff=m_random_buffer_pot->getBuffer(seq);
-      seq++;
+      last_packet=std::chrono::steady_clock::now();
+      //wifibroadcast::log::get_default()->debug("Delay between packets: {}",std::chrono::duration_cast<std::chrono::nanoseconds>(delay_between_packets).count());
+      auto buff=m_random_buffer_pot->get_next_buffer();
       m_cb(buff->data(),buff->size());
       const auto next_packet_tp=last_packet+delay_between_packets;
+      if(std::chrono::steady_clock::now()>=next_packet_tp){
+        wifibroadcast::log::get_default()->warn("Cannot keep up with the wanted tx pps");
+      }
       while (std::chrono::steady_clock::now()<=next_packet_tp){
         // busy sleep
       }

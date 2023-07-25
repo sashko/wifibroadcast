@@ -66,6 +66,19 @@ class StringHelper {
     }
     return std::to_string(sizeBytes) + "B";
   }
+
+  static std::string bitrate_readable(int64_t bits_per_second){
+    if(bits_per_second>1024*1024){
+      float mBitsPerSecond = (float) bits_per_second / 1024.0 / 1024.0;
+      return std::to_string(mBitsPerSecond) + "mBit/s";
+    }
+    if(bits_per_second>1024){
+      float kBitsPerSecond = (float) bits_per_second / 1024.0;
+      return std::to_string(kBitsPerSecond) + "kBit/s";
+    }
+    return std::to_string(bits_per_second) + "Bit/s";
+  }
+
 };
 
 #endif //OSDTESTER_STRINGHELPER_H
