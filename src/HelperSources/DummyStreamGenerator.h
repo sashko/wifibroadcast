@@ -8,17 +8,20 @@
 #include <functional>
 #include <thread>
 #include <cstdint>
+#include <utility>
 
 #include "RandomBufferPot.hpp"
 #include "SchedulingHelper.hpp"
 
-
+/**
+ * Generates as close as possible a stream of data packets with a target packets per second packet rate.
+ */
 class DummyStreamGenerator{
  public:
   typedef std::function<void(const uint8_t* data,int data_len)> OUTPUT_DATA_CALLBACK;
 
   DummyStreamGenerator(OUTPUT_DATA_CALLBACK cb,int packet_size)
-      : m_cb(cb),m_packet_size(packet_size){
+      : m_cb(std::move(cb)),m_packet_size(packet_size){
     m_random_buffer_pot=std::make_unique<RandomBufferPot>(1000,m_packet_size);
   };
   ~DummyStreamGenerator(){
@@ -45,8 +48,8 @@ class DummyStreamGenerator{
   void loop_generate_data(){
     SchedulingHelper::setThreadParamsMaxRealtime();
     std::chrono::steady_clock::time_point last_packet=std::chrono::steady_clock::now();
-    const uint64_t delay_betwee_packets_ns=1000*1000*1000 / m_target_pps;
-    const auto delay_between_packets=std::chrono::nanoseconds(delay_betwee_packets_ns);
+    const uint64_t delay_between_packets_ns=1000*1000*1000 / m_target_pps;
+    const auto delay_between_packets=std::chrono::nanoseconds(delay_between_packets_ns);
     wifibroadcast::log::get_default()->debug("Target pps:{} delta between packets:{}",m_target_pps,MyTimeHelper::R(delay_between_packets));
     while (!m_terminate){
       last_packet=std::chrono::steady_clock::now();
