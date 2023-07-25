@@ -127,7 +127,6 @@ int main(int argc, char *const *argv) {
             m_console->debug("Fine adjust done, {} - {}:{}",fine_adjust_pps,txstats.curr_packets_per_second,txstats.curr_bits_per_second);
             auto test_result=TestResult{mcs,txstats.curr_packets_per_second,txstats.curr_bits_per_second};
             m_test_results.push_back(test_result);
-
             break ;
           }
         }
