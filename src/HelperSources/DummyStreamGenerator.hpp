@@ -56,7 +56,7 @@ class DummyStreamGenerator{
       //wifibroadcast::log::get_default()->debug("Delay between packets: {}",std::chrono::duration_cast<std::chrono::nanoseconds>(delay_between_packets).count());
       auto buff=m_random_buffer_pot->get_next_buffer();
       m_cb(buff->data(),buff->size());
-      const auto next_packet_tp=last_packet+delay_between_packets;
+      const auto next_packet_tp=last_packet+delay_between_packets-std::chrono::nanoseconds(200); // minus Xns to better hit the target
       if(std::chrono::steady_clock::now()>=next_packet_tp){
         //wifibroadcast::log::get_default()->warn("Cannot keep up with the wanted tx pps");
         n_times_cannot_keep_up_wanted_pps++;

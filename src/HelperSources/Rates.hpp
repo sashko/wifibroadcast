@@ -42,9 +42,22 @@ static Rate get_theoretical_rate_5G(int mcs){
 
 static std::vector<Rate> openhd_rtl8812au_5G_practical_rates() {
   return {
+      Rate{6160 ,0}, // MCS 0
+      Rate{11050,0}, // MCS 1
+      Rate{15720,0}, // MCS 2
+      Rate{16790,0}, // MCS 3
+      Rate{26120,0}, // MCS 4
+      Rate{33230,0}, // MCS 5
+      Rate{33330,0}, // MCS 6
+      Rate{36060,0}, // MCS 7
+      Rate{5530 ,0}, // MCS 8
+      Rate{11480,0}, // MCS 9
+      Rate{13810,0}, // MCS 10
+      Rate{14240,0}, // MCS 11
+
       // theoretical:6.5 | 13.5
       // max injection rate possible measured on the bench: 5.7 | 10.4
-      Rate{
+      /*Rate{
           5700 - 1000,   // minus 1MBit/s
           14000 - 3000,  // minus 3MBit/s
       },
@@ -92,7 +105,7 @@ static std::vector<Rate> openhd_rtl8812au_5G_practical_rates() {
       // theoretical 52 | 108
       Rate{30000, 30000},
       // theoretical 78 | 162
-      Rate{30000, 30000},
+      Rate{30000, 30000},*/
   };
 }
 
