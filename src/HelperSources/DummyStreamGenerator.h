@@ -55,14 +55,15 @@ class DummyStreamGenerator{
       m_cb(buff->data(),buff->size());
       const auto next_packet_tp=last_packet+delay_between_packets;
       if(std::chrono::steady_clock::now()>=next_packet_tp){
-        wifibroadcast::log::get_default()->warn("Cannot keep up with the wanted tx pps");
+        //wifibroadcast::log::get_default()->warn("Cannot keep up with the wanted tx pps");
+        n_times_cannot_keep_up_wanted_pps++;
       }
       while (std::chrono::steady_clock::now()<=next_packet_tp){
         // busy sleep
       }
     }
   }
-
+  int n_times_cannot_keep_up_wanted_pps=0;
  private:
   const int m_packet_size=1400;
   const OUTPUT_DATA_CALLBACK m_cb;
