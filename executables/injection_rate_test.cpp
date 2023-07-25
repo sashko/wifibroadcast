@@ -156,12 +156,12 @@ static void print_test_results_and_theoretical(const std::vector<TestResult>& te
   }
 }
 
-static std::vector<TestResult> calculate_rough(std::shared_ptr<WBTxRx> txrx,const int pps_increment){
+static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int pps_increment){
   std::vector<TestResult> ret;
   auto m_console=wifibroadcast::log::create_or_get("main");
   // Since we use increasing MCS, start where the last measurement failed to speed up testing
   int pps_start=500;
-  for(int mcs=0;mcs< 12;mcs++) {
+  for(int mcs=0;mcs< 3;mcs++) {
     // at MCS8 we loop around regarding rate
     if(mcs % 8 ==0){
       pps_start=500;
@@ -189,9 +189,9 @@ void long_test(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
   const int freq_w=use_40mhz ? 40 : 20;
   m_console->info("Long test {}",freq_w);
   txrx->tx_update_channel_width(freq_w);
-  const auto res_first= calculate_rough(txrx,50);
-  const auto res_second= calculate_rough(txrx,50);
-  const auto res_third= calculate_rough(txrx,50);
+  const auto res_first= all_mcs_increase_pps_until_fail(txrx, 50);
+  const auto res_second= all_mcs_increase_pps_until_fail(txrx, 50);
+  const auto res_third= all_mcs_increase_pps_until_fail(txrx, 50);
   m_console->info("First run:");
   print_test_results_rough(res_first);
   m_console->info("Second run:");
@@ -211,6 +211,14 @@ void long_test(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
                     StringHelper::bitrate_readable(res_second.at(i).pass_bps_measured),
                     StringHelper::bitrate_readable(res_third.at(i).pass_bps_measured));
   }
+}
+
+void test_rates_and_print_results(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
+  const int freq_w=use_40mhz ? 40 : 20;
+  txrx->tx_update_channel_width(freq_w);
+  const auto res_20mhz= all_mcs_increase_pps_until_fail(txrx, 20);
+  print_test_results_rough(res_20mhz);
+  print_test_results_and_theoretical(res_20mhz, false);
 }
 
 int main(int argc, char *const *argv) {
@@ -261,7 +269,7 @@ int main(int argc, char *const *argv) {
   /*txrx->tx_update_guard_interval(false);
   const auto res_lgi= calculate_rough(txrx);
   txrx->tx_update_guard_interval(true);
-  //const auto res_sgi= calculate_rough(txrx);
+  //const auto res_sgi= all_mcs_increase_pps_until_fail(txrx);
   m_console->info("ROUGH TEST RESULTS");
   m_console->info("Long guard");
   print_test_results_rough(res_lgi);*/
@@ -270,18 +278,12 @@ int main(int argc, char *const *argv) {
 
   long_test(txrx, true);
 
-  /*txrx->tx_update_channel_width(20);
-  const auto res_20mhz= calculate_rough(txrx,20);
-  print_test_results_rough(res_20mhz);
-  print_test_results_and_theoretical(res_20mhz, false);*/
+  //test_rates_and_print_results(txrx, false);
+  //test_rates_and_print_results(txrx, true);
 
-  /*txrx->tx_update_channel_width(40);
-  const auto res_40mhz= calculate_rough(txrx);
-  print_test_results_rough(res_40mhz);
-  print_test_results_and_theoretical(res_40mhz, true);*/
-  //validate_rtl8812au_rates(txrx, false);
+  validate_rtl8812au_rates(txrx, false);
 
-  /*const auto res_40mhz= calculate_rough(txrx);
+  /*const auto res_40mhz= all_mcs_increase_pps_until_fail(txrx);
   print_test_results_rough(res_40mhz);
   m_console->info("20Mhz:");
   print_test_results_rough(res_20mhz);

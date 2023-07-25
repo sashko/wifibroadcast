@@ -82,11 +82,11 @@ class StringHelper {
       return std::to_string(bits_per_second)+" Bit/s";
     }
     if(bits_per_second>1024*1024){
-      float mBitsPerSecond = (float) bits_per_second / 1024.0 / 1024.0;
+      float mBitsPerSecond = (float) bits_per_second / 1000.0 / 1000.0;
       return  float_to_string_with_precision(mBitsPerSecond,2) + "mBit/s";
     }
     if(bits_per_second>1024){
-      float kBitsPerSecond = (float) bits_per_second / 1024.0;
+      float kBitsPerSecond = (float) bits_per_second / 1000.0;
       return float_to_string_with_precision(kBitsPerSecond,2) + "kBit/s";
     }
     return float_to_string_with_precision(bits_per_second,2) + "Bit/s";
