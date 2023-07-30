@@ -129,7 +129,7 @@ class WBTxRx {
      int64_t n_injected_packets=0;
      // excluding wifi / radiotap / encryption overhead
      int64_t n_injected_bytes_excluding_overhead =0;
-     // including wifi / radiotap / encryption overhead
+     // including wifi / radiotap / encryption overhead, as well as session key packets
      int64_t n_injected_bytes_including_overhead =0;
      // recalculated in X second intervals
      int curr_packets_per_second=-1;

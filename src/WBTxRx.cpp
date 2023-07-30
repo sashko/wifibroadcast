@@ -426,6 +426,8 @@ void WBTxRx::send_session_key() {
   if (len_injected != (int) packet.size()) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
     m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet.size(),len_injected, pcap_geterr(tx));
+  }else{
+    m_tx_stats.n_injected_bytes_including_overhead +=packet.size();
   }
 }
 
