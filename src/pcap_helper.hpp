@@ -110,6 +110,7 @@ struct ParsedRxPcapPacket {
   std::optional<uint16_t> mcs_index=std::nullopt;
   // driver might not support that
   std::optional<uint16_t> channel_width=std::nullopt;
+  std::optional<int> signal_quality=std::nullopt;
 };
 static std::string all_rssi_to_string(const std::vector<RssiForAntenna>& all_rssi){
   std::stringstream ss;
@@ -162,6 +163,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   //
   std::optional<uint16_t> mcs_index=std::nullopt;
   std::optional<uint16_t> channel_width=std::nullopt;
+  std::optional<int> signal_quality=std::nullopt;
 
   uint8_t currentAntenna = 0;
   // not confirmed yet, but one pcap packet might include stats for multiple antennas
@@ -222,6 +224,11 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
         }
       }
       break;
+      case IEEE80211_RADIOTAP_LOCK_QUALITY:{
+        int8_t value;
+        std::memcpy(&value,iterator.this_arg,1);
+        signal_quality=static_cast<int>(value);
+      } break ;
       default:break;
     }
   }  /* while more rt headers */
@@ -265,7 +272,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
     ss<<(int)antsignal<<",";
   }
   std::cout<<ss.str();*/
-  return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck,mcs_index,channel_width};
+  return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck,mcs_index,channel_width,signal_quality};
 }
 
 // [RadiotapHeader | Ieee80211Header | customHeader (if not size 0) | payload (if not size 0)]
