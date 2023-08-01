@@ -310,7 +310,8 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
         m_rx_stats.last_received_packet_channel_width=parsedPacket->channel_width.value();
       }
       if(parsedPacket->signal_quality.has_value()){
-        m_console->debug("Signal quality: {}",parsedPacket->signal_quality.value());
+        //m_console->debug("Signal quality: {}",parsedPacket->signal_quality.value());
+        this_wifi_card_stats.signal_quality=parsedPacket->signal_quality.value();
       }
       {
         // Same for iee80211 seq nr

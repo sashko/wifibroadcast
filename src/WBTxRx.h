@@ -167,6 +167,7 @@ class WBTxRx {
      int64_t count_p_any=0;
      int64_t count_p_valid=0;
      int32_t curr_packet_loss=-1;
+     int signal_quality=-1;
    };
    TxStats get_tx_stats();
    RxStats get_rx_stats();
