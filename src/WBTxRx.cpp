@@ -493,6 +493,8 @@ WBTxRx::RxStatsPerCard WBTxRx::get_rx_stats_for_card(int card_index) {
 
 void WBTxRx::rx_reset_stats() {
   m_rx_stats=RxStats{};
+  m_rx_bitrate_calculator.reset();
+  m_rx_packets_per_second_calculator.reset();
 }
 
 int WBTxRx::get_curr_active_tx_card_idx() {
