@@ -253,7 +253,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     m_console->warn("Discarding packet due to payload exceeding max {}",(int) parsedPacket->payloadSize);
     return;
   }
-  const auto radio_port=parsedPacket->ieee80211Header->getRadioPort();
+  const auto radio_port=parsedPacket->ieee80211Header->get_src_mac_radio_port();
   if(radio_port==RADIO_PORT_SESSION_KEY_PACKETS){
     if (pkt_payload_size != sizeof(SessionKeyPacket)) {
       if(m_options.advanced_debugging_rx){

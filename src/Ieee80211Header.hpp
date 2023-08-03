@@ -56,9 +56,18 @@ class Ieee80211Header {
     data[SRC_MAC_LASTBYTE] = radioPort;
     data[DST_MAC_LASTBYTE] = radioPort;
   }
-
-  uint8_t getRadioPort() const {
+  // Except the last byte (radio port) the mac has to match the openhd default
+  bool has_valid_openhd_src_mac()const{
+      return data[10]==0x13 && data[11]==0x22 && data[12]==0x33 && data[13]==0x44 && data[14]==0x55; //data[15]==radio port
+  }
+  bool has_valid_openhd_dst_mac()const{
+      return data[16]==0x13 && data[17]==0x22 && data[18]==0x33 && data[19]==0x44 && data[20]==0x55; //data[21]==radio port
+  }
+  uint8_t get_src_mac_radio_port() const {
     return data[SRC_MAC_LASTBYTE];
+  }
+  uint8_t get_dst_mac_radio_port()const{
+    return data[DST_MAC_LASTBYTE];
   }
   uint16_t getSequenceNumber() const {
     uint16_t ret;
