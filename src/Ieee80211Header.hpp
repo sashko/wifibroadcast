@@ -40,6 +40,48 @@ class Ieee80211Header {
       0x13, 0x22, 0x33, 0x44, 0x55, 0x66, // something MAC ( 6 bytes), I think DEST MAC (mac of dest STA)  - last byte is als used as radio port
       0x00, 0x00,  // iee80211 sequence control ( 2 bytes )
   };
+  struct OpenHDHeader{
+    // We do not touch the control field (driver)
+    uint8_t control_field1;
+    uint8_t control_field2;
+    // We do not touch the duration field (driver)
+    uint8_t duration1;
+    uint8_t duration2;
+    // We do not touch this MAC (driver)
+    std::array<uint8_t, 6> mac_ap;
+    // We can and do use this mac - first 4 bytes for part 1 of nonce, 1 byte for unique identifier, last byte for radio port
+    uint32_t mac_src_nonce_part1;
+    uint8_t mac_src_unique_id_part;
+    uint8_t mac_src_radio_port;
+    // We can and do use this mac - first 4 bytes for part 2 of nonce, 1 byte for unique identifier, last byte for radio port
+    uint32_t mac_dst_nonce_part2;
+    uint8_t mac_dst_unique_id_part;
+    uint8_t mac_dst_radio_port;
+    // iee80211 sequence control ( 2 bytes ) - might be overridden by the driver, and or even repurposed
+    uint16_t sequence_control=0;
+    // See the data layout above for more info
+    void write_nonce(const uint64_t& nonce){
+      memcpy((uint8_t*)&mac_src_nonce_part1,(uint8_t*)nonce,4);
+      memcpy((uint8_t*)&mac_dst_nonce_part2,((uint8_t*)nonce)+4,4);
+      // From https://stackoverflow.com/questions/2810280/how-to-store-a-64-bit-integer-in-two-32-bit-integers-and-convert-back-again
+      //mac_src_nonce_part1 = static_cast<int32_t>(nonce >> 32);
+      //mac_dst_nonce_part2 = static_cast<int32_t>(nonce);
+    }
+    uint64_t get_nonce()const{
+      uint64_t nonce;
+      memcpy((uint8_t*)nonce,(uint8_t*)&mac_src_nonce_part1,4);
+      memcpy(((uint8_t*)nonce)+4,(uint8_t*)&mac_dst_nonce_part2,4);
+      return nonce;
+    }
+    // NOTE: We write the radio port 2 times - this way we have a pretty reliable way to check if this is an openhd packet or packet from someone else
+    void write_radio_port_src_dst(uint8_t radio_port){
+      mac_src_radio_port=radio_port;
+      mac_dst_radio_port=radio_port;
+    }
+  }__attribute__ ((packed));
+  static_assert(sizeof(OpenHDHeader)==SIZE_BYTES);
+
+
   // default constructor
   Ieee80211Header() = default;
   // write the port re-using the MAC address (which is unused for broadcast)
