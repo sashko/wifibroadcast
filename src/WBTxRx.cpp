@@ -253,7 +253,22 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     m_console->warn("Discarding packet due to payload exceeding max {}",(int) parsedPacket->payloadSize);
     return;
   }
-  const auto radio_port=parsedPacket->ieee80211Header->get_src_mac_radio_port();
+  const auto radio_port_src_mac=parsedPacket->ieee80211Header->get_src_mac_radio_port();
+  const auto radio_port_dst_mac=parsedPacket->ieee80211Header->get_dst_mac_radio_port();
+  if(radio_port_src_mac!=radio_port_dst_mac){
+    // cannot be an openhd packet (probably someone elses normal wifi packet
+    if(m_options.advanced_debugging_rx){
+      m_console->debug("Got packet with mismatching radio port {}-{]",radio_port_src_mac,radio_port_dst_mac);
+    }
+    return ;
+  }
+  if(!(parsedPacket->ieee80211Header->has_valid_openhd_src_mac()&&parsedPacket->ieee80211Header->has_valid_openhd_dst_mac())){
+    if(m_options.advanced_debugging_rx){
+      m_console->debug("Got packet with invalid src / dst mac");
+    }
+    return ;
+  }
+  const auto radio_port=radio_port_src_mac;
   if(radio_port==RADIO_PORT_SESSION_KEY_PACKETS){
     if (pkt_payload_size != sizeof(SessionKeyPacket)) {
       if(m_options.advanced_debugging_rx){
