@@ -12,7 +12,7 @@
 WBTxRx::WBTxRx(std::vector<std::string> wifi_cards,Options options1)
     : m_options(options1),
       m_wifi_cards(std::move(wifi_cards)),
-      m_radiotap_header(RadiotapHeader::UserSelectableParams{})
+      m_tx_radiotap_header(RadiotapHeader::UserSelectableParams{})
 {
   assert(!m_wifi_cards.empty());
   m_console=wifibroadcast::log::create_or_get("WBTxRx");
@@ -87,10 +87,11 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   std::vector<uint8_t> packet = std::vector<uint8_t>(packet_size);
   uint8_t* packet_buff=packet.data();
   // radiotap header comes first
-  memcpy(packet_buff, m_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
+  memcpy(packet_buff, m_tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
   // Iee80211 header comes next
-  mIeee80211Header.writeParams(radioPort,m_ieee80211_seq);
-  memcpy(packet_buff+RadiotapHeader::SIZE_BYTES,mIeee80211Header.getData(),Ieee80211Header::SIZE_BYTES);
+  m_tx_ieee80211_header.writeParams(radioPort,m_ieee80211_seq);
+  memcpy(packet_buff+RadiotapHeader::SIZE_BYTES,
+         m_tx_ieee80211_header.getData(),Ieee80211Header::SIZE_BYTES);
   m_ieee80211_seq++;
   // create a new nonce
   uint64_t nonce=++m_nonce;
@@ -433,8 +434,8 @@ void WBTxRx::announce_session_key_if_needed() {
 }
 
 void WBTxRx::send_session_key() {
-  RadiotapHeader tmp_radiotap_header=m_radiotap_header;
-  Ieee80211Header tmp_ieee_hdr=mIeee80211Header;
+  RadiotapHeader tmp_radiotap_header= m_tx_radiotap_header;
+  Ieee80211Header tmp_ieee_hdr= m_tx_ieee80211_header;
   tmp_ieee_hdr.writeParams(RADIO_PORT_SESSION_KEY_PACKETS,0);
   auto packet=wifibroadcast::pcap_helper::create_radiotap_wifi_packet(tmp_radiotap_header,tmp_ieee_hdr,
                                                           (uint8_t *)&m_tx_sess_key_packet, sizeof(SessionKeyPacket));
@@ -485,7 +486,7 @@ void WBTxRx::tx_update_ldpc(bool ldpc) {
 void WBTxRx::tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams &params) {
   auto newRadioTapHeader=RadiotapHeader{params};
   std::lock_guard<std::mutex> guard(m_tx_mutex);
-  m_radiotap_header = newRadioTapHeader;
+  m_tx_radiotap_header = newRadioTapHeader;
 }
 
 WBTxRx::TxStats WBTxRx::get_tx_stats() {

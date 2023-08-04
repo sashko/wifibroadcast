@@ -206,8 +206,8 @@ class WBTxRx {
   std::vector<std::string> m_wifi_cards;
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
   RadiotapHeader::UserSelectableParams m_radioTapHeaderParams{};
-  RadiotapHeader m_radiotap_header;
-  Ieee80211Header mIeee80211Header{};
+  RadiotapHeader m_tx_radiotap_header;
+  Ieee80211Header m_tx_ieee80211_header{};
   uint16_t m_ieee80211_seq = 0;
   uint64_t m_nonce=0;
   // For multiple RX cards the card with the highest rx rssi is used to inject packets on
