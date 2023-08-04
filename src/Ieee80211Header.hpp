@@ -18,6 +18,106 @@
 #include <array>
 #include <iostream>
 
+// Helper for dealing with the IEEE80211 header in wifibroadcast / openhd
+// Usefully references:
+// https://witestlab.poly.edu/blog/802-11-wireless-lan-2/
+// https://en.wikipedia.org/wiki/802.11_Frame_Types
+// https://elixir.bootlin.com/linux/latest/source/include/linux/ieee80211.h
+
+// NOTE: THIS IS THE LAYOUT OF A NORMAL IEEE80211 header
+// | 2 bytes       | 2 bytes  | 6 bytes   | 6 bytes | 6 bytes | 2 bytes          |
+// | control field | duration | MAC of AP | SRC MAC | DST MAC | Sequence control |
+static constexpr auto IEEE80211_HEADER_SIZE_BYTES = 24;
+
+// Helper for control field - we do not touch it
+struct ControlField{
+  uint8_t part1=0x08;
+  uint8_t part2=0x01;
+}__attribute__ ((packed));
+static_assert(sizeof(ControlField) == 2);
+
+// Helper for sequence control field
+//https://witestlab.poly.edu/blog/802-11-wireless-lan-2/
+//Sequence Control: Contains a 4-bit fragment number subfield, used for fragmentation and reassembly, and a 12-bit sequence number used to number
+//frames sent between a given transmitter and receiver.
+struct SequenceControl {
+  uint8_t subfield: 4;
+  uint16_t sequence_nr: 12;
+  std::string as_debug_string()const{
+    std::stringstream ss;
+    ss << "SequenceControl["<<"" << (int)subfield << ":" << (int) sequence_nr<<"]";
+    return ss.str();
+  }
+}__attribute__ ((packed));
+static_assert(sizeof(SequenceControl) == 2);
+
+// We use as many bytes of this header for useful purposes as possible - might be a bit hard to understand for beginners why we use stuff this way,
+// but optimizing on a byte level is complicated and we have to account for driver quirks
+
+static constexpr auto OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR=0x01;
+static constexpr auto OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND=0x02;
+
+struct Ieee80211HeaderOpenHD{
+  // We do not touch the control field (driver)
+  ControlField control_field{};
+  // We do not touch the duration field (driver)
+  uint8_t duration1=0x00;
+  uint8_t duration2=0x00;
+  // We do not touch this MAC (driver) - and set it to broadcast such that the monitor mode driver accepts it
+  std::array<uint8_t, 6> mac_ap={0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+  // We can and do use this mac - 1 byte for unique identifier (air/gnd), 4 bytes for part 1 of nonce, last byte for radio port
+  uint8_t mac_src_unique_id_part=OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
+  uint32_t mac_src_nonce_part1=0;
+  uint8_t mac_src_radio_port=0;
+  // We can and do use this mac - 1 byte for unique identifier (air/gnd), 4 bytes for part 2 of nonce, last byte for radio port
+  uint8_t mac_dst_unique_id_part=OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
+  uint32_t mac_dst_nonce_part2=0;
+  uint8_t mac_dst_radio_port=0;
+  // iee80211 sequence control ( 2 bytes ) - might be overridden by the driver, and or even repurposed
+  uint16_t sequence_control=0;
+  // See the data layout above for more info
+  void write_nonce(const uint64_t& nonce){
+    memcpy((uint8_t*)&mac_src_nonce_part1,(uint8_t*)nonce,4);
+    memcpy((uint8_t*)&mac_dst_nonce_part2,((uint8_t*)nonce)+4,4);
+    // From https://stackoverflow.com/questions/2810280/how-to-store-a-64-bit-integer-in-two-32-bit-integers-and-convert-back-again
+    //mac_src_nonce_part1 = static_cast<int32_t>(nonce >> 32);
+    //mac_dst_nonce_part2 = static_cast<int32_t>(nonce);
+  }
+  uint64_t get_nonce()const{
+    uint64_t nonce;
+    memcpy((uint8_t*)nonce,(uint8_t*)&mac_src_nonce_part1,4);
+    memcpy(((uint8_t*)nonce)+4,(uint8_t*)&mac_dst_nonce_part2,4);
+    return nonce;
+  }
+  // NOTE: We write the radio port 2 times - this way we have a pretty reliable way to check if this is an openhd packet or packet from someone else
+  void write_radio_port_src_dst(uint8_t radio_port){
+    mac_src_radio_port=radio_port;
+    mac_dst_radio_port=radio_port;
+  }
+  void write_unique_id_src_dst(uint8_t id){
+    mac_src_unique_id_part=id;
+    mac_dst_unique_id_part=id;
+  }
+  // Check - first byte of scr and dst mac needs to mach (unique air / gnd id)
+  bool has_valid_air_gnd_id()const{
+    return mac_src_unique_id_part==mac_dst_unique_id_part;
+  }
+  // Check - last byte of src and dst mac needs to match (radio port)
+  bool has_valid_radio_port()const{
+    return mac_src_radio_port==mac_dst_radio_port;
+  }
+  // validate before use (matching)
+  uint8_t get_valid_air_gnd_id()const{
+    return mac_src_unique_id_part;
+  }
+  // validate before use (matching)
+  uint8_t get_valid_radio_port()const{
+    return mac_src_radio_port;
+  }
+}__attribute__ ((packed));
+static_assert(sizeof(Ieee80211HeaderOpenHD)==IEEE80211_HEADER_SIZE_BYTES);
+
+
 // Wrapper around the Ieee80211 header (declared as raw array initially)
 // info https://witestlab.poly.edu/blog/802-11-wireless-lan-2/
 // In the way this is declared it is an IEE80211 data frame
@@ -40,48 +140,6 @@ class Ieee80211Header {
       0x13, 0x22, 0x33, 0x44, 0x55, 0x66, // something MAC ( 6 bytes), I think DEST MAC (mac of dest STA)  - last byte is als used as radio port
       0x00, 0x00,  // iee80211 sequence control ( 2 bytes )
   };
-  struct OpenHDHeader{
-    // We do not touch the control field (driver)
-    uint8_t control_field1;
-    uint8_t control_field2;
-    // We do not touch the duration field (driver)
-    uint8_t duration1;
-    uint8_t duration2;
-    // We do not touch this MAC (driver)
-    std::array<uint8_t, 6> mac_ap;
-    // We can and do use this mac - first 4 bytes for part 1 of nonce, 1 byte for unique identifier, last byte for radio port
-    uint32_t mac_src_nonce_part1;
-    uint8_t mac_src_unique_id_part;
-    uint8_t mac_src_radio_port;
-    // We can and do use this mac - first 4 bytes for part 2 of nonce, 1 byte for unique identifier, last byte for radio port
-    uint32_t mac_dst_nonce_part2;
-    uint8_t mac_dst_unique_id_part;
-    uint8_t mac_dst_radio_port;
-    // iee80211 sequence control ( 2 bytes ) - might be overridden by the driver, and or even repurposed
-    uint16_t sequence_control=0;
-    // See the data layout above for more info
-    void write_nonce(const uint64_t& nonce){
-      memcpy((uint8_t*)&mac_src_nonce_part1,(uint8_t*)nonce,4);
-      memcpy((uint8_t*)&mac_dst_nonce_part2,((uint8_t*)nonce)+4,4);
-      // From https://stackoverflow.com/questions/2810280/how-to-store-a-64-bit-integer-in-two-32-bit-integers-and-convert-back-again
-      //mac_src_nonce_part1 = static_cast<int32_t>(nonce >> 32);
-      //mac_dst_nonce_part2 = static_cast<int32_t>(nonce);
-    }
-    uint64_t get_nonce()const{
-      uint64_t nonce;
-      memcpy((uint8_t*)nonce,(uint8_t*)&mac_src_nonce_part1,4);
-      memcpy(((uint8_t*)nonce)+4,(uint8_t*)&mac_dst_nonce_part2,4);
-      return nonce;
-    }
-    // NOTE: We write the radio port 2 times - this way we have a pretty reliable way to check if this is an openhd packet or packet from someone else
-    void write_radio_port_src_dst(uint8_t radio_port){
-      mac_src_radio_port=radio_port;
-      mac_dst_radio_port=radio_port;
-    }
-  }__attribute__ ((packed));
-  static_assert(sizeof(OpenHDHeader)==SIZE_BYTES);
-
-
   // default constructor
   Ieee80211Header() = default;
   // write the port re-using the MAC address (which is unused for broadcast)
@@ -151,13 +209,26 @@ class Ieee80211Header {
     memcpy(&ret, &data[FRAME_SEQ_LB], sizeof(SequenceControl));
     return ret;
   }
-  void printSequenceControl() const {
+  std::string sequence_control_as_string() const {
     const auto tmp = getSequenceControl();
-    std::cout << "SequenceControl subfield:" << (int) tmp.subfield << " sequenceNr:" << (int) tmp.sequence_nr << "\n";
+    std::stringstream ss;
+    ss << "SequenceControl subfield:" << (int) tmp.subfield << " sequenceNr:" << (int) tmp.sequence_nr;
+    return ss.str();
   }
-
+  static std::string mac_as_string(const uint8_t* mac_6bytes){
+    return StringHelper::bytes_as_string_hex(mac_6bytes,6);
+  }
+  std::string header_as_string()const{
+    std::stringstream ss;
+    ss<<sequence_control_as_string()<<"\n";
+    ss<<"mac"<<mac_as_string(&data[4])<<"\n";
+    ss<<"src_mac"<<mac_as_string(&data[4+6])<<"\n";
+    ss<<"dst_mac"<<mac_as_string(&data[4+6])<<"\n";
+    return ss.str();
+  }
 }__attribute__ ((packed));
 static_assert(sizeof(Ieee80211Header) == Ieee80211Header::SIZE_BYTES, "ALWAYS TRUE");
+
 
 static void testLol() {
   Ieee80211Header ieee80211Header;
@@ -166,7 +237,7 @@ static void testLol() {
     ieee80211Header.data[Ieee80211Header::FRAME_SEQ_LB] = seqenceNumber & 0xff;
     ieee80211Header.data[Ieee80211Header::FRAME_SEQ_HB] = (seqenceNumber >> 8) & 0xff;
     // now print it
-    ieee80211Header.printSequenceControl();
+    std::cout<<ieee80211Header.sequence_control_as_string()<<std::endl;
     seqenceNumber += 16;
   }
 }

@@ -35,9 +35,11 @@ WBTxRx::WBTxRx(std::vector<std::string> wifi_cards,Options options1)
     auto wifi_card=m_wifi_cards[i];
     PcapTxRx pcapTxRx{};
     pcapTxRx.rx=wifibroadcast::pcap_helper::open_pcap_rx(wifi_card);
-    //pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card);
+    //pcapTxRx.tx=pcapTxRx.rx;
+    pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card);
     if(m_options.set_direction){
-      pcap_setdirection(pcapTxRx.rx, PCAP_D_IN);
+      const auto ret=pcap_setdirection(pcapTxRx.rx, PCAP_D_IN);
+      m_console->debug("pcap_setdirection() returned {}",ret);
     }
     m_pcap_handles.push_back(pcapTxRx);
     auto fd = pcap_get_selectable_fd(pcapTxRx.rx);
@@ -59,7 +61,15 @@ WBTxRx::~WBTxRx() {
     close(fd.fd);
   }
   for(auto& pcapTxRx:m_pcap_handles){
-    pcap_close(pcapTxRx.rx);
+    if(pcapTxRx.rx==pcapTxRx.tx){
+      pcap_close(pcapTxRx.rx);
+      pcapTxRx.rx= nullptr;
+      pcapTxRx.tx= nullptr;
+    }else{
+      pcap_close(pcapTxRx.rx);
+      pcap_close(pcapTxRx.tx);
+    }
+    //pcap_close(pcapTxRx.rx);
     //pcap_close(pcapTxRx.tx);
   }
 }
@@ -104,10 +114,10 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   assert(data_len+crypto_aead_chacha20poly1305_ABYTES == ciphertext_len);
   // inject via pcap
   // we inject the packet on whatever card has the highest rx rssi right now
-  pcap_t *tx= m_pcap_handles[m_curr_tx_card].rx;
+  pcap_t *tx= m_pcap_handles[m_curr_tx_card].tx;
   const auto before_injection = std::chrono::steady_clock::now();
-  //const auto len_injected=pcap_inject(tx, packet.data(), packet.size());
-  const auto len_injected=write(m_receive_pollfds.at(0).fd,packet.data(),packet.size());
+  const auto len_injected=pcap_inject(tx, packet.data(), packet.size());
+  //const auto len_injected=write(m_receive_pollfds.at(0).fd,packet.data(),packet.size());
   const auto delta_inject=std::chrono::steady_clock::now()-before_injection;
   if(delta_inject>=MAX_SANE_INJECTION_TIME){
     m_tx_stats.count_tx_injections_error_hint++;
@@ -238,6 +248,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     }
     return;
   }
+  //m_console->debug(parsedPacket->ieee80211Header->header_as_string());
   if (!parsedPacket->ieee80211Header->isDataFrame()) {
     if(m_options.advanced_debugging_rx){
       // we only process data frames

@@ -38,6 +38,35 @@ class StringHelper {
     ss << "]";
     return ss.str();
   }
+  static std::string bytes_as_string_decimal(const uint8_t* data,int data_len){
+    std::stringstream ss;
+    ss << "[";
+    for(int i=0;i<data_len;i++){
+      ss << (int)data[i];
+      if(i!=data_len-1){
+        ss<<",";
+      }
+    }
+    ss << "]";
+    return ss.str();
+  }
+  static std::string byte_as_hex(uint8_t byte){
+    char str[100]={};
+    sprintf(str,"%x",byte);
+    return "0x"+std::string(str);
+  }
+  static std::string bytes_as_string_hex(const uint8_t* data,int data_len) {
+    std::stringstream ss;
+    ss << "[";
+    for(int i=0;i<data_len;i++){
+      ss << byte_as_hex(data[i]);
+      if(i!=data_len-1){
+        ss<<",";
+      }
+    }
+    ss << "]";
+    return ss.str();
+  }
 
   template<typename T, std::size_t S>
   static std::string arrayAsString(const std::array<T, S> &a) {

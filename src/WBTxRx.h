@@ -67,6 +67,8 @@ class WBTxRx {
     // enable encryption, by default, only packet validation (without encryption) is done since
     // encryption needs a lot of CPU processing.
     bool enable_encryption= false;
+    // You need to set this to air / gnd on the air / gnd unit since AR9271 has a bug where it reports injected packets as received packets
+    bool use_gnd_identifier= false;
   };
   explicit WBTxRx(std::vector<std::string> wifi_cards,Options options1);
   WBTxRx(const WBTxRx &) = delete;
@@ -273,6 +275,9 @@ class WBTxRx {
   bool process_received_data_packet(int wlan_idx,uint8_t radio_port,const uint8_t *pkt_payload,size_t pkt_payload_size);
   // called avery time we have successfully decrypted a packet
   void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t radioPort,const uint8_t *data, std::size_t data_len);
+ private:
+  uint32_t m_n_received_openhd_packets=0;
+  uint32_t m_n_received_foreign_packets=0;
 };
 
 static std::ostream& operator<<(std::ostream& strm, const WBTxRx::TxStats& data){
