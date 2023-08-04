@@ -76,7 +76,7 @@ class Encryptor {
     if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
       memcpy(dest,src, src_len);
       uint8_t* sign=dest+src_len;
-      //crypto_onetimeauth(sign,src,src_len,session_key.data());
+      crypto_onetimeauth(sign,src,src_len,session_key.data());
       return src_len+crypto_onetimeauth_BYTES;
     }
     long long unsigned int ciphertext_len;

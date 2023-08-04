@@ -32,7 +32,7 @@ struct FECDisabledHeader{
 }__attribute__ ((packed));
 static_assert(sizeof(FECDisabledHeader)==8);
 
-// usage of nonce: Simple, uint64_t number increasing with each packet
+// Really simple, adds a sequence number, nothing else
 class FECDisabledEncoder {
  public:
   typedef std::function<void(const uint8_t *payload, const std::size_t payloadSize)>
