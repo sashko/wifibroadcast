@@ -88,7 +88,7 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
       RadiotapHeader::SIZE_BYTES+
       // Then the Ieee80211 header
       Ieee80211Header::SIZE_BYTES+
-      // after that, the nonce (sequence number)
+      // after that, the this_packet_nonce (sequence number)
       sizeof(uint64_t)+
       // actual data
       data_len+
@@ -103,10 +103,10 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   memcpy(packet_buff+RadiotapHeader::SIZE_BYTES,
          m_tx_ieee80211_header.getData(),Ieee80211Header::SIZE_BYTES);
   m_ieee80211_seq++;
-  // create a new nonce
-  uint64_t nonce=++m_nonce;
-  // copy over the nonce and fill with the rest of the packet with the encrypted data
-  memcpy(packet_buff+RadiotapHeader::SIZE_BYTES+Ieee80211Header::SIZE_BYTES,(uint8_t*)&nonce,sizeof(uint64_t));
+  // create a new nonce for this packet
+  const uint64_t this_packet_nonce =++m_nonce;
+  // copy over the this_packet_nonce and fill with the rest of the packet with the encrypted data
+  memcpy(packet_buff+RadiotapHeader::SIZE_BYTES+Ieee80211Header::SIZE_BYTES,(uint8_t*)&this_packet_nonce,sizeof(uint64_t));
   uint8_t* encrypted_data_p=packet_buff+RadiotapHeader::SIZE_BYTES+Ieee80211Header::SIZE_BYTES+sizeof(uint64_t);
   const auto ciphertext_len=m_encryptor->encrypt2(m_nonce,data,data_len,encrypted_data_p);
   // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated

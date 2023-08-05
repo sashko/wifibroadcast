@@ -94,6 +94,7 @@ struct Ieee80211HeaderOpenHD{
     mac_src_radio_port=radio_port;
     mac_dst_radio_port=radio_port;
   }
+  // NOTE: We also write the unique id 2 times - same reason like with radio port
   void write_unique_id_src_dst(uint8_t id){
     mac_src_unique_id_part=id;
     mac_dst_unique_id_part=id;

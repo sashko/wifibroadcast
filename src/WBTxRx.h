@@ -20,19 +20,22 @@
 #include "TimeHelper.hpp"
 
 /**
- * Wraps one or more wifi card in monitor mode
- * Provides easy interface to inject data packets and register a callback to
- * process received data packets.
- * Adds packet encryption and authentication via libsodium (can be disabled for
- * performance) Allows multiplexing of multiple data streams (radio_port) Quick
- * usage description by example:
- * # System 1: card 1
- * # System 2: card 2
- * air in between card 1 and card 2
- * Create an instance of WBTxRx on both system 1
- * and system 2 inject packets using WBTxRx on system 1 -> receive them
- * using WBTxRx on system 2 inject packets using WBTxRx on system 2
- * -> receive them using WBTxRx on system 1
+ * This class exists to provide a clean, working interface to create a broadcast-like
+ * bidirectional wifi link between an fpv air and (one or more) ground unit(s).
+ * It hides away some nasty driver quirks, and offers
+ * 1) A lot of usefully stats like packet loss, dbm, ...
+ * 2) Multiplexing (radio_port) - multiple streams from air to ground / ground to air are possible
+ * 3) Packet validation / encryption
+ * 4) Multiple RX-cards (only one active tx at a time though)
+ * Packets sent by an "air unit" are received by any listening ground unit (broadcast) that uses the same (encryption/validation) key-pair
+ * Packets sent by an "ground unit" are received by any listening air unit (broadcast) that uses the same (encryption/validation) key-pair
+ * Packets sent by an "air unit" are never received by another air unit (and reverse for ground unit)
+ * (This is necessary due to AR9271 driver quirk - it gives injected packets back on the cb for received packets)
+ *
+ * It adds a minimal overhead of 16 bytes per data packet for validation / encryption
+ * And - configurable - a couple of packets per second for the session key.
+ *
+ * See example_hello for how to use this class.
  *
  * NOTE: Receiving of data is not started until startReceiving() is called !
  */
