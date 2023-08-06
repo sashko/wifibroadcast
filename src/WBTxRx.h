@@ -285,8 +285,6 @@ class WBTxRx {
   void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t radioPort,const uint8_t *data, std::size_t data_len);
  private:
   // These are 'extra' for calculating some channel pollution value
-  //uint32_t m_pollution_non_openhd_packets=0;
-  //uint32_t m_pollution_openhd_packets=0;
   uint32_t m_pollution_total_rx_packets=0;
   uint32_t m_pollution_openhd_rx_packets=0;
   std::chrono::steady_clock::time_point m_last_pollution_calculation=std::chrono::steady_clock::now();
