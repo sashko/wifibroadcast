@@ -25,6 +25,17 @@ static_assert(crypto_onetimeauth_BYTES==crypto_aead_chacha20poly1305_ABYTES);
 // Encryption (or packet validation) adds this many bytes to the end of the message
 static constexpr auto ENCRYPTION_ADDITIONAL_VALIDATION_DATA=crypto_aead_chacha20poly1305_ABYTES;
 
+// https://libsodium.gitbook.io/doc/key_derivation
+// Helper since we both support encryption and one time validation to save cpu performance
+static std::array<uint8_t,32> create_onetimeauth_subkey(const uint64_t nonce,const std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> session_key){
+  // sub-key for this packet
+  std::array<uint8_t, 32> subkey{};
+  std::array<uint8_t,16> nonce_buf{0};
+  memcpy(nonce_buf.data(),(uint8_t*)&nonce,8);
+  crypto_core_hchacha20(subkey.data(),nonce_buf.data(),session_key.data(), nullptr);
+  return subkey;
+}
+
 class Encryptor {
  public:
   /**
@@ -76,7 +87,8 @@ class Encryptor {
     if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
       memcpy(dest,src, src_len);
       uint8_t* sign=dest+src_len;
-      crypto_onetimeauth(sign,src,src_len,session_key.data());
+      const auto sub_key=create_onetimeauth_subkey(nonce,session_key);
+      crypto_onetimeauth(sign,src,src_len,sub_key.data());
       return src_len+crypto_onetimeauth_BYTES;
     }
     long long unsigned int ciphertext_len;
@@ -171,7 +183,8 @@ class Decryptor {
       assert(payload_size>0);
       const uint8_t* sign=encrypted+payload_size;
       //const int res=crypto_auth_hmacsha256_verify(sign,msg,payload_size,session_key.data());
-      const int res=crypto_onetimeauth_verify(sign,encrypted,payload_size,session_key.data());
+      const auto sub_key=create_onetimeauth_subkey(nonce,session_key);
+      const int res=crypto_onetimeauth_verify(sign,encrypted,payload_size,sub_key.data());
       if(res!=-1){
         memcpy(dest,encrypted,payload_size);
         return true;

@@ -141,8 +141,8 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
         }
         {
             // tamper with the nonce - shouldn't let packets through
-            //const auto decrypted = decryptor.decrypt3(nonce+1, encrypted->data(), encrypted->size());
-            //assert(decrypted== nullptr);
+            const auto decrypted = decryptor.decrypt3(nonce+1, encrypted->data(), encrypted->size());
+            assert(decrypted== nullptr);
         }
         {
             // tamper with the encryption suffix -  shouldn't let data through
