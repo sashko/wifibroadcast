@@ -101,7 +101,7 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   const auto this_packet_ieee80211_seq=m_ieee80211_seq++;
   m_tx_ieee80211_hdr_openhd.write_ieee80211_seq_nr(this_packet_ieee80211_seq);
   // create a new nonce for this packet
-  const uint64_t this_packet_nonce =++m_nonce;
+  const uint64_t this_packet_nonce =m_nonce++;
   m_tx_ieee80211_hdr_openhd.write_radio_port_src_dst(radioPort);
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   m_tx_ieee80211_hdr_openhd.write_unique_id_src_dst(unique_tx_id);
@@ -261,16 +261,15 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     return;
   }
   // All these edge cases should NEVER happen if using a proper tx/rx setup and the wifi driver isn't complete crap
-  if (parsedPacket->payloadSize <= 0) {
+  if (parsedPacket->payloadSize <= 0 || parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
     m_console->warn("Discarding packet due to no actual payload !");
     return;
   }
+  // Generic packet validation end - now to the openhd specific validation(s)
   if (parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
     m_console->warn("Discarding packet due to payload exceeding max {}",(int) parsedPacket->payloadSize);
     return;
   }
-  /*const auto radio_port_src_mac=parsedPacket->ieee80211Header->get_src_mac_radio_port();
-  const auto radio_port_dst_mac=parsedPacket->ieee80211Header->get_dst_mac_radio_port();*/
   const auto& rx_iee80211_hdr_openhd=*((Ieee80211HeaderOpenHD*)parsedPacket->ieee80211Header);
   if(!rx_iee80211_hdr_openhd.has_valid_air_gnd_id()){
     if(m_options.advanced_debugging_rx){
@@ -469,6 +468,7 @@ void WBTxRx::send_session_key() {
   tmp_tx_hdr.write_unique_id_src_dst(unique_tx_id);
   tmp_tx_hdr.write_radio_port_src_dst(RADIO_PORT_SESSION_KEY_PACKETS);
   tmp_tx_hdr.write_ieee80211_seq_nr(m_ieee80211_seq++);
+  tmp_tx_hdr.write_nonce(m_nonce++);
 
   auto packet=wifibroadcast::pcap_helper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211Header*)&tmp_tx_hdr,
                                                           (uint8_t *)&m_tx_sess_key_packet, sizeof(SessionKeyPacket));
