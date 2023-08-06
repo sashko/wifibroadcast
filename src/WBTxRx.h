@@ -166,6 +166,7 @@ class WBTxRx {
      int last_received_packet_channel_width=-1;
      // complicated but important metric in our case - how many "big gaps" we had in the last 1 second
      int16_t curr_big_gaps_counter=-1;
+     int curr_link_pollution_perc=0;
    };
    struct RxStatsPerCard{
      RSSIForWifiCard rssi_for_wifi_card{};
@@ -280,8 +281,13 @@ class WBTxRx {
   // called avery time we have successfully decrypted a packet
   void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t radioPort,const uint8_t *data, std::size_t data_len);
  private:
-  uint32_t m_n_received_openhd_packets=0;
-  uint32_t m_n_received_foreign_packets=0;
+  // These are 'extra' for calculating some channel pollution value
+  //uint32_t m_pollution_non_openhd_packets=0;
+  //uint32_t m_pollution_openhd_packets=0;
+  uint32_t m_pollution_total_rx_packets=0;
+  uint32_t m_pollution_openhd_rx_packets=0;
+  std::chrono::steady_clock::time_point m_last_pollution_calculation=std::chrono::steady_clock::now();
+  void recalculate_pollution_perc();
 };
 
 static std::ostream& operator<<(std::ostream& strm, const WBTxRx::TxStats& data){

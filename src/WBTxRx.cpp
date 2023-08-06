@@ -245,6 +245,9 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
   m_rx_stats.count_p_any++;
   m_rx_stats.count_bytes_any+=pkt_payload_size;
   m_rx_stats_per_card[wlan_idx].count_p_any++;
+  if(wlan_idx==0){
+    m_pollution_total_rx_packets++;
+  }
 
   if (parsedPacket->frameFailedFCSCheck) {
     if(m_options.advanced_debugging_rx){
@@ -285,6 +288,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
       if(unique_air_gnd_id==unique_tx_id){
         // AR9271 bug - gives back injected packets
         m_console->debug("Got packet back on rx that was injected (bug) {}",rx_iee80211_hdr_openhd.debug_unique_ids());
+        m_pollution_total_rx_packets--;
       }else{
         m_console->debug("Got packet with invalid unique air gnd id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
       }
@@ -324,6 +328,9 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
           opt_cb_session();
         }
       }
+      if(wlan_idx==0){
+        m_pollution_openhd_rx_packets++;
+      }
     }
   }else{
     // the payload needs to include at least one byte of actual payload and the encryption suffix
@@ -357,6 +364,10 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
       if(parsedPacket->signal_quality.has_value()){
         //m_console->debug("Signal quality: {}",parsedPacket->signal_quality.value());
         this_wifi_card_stats.signal_quality=parsedPacket->signal_quality.value();
+      }
+      if(wlan_idx==0){
+        m_pollution_openhd_rx_packets++;
+        recalculate_pollution_perc();
       }
       {
         // Same for iee80211 seq nr
@@ -583,4 +594,29 @@ void WBTxRx::tx_reset_stats() {
   m_tx_packets_per_second_calculator.reset();
   m_tx_bitrate_calculator_excluding_overhead.reset();
   m_tx_bitrate_calculator_including_overhead.reset();
+}
+
+void WBTxRx::recalculate_pollution_perc() {
+  /*const auto non_openhd_packets=m_pollution_total_rx_packets-m_pollution_openhd_rx_packets;
+  if(non_openhd_packets>0){
+    double perc_openhd_packets=(double)m_pollution_openhd_rx_packets/(double)non_openhd_packets*100.0;
+    m_console->debug("Perc of openhd packets {}",perc_openhd_packets);
+  }*/
+  const auto elapsed=std::chrono::steady_clock::now()-m_last_pollution_calculation;
+  if(elapsed<=std::chrono::seconds(1)){
+    return ;
+  }
+  if(m_pollution_total_rx_packets<=0 || m_pollution_openhd_rx_packets<=0 ){
+    return ;
+  }
+  m_last_pollution_calculation=std::chrono::steady_clock::now();
+  const auto non_openhd_packets=m_pollution_total_rx_packets-m_pollution_openhd_rx_packets;
+  if(m_pollution_total_rx_packets>0){
+    double perc_non_openhd_packets=(double)non_openhd_packets/(double)m_pollution_total_rx_packets*100.0;
+    //m_console->debug("Link pollution: {}% [{}:{}]",perc_non_openhd_packets,non_openhd_packets,m_pollution_total_rx_packets);
+    m_rx_stats.curr_link_pollution_perc=std::ceil(perc_non_openhd_packets);
+    //curr_link_pollution_perc=std::ceil()
+  }
+  m_pollution_total_rx_packets=0;
+  m_pollution_openhd_rx_packets=0;
 }
