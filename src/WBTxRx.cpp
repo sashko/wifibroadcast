@@ -284,12 +284,18 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   const auto unique_rx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR : OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND;
   if(unique_air_gnd_id!=unique_rx_id){
-    if(m_options.advanced_debugging_rx){
-      if(unique_air_gnd_id==unique_tx_id){
-        // AR9271 bug - gives back injected packets
-        m_console->debug("Got packet back on rx that was injected (bug) {}",rx_iee80211_hdr_openhd.debug_unique_ids());
+    // Rare case - when multiple RX-es are used, we might get a packet we sent on this air / gnd unit
+    // And on AR9271, there is a bug where the card itself gives injected packets back to us
+    if(unique_air_gnd_id==unique_tx_id){
+      // Packet originated from this unit
+      if(m_options.advanced_debugging_rx){
+        m_console->debug("Got packet back on rx {} that was injected (bug or multi rx) {}",wlan_idx,rx_iee80211_hdr_openhd.debug_unique_ids());
+      }
+      if(wlan_idx==0){
         m_pollution_total_rx_packets--;
-      }else{
+      }
+    }else{
+      if(m_options.advanced_debugging_rx){
         m_console->debug("Got packet with invalid unique air gnd id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
       }
     }
@@ -332,6 +338,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
       }
       if(wlan_idx==0){
         m_pollution_openhd_rx_packets++;
+        recalculate_pollution_perc();
       }
     }
   }else{
@@ -600,11 +607,6 @@ void WBTxRx::tx_reset_stats() {
 }
 
 void WBTxRx::recalculate_pollution_perc() {
-  /*const auto non_openhd_packets=m_pollution_total_rx_packets-m_pollution_openhd_rx_packets;
-  if(non_openhd_packets>0){
-    double perc_openhd_packets=(double)m_pollution_openhd_rx_packets/(double)non_openhd_packets*100.0;
-    m_console->debug("Perc of openhd packets {}",perc_openhd_packets);
-  }*/
   const auto elapsed=std::chrono::steady_clock::now()-m_last_pollution_calculation;
   if(elapsed<=std::chrono::seconds(1)){
     return ;
