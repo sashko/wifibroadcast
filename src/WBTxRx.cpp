@@ -106,8 +106,8 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   m_tx_ieee80211_hdr_openhd.write_unique_id_src_dst(unique_tx_id);
   m_tx_ieee80211_hdr_openhd.write_nonce(this_packet_nonce);
-  m_console->debug("Test Nonce:{}/{} {} {} {}",this_packet_nonce,m_tx_ieee80211_hdr_openhd.get_nonce(),m_tx_ieee80211_hdr_openhd.has_valid_air_gnd_id(),m_tx_ieee80211_hdr_openhd.has_valid_radio_port(),
-                   m_tx_ieee80211_hdr_openhd.is_data_frame());
+  //m_console->debug("Test Nonce:{}/{} {} {} {}",this_packet_nonce,m_tx_ieee80211_hdr_openhd.get_nonce(),m_tx_ieee80211_hdr_openhd.has_valid_air_gnd_id(),m_tx_ieee80211_hdr_openhd.has_valid_radio_port(),
+  //                 m_tx_ieee80211_hdr_openhd.is_data_frame());
   memcpy(packet_buff+RadiotapHeader::SIZE_BYTES,
          (uint8_t*)&m_tx_ieee80211_hdr_openhd,Ieee80211Header::SIZE_BYTES);
   // Then the encrypted / validated data (including encryption / validation suffix)
