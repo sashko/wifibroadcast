@@ -207,8 +207,8 @@ class WBTxRx {
         IEEE80211_HEADER_SIZE_BYTES);
    static_assert(RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE==1473);
    // and we use some bytes of that for encryption / packet validation
-   static constexpr const auto MAX_PACKET_PAYLOAD_SIZE=RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE-sizeof(uint64_t)-crypto_aead_chacha20poly1305_ABYTES;
-   static_assert(MAX_PACKET_PAYLOAD_SIZE==1449);
+   static constexpr const auto MAX_PACKET_PAYLOAD_SIZE=RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE-crypto_aead_chacha20poly1305_ABYTES;
+   static_assert(MAX_PACKET_PAYLOAD_SIZE==1457);
    static std::string tx_stats_to_string(const TxStats& data);
    static std::string rx_stats_to_string(const RxStats& data);
  private:
