@@ -77,7 +77,10 @@ struct Ieee80211HeaderOpenHD{
   uint8_t mac_dst_radio_port=0;
   // iee80211 sequence control ( 2 bytes ) - might be overridden by the driver, and or even repurposed
   uint16_t sequence_control=0;
-  // See the data layout above for more info
+  // ----------------------------------- DATA LAYOUT END -----------------------------------
+  /**
+   * We use some of the available bytes for a 8 bytes "nonce"
+   */
   void write_nonce(const uint64_t& nonce){
     memcpy((uint8_t*)&mac_src_nonce_part1,(uint8_t*)&nonce,4);
     memcpy((uint8_t*)&mac_dst_nonce_part2,((uint8_t*)&nonce)+4,4);
@@ -91,12 +94,16 @@ struct Ieee80211HeaderOpenHD{
     memcpy(((uint8_t*)nonce)+4,(uint8_t*)&mac_dst_nonce_part2,4);
     return nonce;
   }
-  // NOTE: We write the radio port 2 times - this way we have a pretty reliable way to check if this is an openhd packet or packet from someone else
+  /**
+   * NOTE: We write the radio port 2 times - this way we have a pretty reliable way to check if this is an openhd packet or packet from someone else
+   */
   void write_radio_port_src_dst(uint8_t radio_port){
     mac_src_radio_port=radio_port;
     mac_dst_radio_port=radio_port;
   }
-  // NOTE: We also write the unique id 2 times - same reason like with radio port
+  /*
+   *  We also write the unique id 2 times - same reason like with radio port
+   */
   void write_unique_id_src_dst(uint8_t id){
     mac_src_unique_id_part=id;
     mac_dst_unique_id_part=id;

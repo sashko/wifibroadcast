@@ -361,8 +361,8 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
       }
       {
         // Same for iee80211 seq nr
-        uint16_t iee_seq_nr=parsedPacket->ieee80211Header->getSequenceNumber();
-        m_seq_nr_helper_iee80211.on_new_sequence_number(iee_seq_nr);
+        //uint16_t iee_seq_nr=parsedPacket->ieee80211Header->getSequenceNumber();
+        //m_seq_nr_helper_iee80211.on_new_sequence_number(iee_seq_nr);
         //m_console->debug("IEE SEQ NR PACKET LOSS {}",m_seq_nr_helper_iee80211.get_current_loss_percent());
       }
       // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
