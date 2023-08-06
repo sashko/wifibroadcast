@@ -126,6 +126,9 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   if(delta_inject>=MAX_SANE_INJECTION_TIME){
     m_tx_stats.count_tx_injections_error_hint++;
   }
+  if(m_options.advanced_debugging_tx){
+    m_console->debug("Injected packet ret:{} took:{}",len_injected,MyTimeHelper::R(delta_inject));
+  }
   if (len_injected != (int) packet.size()) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
     m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet.size(),len_injected, pcap_geterr(tx));
