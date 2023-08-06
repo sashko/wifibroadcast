@@ -16,6 +16,8 @@
 // (Or packet validation only to save CPU resources)
 // to a lossy unidirectional link
 // Packet validation is quite important, to make sure only openhd packets (and not standard wifi packets) are used in OpenHD
+// The Encryption / Decryption name(s) are legacy -
+// The more difficult part is dealing with the session key stuff, and this class makes it a bit easier to use
 
 // For developing or when encryption is not important, you can use this default seed to
 // create deterministic rx and tx keys
@@ -84,10 +86,12 @@ class Encryptor {
    * Encrypt the given message of size @param src_len
    * (Or if encryption is disabled, only calculate the message sign)
    * and write the (encrypted) data appended by the validation data into dest
+   * @param nonce: needs to be different for every packet
+   * @param authenticate_only: if
    * @param dest needs to point to a memory region at least @param src_len + 16 bytes big
    * Returns written data size (msg payload plus sign data)
    */
-  int encrypt2(const uint64_t nonce,const uint8_t *src,std::size_t src_len,uint8_t* dest){
+  int authenticate_and_encrypt(const uint64_t nonce,const uint8_t *src,std::size_t src_len,uint8_t* dest){
     if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
       memcpy(dest,src, src_len);
       uint8_t* sign=dest+src_len;
@@ -104,11 +108,18 @@ class Encryptor {
     return (int)ciphertext_len;
   }
   // For easy use - returns a buffer including (encrypted) payload plus validation data
-  std::shared_ptr<std::vector<uint8_t>> encrypt3(const uint64_t nonce,const uint8_t *src,std::size_t src_len){
+  std::shared_ptr<std::vector<uint8_t>> authenticate_and_encrypt_buff(const uint64_t nonce,const uint8_t *src,std::size_t src_len){
     auto ret=std::make_shared<std::vector<uint8_t>>(src_len + ENCRYPTION_ADDITIONAL_VALIDATION_DATA);
-    const auto size=encrypt2(nonce,src,src_len,ret->data());
+    const auto size=authenticate_and_encrypt(nonce, src, src_len, ret->data());
     assert(size==ret->size());
     return ret;
+  }
+  /**
+   * Disables encryption (to save cpu performance) but keeps packet validation functionality
+   * @param encryption_enabled
+   */
+  void set_encryption_enabled(bool encryption_enabled){
+    DISABLE_ENCRYPTION_FOR_PERFORMANCE=!encryption_enabled;
   }
  private:
   // tx->rx keypair
@@ -116,7 +127,7 @@ class Encryptor {
   std::array<uint8_t, crypto_box_PUBLICKEYBYTES> rx_publickey{};
   std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> session_key{};
   // use this one if you are worried about CPU usage when using encryption
-  const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
+  bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
   //static_assert(crypto_onetimeauth_BYTES);
 };
 
@@ -148,7 +159,7 @@ class Decryptor {
   }
  private:
   // use this one if you are worried about CPU usage when using encryption
-  const bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
+  bool DISABLE_ENCRYPTION_FOR_PERFORMANCE;
  public:
   std::array<uint8_t, crypto_box_SECRETKEYBYTES> rx_secretkey{};
  public:
@@ -181,7 +192,7 @@ class Decryptor {
    * Returns true on success, false otherwise (false== the message is not a valid message)
    * @param dest needs to be at least @param encrypted - 16 bytes big.
    */
-  bool decrypt2(const uint64_t& nonce,const uint8_t* encrypted,int encrypted_size,uint8_t* dest){
+  bool authenticate_and_decrypt(const uint64_t& nonce,const uint8_t* encrypted,int encrypted_size,uint8_t* dest){
     if(DISABLE_ENCRYPTION_FOR_PERFORMANCE){
       const auto payload_size=encrypted_size-crypto_onetimeauth_BYTES;
       assert(payload_size>0);
@@ -203,9 +214,10 @@ class Decryptor {
                                                    (uint8_t *) (&nonce), session_key.data());
     return res!=-1;
   }
-  std::shared_ptr<std::vector<uint8_t>> decrypt3(const uint64_t& nonce,const uint8_t* encrypted,int encrypted_size){
+  std::shared_ptr<std::vector<uint8_t>> authenticate_and_decrypt_buff(const uint64_t& nonce,const uint8_t* encrypted,int encrypted_size){
     auto ret=std::make_shared<std::vector<uint8_t>>(encrypted_size - get_additional_payload_size());
-    const auto res= decrypt2(nonce,encrypted,encrypted_size,ret->data());
+    const auto res=
+        authenticate_and_decrypt(nonce, encrypted, encrypted_size, ret->data());
     if(res){
       return ret;
     }
@@ -216,6 +228,13 @@ class Decryptor {
       return crypto_onetimeauth_BYTES;
     }
     return crypto_aead_chacha20poly1305_ABYTES;
+  }
+  /**
+   * Disables encryption (to save cpu performance) but keeps packet validation functionality
+   * @param encryption_enabled
+   */
+  void set_encryption_enabled(bool encryption_enabled){
+    DISABLE_ENCRYPTION_FOR_PERFORMANCE=!encryption_enabled;
   }
 };
 

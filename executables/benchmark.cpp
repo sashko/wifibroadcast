@@ -117,7 +117,8 @@ void benchmark_crypt(const Options &options,const bool packet_validation_only) {
       // encrypt the packets and store them for later use, me measure decryption throughput
       for(int i=0;i<N_BUFFERS;i++){
           auto buf=randomBufferPot.getBuffer(i);
-          auto encrypted=encryptor.encrypt3(i,buf->data(),buf->size());
+          auto encrypted= encryptor.authenticate_and_encrypt_buff(
+              i, buf->data(), buf->size());
           EncryptedPacket encryptedPacket{(uint64_t)i,encrypted};
           encrypted_packets_buff.push_back(encryptedPacket);
       }
@@ -149,7 +150,8 @@ void benchmark_crypt(const Options &options,const bool packet_validation_only) {
           if(encrypt){
             const auto buffer = randomBufferPot.getBuffer(i);
             durationBenchmark.start();
-            const auto encrypted = encryptor.encrypt3(nonce, buffer->data(), buffer->size());
+            const auto encrypted = encryptor.authenticate_and_encrypt_buff(
+                nonce, buffer->data(), buffer->size());
             durationBenchmark.stop();
             assert(!encrypted->empty());
             nonce++;
@@ -157,7 +159,9 @@ void benchmark_crypt(const Options &options,const bool packet_validation_only) {
           }else{
             const auto& encrypted=encrypted_packets_buff.at(i);
             durationBenchmark.start();
-            auto decrypted=decryptor.decrypt3(encrypted.nonce,encrypted.data->data(),encrypted.data->size());
+            auto decrypted= decryptor.authenticate_and_decrypt_buff(
+                encrypted.nonce, encrypted.data->data(),
+                encrypted.data->size());
             assert(!decrypted->empty());
             durationBenchmark.stop();
             packetizedBenchmark.doneWithPacket(decrypted->size());

@@ -133,15 +133,18 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
   // now encrypt a couple of packets and decrypt them again afterwards
   for (uint64_t nonce = 0; nonce < 200; nonce++) {
 	const auto data = GenericHelper::createRandomDataBuffer(FEC_PACKET_MAX_PAYLOAD_SIZE);
-        const auto encrypted=encryptor.encrypt3(nonce,data.data(),data.size());
+        const auto encrypted= encryptor.authenticate_and_encrypt_buff(
+            nonce, data.data(), data.size());
         {
             // Correct usage - let packets through and get the original data back
-            const auto decrypted = decryptor.decrypt3(nonce, encrypted->data(), encrypted->size());
+            const auto decrypted = decryptor.authenticate_and_decrypt_buff(
+          nonce, encrypted->data(), encrypted->size());
             assert(GenericHelper::compareVectors(data, *decrypted) == true);
         }
         {
             // tamper with the nonce - shouldn't let packets through
-            const auto decrypted = decryptor.decrypt3(nonce+1, encrypted->data(), encrypted->size());
+            const auto decrypted = decryptor.authenticate_and_decrypt_buff(
+                nonce + 1, encrypted->data(), encrypted->size());
             assert(decrypted== nullptr);
         }
         {
@@ -149,7 +152,9 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
             auto encrypted_wrong_sing=encrypted;
             encrypted_wrong_sing->at(encrypted_wrong_sing->size()-1)=0;
             encrypted_wrong_sing->at(encrypted_wrong_sing->size()-2)=0;
-            const auto decrypted = decryptor.decrypt3(nonce, encrypted_wrong_sing->data(), encrypted_wrong_sing->size());
+            const auto decrypted = decryptor.authenticate_and_decrypt_buff(
+                nonce, encrypted_wrong_sing->data(),
+                encrypted_wrong_sing->size());
             assert(decrypted== nullptr);
         }
 
@@ -160,7 +165,8 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
         const auto enrypted_wrong_sign=std::make_shared<std::vector<uint8_t>>();
         enrypted_wrong_sign->resize(data.size()+ENCRYPTION_ADDITIONAL_VALIDATION_DATA);
         memcpy(enrypted_wrong_sign->data(),data.data(),data.size());
-        const auto decrypted = decryptor.decrypt3(nonce, enrypted_wrong_sign->data(), enrypted_wrong_sign->size());
+        const auto decrypted = decryptor.authenticate_and_decrypt_buff(
+            nonce, enrypted_wrong_sign->data(), enrypted_wrong_sign->size());
         assert(decrypted== nullptr);
   }
   std::cout << "encryption test passed\n";

@@ -112,7 +112,8 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
          (uint8_t*)&m_tx_ieee80211_hdr_openhd, Ieee80211HeaderRaw::SIZE_BYTES);
   // Then the encrypted / validated data (including encryption / validation suffix)
   uint8_t* encrypted_data_p=packet_buff+RadiotapHeader::SIZE_BYTES+ Ieee80211HeaderRaw::SIZE_BYTES;
-  const auto ciphertext_len=m_encryptor->encrypt2(this_packet_nonce,data,data_len,encrypted_data_p);
+  const auto ciphertext_len= m_encryptor->authenticate_and_encrypt(
+      this_packet_nonce, data, data_len, encrypted_data_p);
   // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated
   // (the documentation says 'write up to n bytes' but they probably mean (write exactly n bytes unless an error occurs)
   assert(data_len+crypto_aead_chacha20poly1305_ABYTES == ciphertext_len);
@@ -421,8 +422,9 @@ bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t radio_port,const 
   // after that, we have the encrypted data (and the encryption suffix)
   const uint8_t* encrypted_data_with_suffix=payload_and_enc_suffix;
   const auto encrypted_data_with_suffix_len = payload_and_enc_suffix_size;
-  const auto res=m_decryptor->decrypt2(nonce,encrypted_data_with_suffix,encrypted_data_with_suffix_len,
-                                         decrypted->data());
+  const auto res= m_decryptor->authenticate_and_decrypt(
+      nonce, encrypted_data_with_suffix, encrypted_data_with_suffix_len,
+      decrypted->data());
   if(res){
     if(m_options.log_all_received_validated_packets){
       m_console->debug("Got valid packet nonce:{} wlan_idx:{} radio_port:{} size:{}",nonce,wlan_idx,radio_port,payload_and_enc_suffix_size);
