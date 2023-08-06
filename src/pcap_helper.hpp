@@ -101,7 +101,7 @@ struct RssiForAntenna {
 struct ParsedRxPcapPacket {
   // Size can be anything from size=1 to size== N where N is the number of Antennas of this adapter
   const std::vector<RssiForAntenna> allAntennaValues;
-  const Ieee80211Header *ieee80211Header;
+  const Ieee80211HeaderRaw *ieee80211Header;
   const uint8_t *payload;
   const std::size_t payloadSize;
   // Atheros forwards frames even though the fcs check failed ( this packet is corrupted)
@@ -258,9 +258,9 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   pkt += iterator._max_length;
   pktlen -= iterator._max_length;
   //
-  const Ieee80211Header *ieee80211Header = (Ieee80211Header *) pkt;
-  const uint8_t *payload = pkt + Ieee80211Header::SIZE_BYTES;
-  const std::size_t payloadSize = (std::size_t) pktlen - Ieee80211Header::SIZE_BYTES;
+  const Ieee80211HeaderRaw *ieee80211Header = (Ieee80211HeaderRaw *) pkt;
+  const uint8_t *payload = pkt + Ieee80211HeaderRaw::SIZE_BYTES;
+  const std::size_t payloadSize = (std::size_t) pktlen - Ieee80211HeaderRaw::SIZE_BYTES;
   //
   /*std::stringstream ss;
   ss<<"Antennas:";
@@ -275,18 +275,18 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck,mcs_index,channel_width,signal_quality};
 }
 
-// [RadiotapHeader | Ieee80211Header | customHeader (if not size 0) | payload (if not size 0)]
+// [RadiotapHeader | Ieee80211HeaderRaw | customHeader (if not size 0) | payload (if not size 0)]
 static std::vector<uint8_t> create_radiotap_wifi_packet(const RadiotapHeader& radiotapHeader,
-                                                        const Ieee80211Header &ieee80211Header,
+                                                        const Ieee80211HeaderRaw &ieee80211Header,
                                                         const uint8_t* data,int data_len){
-  std::vector<uint8_t> packet(radiotapHeader.getSize() + ieee80211Header.getSize() + data_len);
+  std::vector<uint8_t> packet(radiotapHeader.getSize() + sizeof(ieee80211Header.data) + data_len);
   uint8_t *p = packet.data();
   // radiotap header
   memcpy(p, radiotapHeader.getData(), radiotapHeader.getSize());
   p += radiotapHeader.getSize();
   // ieee80211 wbDataHeader
-  memcpy(p, ieee80211Header.getData(), ieee80211Header.getSize());
-  p += ieee80211Header.getSize();
+  memcpy(p, &ieee80211Header.data, sizeof(ieee80211Header.data));
+  p += sizeof(ieee80211Header.data);
   memcpy(p, data, data_len);
   p += data_len;
   return packet;

@@ -13,7 +13,7 @@ namespace seq_nr{
 
 static int diff_between_packets_rolling_uint16_t(int last_packet,int curr_packet){
   if(last_packet==curr_packet){
-    wifibroadcast::log::get_default()->debug("Duplicate in seq nr, invalid usage");
+    wifibroadcast::log::get_default()->debug("Duplicate in seq nr {}-{}, invalid usage",last_packet,curr_packet);
   }
   if(curr_packet<last_packet){
     // We probably have overflown the uin16_t range

@@ -20,19 +20,22 @@
 #include "TimeHelper.hpp"
 
 /**
- * Wraps one or more wifi card in monitor mode
- * Provides easy interface to inject data packets and register a callback to
- * process received data packets.
- * Adds packet encryption and authentication via libsodium (can be disabled for
- * performance) Allows multiplexing of multiple data streams (radio_port) Quick
- * usage description by example:
- * # System 1: card 1
- * # System 2: card 2
- * air in between card 1 and card 2
- * Create an instance of WBTxRx on both system 1
- * and system 2 inject packets using WBTxRx on system 1 -> receive them
- * using WBTxRx on system 2 inject packets using WBTxRx on system 2
- * -> receive them using WBTxRx on system 1
+ * This class exists to provide a clean, working interface to create a broadcast-like
+ * bidirectional wifi link between an fpv air and (one or more) ground unit(s).
+ * It hides away some nasty driver quirks, and offers
+ * 1) A lot of usefully stats like packet loss, dbm, ...
+ * 2) Multiplexing (radio_port) - multiple streams from air to ground / ground to air are possible
+ * 3) Packet validation / encryption
+ * 4) Multiple RX-cards (only one active tx at a time though)
+ * Packets sent by an "air unit" are received by any listening ground unit (broadcast) that uses the same (encryption/validation) key-pair
+ * Packets sent by an "ground unit" are received by any listening air unit (broadcast) that uses the same (encryption/validation) key-pair
+ * Packets sent by an "air unit" are never received by another air unit (and reverse for ground unit)
+ * (This is necessary due to AR9271 driver quirk - it gives injected packets back on the cb for received packets)
+ *
+ * It adds a minimal overhead of 16 bytes per data packet for validation / encryption
+ * And - configurable - a couple of packets per second for the session key.
+ *
+ * See example_hello for how to use this class.
  *
  * NOTE: Receiving of data is not started until startReceiving() is called !
  */
@@ -44,7 +47,7 @@ class WBTxRx {
     std::optional<std::string> encryption_key = std::nullopt;
     // dirty, rssi on rtl8812au is "bugged", this discards the first rssi value reported by the card.
     bool rtl8812au_rssi_fixup=false;
-    // TODO
+    // on the rx pcap fd, set direction PCAP_D_IN (aka only packets received by the card) - doesn't work on AR9271
     bool set_direction= true;
     // thy spam the console, but usefully for debugging
     // log all received packets (regardless where they are from)
@@ -67,6 +70,8 @@ class WBTxRx {
     // enable encryption, by default, only packet validation (without encryption) is done since
     // encryption needs a lot of CPU processing.
     bool enable_encryption= false;
+    // You need to set this to air / gnd on the air / gnd unit since AR9271 has a bug where it reports injected packets as received packets
+    bool use_gnd_identifier= false;
   };
   explicit WBTxRx(std::vector<std::string> wifi_cards,Options options1);
   WBTxRx(const WBTxRx &) = delete;
@@ -161,6 +166,11 @@ class WBTxRx {
      int last_received_packet_channel_width=-1;
      // complicated but important metric in our case - how many "big gaps" we had in the last 1 second
      int16_t curr_big_gaps_counter=-1;
+     // Percentage of non openhd packets over total n of packets
+     int curr_link_pollution_perc=0;
+     // Usefully for channel scan - n packets that are quite likely coming from an openhd air / ground unit (respective depending on if air/gnd mode)
+     // But not validated - e.g. on a channel scan, session key packet(s) have not been received yet
+     int curr_n_likely_openhd_packets=0;
    };
    struct RxStatsPerCard{
      RSSIForWifiCard rssi_for_wifi_card{};
@@ -193,11 +203,12 @@ class WBTxRx {
    // the reasoning behind this value: https://github.com/svpcom/wifibroadcast/issues/69
    static constexpr const auto PCAP_MAX_PACKET_SIZE = 1510;
    // This is the max number of bytes usable when injecting
-   static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE = (PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES);
+   static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE = (PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES -
+        IEEE80211_HEADER_SIZE_BYTES);
    static_assert(RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE==1473);
    // and we use some bytes of that for encryption / packet validation
-   static constexpr const auto MAX_PACKET_PAYLOAD_SIZE=RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE-sizeof(uint64_t)-crypto_aead_chacha20poly1305_ABYTES;
-   static_assert(MAX_PACKET_PAYLOAD_SIZE==1449);
+   static constexpr const auto MAX_PACKET_PAYLOAD_SIZE=RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE-crypto_aead_chacha20poly1305_ABYTES;
+   static_assert(MAX_PACKET_PAYLOAD_SIZE==1457);
    static std::string tx_stats_to_string(const TxStats& data);
    static std::string rx_stats_to_string(const RxStats& data);
  private:
@@ -206,8 +217,8 @@ class WBTxRx {
   std::vector<std::string> m_wifi_cards;
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
   RadiotapHeader::UserSelectableParams m_radioTapHeaderParams{};
-  RadiotapHeader m_radiotap_header;
-  Ieee80211Header mIeee80211Header{};
+  RadiotapHeader m_tx_radiotap_header;
+  Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
   uint16_t m_ieee80211_seq = 0;
   uint64_t m_nonce=0;
   // For multiple RX cards the card with the highest rx rssi is used to inject packets on
@@ -270,9 +281,17 @@ class WBTxRx {
   void on_new_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
   // verify and decrypt the packet if possible
   // returns true if packet could be decrypted successfully
-  bool process_received_data_packet(int wlan_idx,uint8_t radio_port,const uint8_t *pkt_payload,size_t pkt_payload_size);
+  bool process_received_data_packet(int wlan_idx,uint8_t radio_port,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
   // called avery time we have successfully decrypted a packet
   void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t radioPort,const uint8_t *data, std::size_t data_len);
+ private:
+  // These are 'extra' for calculating some channel pollution value
+  //uint32_t m_pollution_non_openhd_packets=0;
+  //uint32_t m_pollution_openhd_packets=0;
+  uint32_t m_pollution_total_rx_packets=0;
+  uint32_t m_pollution_openhd_rx_packets=0;
+  std::chrono::steady_clock::time_point m_last_pollution_calculation=std::chrono::steady_clock::now();
+  void recalculate_pollution_perc();
 };
 
 static std::ostream& operator<<(std::ostream& strm, const WBTxRx::TxStats& data){

@@ -30,6 +30,7 @@
 #include "../src/HelperSources/Helper.hpp"
 #include "../src/Encryption.hpp"
 #include "../src/wifibroadcast-spdlog.h"
+#include "../src/Ieee80211Header.hpp"
 
 // Simple unit testing for the FEC lib that doesn't require wifi cards
 
@@ -106,12 +107,16 @@ static void test_fec_stream_random_bs_fs_overhead_dropped(){
 
 }
 
-namespace TestEncryption {
-
-static void test(const bool useGeneratedFiles,bool message_signing_only) {
+// Test encryption+packet validation and packet validation only
+static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool message_signing_only) {
   std::cout << "Using generated keypair (default seed otherwise):" << (useGeneratedFiles ? "y" : "n") << "\n";
   std::optional<std::string> encKey = useGeneratedFiles ? std::optional<std::string>("gs.key") : std::nullopt;
   std::optional<std::string> decKey = useGeneratedFiles ? std::optional<std::string>("drone.key") : std::nullopt;
+  if(message_signing_only){
+    std::cout<<"Testing message signing\n";
+  }else{
+    std::cout<<"Testing encryption & signing\n";
+  }
 
   Encryptor encryptor{encKey,message_signing_only};
   Decryptor decryptor{decKey,message_signing_only};
@@ -126,15 +131,31 @@ static void test(const bool useGeneratedFiles,bool message_signing_only) {
   assert(
 	  decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData) == true);
   // now encrypt a couple of packets and decrypt them again afterwards
-  for (uint64_t nonce = 0; nonce < 20; nonce++) {
+  for (uint64_t nonce = 0; nonce < 200; nonce++) {
 	const auto data = GenericHelper::createRandomDataBuffer(FEC_PACKET_MAX_PAYLOAD_SIZE);
         const auto encrypted=encryptor.encrypt3(nonce,data.data(),data.size());
-	const auto decrypted = decryptor.decrypt3(nonce, encrypted->data(), encrypted->size());
-	//assert(decrypted != std::nullopt);
-	assert(GenericHelper::compareVectors(data, *decrypted) == true);
+        {
+            // Correct usage - let packets through and get the original data back
+            const auto decrypted = decryptor.decrypt3(nonce, encrypted->data(), encrypted->size());
+            assert(GenericHelper::compareVectors(data, *decrypted) == true);
+        }
+        {
+            // tamper with the nonce - shouldn't let packets through
+            const auto decrypted = decryptor.decrypt3(nonce+1, encrypted->data(), encrypted->size());
+            assert(decrypted== nullptr);
+        }
+        {
+            // tamper with the encryption suffix -  shouldn't let data through
+            auto encrypted_wrong_sing=encrypted;
+            encrypted_wrong_sing->at(encrypted_wrong_sing->size()-1)=0;
+            encrypted_wrong_sing->at(encrypted_wrong_sing->size()-2)=0;
+            const auto decrypted = decryptor.decrypt3(nonce, encrypted_wrong_sing->data(), encrypted_wrong_sing->size());
+            assert(decrypted== nullptr);
+        }
+
   }
-  // and make sure we don't let invalid packets thrugh
-  for (uint64_t nonce = 0; nonce < 20; nonce++) {
+  // and make sure we don't let packets with an invalid signing suffix through
+  for (uint64_t nonce = 0; nonce < 200; nonce++) {
         const auto data = GenericHelper::createRandomDataBuffer(FEC_PACKET_MAX_PAYLOAD_SIZE);
         const auto enrypted_wrong_sign=std::make_shared<std::vector<uint8_t>>();
         enrypted_wrong_sign->resize(data.size()+ENCRYPTION_ADDITIONAL_VALIDATION_DATA);
@@ -144,7 +165,7 @@ static void test(const bool useGeneratedFiles,bool message_signing_only) {
   }
   std::cout << "encryption test passed\n";
 }
-}
+
 
 int main(int argc, char *argv[]) {
   std::cout << "Tests for Wifibroadcast\n";
@@ -164,6 +185,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   print_optimization_method();
+  test::test_nonce();
 
   try {
 	if (test_mode == 0 || test_mode == 1) {
@@ -177,10 +199,9 @@ int main(int argc, char *argv[]) {
 	}
 	if (test_mode == 0 || test_mode == 2) {
 	  std::cout << "Testing Encryption"<<std::endl;
-	  TestEncryption::test(false, false);
-          TestEncryption::test(false, true);
-	  TestEncryption::test(true, false);
-          //TestEncryption::test(true, true);
+          test_encrypt_decrypt_validate(false, false);
+          test_encrypt_decrypt_validate(false, true);
+          test_encrypt_decrypt_validate(true, false);
 	}
   } catch (std::runtime_error &e) {
 	std::cerr << "Error: " << std::string(e.what());

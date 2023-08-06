@@ -20,8 +20,9 @@
  */
 int main(int argc, char *const *argv) {
   std::string card="wlxac9e17596103";
-  bool pcap_setdirection= true;
+  bool advanced_debugging= false;
   bool is_air= false;
+  bool air_or_ground_explicitly_specified= false;
   int opt;
   while ((opt = getopt(argc, argv, "w:agd")) != -1) {
     switch (opt) {
@@ -30,12 +31,14 @@ int main(int argc, char *const *argv) {
         break;
       case 'a':
         is_air= true;
+        air_or_ground_explicitly_specified= true;
         break ;
       case 'g':
         is_air= false;
+        air_or_ground_explicitly_specified= true;
         break ;
       case 'd':
-        pcap_setdirection= false;
+        advanced_debugging= true;
         break ;
       default: /* '?' */
       show_usage:
@@ -45,17 +48,22 @@ int main(int argc, char *const *argv) {
         exit(1);
     }
   }
+  if(!air_or_ground_explicitly_specified){
+    std::cerr<<"Warning - please specify air or ground, air only talks to ground and vice versa"<<std::endl;
+  }
   std::cout<<"Running as "<<(is_air ? "Air" : "Ground")<<" on card "<<card<<"\n";
 
   // Create the Tx-RX
   std::vector<std::string> cards{card};
   WBTxRx::Options options_txrx{};
   options_txrx.rtl8812au_rssi_fixup= true;
-  //options_txrx.set_direction= false;
-  options_txrx.set_direction= pcap_setdirection;
-  options_txrx.log_all_received_validated_packets= true;
-  // For easier debugging
+  options_txrx.set_direction= true;
   options_txrx.enable_encryption= false;
+  options_txrx.use_gnd_identifier=!is_air;
+  if(advanced_debugging){
+    options_txrx.log_all_received_validated_packets= true;
+    options_txrx.advanced_debugging_rx= true;
+  }
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
 
