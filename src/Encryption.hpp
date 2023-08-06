@@ -32,6 +32,7 @@ static constexpr auto ENCRYPTION_ADDITIONAL_VALIDATION_DATA=crypto_aead_chacha20
 static std::array<uint8_t,32> create_onetimeauth_subkey(const uint64_t nonce,const std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> session_key){
   // sub-key for this packet
   std::array<uint8_t, 32> subkey{};
+  // We only have an 8 byte nonce, this should be enough entropy
   std::array<uint8_t,16> nonce_buf{0};
   memcpy(nonce_buf.data(),(uint8_t*)&nonce,8);
   crypto_core_hchacha20(subkey.data(),nonce_buf.data(),session_key.data(), nullptr);
