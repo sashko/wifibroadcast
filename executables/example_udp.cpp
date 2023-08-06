@@ -34,6 +34,7 @@ int main(int argc, char *const *argv) {
   std::string card="wlxac9e17596103";
   bool pcap_setdirection= true;
   bool is_air= false;
+  bool air_or_ground_explicitly_specified= false;
   bool enable_fec= false;
   int opt;
   while ((opt = getopt(argc, argv, "w:agdf")) != -1) {
@@ -43,9 +44,11 @@ int main(int argc, char *const *argv) {
         break;
       case 'a':
         is_air= true;
+        air_or_ground_explicitly_specified= true;
         break ;
       case 'g':
         is_air= false;
+        air_or_ground_explicitly_specified= true;
         break ;
       case 'f':
         enable_fec= true;
@@ -60,6 +63,9 @@ int main(int argc, char *const *argv) {
                 argv[0]);
         exit(1);
     }
+  }
+  if(!air_or_ground_explicitly_specified){
+    std::cerr<<"Warning - please specify air or ground, air only talks to ground and vice versa"<<std::endl;
   }
   auto console=wifibroadcast::log::create_or_get("main");
   console->info("Running as {} on card {}",(is_air ? "Air" : "Ground"),card);
