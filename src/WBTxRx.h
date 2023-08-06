@@ -169,7 +169,7 @@ class WBTxRx {
      // Percentage of non openhd packets over total n of packets
      int curr_link_pollution_perc=0;
      // Usefully for channel scan - n packets that are quite likely coming from an openhd air / ground unit (respective depending on if air/gnd mode)
-     // But not validated - e.g. on a channel scan, session key packet has not been received yet
+     // But not validated - e.g. on a channel scan, session key packet(s) have not been received yet
      int curr_n_likely_openhd_packets=0;
    };
    struct RxStatsPerCard{

@@ -303,6 +303,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
   }
   const auto radio_port=rx_iee80211_hdr_openhd.get_valid_radio_port();
   const auto nonce=rx_iee80211_hdr_openhd.get_nonce();
+  // Quite likely an openhd packet (I'd say pretty much 100%) but not validated yet
   m_rx_stats.curr_n_likely_openhd_packets++;
   if(radio_port==RADIO_PORT_SESSION_KEY_PACKETS){
     if (pkt_payload_size != sizeof(SessionKeyPacket)) {
