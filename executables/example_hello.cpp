@@ -20,7 +20,7 @@
  */
 int main(int argc, char *const *argv) {
   std::string card="wlxac9e17596103";
-  bool pcap_setdirection= true;
+  bool advanced_debugging= false;
   bool is_air= false;
   int opt;
   while ((opt = getopt(argc, argv, "w:agd")) != -1) {
@@ -35,7 +35,7 @@ int main(int argc, char *const *argv) {
         is_air= false;
         break ;
       case 'd':
-        pcap_setdirection= false;
+        advanced_debugging= true;
         break ;
       default: /* '?' */
       show_usage:
@@ -51,13 +51,13 @@ int main(int argc, char *const *argv) {
   std::vector<std::string> cards{card};
   WBTxRx::Options options_txrx{};
   options_txrx.rtl8812au_rssi_fixup= true;
-  //options_txrx.set_direction= false;
-  options_txrx.set_direction= pcap_setdirection;
-  options_txrx.log_all_received_validated_packets= true;
-  // For easier debugging
+  options_txrx.set_direction= true;
   options_txrx.enable_encryption= false;
   options_txrx.use_gnd_identifier=!is_air;
-  options_txrx.advanced_debugging_rx= true;
+  if(advanced_debugging){
+    options_txrx.log_all_received_validated_packets= true;
+    options_txrx.advanced_debugging_rx= true;
+  }
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
 

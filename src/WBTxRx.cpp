@@ -98,13 +98,16 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   memcpy(packet_buff, m_tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
   // Iee80211 header comes next
   // Will most likely be overridden by the driver
-  const auto this_packet_ieee80211_seq=++m_ieee80211_seq;
+  const auto this_packet_ieee80211_seq=m_ieee80211_seq;
+  m_tx_ieee80211_hdr_openhd.write_ieee80211_seq_nr(this_packet_ieee80211_seq);
   // create a new nonce for this packet
   const uint64_t this_packet_nonce =++m_nonce;
   m_tx_ieee80211_hdr_openhd.write_radio_port_src_dst(radioPort);
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   m_tx_ieee80211_hdr_openhd.write_unique_id_src_dst(unique_tx_id);
   m_tx_ieee80211_hdr_openhd.write_nonce(this_packet_nonce);
+  //m_console->debug("Test {} {} {}",m_tx_ieee80211_hdr_openhd.has_valid_air_gnd_id(),m_tx_ieee80211_hdr_openhd.has_valid_radio_port(),
+  //                 m_tx_ieee80211_hdr_openhd.is_data_frame());
   memcpy(packet_buff+RadiotapHeader::SIZE_BYTES,
          (uint8_t*)&m_tx_ieee80211_hdr_openhd,Ieee80211Header::SIZE_BYTES);
   // Then the encrypted / validated data (including encryption / validation suffix)
@@ -278,7 +281,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
   const auto unique_air_gnd_id=rx_iee80211_hdr_openhd.get_valid_air_gnd_id();
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   const auto unique_rx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR : OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND;
-  if(unique_air_gnd_id==unique_rx_id){
+  if(unique_air_gnd_id!=unique_rx_id){
     if(m_options.advanced_debugging_rx){
       if(unique_air_gnd_id==unique_tx_id){
         // AR9271 bug - gives back injected packets
@@ -465,6 +468,7 @@ void WBTxRx::send_session_key() {
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   tmp_tx_hdr.write_unique_id_src_dst(unique_tx_id);
   tmp_tx_hdr.write_radio_port_src_dst(RADIO_PORT_SESSION_KEY_PACKETS);
+  tmp_tx_hdr.write_ieee80211_seq_nr(m_ieee80211_seq++);
 
   auto packet=wifibroadcast::pcap_helper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211Header*)&tmp_tx_hdr,
                                                           (uint8_t *)&m_tx_sess_key_packet, sizeof(SessionKeyPacket));

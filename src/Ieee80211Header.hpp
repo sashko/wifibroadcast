@@ -60,8 +60,8 @@ static constexpr auto OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND=0x02;
 struct Ieee80211HeaderOpenHD{
   // We do not touch the control field (driver)
   //ControlField control_field{};
-  uint8_t part1=0x08;
-  uint8_t part2=0x01;
+  uint8_t control_field_part1=0x08;
+  uint8_t control_field_part2=0x01;
   // We do not touch the duration field (driver)
   uint8_t duration1=0x00;
   uint8_t duration2=0x00;
@@ -117,11 +117,21 @@ struct Ieee80211HeaderOpenHD{
   uint8_t get_valid_radio_port()const{
     return mac_src_radio_port;
   }
+  bool is_data_frame() const {
+    return control_field_part1 == 0x08 && control_field_part2 == 0x01;
+  }
   std::string debug_radio_ports()const{
     return fmt::format("{}:{}",(int)mac_src_radio_port,(int)mac_dst_radio_port);
   }
   std::string debug_unique_ids()const{
     return fmt::format("{}:{}",(int)mac_src_unique_id_part,(int)mac_dst_unique_id_part);
+  }
+  // Dirty
+  void write_ieee80211_seq_nr(const uint16_t seq_nr){
+    uint8_t seq_nr_buf[2];
+    seq_nr_buf[0] = seq_nr & 0xff;
+    seq_nr_buf[1] = (seq_nr >> 8) & 0xff;
+    memcpy((uint8_t*)&sequence_control,seq_nr_buf,2);
   }
 }__attribute__ ((packed));
 static_assert(sizeof(Ieee80211HeaderOpenHD)==IEEE80211_HEADER_SIZE_BYTES);
