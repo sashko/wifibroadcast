@@ -90,7 +90,7 @@ struct Ieee80211HeaderOpenHD{
   }
   uint64_t get_nonce()const{
     uint64_t nonce;
-    memcpy((uint8_t*)nonce,(uint8_t*)&mac_src_nonce_part1,4);
+    memcpy(((uint8_t*)nonce),(uint8_t*)&mac_src_nonce_part1,4);
     memcpy(((uint8_t*)nonce)+4,(uint8_t*)&mac_dst_nonce_part2,4);
     return nonce;
   }
@@ -321,4 +321,7 @@ static uint8_t u8aIeeeHeader_rts[] = {
     0xff                    // 1st byte of MAC will be overwritten with encoded port
 };
 }
+
+// Everything in here assumes little endian
+static_assert(__BYTE_ORDER == __LITTLE_ENDIAN, "This code is written for little endian only !");
 #endif
