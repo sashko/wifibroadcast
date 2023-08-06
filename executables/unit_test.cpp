@@ -30,6 +30,7 @@
 #include "../src/HelperSources/Helper.hpp"
 #include "../src/Encryption.hpp"
 #include "../src/wifibroadcast-spdlog.h"
+#include "../src/Ieee80211Header.hpp"
 
 // Simple unit testing for the FEC lib that doesn't require wifi cards
 
@@ -184,6 +185,7 @@ int main(int argc, char *argv[]) {
 	}
   }
   print_optimization_method();
+  test::test_nonce();
 
   try {
 	if (test_mode == 0 || test_mode == 1) {

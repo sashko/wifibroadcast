@@ -69,11 +69,11 @@ struct Ieee80211HeaderOpenHD{
   std::array<uint8_t, 6> mac_ap={0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   // We can and do use this mac - 1 byte for unique identifier (air/gnd), 4 bytes for part 1 of nonce, last byte for radio port
   uint8_t mac_src_unique_id_part=OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
-  uint32_t mac_src_nonce_part1=0;
+  std::array<uint8_t, 4> mac_src_nonce_part1={};
   uint8_t mac_src_radio_port=0;
   // We can and do use this mac - 1 byte for unique identifier (air/gnd), 4 bytes for part 2 of nonce, last byte for radio port
   uint8_t mac_dst_unique_id_part=OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
-  uint32_t mac_dst_nonce_part2=0;
+  std::array<uint8_t, 4> mac_dst_nonce_part2={};
   uint8_t mac_dst_radio_port=0;
   // iee80211 sequence control ( 2 bytes ) - might be overridden by the driver, and or even repurposed
   uint16_t sequence_control=0;
@@ -81,7 +81,7 @@ struct Ieee80211HeaderOpenHD{
   /**
    * We use some of the available bytes for a 8 bytes "nonce"
    */
-  void write_nonce(const uint64_t& nonce){
+  void write_nonce(const uint64_t nonce){
     memcpy((uint8_t*)&mac_src_nonce_part1,(uint8_t*)&nonce,4);
     memcpy((uint8_t*)&mac_dst_nonce_part2,((uint8_t*)&nonce)+4,4);
     // From https://stackoverflow.com/questions/2810280/how-to-store-a-64-bit-integer-in-two-32-bit-integers-and-convert-back-again
@@ -89,9 +89,9 @@ struct Ieee80211HeaderOpenHD{
     //mac_dst_nonce_part2 = static_cast<int32_t>(nonce);
   }
   uint64_t get_nonce()const{
-    uint64_t nonce;
-    memcpy(((uint8_t*)nonce),(uint8_t*)&mac_src_nonce_part1,4);
-    memcpy(((uint8_t*)nonce)+4,(uint8_t*)&mac_dst_nonce_part2,4);
+    uint64_t nonce=0;
+    memcpy(((uint8_t*)&nonce),(uint8_t*)&mac_src_nonce_part1,4);
+    memcpy(((uint8_t*)&nonce)+4,(uint8_t*)&mac_dst_nonce_part2,4);
     return nonce;
   }
   /**
@@ -320,6 +320,17 @@ static uint8_t u8aIeeeHeader_rts[] = {
     0xb4, 0x01, 0x00, 0x00, // frame control field (2 bytes), duration (2 bytes)
     0xff                    // 1st byte of MAC will be overwritten with encoded port
 };
+}
+
+namespace test{
+static void test_nonce(){
+  Ieee80211HeaderOpenHD tmp{};
+  assert(tmp.is_data_frame());
+  for(uint64_t nonce=0;nonce<10;nonce++){
+    tmp.write_nonce(nonce);
+    assert(tmp.get_nonce()==nonce);
+  }
+}
 }
 
 // Everything in here assumes little endian
