@@ -98,7 +98,7 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   memcpy(packet_buff, m_tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
   // Iee80211 header comes next
   // Will most likely be overridden by the driver
-  const auto this_packet_ieee80211_seq=m_ieee80211_seq;
+  const auto this_packet_ieee80211_seq=m_ieee80211_seq++;
   m_tx_ieee80211_hdr_openhd.write_ieee80211_seq_nr(this_packet_ieee80211_seq);
   // create a new nonce for this packet
   const uint64_t this_packet_nonce =++m_nonce;
