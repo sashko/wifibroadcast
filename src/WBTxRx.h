@@ -203,7 +203,8 @@ class WBTxRx {
    // the reasoning behind this value: https://github.com/svpcom/wifibroadcast/issues/69
    static constexpr const auto PCAP_MAX_PACKET_SIZE = 1510;
    // This is the max number of bytes usable when injecting
-   static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE = (PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES - Ieee80211Header::SIZE_BYTES);
+   static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE = (PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES -
+        IEEE80211_HEADER_SIZE_BYTES);
    static_assert(RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE==1473);
    // and we use some bytes of that for encryption / packet validation
    static constexpr const auto MAX_PACKET_PAYLOAD_SIZE=RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE-sizeof(uint64_t)-crypto_aead_chacha20poly1305_ABYTES;
@@ -217,7 +218,6 @@ class WBTxRx {
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
   RadiotapHeader::UserSelectableParams m_radioTapHeaderParams{};
   RadiotapHeader m_tx_radiotap_header;
-  //Ieee80211Header m_tx_ieee80211_header{};
   Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
   uint16_t m_ieee80211_seq = 0;
   uint64_t m_nonce=0;

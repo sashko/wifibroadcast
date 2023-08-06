@@ -87,7 +87,7 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
       // Radiotap header comes first
       RadiotapHeader::SIZE_BYTES+
       // Then the Ieee80211 header
-      Ieee80211Header::SIZE_BYTES+
+      Ieee80211HeaderRaw::SIZE_BYTES+
       // actual data
       data_len+
       // encryption suffix
@@ -109,9 +109,9 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   //m_console->debug("Test Nonce:{}/{} {} {} {}",this_packet_nonce,m_tx_ieee80211_hdr_openhd.get_nonce(),m_tx_ieee80211_hdr_openhd.has_valid_air_gnd_id(),m_tx_ieee80211_hdr_openhd.has_valid_radio_port(),
   //                 m_tx_ieee80211_hdr_openhd.is_data_frame());
   memcpy(packet_buff+RadiotapHeader::SIZE_BYTES,
-         (uint8_t*)&m_tx_ieee80211_hdr_openhd,Ieee80211Header::SIZE_BYTES);
+         (uint8_t*)&m_tx_ieee80211_hdr_openhd, Ieee80211HeaderRaw::SIZE_BYTES);
   // Then the encrypted / validated data (including encryption / validation suffix)
-  uint8_t* encrypted_data_p=packet_buff+RadiotapHeader::SIZE_BYTES+Ieee80211Header::SIZE_BYTES;
+  uint8_t* encrypted_data_p=packet_buff+RadiotapHeader::SIZE_BYTES+ Ieee80211HeaderRaw::SIZE_BYTES;
   const auto ciphertext_len=m_encryptor->encrypt2(this_packet_nonce,data,data_len,encrypted_data_p);
   // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated
   // (the documentation says 'write up to n bytes' but they probably mean (write exactly n bytes unless an error occurs)
@@ -255,11 +255,12 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     }
     return;
   }
+  const auto& rx_iee80211_hdr_openhd=*((Ieee80211HeaderOpenHD*)parsedPacket->ieee80211Header);
   //m_console->debug(parsedPacket->ieee80211Header->header_as_string());
-  if (!parsedPacket->ieee80211Header->isDataFrame()) {
+  if (!rx_iee80211_hdr_openhd.is_data_frame()) {
     if(m_options.advanced_debugging_rx){
       // we only process data frames
-      m_console->debug("Got packet that is not a data packet {}",(int) parsedPacket->ieee80211Header->getFrameControl());
+      m_console->debug("Got packet that is not a data packet {}",rx_iee80211_hdr_openhd.debug_control_field());
     }
     return;
   }
@@ -273,7 +274,6 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     m_console->warn("Discarding packet due to payload exceeding max {}",(int) parsedPacket->payloadSize);
     return;
   }
-  const auto& rx_iee80211_hdr_openhd=*((Ieee80211HeaderOpenHD*)parsedPacket->ieee80211Header);
   if(!rx_iee80211_hdr_openhd.has_valid_air_gnd_id()){
     if(m_options.advanced_debugging_rx){
       m_console->debug("Got packet that has not a valid unique id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
@@ -481,7 +481,7 @@ void WBTxRx::announce_session_key_if_needed() {
 
 void WBTxRx::send_session_key() {
   RadiotapHeader tmp_radiotap_header= m_tx_radiotap_header;
-  /*Ieee80211Header tmp_ieee_hdr= m_tx_ieee80211_header;
+  /*Ieee80211HeaderRaw tmp_ieee_hdr= m_tx_ieee80211_header;
   tmp_ieee_hdr.writeParams(RADIO_PORT_SESSION_KEY_PACKETS,0);*/
   Ieee80211HeaderOpenHD tmp_tx_hdr{};
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
@@ -490,7 +490,7 @@ void WBTxRx::send_session_key() {
   tmp_tx_hdr.write_ieee80211_seq_nr(m_ieee80211_seq++);
   tmp_tx_hdr.write_nonce(m_nonce++);
 
-  auto packet=wifibroadcast::pcap_helper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211Header*)&tmp_tx_hdr,
+  auto packet=wifibroadcast::pcap_helper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211HeaderRaw*)&tmp_tx_hdr,
                                                           (uint8_t *)&m_tx_sess_key_packet, sizeof(SessionKeyPacket));
   // NOTE: Session key is always sent via card 0 since otherwise we might pick up the session key intended for the ground unit
   // from the air unit !
