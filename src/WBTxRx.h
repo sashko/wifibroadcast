@@ -212,7 +212,8 @@ class WBTxRx {
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
   RadiotapHeader::UserSelectableParams m_radioTapHeaderParams{};
   RadiotapHeader m_tx_radiotap_header;
-  Ieee80211Header m_tx_ieee80211_header{};
+  //Ieee80211Header m_tx_ieee80211_header{};
+  Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
   uint16_t m_ieee80211_seq = 0;
   uint64_t m_nonce=0;
   // For multiple RX cards the card with the highest rx rssi is used to inject packets on
@@ -275,7 +276,7 @@ class WBTxRx {
   void on_new_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
   // verify and decrypt the packet if possible
   // returns true if packet could be decrypted successfully
-  bool process_received_data_packet(int wlan_idx,uint8_t radio_port,const uint8_t *pkt_payload,size_t pkt_payload_size);
+  bool process_received_data_packet(int wlan_idx,uint8_t radio_port,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
   // called avery time we have successfully decrypted a packet
   void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t radioPort,const uint8_t *data, std::size_t data_len);
  private:

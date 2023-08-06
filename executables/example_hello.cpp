@@ -56,6 +56,8 @@ int main(int argc, char *const *argv) {
   options_txrx.log_all_received_validated_packets= true;
   // For easier debugging
   options_txrx.enable_encryption= false;
+  options_txrx.use_gnd_identifier=!is_air;
+  options_txrx.advanced_debugging_rx= true;
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
 

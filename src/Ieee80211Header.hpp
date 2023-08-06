@@ -59,7 +59,9 @@ static constexpr auto OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND=0x02;
 
 struct Ieee80211HeaderOpenHD{
   // We do not touch the control field (driver)
-  ControlField control_field{};
+  //ControlField control_field{};
+  uint8_t part1=0x08;
+  uint8_t part2=0x01;
   // We do not touch the duration field (driver)
   uint8_t duration1=0x00;
   uint8_t duration2=0x00;
@@ -77,8 +79,8 @@ struct Ieee80211HeaderOpenHD{
   uint16_t sequence_control=0;
   // See the data layout above for more info
   void write_nonce(const uint64_t& nonce){
-    memcpy((uint8_t*)&mac_src_nonce_part1,(uint8_t*)nonce,4);
-    memcpy((uint8_t*)&mac_dst_nonce_part2,((uint8_t*)nonce)+4,4);
+    memcpy((uint8_t*)&mac_src_nonce_part1,(uint8_t*)&nonce,4);
+    memcpy((uint8_t*)&mac_dst_nonce_part2,((uint8_t*)&nonce)+4,4);
     // From https://stackoverflow.com/questions/2810280/how-to-store-a-64-bit-integer-in-two-32-bit-integers-and-convert-back-again
     //mac_src_nonce_part1 = static_cast<int32_t>(nonce >> 32);
     //mac_dst_nonce_part2 = static_cast<int32_t>(nonce);
@@ -114,6 +116,12 @@ struct Ieee80211HeaderOpenHD{
   // validate before use (matching)
   uint8_t get_valid_radio_port()const{
     return mac_src_radio_port;
+  }
+  std::string debug_radio_ports()const{
+    return fmt::format("{}:{}",(int)mac_src_radio_port,(int)mac_dst_radio_port);
+  }
+  std::string debug_unique_ids()const{
+    return fmt::format("{}:{}",(int)mac_src_unique_id_part,(int)mac_dst_unique_id_part);
   }
 }__attribute__ ((packed));
 static_assert(sizeof(Ieee80211HeaderOpenHD)==IEEE80211_HEADER_SIZE_BYTES);
