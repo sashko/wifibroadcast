@@ -237,7 +237,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
   if(m_options.log_all_received_packets){
     m_console->debug("Got packet {} {}",wlan_idx,hdr.len);
   }
-  const auto parsedPacket = wifibroadcast::pcap_helper::processReceivedPcapPacket(hdr, pkt, m_options.rtl8812au_rssi_fixup);
+  const auto parsedPacket = wifibroadcast::pcap_helper::processReceivedPcapPacket(hdr, pkt);
   if (parsedPacket == std::nullopt) {
     if(m_options.advanced_debugging_rx){
       m_console->warn("Discarding packet due to pcap parsing error!");
@@ -291,7 +291,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     // Rare case - when multiple RX-es are used, we might get a packet we sent on this air / gnd unit
     // And on AR9271, there is a bug where the card itself gives injected packets back to us
     if(unique_air_gnd_id==unique_tx_id){
-      // Packet originated from this unit
+      // Packet (most likely) originated from this unit
       if(m_options.advanced_debugging_rx){
         m_console->debug("Got packet back on rx {} that was injected (bug or multi rx) {}",wlan_idx,rx_iee80211_hdr_openhd.debug_unique_ids());
       }
@@ -361,8 +361,8 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
       // We only use known "good" packets for those stats.
       auto &this_wifi_card_stats = m_rx_stats_per_card.at(wlan_idx);
       auto& rssi_for_this_card=this_wifi_card_stats.rssi_for_wifi_card;
-      //m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
-      const auto best_rssi=wifibroadcast::pcap_helper::get_best_rssi_of_card(parsedPacket->allAntennaValues);
+      m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
+      const auto best_rssi=wifibroadcast::pcap_helper::get_best_rssi_of_card(parsedPacket->allAntennaValues,m_options.rtl8812au_rssi_fixup);
       //m_console->debug("best_rssi:{}",(int)best_rssi);
       if(best_rssi.has_value()){
         rssi_for_this_card.addRSSI(best_rssi.value());

@@ -93,8 +93,9 @@ static pcap_t *open_pcap_tx(const std::string &wlan) {
 }
 
 struct RssiForAntenna {
-  // which antenna the value refers to
-  const uint8_t antennaIdx;
+  // which antenna the value refers to,
+  // or -1 this dgm value came before a IEEE80211_RADIOTAP_ANTENNA field and the antenna idx is therefore unknown
+  const int8_t antennaIdx;
   // https://www.radiotap.org/fields/Antenna%20signal.html
   const int8_t rssi;
 };
@@ -114,9 +115,10 @@ struct ParsedRxPcapPacket {
 };
 static std::string all_rssi_to_string(const std::vector<RssiForAntenna>& all_rssi){
   std::stringstream ss;
+  ss<<"RSSI for antenna:";
   int idx=0;
   for(const auto& rssiForAntenna:all_rssi){
-    ss<<"RssiForAntenna"<<idx<<"{"<<(int)rssiForAntenna.rssi<<"}\n";
+    ss<<" {"<<(int)rssiForAntenna.antennaIdx<<":"<<(int)rssiForAntenna.rssi<<"}";
     idx++;
   }
   return ss.str();
@@ -126,11 +128,14 @@ static std::string all_rssi_to_string(const std::vector<RssiForAntenna>& all_rss
 //RssiForAntenna1{10}
 //RssiForAntenna2{-18}
 //Now this doesn't make sense, so this helper should fix it
-static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAntenna>& all_rssi){
+static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAntenna>& all_rssi,const bool fixup_rssi_rtl8812au){
   if(all_rssi.empty())return std::nullopt;
   // best rssi == highest value
   int8_t highest_value=INT8_MIN;
   for(const auto& rssiForAntenna:all_rssi){
+    if(rssiForAntenna.antennaIdx==-1){
+      continue ;
+    }
     if(rssiForAntenna.rssi>highest_value){
       highest_value=rssiForAntenna.rssi;
     }
@@ -141,7 +146,7 @@ static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAnte
 // Returns std::nullopt if radiotap was unable to parse the header
 // else return the *parsed information*
 // To avoid confusion it might help to treat this method as a big black Box :)
-static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pkthdr &hdr, const uint8_t *pkt,const bool fixup_rssi_rtl8812au) {
+static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pkthdr &hdr, const uint8_t *pkt) {
   int pktlen = hdr.caplen;
   //
   //RadiotapHelper::debugRadiotapHeader(pkt,pktlen);
@@ -165,7 +170,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
   std::optional<uint16_t> channel_width=std::nullopt;
   std::optional<int> signal_quality=std::nullopt;
 
-  uint8_t currentAntenna = 0;
+  int8_t currentAntenna = -1;
   // not confirmed yet, but one pcap packet might include stats for multiple antennas
   std::vector<RssiForAntenna> allAntennaValues;
   while (ret == 0) {
@@ -183,17 +188,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
       case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
         int8_t value;
         std::memcpy(&value,iterator.this_arg,1);
-        //const int8_t value=*(int8_t*)iterator.this_arg;
-        if(fixup_rssi_rtl8812au){
-          // Dirty fixup for rtl8812au: Throw out the first reported value
-          if(is_first_reported_antenna_value){
-            is_first_reported_antenna_value= false;
-          }else{
-            allAntennaValues.push_back({currentAntenna,value});
-          }
-        }else{
-          allAntennaValues.push_back({currentAntenna,value});
-        }
+        allAntennaValues.push_back({currentAntenna,value});
       }
       break;
       case IEEE80211_RADIOTAP_FLAGS:
