@@ -157,7 +157,6 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
                 encrypted_wrong_sing->size());
             assert(decrypted== nullptr);
         }
-
   }
   // and make sure we don't let packets with an invalid signing suffix through
   for (uint64_t nonce = 0; nonce < 200; nonce++) {
