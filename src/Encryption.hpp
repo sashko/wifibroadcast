@@ -65,7 +65,11 @@ class Encryptor {
       fclose(fp);
     }
   }
-  // Don't forget to send the session key after creating a new one !
+  /**
+   * Creates a new session key, simply put, the data we can send publicly
+   * @param sessionKeyNonce filled with public nonce
+   * @param sessionKeyData filled with public data
+   */
   void makeNewSessionKey(std::array<uint8_t, crypto_box_NONCEBYTES> &sessionKeyNonce,
                          std::array<uint8_t,
                                     crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES> &sessionKeyData) {
