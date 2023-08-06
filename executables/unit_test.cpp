@@ -133,11 +133,27 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
   for (uint64_t nonce = 0; nonce < 200; nonce++) {
 	const auto data = GenericHelper::createRandomDataBuffer(FEC_PACKET_MAX_PAYLOAD_SIZE);
         const auto encrypted=encryptor.encrypt3(nonce,data.data(),data.size());
-	const auto decrypted = decryptor.decrypt3(nonce, encrypted->data(), encrypted->size());
-	//assert(decrypted != std::nullopt);
-	assert(GenericHelper::compareVectors(data, *decrypted) == true);
+        {
+            // Correct usage - let packets through and get the original data back
+            const auto decrypted = decryptor.decrypt3(nonce, encrypted->data(), encrypted->size());
+            assert(GenericHelper::compareVectors(data, *decrypted) == true);
+        }
+        {
+            // tamper with the nonce - shouldn't let packets through
+            //const auto decrypted = decryptor.decrypt3(nonce+1, encrypted->data(), encrypted->size());
+            //assert(decrypted== nullptr);
+        }
+        {
+            // tamper with the encryption suffix -  shouldn't let data through
+            auto encrypted_wrong_sing=encrypted;
+            encrypted_wrong_sing->at(encrypted_wrong_sing->size()-1)=0;
+            encrypted_wrong_sing->at(encrypted_wrong_sing->size()-2)=0;
+            const auto decrypted = decryptor.decrypt3(nonce, encrypted_wrong_sing->data(), encrypted_wrong_sing->size());
+            assert(decrypted== nullptr);
+        }
+
   }
-  // and make sure we don't let invalid packets thrugh
+  // and make sure we don't let packets with an invalid signing suffix through
   for (uint64_t nonce = 0; nonce < 200; nonce++) {
         const auto data = GenericHelper::createRandomDataBuffer(FEC_PACKET_MAX_PAYLOAD_SIZE);
         const auto enrypted_wrong_sign=std::make_shared<std::vector<uint8_t>>();
