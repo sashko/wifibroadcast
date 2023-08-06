@@ -166,7 +166,11 @@ class WBTxRx {
      int last_received_packet_channel_width=-1;
      // complicated but important metric in our case - how many "big gaps" we had in the last 1 second
      int16_t curr_big_gaps_counter=-1;
+     // Percentage of non openhd packets over total n of packets
      int curr_link_pollution_perc=0;
+     // Usefully for channel scan - n packets that are quite likely coming from an openhd air / ground unit (respective depending on if air/gnd mode)
+     // But not validated - e.g. on a channel scan, session key packet has not been received yet
+     int curr_n_likely_openhd_packets=0;
    };
    struct RxStatsPerCard{
      RSSIForWifiCard rssi_for_wifi_card{};
