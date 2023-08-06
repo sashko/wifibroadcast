@@ -58,6 +58,7 @@ int main(int argc, char *const *argv) {
     options_txrx.log_all_received_validated_packets= true;
     options_txrx.advanced_debugging_rx= true;
   }
+  options_txrx.log_all_received_validated_packets= true;
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
 
