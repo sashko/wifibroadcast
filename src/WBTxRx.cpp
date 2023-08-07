@@ -51,7 +51,7 @@ WBTxRx::WBTxRx(std::vector<std::string> wifi_cards,Options options1)
   m_encryptor->makeNewSessionKey(m_tx_sess_key_packet.sessionKeyNonce,m_tx_sess_key_packet.sessionKeyData);
   // next session key in delta ms if packets are being fed
   m_session_key_next_announce_ts = std::chrono::steady_clock::now();
-  // Create a random nonce, we limit it to uint32_t range
+  // Create a random nonce
   m_nonce=randombytes_random();
 }
 
@@ -83,7 +83,7 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
     return ;
   }
   // new wifi packet
-  auto packet_size=
+  const auto packet_size=
       // Radiotap header comes first
       RadiotapHeader::SIZE_BYTES+
       // Then the Ieee80211 header
@@ -130,9 +130,9 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   if(m_options.advanced_debugging_tx){
     m_console->debug("Injected packet ret:{} took:{}",len_injected,MyTimeHelper::R(delta_inject));
   }
-  if (len_injected != (int) packet.size()) {
+  if (len_injected != (int) packet_size) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
-    m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet.size(),len_injected, pcap_geterr(tx));
+    m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size,len_injected, pcap_geterr(tx));
     m_tx_stats.count_tx_errors++;
   }else{
     m_tx_stats.n_injected_bytes_excluding_overhead += data_len;
