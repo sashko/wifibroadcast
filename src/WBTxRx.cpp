@@ -113,7 +113,15 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   // Then the encrypted / validated data (including encryption / validation suffix)
   uint8_t* encrypted_data_p=packet_buff+RadiotapHeader::SIZE_BYTES+ Ieee80211HeaderRaw::SIZE_BYTES;
   m_encryptor->set_encryption_enabled(encrypt);
+  const auto before_encrypt=std::chrono::steady_clock::now();
   const auto ciphertext_len= m_encryptor->authenticate_and_encrypt(this_packet_nonce, data, data_len, encrypted_data_p);
+  if(m_options.debug_encrypt_time){
+    m_packet_encrypt_time.add(std::chrono::steady_clock::now()-before_encrypt);
+    if(m_packet_encrypt_time.get_delta_since_last_reset()>std::chrono::seconds(2)){
+      m_console->debug("Encrypt/validate: {}",m_packet_encrypt_time.getAvgReadable());
+      m_packet_encrypt_time.reset();
+    }
+  }
   // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated
   // (the documentation says 'write up to n bytes' but they probably mean (write exactly n bytes unless an error occurs)
   assert(data_len+crypto_aead_chacha20poly1305_ABYTES == ciphertext_len);
@@ -426,10 +434,18 @@ bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t stream_index,bool
   const uint8_t* encrypted_data_with_suffix=payload_and_enc_suffix;
   const auto encrypted_data_with_suffix_len = payload_and_enc_suffix_size;
   m_decryptor->set_encryption_enabled(encrypted);
+  const auto before_decrypt=std::chrono::steady_clock::now();
   const auto res= m_decryptor->authenticate_and_decrypt(nonce, encrypted_data_with_suffix, encrypted_data_with_suffix_len,decrypted->data());
   if(res){
     if(m_options.log_all_received_validated_packets){
       m_console->debug("Got valid packet nonce:{} wlan_idx:{} encrypted:{} stream_index:{} size:{}",nonce,wlan_idx,encrypted,stream_index,payload_and_enc_suffix_size);
+    }
+    if(m_options.debug_decrypt_time){
+      m_packet_decrypt_time.add(std::chrono::steady_clock::now()-before_decrypt);
+      if(m_packet_decrypt_time.get_delta_since_last_reset()>std::chrono::seconds(2)){
+        m_console->debug("Decrypt/Validate: {}",m_packet_decrypt_time.getAvgReadable());
+        m_packet_decrypt_time.reset();
+      }
     }
     on_valid_packet(nonce,wlan_idx,stream_index,decrypted->data(),decrypted->size());
     if(wlan_idx==0){

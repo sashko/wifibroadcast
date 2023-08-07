@@ -75,6 +75,10 @@ class WBTxRx {
     bool use_gnd_identifier= false;
     // RSSI can be tricky
     bool debug_rssi= false;
+    // Debug encrypt / calculate checksum time
+    bool debug_encrypt_time= false;
+    // Debug decrypt / validate checksum time
+    bool debug_decrypt_time= false;
   };
   explicit WBTxRx(std::vector<std::string> wifi_cards,Options options1);
   WBTxRx(const WBTxRx &) = delete;
@@ -287,6 +291,8 @@ class WBTxRx {
   PacketsPerSecondCalculator m_tx_packets_per_second_calculator{};
   BitrateCalculator m_rx_bitrate_calculator{};
   PacketsPerSecondCalculator m_rx_packets_per_second_calculator{};
+  AvgCalculator m_packet_encrypt_time;
+  AvgCalculator m_packet_decrypt_time;
  private:
   // we announce the session key in regular intervals if data is currently being injected (tx_ is called)
   void announce_session_key_if_needed();
