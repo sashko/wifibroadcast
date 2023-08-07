@@ -39,6 +39,9 @@
  *
  * NOTE: Receiving of data is not started until startReceiving() is called !
  * (To give the user time to register all the receive handlers)
+ *
+ * NOTE2: You won't find any FEC or similar here - this class intentionally represents a lowe level
+ * where FEC or similar can be added on top
  */
 class WBTxRx {
  public:
