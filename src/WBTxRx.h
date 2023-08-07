@@ -94,7 +94,7 @@ class WBTxRx {
    * uint8_t but needs to be in range of [MIN,MAX] stream index
    * @param data the packet payload
    * @param data_len the packet payload length
-   * @param encrypt: Optionally encrypt the packet, if not encrypted, it is only validated in a secure way
+   * @param encrypt: Optionally encrypt the packet, if not encrypted, only a (secure) validation checksum is calculated & checked on rx
    * Encryption results in more CPU load and is therefore not wanted in all cases (e.g. by default, openhd does not encrypt video)
    */
   void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,bool encrypt=false);
