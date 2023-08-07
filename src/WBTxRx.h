@@ -72,6 +72,8 @@ class WBTxRx {
     bool enable_encryption= false;
     // You need to set this to air / gnd on the air / gnd unit since AR9271 has a bug where it reports injected packets as received packets
     bool use_gnd_identifier= false;
+    // RSSI can be tricky
+    bool debug_rssi= false;
   };
   explicit WBTxRx(std::vector<std::string> wifi_cards,Options options1);
   WBTxRx(const WBTxRx &) = delete;

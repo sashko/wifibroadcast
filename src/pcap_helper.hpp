@@ -133,8 +133,10 @@ static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAnte
   // best rssi == highest value
   int8_t highest_value=INT8_MIN;
   for(const auto& rssiForAntenna:all_rssi){
-    if(rssiForAntenna.antennaIdx==-1){
-      continue ;
+    if(fixup_rssi_rtl8812au){
+      if(rssiForAntenna.antennaIdx==-1){
+        continue ;
+      }
     }
     if(rssiForAntenna.rssi>highest_value){
       highest_value=rssiForAntenna.rssi;

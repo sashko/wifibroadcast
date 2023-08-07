@@ -361,7 +361,9 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
       // We only use known "good" packets for those stats.
       auto &this_wifi_card_stats = m_rx_stats_per_card.at(wlan_idx);
       auto& rssi_for_this_card=this_wifi_card_stats.rssi_for_wifi_card;
-      m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
+      if(m_options.debug_rssi){
+        m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
+      }
       const auto best_rssi=wifibroadcast::pcap_helper::get_best_rssi_of_card(parsedPacket->allAntennaValues,m_options.rtl8812au_rssi_fixup);
       //m_console->debug("best_rssi:{}",(int)best_rssi);
       if(best_rssi.has_value()){
