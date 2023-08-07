@@ -87,6 +87,10 @@ class WBStreamTx {
     MinMaxAvg<uint16_t> curr_fec_block_length{};
   };
   FECStats get_latest_fec_stats();
+  /**
+   * Enables / disables encryption for this stream
+   * (pass encrypt=true on the inject cb)
+   */
   void set_encryption(bool encrypt){
     m_enable_encryption=encrypt;
   }
