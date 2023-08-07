@@ -100,7 +100,7 @@ class WBTxRx {
    * @param wlan_index: the card on which the packet was received (in case there are multiple cards used for wb)
    * @param radio_port: the multiplex index used to separate streams during injection
    */
-  typedef std::function<void(uint64_t nonce,int wlan_index,const uint8_t *data, const std::size_t data_len)> SPECIFIC_OUTPUT_DATA_CB;
+  typedef std::function<void(uint64_t nonce,int wlan_index,const uint8_t *data, const int data_len)> SPECIFIC_OUTPUT_DATA_CB;
   typedef std::function<void()> NEW_SESSION_CB;
   struct StreamRxHandler{
     uint8_t radio_port; // For which multiplexed stream this handles events
@@ -111,7 +111,7 @@ class WBTxRx {
   };
   void rx_register_stream_handler(std::shared_ptr<StreamRxHandler> handler);
   void rx_unregister_stream_handler(uint8_t radio_port);
-  typedef std::function<void(uint64_t nonce,int wlan_index,const uint8_t radioPort,const uint8_t *data, const std::size_t data_len)> OUTPUT_DATA_CALLBACK;
+  typedef std::function<void(uint64_t nonce,int wlan_index,const uint8_t radioPort,const uint8_t *data, const int data_len)> OUTPUT_DATA_CALLBACK;
   // register callback that is called each time a valid packet is received (any multiplexed stream)
   void rx_register_callback(OUTPUT_DATA_CALLBACK cb);
 
@@ -298,7 +298,7 @@ class WBTxRx {
   // returns true if packet could be decrypted successfully
   bool process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
   // called avery time we have successfully decrypted a packet
-  void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data, std::size_t data_len);
+  void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data,const int data_len);
   static std::string options_to_string(const std::vector<std::string>& wifi_cards,const Options& options);
  private:
   // These are 'extra' for calculating some channel pollution value

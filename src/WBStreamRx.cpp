@@ -29,7 +29,7 @@ WBStreamRx::WBStreamRx(std::shared_ptr<WBTxRx> txrx,Options options1)
     };
     m_fec_disabled_decoder->mSendDecodedPayloadCallback = cb;
   }
-  auto cb_packet=[this](uint64_t nonce,int wlan_index,const uint8_t *data, const std::size_t data_len){
+  auto cb_packet=[this](uint64_t nonce,int wlan_index,const uint8_t *data, const int data_len){
     this->on_new_packet(nonce,wlan_index,data,data_len);
   };
   auto cb_sesssion=[this](){
@@ -59,7 +59,7 @@ void WBStreamRx::set_callback(
   m_out_cb=std::move(output_data_callback);
 }
 
-void WBStreamRx::on_new_packet(uint64_t nonce, int wlan_index, const uint8_t *data,const std::size_t data_len) {
+void WBStreamRx::on_new_packet(uint64_t nonce, int wlan_index, const uint8_t *data,const int data_len) {
   m_n_input_packets++;
   m_n_input_bytes+=data_len;
   if(m_options.enable_threading){
