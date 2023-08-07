@@ -132,6 +132,15 @@ static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAnte
   if(all_rssi.empty())return std::nullopt;
   // best rssi == highest value
   int8_t highest_value=INT8_MIN;
+  for(int i=0;i<all_rssi.size();i++){
+    const auto& rssi_for_antenna=all_rssi[i];
+    if(fixup_rssi_rtl8812au || true){
+      if(i==0) continue ;
+      if(rssi_for_antenna.rssi>highest_value){
+        highest_value=rssi_for_antenna.rssi;
+      }
+    }
+  }
   for(const auto& rssiForAntenna:all_rssi){
     if(fixup_rssi_rtl8812au){
       if(rssiForAntenna.antennaIdx==-1){
@@ -183,7 +192,7 @@ static std::optional<ParsedRxPcapPacket> processReceivedPcapPacket(const pcap_pk
     /* see if this argument is something we can use */
     switch (iterator.this_arg_index) {
       case IEEE80211_RADIOTAP_ANTENNA:
-        // RADIOTAP_DBM_ANTSIGNAL should come directly afterwards
+        // RADIOTAP_DBM_ANTSIGNAL seems to come not before, but after
         currentAntenna = iterator.this_arg[0];
         //radiotap_antennas.push_back(iterator.this_arg[0]);
         break;

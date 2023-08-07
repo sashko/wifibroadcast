@@ -25,7 +25,7 @@
  * It hides away some nasty driver quirks, and offers
  * 1) A lot of usefully stats like packet loss, dbm, ...
  * 2) Multiplexing (radio_port) - multiple streams from air to ground / ground to air are possible
- * 3) Packet validation / encryption
+ * 3) Packet validation / encryption (selectable per packet)
  * 4) Multiple RX-cards (only one active tx at a time though)
  * Packets sent by an "air unit" are received by any listening ground unit (broadcast) that uses the same (encryption/validation) key-pair
  * Packets sent by an "ground unit" are received by any listening air unit (broadcast) that uses the same (encryption/validation) key-pair
@@ -67,9 +67,6 @@ class WBTxRx {
     // interval in which the session key packet is sent out - if no data is fed to the TX,
     // no session key is sent until data is fed.
     std::chrono::milliseconds session_key_packet_interval=std::chrono::seconds(1);
-    // enable encryption, by default, only packet validation (without encryption) is done since
-    // encryption needs a lot of CPU processing.
-    bool enable_encryption= false;
     // You need to set this to air / gnd on the air / gnd unit since AR9271 has a bug where it reports injected packets as received packets
     bool use_gnd_identifier= false;
     // RSSI can be tricky
@@ -81,15 +78,18 @@ class WBTxRx {
   ~WBTxRx();
   /**
    * Creates a valid injection packet which has the layout:
-   * radiotap_header,ieee_80211_header,nonce (64 bit), encrypted data, encryption prefix
+   * radiotap_header,ieee_80211_header, data (encrypted or not encrypted), encryption/validation suffix
    * A increasing nonce is used for each packet, and is used for packet validation
    * on the receiving side.
    * NOTE: Encryption and/or validation adds a fixed amount of overhead to each injected packet !
-   * @param radioPort used to multiplex more than one data stream, the radio port is written into the IEE80211 header
+   * @param stream_index used to multiplex more than one data stream, written into the IEE80211 header
+   * uint8_t but needs to be in range of [MIN,MAX] stream index
    * @param data the packet payload
    * @param data_len the packet payload length
+   * @param encrypt: Optionally encrypt the packet, if not encrypted, it is only validated in a secure way
+   * Encryption results in more CPU load and is therefore not wanted in all cases (e.g. by default, openhd does not encrypt video)
    */
-  void tx_inject_packet(uint8_t radioPort,const uint8_t* data,int data_len);
+  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,bool encrypt=false);
 
   /**
    * A typical stream RX (aka the receiver for a specific multiplexed stream) needs to react to events during streaming.
@@ -221,6 +221,20 @@ class WBTxRx {
   RadiotapHeader m_tx_radiotap_header;
   Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
   uint16_t m_ieee80211_seq = 0;
+  struct RadioPort{
+     uint8_t encrypted: 1; // 1 bit encryption enabled / disabled
+     uint8_t multiplex_index: 7; // 7 bit multiplex / stream index (2^7=128 => 127 possible multiplexed streams since one is reserved for session keys)
+  }__attribute__ ((packed));
+  static_assert(sizeof(RadioPort)==1);
+  static uint8_t radio_port_to_uint8_t(const RadioPort& radio_port){
+     uint8_t ret;
+     memcpy(&ret,(void*)&radio_port,1);
+     return ret;
+  }
+  static constexpr auto STREAM_INDEX_MIN =0;
+  static constexpr auto STREAM_INDEX_MAX =127;
+  // Not available as a valid stream index, since used for the session packets
+  static constexpr auto STREAM_INDEX_SESSION_KEY_PACKETS =128;
   uint64_t m_nonce=0;
   // For multiple RX cards the card with the highest rx rssi is used to inject packets on
   std::atomic<int> m_curr_tx_card=0;
@@ -239,7 +253,6 @@ class WBTxRx {
   std::unique_ptr<std::thread> m_receive_thread;
   std::vector<pollfd> m_receive_pollfds;
   std::chrono::steady_clock::time_point m_last_receiver_error_log=std::chrono::steady_clock::now();
-  static constexpr auto RADIO_PORT_SESSION_KEY_PACKETS=25;
   // for calculating the packet loss on the rx side
   seq_nr::Helper m_seq_nr_helper;
   seq_nr::Helper m_seq_nr_helper_iee80211;
@@ -282,9 +295,10 @@ class WBTxRx {
   void on_new_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
   // verify and decrypt the packet if possible
   // returns true if packet could be decrypted successfully
-  bool process_received_data_packet(int wlan_idx,uint8_t radio_port,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
+  bool process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
   // called avery time we have successfully decrypted a packet
-  void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t radioPort,const uint8_t *data, std::size_t data_len);
+  void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data, std::size_t data_len);
+  static std::string options_to_string(const std::vector<std::string>& wifi_cards,const Options& options);
  private:
   // These are 'extra' for calculating some channel pollution value
   uint32_t m_pollution_total_rx_packets=0;

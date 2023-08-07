@@ -58,7 +58,6 @@ int main(int argc, char *const *argv) {
   WBTxRx::Options options_txrx{};
   options_txrx.rtl8812au_rssi_fixup= true;
   options_txrx.set_direction= true;
-  options_txrx.enable_encryption= false;
   options_txrx.use_gnd_identifier=!is_air;
   if(advanced_debugging){
     options_txrx.log_all_received_validated_packets= true;

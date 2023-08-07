@@ -16,7 +16,7 @@ WBTxRx::WBTxRx(std::vector<std::string> wifi_cards,Options options1)
 {
   assert(!m_wifi_cards.empty());
   m_console=wifibroadcast::log::create_or_get("WBTxRx");
-  m_console->debug(" cards:{} set_direction:{}",StringHelper::string_vec_as_string(m_wifi_cards),m_options.set_direction);
+  m_console->debug("{}", options_to_string(m_wifi_cards,m_options));
   // Common error - not run as root
   if(!SchedulingHelper::check_root()){
     std::cerr<<"wifibroadcast needs root"<<std::endl;
@@ -46,13 +46,14 @@ WBTxRx::WBTxRx(std::vector<std::string> wifi_cards,Options options1)
     m_receive_pollfds[i].fd = fd;
     m_receive_pollfds[i].events = POLLIN;
   }
-  const bool disable_encryption=! m_options.enable_encryption;
-  m_encryptor=std::make_unique<Encryptor>(std::nullopt,disable_encryption);
-  m_decryptor=std::make_unique<Decryptor>(std::nullopt,disable_encryption);
+  m_encryptor=std::make_unique<Encryptor>(m_options.encryption_key);
+  m_decryptor=std::make_unique<Decryptor>(m_options.encryption_key);
   m_encryptor->makeNewSessionKey(m_tx_sess_key_packet.sessionKeyNonce,
                                 m_tx_sess_key_packet.sessionKeyData);
   // next session key in delta ms if packets are being fed
   m_session_key_next_announce_ts = std::chrono::steady_clock::now();
+  // Create a random nonce, we limit it to uint32_t range
+  m_nonce=randombytes_random();
 }
 
 WBTxRx::~WBTxRx() {
@@ -74,9 +75,9 @@ WBTxRx::~WBTxRx() {
   }
 }
 
-void WBTxRx::tx_inject_packet(const uint8_t radioPort,
-                                    const uint8_t* data, int data_len) {
+void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, int data_len,bool encrypt) {
   assert(data_len<=MAX_PACKET_PAYLOAD_SIZE);
+  assert(stream_index>= STREAM_INDEX_MIN && stream_index<= STREAM_INDEX_MAX);
   std::lock_guard<std::mutex> guard(m_tx_mutex);
   // for openhd ground station functionality
   if(m_disable_all_transmissions){
@@ -102,7 +103,8 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
   m_tx_ieee80211_hdr_openhd.write_ieee80211_seq_nr(this_packet_ieee80211_seq);
   // create a new nonce for this packet
   const uint64_t this_packet_nonce =m_nonce++;
-  m_tx_ieee80211_hdr_openhd.write_radio_port_src_dst(radioPort);
+  RadioPort this_packet_radio_port{encrypt,stream_index};
+  m_tx_ieee80211_hdr_openhd.write_radio_port_src_dst(radio_port_to_uint8_t(this_packet_radio_port));
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   m_tx_ieee80211_hdr_openhd.write_unique_id_src_dst(unique_tx_id);
   m_tx_ieee80211_hdr_openhd.write_nonce(this_packet_nonce);
@@ -112,8 +114,8 @@ void WBTxRx::tx_inject_packet(const uint8_t radioPort,
          (uint8_t*)&m_tx_ieee80211_hdr_openhd, Ieee80211HeaderRaw::SIZE_BYTES);
   // Then the encrypted / validated data (including encryption / validation suffix)
   uint8_t* encrypted_data_p=packet_buff+RadiotapHeader::SIZE_BYTES+ Ieee80211HeaderRaw::SIZE_BYTES;
-  const auto ciphertext_len= m_encryptor->authenticate_and_encrypt(
-      this_packet_nonce, data, data_len, encrypted_data_p);
+  m_encryptor->set_encryption_enabled(encrypt);
+  const auto ciphertext_len= m_encryptor->authenticate_and_encrypt(this_packet_nonce, data, data_len, encrypted_data_p);
   // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated
   // (the documentation says 'write up to n bytes' but they probably mean (write exactly n bytes unless an error occurs)
   assert(data_len+crypto_aead_chacha20poly1305_ABYTES == ciphertext_len);
@@ -311,11 +313,12 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     }
     return;
   }
-  const auto radio_port=rx_iee80211_hdr_openhd.get_valid_radio_port();
+  const auto radio_port_raw=rx_iee80211_hdr_openhd.get_valid_radio_port();
+  const RadioPort& radio_port=*(RadioPort*)&radio_port_raw;
   const auto nonce=rx_iee80211_hdr_openhd.get_nonce();
   // Quite likely an openhd packet (I'd say pretty much 100%) but not validated yet
   m_rx_stats.curr_n_likely_openhd_packets++;
-  if(radio_port==RADIO_PORT_SESSION_KEY_PACKETS){
+  if(radio_port.multiplex_index== STREAM_INDEX_SESSION_KEY_PACKETS){
     if (pkt_payload_size != sizeof(SessionKeyPacket)) {
       if(m_options.advanced_debugging_rx){
         m_console->warn("Cannot be session key packet - size mismatch {}",pkt_payload_size);
@@ -354,7 +357,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
       }
       return ;
     }
-    const bool valid=process_received_data_packet(wlan_idx,radio_port,nonce,pkt_payload,pkt_payload_size);
+    const bool valid=process_received_data_packet(wlan_idx,radio_port.multiplex_index,radio_port.encrypted,nonce,pkt_payload,pkt_payload_size);
     if(valid){
       m_rx_stats.count_p_valid++;
       m_rx_stats.count_bytes_valid+=pkt_payload_size;
@@ -419,19 +422,18 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
   }
 }
 
-bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t radio_port,const uint64_t nonce,const uint8_t *payload_and_enc_suffix,int payload_and_enc_suffix_size) {
+bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,const uint64_t nonce,const uint8_t *payload_and_enc_suffix,int payload_and_enc_suffix_size) {
   std::shared_ptr<std::vector<uint8_t>> decrypted=std::make_shared<std::vector<uint8_t>>(payload_and_enc_suffix_size-crypto_aead_chacha20poly1305_ABYTES);
   // after that, we have the encrypted data (and the encryption suffix)
   const uint8_t* encrypted_data_with_suffix=payload_and_enc_suffix;
   const auto encrypted_data_with_suffix_len = payload_and_enc_suffix_size;
-  const auto res= m_decryptor->authenticate_and_decrypt(
-      nonce, encrypted_data_with_suffix, encrypted_data_with_suffix_len,
-      decrypted->data());
+  m_decryptor->set_encryption_enabled(encrypted);
+  const auto res= m_decryptor->authenticate_and_decrypt(nonce, encrypted_data_with_suffix, encrypted_data_with_suffix_len,decrypted->data());
   if(res){
     if(m_options.log_all_received_validated_packets){
-      m_console->debug("Got valid packet nonce:{} wlan_idx:{} radio_port:{} size:{}",nonce,wlan_idx,radio_port,payload_and_enc_suffix_size);
+      m_console->debug("Got valid packet nonce:{} wlan_idx:{} encrypted:{} stream_index:{} size:{}",nonce,wlan_idx,encrypted,stream_index,payload_and_enc_suffix_size);
     }
-    on_valid_packet(nonce,wlan_idx,radio_port,decrypted->data(),decrypted->size());
+    on_valid_packet(nonce,wlan_idx,stream_index,decrypted->data(),decrypted->size());
     if(wlan_idx==0){
       uint16_t tmp=nonce;
       m_seq_nr_helper.on_new_sequence_number(tmp);
@@ -448,12 +450,12 @@ bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t radio_port,const 
   return false;
 }
 
-void WBTxRx::on_valid_packet(uint64_t nonce,int wlan_index,const uint8_t radioPort,const uint8_t *data, const std::size_t data_len) {
+void WBTxRx::on_valid_packet(uint64_t nonce,int wlan_index,const uint8_t stream_index,const uint8_t *data, const std::size_t data_len) {
   if(m_output_cb!= nullptr){
-    m_output_cb(nonce,wlan_index,radioPort,data,data_len);
+    m_output_cb(nonce,wlan_index,stream_index,data,data_len);
   }
   // find a consumer for data of this radio port
-  auto handler=m_rx_handlers.find(radioPort);
+  auto handler=m_rx_handlers.find(stream_index);
   if(handler!=m_rx_handlers.end()){
     StreamRxHandler& rxHandler=*handler->second;
     rxHandler.cb_packet(nonce,wlan_index,data,data_len);
@@ -489,11 +491,11 @@ void WBTxRx::announce_session_key_if_needed() {
 void WBTxRx::send_session_key() {
   RadiotapHeader tmp_radiotap_header= m_tx_radiotap_header;
   /*Ieee80211HeaderRaw tmp_ieee_hdr= m_tx_ieee80211_header;
-  tmp_ieee_hdr.writeParams(RADIO_PORT_SESSION_KEY_PACKETS,0);*/
+  tmp_ieee_hdr.writeParams(STREAM_INDEX_SESSION_KEY_PACKETS,0);*/
   Ieee80211HeaderOpenHD tmp_tx_hdr{};
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   tmp_tx_hdr.write_unique_id_src_dst(unique_tx_id);
-  tmp_tx_hdr.write_radio_port_src_dst(RADIO_PORT_SESSION_KEY_PACKETS);
+  tmp_tx_hdr.write_radio_port_src_dst(STREAM_INDEX_SESSION_KEY_PACKETS);
   tmp_tx_hdr.write_ieee80211_seq_nr(m_ieee80211_seq++);
   tmp_tx_hdr.write_nonce(m_nonce++);
 
@@ -631,4 +633,9 @@ void WBTxRx::recalculate_pollution_perc() {
   }
   m_pollution_total_rx_packets=0;
   m_pollution_openhd_rx_packets=0;
+}
+
+std::string WBTxRx::options_to_string(const std::vector<std::string>& wifi_cards,const WBTxRx::Options& options) {
+  return fmt::format("Id:{} Cards:{} Keypair:{} ",options.use_gnd_identifier ? "Ground":"Air",StringHelper::string_vec_as_string(wifi_cards),
+                     options.encryption_key.value_or("DEFAULT_SEED"));
 }

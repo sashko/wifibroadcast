@@ -87,6 +87,9 @@ class WBStreamTx {
     MinMaxAvg<uint16_t> curr_fec_block_length{};
   };
   FECStats get_latest_fec_stats();
+  void set_encryption(bool encrypt){
+    m_enable_encryption=encrypt;
+  }
  private:
   const Options options;
   std::shared_ptr<WBTxRx> m_txrx;
@@ -131,6 +134,7 @@ class WBStreamTx {
   void process_enqueued_packet(const EnqueuedPacket& packet);
   void process_enqueued_block(const EnqueuedBlock& block);
   void send_packet(const uint8_t* packet,int packet_len);
+  std::atomic<bool> m_enable_encryption=false;
 };
 
 #endif  // WIFIBROADCAST_WBSTREAMTX_H

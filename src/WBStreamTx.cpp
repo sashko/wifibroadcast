@@ -166,7 +166,7 @@ void WBStreamTx::process_enqueued_block(const WBStreamTx::EnqueuedBlock& block) 
 }
 
 void WBStreamTx::send_packet(const uint8_t* packet, int packet_len) {
-  m_txrx->tx_inject_packet(options.radio_port,packet,packet_len);
+  m_txrx->tx_inject_packet(options.radio_port,packet,packet_len,m_enable_encryption.load());
   m_n_injected_packets++;
   m_count_bytes_data_injected+=packet_len;
 }

@@ -75,7 +75,7 @@ struct Ieee80211HeaderOpenHD{
   uint8_t mac_dst_unique_id_part=OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   std::array<uint8_t, 4> mac_dst_nonce_part2={};
   uint8_t mac_dst_radio_port=0;
-  // iee80211 sequence control ( 2 bytes ) - might be overridden by the driver, and or even repurposed
+  // iee80211 sequence control ( 2 bytes ) - might be overridden by the driver, and/or even repurposed
   uint16_t sequence_control=0;
   // ----------------------------------- DATA LAYOUT END -----------------------------------
   /**
