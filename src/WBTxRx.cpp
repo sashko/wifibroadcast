@@ -92,8 +92,7 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
       data_len+
       // encryption suffix
       crypto_aead_chacha20poly1305_ABYTES;
-  std::vector<uint8_t> packet = std::vector<uint8_t>(packet_size);
-  uint8_t* packet_buff=packet.data();
+  uint8_t* packet_buff=m_tx_packet_buff.data();
   // radiotap header comes first
   memcpy(packet_buff, m_tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
   // Iee80211 header comes next
@@ -122,7 +121,7 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   // we inject the packet on whatever card has the highest rx rssi right now
   pcap_t *tx= m_pcap_handles[m_curr_tx_card].tx;
   const auto before_injection = std::chrono::steady_clock::now();
-  const auto len_injected=pcap_inject(tx, packet.data(), packet.size());
+  const auto len_injected=pcap_inject(tx, packet_buff, packet_size);
   //const auto len_injected=write(m_receive_pollfds.at(0).fd,packet.data(),packet.size());
   const auto delta_inject=std::chrono::steady_clock::now()-before_injection;
   if(delta_inject>=MAX_SANE_INJECTION_TIME){

@@ -221,6 +221,7 @@ class WBTxRx {
   RadiotapHeader::UserSelectableParams m_radioTapHeaderParams{};
   RadiotapHeader m_tx_radiotap_header;
   Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
+  std::array<uint8_t,PCAP_MAX_PACKET_SIZE> m_tx_packet_buff{};
   uint16_t m_ieee80211_seq = 0;
   struct RadioPort{
      uint8_t encrypted: 1; // 1 bit encryption enabled / disabled
