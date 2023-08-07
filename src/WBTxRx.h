@@ -23,8 +23,8 @@
  * This class exists to provide a clean, working interface to create a broadcast-like
  * bidirectional wifi link between an fpv air and (one or more) ground unit(s).
  * It hides away some nasty driver quirks, and offers
- * 1) A lot of usefully stats like packet loss, dbm, ...
- * 2) Multiplexing (radio_port) - multiple streams from air to ground / ground to air are possible
+ * 1) A lot of usefully stats like packet loss,pollution, dbm, ...
+ * 2) Multiplexing (stream_index) - multiple streams from air to ground / ground to air are possible
  * 3) Packet validation / encryption (selectable per packet)
  * 4) Multiple RX-cards (only one active tx at a time though)
  * Packets sent by an "air unit" are received by any listening ground unit (broadcast) that uses the same (encryption/validation) key-pair
@@ -35,9 +35,10 @@
  * It adds a minimal overhead of 16 bytes per data packet for validation / encryption
  * And - configurable - a couple of packets per second for the session key.
  *
- * See example_hello for how to use this class.
+ * See executables/example_hello.cpp for a simple demonstration how to use this class.
  *
  * NOTE: Receiving of data is not started until startReceiving() is called !
+ * (To give the user time to register all the receive handlers)
  */
 class WBTxRx {
  public:
