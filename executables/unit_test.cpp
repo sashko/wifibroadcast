@@ -110,8 +110,10 @@ static void test_fec_stream_random_bs_fs_overhead_dropped(){
 // Test encryption+packet validation and packet validation only
 static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool message_signing_only) {
   std::cout << "Using generated keypair (default seed otherwise):" << (useGeneratedFiles ? "y" : "n") << "\n";
-  std::optional<std::string> encKey = useGeneratedFiles ? std::optional<std::string>("gs.key") : std::nullopt;
-  std::optional<std::string> decKey = useGeneratedFiles ? std::optional<std::string>("drone.key") : std::nullopt;
+  const std::string filename_gs="gs.key"; //"../example_keys/gs.key"
+  const std::string filename_drone="drone.key" //"../example_keys/drone.key"
+  std::optional<std::string> encKey = useGeneratedFiles ? std::optional<std::string>(filename_gs) : std::nullopt;
+  std::optional<std::string> decKey = useGeneratedFiles ? std::optional<std::string>(filename_drone) : std::nullopt;
   if(message_signing_only){
     std::cout<<"Testing message signing\n";
   }else{
@@ -128,8 +130,8 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
   // make session key (tx)
   encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   // and "receive" session key (rx)
-  assert(
-	  decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData) == true);
+  assert(decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)
+         == Decryptor::SESSION_VALID_NEW);
   // now encrypt a couple of packets and decrypt them again afterwards
   for (uint64_t nonce = 0; nonce < 200; nonce++) {
 	const auto data = GenericHelper::createRandomDataBuffer(FEC_PACKET_MAX_PAYLOAD_SIZE);

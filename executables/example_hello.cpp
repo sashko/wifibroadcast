@@ -54,7 +54,9 @@ int main(int argc, char *const *argv) {
   std::cout<<"Running as "<<(is_air ? "Air" : "Ground")<<" on card "<<card<<"\n";
 
   // Create the Tx-RX
-  std::vector<std::string> cards{card};
+  std::vector<WBTxRx::WifiCard> cards;
+  WBTxRx::WifiCard tmp_card{card,1};
+  cards.push_back(tmp_card);
   WBTxRx::Options options_txrx{};
   options_txrx.rtl8812au_rssi_fixup= true;
   options_txrx.set_direction= true;
@@ -90,9 +92,9 @@ int main(int argc, char *const *argv) {
       lastLog=std::chrono::steady_clock::now();
       auto txStats=txrx->get_tx_stats();
       auto rxStats=txrx->get_rx_stats();
-      auto rssi=txrx->get_rx_stats_for_card(0);
+      auto rx_stats_card0=txrx->get_rx_stats_for_card(0);
       std::cout<<txStats<<std::endl;
-      std::cout<<rxStats<<" RSSI:"<<(int)rssi.rssi_for_wifi_card.last_rssi<<std::endl;
+      std::cout<<rx_stats_card0<<std::endl;
     }
   }
 }

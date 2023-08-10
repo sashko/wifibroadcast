@@ -167,8 +167,16 @@ class Decryptor {
   std::array<uint8_t, crypto_box_PUBLICKEYBYTES> tx_publickey{};
   std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> session_key{};
  public:
-  // return true if a new session was detected (The same session key can be sent multiple times by the tx)
-  bool onNewPacketSessionKeyData(const std::array<uint8_t, crypto_box_NONCEBYTES> &sessionKeyNonce,
+  static constexpr auto SESSION_VALID_NEW=0;
+  static constexpr auto SESSION_VALID_NOT_NEW=1;
+  static constexpr auto SESSION_NOT_VALID=-1;
+  /**
+   * Returns 0 if the session is a valid session in regards to the key-pairs AND the session is a new session
+   * Returns 1 if the session is a valid session in regards to the key-pairs but it is not a new session
+   * Returns -1 if the session is not a valid session in regards to the key-pairs
+   *
+   */
+  int onNewPacketSessionKeyData(const std::array<uint8_t, crypto_box_NONCEBYTES> &sessionKeyNonce,
                                  const std::array<uint8_t,crypto_aead_chacha20poly1305_KEYBYTES+ crypto_box_MACBYTES> &sessionKeyData) {
     std::array<uint8_t, sizeof(session_key)> new_session_key{};
     if (crypto_box_open_easy(new_session_key.data(),
@@ -177,15 +185,15 @@ class Decryptor {
                              tx_publickey.data(), rx_secretkey.data()) != 0) {
       // this basically should just never happen, and is an error
       wifibroadcast::log::get_default()->warn("unable to decrypt session key");
-      return false;
+      return SESSION_NOT_VALID;
     }
     if (memcmp(session_key.data(), new_session_key.data(), sizeof(session_key)) != 0) {
       // this is NOT an error, the same session key is sent multiple times !
       wifibroadcast::log::get_default()->info("Decryptor-New session detected");
       session_key = new_session_key;
-      return true;
+      return SESSION_VALID_NEW;
     }
-    return false;
+    return SESSION_VALID_NOT_NEW;
   }
   /**
    * Decrypt (or validate only if encryption is disabled) the given message
@@ -238,5 +246,47 @@ class Decryptor {
     DISABLE_ENCRYPTION_FOR_PERFORMANCE=!encryption_enabled;
   }
 };
+
+namespace wbencryption{
+
+struct KeypairData{
+  unsigned char drone_publickey[crypto_box_PUBLICKEYBYTES];
+  unsigned char drone_secretkey[crypto_box_SECRETKEYBYTES];
+  unsigned char gs_publickey[crypto_box_PUBLICKEYBYTES];
+  unsigned char gs_secretkey[crypto_box_SECRETKEYBYTES];
+};
+
+static KeypairData generate_keypair(){
+  KeypairData ret{};
+  crypto_box_keypair(ret.drone_publickey, ret.drone_secretkey);
+  crypto_box_keypair(ret.gs_publickey, ret.gs_secretkey);
+  return ret;
+}
+
+static int write_to_file(const KeypairData& data){
+  FILE *fp;
+  if ((fp = fopen("drone.key", "w")) == NULL) {
+    perror("Unable to save drone.key");
+    return 1;
+  }
+  fwrite(data.drone_secretkey, crypto_box_SECRETKEYBYTES, 1, fp);
+  fwrite(data.gs_publickey, crypto_box_PUBLICKEYBYTES, 1, fp);
+  fclose(fp);
+
+  fprintf(stderr, "Drone keypair (drone sec + gs pub) saved to drone.key\n");
+
+  if ((fp = fopen("gs.key", "w")) == NULL) {
+    perror("Unable to save gs.key");
+    return 1;
+  }
+
+  fwrite(data.gs_secretkey, crypto_box_SECRETKEYBYTES, 1, fp);
+  fwrite(data.drone_publickey, crypto_box_PUBLICKEYBYTES, 1, fp);
+  fclose(fp);
+  fprintf(stderr, "GS keypair (gs sec + drone pub) saved to gs.key\n");
+  return 0;
+}
+
+}
 
 #endif //ENCRYPTION_HPP

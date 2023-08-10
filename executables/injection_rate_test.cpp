@@ -245,12 +245,13 @@ int main(int argc, char *const *argv) {
   std::cout<<"Running on card "<<card<<"\n";
 
   // Create the Tx-RX
-  std::vector<std::string> cards{card};
+  std::vector<WBTxRx::WifiCard> cards;
+  WBTxRx::WifiCard tmp_card{card,1};
+  cards.push_back(tmp_card);
   WBTxRx::Options options_txrx{};
   options_txrx.rtl8812au_rssi_fixup= true;
   //options_txrx.set_direction= false;
   options_txrx.log_all_received_validated_packets= false;
-  options_txrx.enable_encryption= false;
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
   // No idea if and what effect stbc and ldpc have on the rate, but openhd enables them if possible by default

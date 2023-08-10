@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(WBLib.cmake)
 
-add_executable(wfb_keygen executables/wfb_keygen.c)
+add_executable(wfb_keygen executables/wfb_keygen.cpp)
 target_link_libraries(wfb_keygen  ${WB_TARGET_LINK_LIBRARIES})
 
 add_executable(benchmark executables/benchmark.cpp)
@@ -35,6 +35,9 @@ target_link_libraries(example_udp ${WB_TARGET_LINK_LIBRARIES})
 
 add_executable(injection_rate_test executables/injection_rate_test.cpp)
 target_link_libraries(injection_rate_test ${WB_TARGET_LINK_LIBRARIES})
+
+add_executable(example_pollute executables/example_pollute.cpp)
+target_link_libraries(example_pollute ${WB_TARGET_LINK_LIBRARIES})
 
 # When it is a static library, we don't need to install it.
 # But if it is a shared library, we need to install it.
