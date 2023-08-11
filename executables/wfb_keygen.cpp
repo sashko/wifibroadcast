@@ -20,9 +20,33 @@
 #include "../src/Encryption.hpp"
 
 /**
- * Generates a new keypair and saves it to file for later use.
+ * Generates a new tx rx keypair and saves it to file for later use.
  */
-int main(void) {
-  auto keypair=wbencryption::generate_keypair();
-  return wbencryption::write_to_file(keypair);
+int main(int argc, char *const *argv) {
+  int opt;
+  std::optional<std::string> bind_phrase=std::nullopt;
+  while ((opt = getopt(argc, argv, "b:")) != -1) {
+    switch (opt) {
+      case 'b':{
+        bind_phrase=std::string(optarg);
+      }
+        break;
+      default: /* '?' */
+      show_usage:
+        fprintf(stderr,
+                "wfb-keygen [-b bind_phrase,deterministic], if no bind phrase is specified, random keys are generated (non-deterministic)\n",
+                argv[0]);
+        exit(1);
+    }
+  }
+  wb::KeyPairTxRx keyPairTxRx{};
+  if(bind_phrase.has_value()){
+    std::cout<<"Generating txrx keypair using bind phrase ["<<bind_phrase.value()<<"]"<<std::endl;
+    keyPairTxRx=wb::generate_keypair_from_bind_phrase(bind_phrase.value());
+  }else{
+    std::cout<<"Generating random txrx keypair"<<std::endl;
+    keyPairTxRx=wb::generate_keypair_random();
+  }
+  //auto keypair=wb::generate_keypair_from_bind_phrase("openhd");
+  return wb::write_keypair_to_file(keyPairTxRx,"txrx.key");
 }

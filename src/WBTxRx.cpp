@@ -45,17 +45,25 @@ WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
     pcapTxRx.rx=wifibroadcast::pcap_helper::open_pcap_rx(wifi_card.name);
     //pcapTxRx.tx=pcapTxRx.rx;
     pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card.name);
-    if(m_options.set_direction){
+    if(m_options.pcap_rx_set_direction){
       const auto ret=pcap_setdirection(pcapTxRx.rx, PCAP_D_IN);
-      m_console->debug("pcap_setdirection() returned {}",ret);
+      if(ret!=0){
+        m_console->debug("pcap_setdirection() returned {}",ret);
+      }
     }
     m_pcap_handles.push_back(pcapTxRx);
     auto fd = pcap_get_selectable_fd(pcapTxRx.rx);
     m_receive_pollfds[i].fd = fd;
     m_receive_pollfds[i].events = POLLIN;
   }
-  m_encryptor=std::make_unique<Encryptor>(m_options.encryption_key);
-  m_decryptor=std::make_unique<Decryptor>(m_options.encryption_key);
+  wb::KeyPairTxRx keypair{};
+  if(m_options.secure_keypair.has_value()){
+    keypair= m_options.secure_keypair.value();
+  }else{
+    keypair=wb::generate_keypair_from_bind_phrase();
+  }
+  m_encryptor=std::make_unique<wb::Encryptor>(keypair.get_tx_key(!m_options.use_gnd_identifier));
+  m_decryptor=std::make_unique<wb::Decryptor>(keypair.get_rx_key(!m_options.use_gnd_identifier));
   m_encryptor->makeNewSessionKey(m_tx_sess_key_packet.sessionKeyNonce,m_tx_sess_key_packet.sessionKeyData);
   // next session key in delta ms if packets are being fed
   m_session_key_next_announce_ts = std::chrono::steady_clock::now();
@@ -180,6 +188,8 @@ void WBTxRx::loop_receive_packets() {
   if(m_options.receive_thread_max_realtime){
     SchedulingHelper::setThreadParamsMaxRealtime();
   }
+  std::vector<int> packets_per_card{};
+  packets_per_card.resize(m_wifi_cards.size());
   while (keep_receiving){
     const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(1)).count();
     int rc = poll(m_receive_pollfds.data(), m_receive_pollfds.size(), timeoutMS);
@@ -215,9 +225,20 @@ void WBTxRx::loop_receive_packets() {
         }
       }
       if (m_receive_pollfds[i].revents & POLLIN) {
-        loop_iter(i);
+        const auto n_packets=loop_iter(i);
+        packets_per_card[i]=n_packets;
         rc -= 1;
+      }else{
+        packets_per_card[i]=0;
       }
+    }
+    if(m_options.debug_multi_rx_packets_variance){
+      std::stringstream ss;
+      ss<<"Packets";
+      for(int i=0;i<packets_per_card.size();i++){
+        ss<<fmt::format(" Card{}:{}",i,packets_per_card[i]);
+      }
+      m_console->debug("{}",ss.str());
     }
   }
 }
@@ -363,11 +384,29 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
     }*/
     SessionKeyPacket &sessionKeyPacket = *((SessionKeyPacket*) parsedPacket->payload);
     const auto decrypt_res=m_decryptor->onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-    if(wlan_idx==0 && (decrypt_res==Decryptor::SESSION_VALID_NEW || decrypt_res==Decryptor::SESSION_VALID_NOT_NEW)){
-      m_pollution_openhd_rx_packets++;
-      recalculate_pollution_perc();
+    if(decrypt_res==wb::Decryptor::SESSION_VALID_NEW || decrypt_res==wb::Decryptor::SESSION_VALID_NOT_NEW){
+      if(wlan_idx==0){ // Pollution is calculated only on card0
+        m_pollution_openhd_rx_packets++;
+        recalculate_pollution_perc();
+      }
+      m_likely_wrong_encryption_valid_session_keys++;
+    }else{
+      m_likely_wrong_encryption_invalid_session_keys++;
     }
-    if (decrypt_res==Decryptor::SESSION_VALID_NEW) {
+    // A lot of invalid session keys and no valid session keys hint at a bind phrase mismatch
+    const auto elapsed_likely_wrong_key=std::chrono::steady_clock::now()-m_likely_wrong_encryption_last_check;
+    if(elapsed_likely_wrong_key>std::chrono::seconds(5)){
+      // No valid session key(s) and at least one invalid session key
+      if(m_likely_wrong_encryption_valid_session_keys==0 && m_likely_wrong_encryption_invalid_session_keys>=1){
+        m_rx_stats.likely_mismatching_encryption_key= true;
+      }else{
+        m_rx_stats.likely_mismatching_encryption_key= false;
+      }
+      m_likely_wrong_encryption_last_check=std::chrono::steady_clock::now();
+      m_likely_wrong_encryption_valid_session_keys=0;
+      m_likely_wrong_encryption_invalid_session_keys=0;
+    }
+    if (decrypt_res==wb::Decryptor::SESSION_VALID_NEW) {
       m_console->debug("Initializing new session.");
       m_rx_stats.n_received_valid_session_key_packets++;
       for(auto& handler:m_rx_handlers){
@@ -731,6 +770,6 @@ void WBTxRx::recalculate_pollution_perc() {
 }
 
 std::string WBTxRx::options_to_string(const std::vector<std::string>& wifi_cards,const WBTxRx::Options& options) {
-  return fmt::format("Id:{} Cards:{} Keypair:{} ",options.use_gnd_identifier ? "Ground":"Air",StringHelper::string_vec_as_string(wifi_cards),
-                     options.encryption_key.value_or("DEFAULT_SEED"));
+  return fmt::format("Id:{} Cards:{} Key:{} ",options.use_gnd_identifier ? "Ground":"Air",StringHelper::string_vec_as_string(wifi_cards),
+                     options.secure_keypair.has_value() ? "Custom" : "Default(openhd)");
 }

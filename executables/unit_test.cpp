@@ -108,22 +108,26 @@ static void test_fec_stream_random_bs_fs_overhead_dropped(){
 }
 
 // Test encryption+packet validation and packet validation only
-static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool message_signing_only) {
-  std::cout << "Using generated keypair (default seed otherwise):" << (useGeneratedFiles ? "y" : "n") << "\n";
-  const std::string filename_gs="gs.key"; //"../example_keys/gs.key"
-  const std::string filename_drone="drone.key" //"../example_keys/drone.key"
-  std::optional<std::string> encKey = useGeneratedFiles ? std::optional<std::string>(filename_gs) : std::nullopt;
-  std::optional<std::string> decKey = useGeneratedFiles ? std::optional<std::string>(filename_drone) : std::nullopt;
-  if(message_signing_only){
-    std::cout<<"Testing message signing\n";
+static void test_encrypt_decrypt_validate(const bool use_key_from_file,bool message_signing_only) {
+  const std::string TEST_TYPE=message_signing_only ?  "Sign" : "Encrypt&Sign";
+  const std::string TEST_KEY_TYPE=use_key_from_file ? "key from file" : "default key";
+  fmt::print("Testing {} with {}\n",TEST_TYPE,TEST_KEY_TYPE);
+  const std::string KEY_FILENAME="../example_key/txrx.key";
+  wb::KeyPairTxRx keyPairTxRx{};
+  if(use_key_from_file){
+    keyPairTxRx=wb::read_keypair_from_file(KEY_FILENAME);
   }else{
-    std::cout<<"Testing encryption & signing\n";
+    const auto before=std::chrono::steady_clock::now();
+    keyPairTxRx=wb::generate_keypair_from_bind_phrase("openhd");
+    std::cout<<"Generating keypair from bind phrase took:"<<MyTimeHelper::R(std::chrono::steady_clock::now()-before)<<std::endl;
   }
 
-  Encryptor encryptor{encKey,message_signing_only};
-  Decryptor decryptor{decKey,message_signing_only};
+  wb::Encryptor encryptor{keyPairTxRx.get_tx_key(true)};// We send from air unit
+  encryptor.set_encryption_enabled(!message_signing_only);
+  wb::Decryptor decryptor{keyPairTxRx.get_rx_key(false)}; // To the ground unit
+  decryptor.set_encryption_enabled(!message_signing_only);
   struct SessionStuff{
-    std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};  // random data
+    std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};  // filled with random data
     std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES> sessionKeyData{};
   };
   SessionStuff sessionKeyPacket;
@@ -131,7 +135,7 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
   encryptor.makeNewSessionKey(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
   // and "receive" session key (rx)
   assert(decryptor.onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData)
-         == Decryptor::SESSION_VALID_NEW);
+         == wb::Decryptor::SESSION_VALID_NEW);
   // now encrypt a couple of packets and decrypt them again afterwards
   for (uint64_t nonce = 0; nonce < 200; nonce++) {
 	const auto data = GenericHelper::createRandomDataBuffer(FEC_PACKET_MAX_PAYLOAD_SIZE);
@@ -170,7 +174,7 @@ static void test_encrypt_decrypt_validate(const bool useGeneratedFiles,bool mess
             nonce, enrypted_wrong_sign->data(), enrypted_wrong_sign->size());
         assert(decrypted== nullptr);
   }
-  std::cout << "encryption test passed\n";
+  fmt::print("Test {} with {} passed\n",TEST_TYPE,TEST_KEY_TYPE);
 }
 
 

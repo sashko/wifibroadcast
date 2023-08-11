@@ -48,18 +48,15 @@
  * (To give the user time to register all the receive handlers)
  *
  * NOTE2: You won't find any FEC or similar here - this class intentionally
- * represents a lowe level where FEC or similar can be added on top
+ * represents a lower level where FEC or similar can be added on top
  */
 class WBTxRx {
  public:
   struct Options{
-    // file for encryptor
-    // make optional for ease of use - with no keypair given the default "seed" is used
-    std::optional<std::string> encryption_key = std::nullopt;
-    // dirty, rssi on rtl8812au is "bugged", this discards the first rssi value reported by the card.
-    bool rtl8812au_rssi_fixup=false;
-    // on the rx pcap fd, set direction PCAP_D_IN (aka only packets received by the card) - doesn't work on AR9271
-    bool set_direction= true;
+    // Bidirectional, so we need 2 keys. If not specified, keys generated from default bind phrase are used
+    std::optional<wb::KeyPairTxRx> secure_keypair=std::nullopt;
+    // on the rx pcap rx fd, set direction PCAP_D_IN (aka only packets received by the card) - doesn't work on AR9271
+    bool pcap_rx_set_direction = true;
     // thy spam the console, but usefully for debugging
     // log all received packets (regardless where they are from)
     bool log_all_received_packets= false;
@@ -88,6 +85,8 @@ class WBTxRx {
     bool debug_decrypt_time= false;
     // Debug packet gaps
     bool debug_packet_gaps= false;
+    // Debug multi rx packets variance
+    bool debug_multi_rx_packets_variance= false;
     // This is only for debugging / testing, inject packets with a fixed MAC - won't be received as valid packets by another rx instance
     bool enable_non_openhd_mode= false;
   };
@@ -199,6 +198,8 @@ class WBTxRx {
      // Usefully for channel scan - n packets that are quite likely coming from an openhd air / ground unit (respective depending on if air/gnd mode)
      // But not validated - e.g. on a channel scan, session key packet(s) have not been received yet
      int curr_n_likely_openhd_packets=0;
+     // Usefully for telling the user that he is probably using incompatible bind phrases / encryption keys on air and ground
+     bool likely_mismatching_encryption_key= false;
    };
    struct RxStatsPerCard{
      int card_index=0; // 0 for first card, 1 for second, ...
@@ -281,8 +282,8 @@ class WBTxRx {
   // For multiple RX cards the card with the highest rx rssi is used to inject packets on
   std::atomic<int> m_curr_tx_card=0;
   SessionKeyPacket m_tx_sess_key_packet;
-  std::unique_ptr<Encryptor> m_encryptor;
-  std::unique_ptr<Decryptor> m_decryptor;
+  std::unique_ptr<wb::Encryptor> m_encryptor;
+  std::unique_ptr<wb::Decryptor> m_decryptor;
   struct PcapTxRx{
     pcap_t *tx= nullptr;
     pcap_t *rx= nullptr;
@@ -362,6 +363,10 @@ class WBTxRx {
   uint32_t m_pollution_openhd_rx_packets=0;
   std::chrono::steady_clock::time_point m_last_pollution_calculation=std::chrono::steady_clock::now();
   void recalculate_pollution_perc();
+  // These are 'extra' for calculating the "likely wrong encryption keys" value
+  uint32_t m_likely_wrong_encryption_valid_session_keys=0;
+  std::chrono::steady_clock::time_point m_likely_wrong_encryption_last_check=std::chrono::steady_clock::now();
+  uint32_t m_likely_wrong_encryption_invalid_session_keys=0;
 };
 
 static std::ostream& operator<<(std::ostream& strm, const WBTxRx::TxStats& data){
