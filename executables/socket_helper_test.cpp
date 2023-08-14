@@ -2,8 +2,6 @@
 // Created by consti10 on 21.04.22.
 //
 
-#include <thread>
-#include <chrono>
 #include "../src/HelperSources/SocketHelper.hpp"
 
 static void test_send_and_receive() {
