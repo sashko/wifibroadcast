@@ -67,6 +67,8 @@ uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,uint32_t f
  */
 unsigned int calculateN(unsigned int k, unsigned int percentage);
 
+void fec_stream_print_fec_optimization_method();
+
 class FECEncoder {
  public:
   typedef std::function<void(const uint8_t* packet,int packet_len)>

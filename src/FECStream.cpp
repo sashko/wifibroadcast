@@ -465,3 +465,7 @@ uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,
 unsigned int calculateN(const unsigned int k, const unsigned int percentage) {
   return k + calculate_n_secondary_fragments(k,percentage);
 }
+
+void fec_stream_print_fec_optimization_method() {
+  print_optimization_method();
+}
