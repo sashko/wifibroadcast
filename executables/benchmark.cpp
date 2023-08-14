@@ -16,23 +16,28 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "../src/HelperSources/SchedulingHelper.hpp"
-#include "../src/FECEnabled.h"
-#include "../src/Encryption.hpp"
-#include "../src/HelperSources/RandomBufferPot.hpp"
 #include "../src/HelperSources/Benchmark.hpp"
-#include <cassert>
-#include <cstdio>
-#include <cinttypes>
-#include <unistd.h>
-#include <poll.h>
-#include <memory>
-#include <string>
-#include <chrono>
-#include <sstream>
-#include <list>
 
-// Test the FEC encoding / decoding and Encryption / Decryption performance (throughput) of this system
+#include <poll.h>
+#include <unistd.h>
+
+#include <cassert>
+#include <chrono>
+#include <cinttypes>
+#include <cstdio>
+#include <list>
+#include <memory>
+#include <sstream>
+#include <string>
+
+#include "../src/Encryption.h"
+#include "../src/FECStream.h"
+#include "../src/HelperSources/RandomBufferPot.hpp"
+#include "../src/HelperSources/SchedulingHelper.hpp"
+#include "../src/external/fec/fec_base.h"
+
+// Test the FEC encoding / decoding and Encryption / Decryption performance
+// (throughput) of this system
 // Gives a hint on max possible FEC K target(s) for this platform
 // NOTE: Does not take WIFI card throughput into account
 
@@ -98,9 +103,10 @@ void benchmark_fec_encode(const Options &options, bool printBlockTime = false) {
 void benchmark_crypt(const Options &options,const bool packet_validation_only) {
   assert(options.benchmarkType == BENCHMARK_ENCRYPT || options.benchmarkType == BENCHMARK_DECRYPT);
   const bool encrypt=options.benchmarkType==BENCHMARK_ENCRYPT;
-  wb::Encryptor encryptor{wb::generate_keypair_deterministic(true)};
+  const wb::KeyPairTxRx keyPairTxRx=wb::generate_keypair_from_bind_phrase();
+  wb::Encryptor encryptor{keyPairTxRx.key_1};
   encryptor.set_encryption_enabled(!packet_validation_only);
-  wb::Decryptor decryptor{wb::generate_keypair_deterministic(true)};
+  wb::Decryptor decryptor{keyPairTxRx.key_1};
   decryptor.set_encryption_enabled(!packet_validation_only);
   std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};
   std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES> sessionKeyData{};

@@ -2,19 +2,21 @@
 // Created by consti10 on 08.08.23.
 //
 
-#ifndef WIFIBROADCAST_NONCESEQNRHELPER_H
-#define WIFIBROADCAST_NONCESEQNRHELPER_H
+#ifndef WIFIBROADCAST_UINT64SEQNRHELPER_HPP
+#define WIFIBROADCAST_UINT64SEQNRHELPER_HPP
 
 #include <atomic>
+#include <cmath>
 #include <memory>
 
-#include "../wifibroadcast-spdlog.h"
+#include "../wifibroadcast_spdlog.h"
+#include <spdlog/spdlog.h>
 #include "StringHelper.hpp"
 
-// Helper for dealing with sequence number
+// UINT16SeqNrHelper for dealing with sequence number
 // (calculate packet loss and more)
 // Using a unique uint64_t nonce
-class NonceSeqNrHelper{
+class UINT64SeqNrHelper {
  public:
   int16_t get_current_loss_percent(){
     return m_curr_loss_perc.load();
@@ -127,4 +129,4 @@ class NonceSeqNrHelper{
   int m_card_index=0;
 };
 
-#endif  // WIFIBROADCAST_NONCESEQNRHELPER_H
+#endif  // WIFIBROADCAST_UINT64SEQNRHELPER_HPP

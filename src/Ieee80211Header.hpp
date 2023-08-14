@@ -1,24 +1,19 @@
 #ifndef __WIFIBROADCAST_IEEE80211_HEADER_HPP__
 #define __WIFIBROADCAST_IEEE80211_HEADER_HPP__
 
-#include <cstdio>
-#include <cstdlib>
-#include <cerrno>
-#include <resolv.h>
-#include <cstring>
-#include <utime.h>
-#include <unistd.h>
-#include <getopt.h>
 #include <endian.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <endian.h>
+
+#include <array>
+#include <cassert>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <array>
-#include <iostream>
 
-// Helper for dealing with the IEEE80211 header in wifibroadcast / openhd
+#include "HelperSources/StringHelper.hpp"
+#include "wifibroadcast_spdlog.h"
+#include <spdlog/spdlog.h>
+
+// UINT16SeqNrHelper for dealing with the IEEE80211 header in wifibroadcast / openhd
 // Usefully references:
 // https://witestlab.poly.edu/blog/802-11-wireless-lan-2/
 // https://en.wikipedia.org/wiki/802.11_Frame_Types
@@ -29,14 +24,14 @@
 // | control field | duration | MAC of AP | SRC MAC | DST MAC | Sequence control |
 static constexpr auto IEEE80211_HEADER_SIZE_BYTES = 24;
 
-// Helper for control field - we do not touch it
+// UINT16SeqNrHelper for control field - we do not touch it
 struct ControlField{
   uint8_t part1=0x08;
   uint8_t part2=0x01;
 }__attribute__ ((packed));
 static_assert(sizeof(ControlField) == 2);
 
-// Helper for sequence control field
+// UINT16SeqNrHelper for sequence control field
 //https://witestlab.poly.edu/blog/802-11-wireless-lan-2/
 //Sequence Control: Contains a 4-bit fragment number subfield, used for fragmentation and reassembly, and a 12-bit sequence number used to number
 //frames sent between a given transmitter and receiver.

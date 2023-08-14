@@ -5,19 +5,24 @@
 #ifndef WIFIBROADCAST_SOCKETHELPER_HPP
 #define WIFIBROADCAST_SOCKETHELPER_HPP
 
-#include <list>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netinet/ether.h>
-#include <netpacket/packet.h>
-#include <termio.h>
-#include <sys/ioctl.h>
 #include <net/if.h>
-#include <optional>
+#include <netinet/ether.h>
+#include <netinet/in.h>
+#include <netpacket/packet.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <termio.h>
 #include <unistd.h>
 
-#include "Helper.hpp"
+#include <list>
+#include <mutex>
+#include <optional>
+#include <thread>
+
+#include "../wifibroadcast_spdlog.h"
+#include <spdlog/spdlog.h>
+#include "StringHelper.hpp"
 #include "TimeHelper.hpp"
 #ifdef DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "openhd_spdlog.h"

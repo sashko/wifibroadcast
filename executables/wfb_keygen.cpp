@@ -17,7 +17,12 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "../src/Encryption.hpp"
+#include <getopt.h>
+
+#include <iostream>
+#include <optional>
+
+#include "../src/Encryption.h"
 
 /**
  * Generates a new tx rx keypair and saves it to file for later use.
@@ -34,7 +39,7 @@ int main(int argc, char *const *argv) {
       default: /* '?' */
       show_usage:
         fprintf(stderr,
-                "wfb-keygen [-b bind_phrase,deterministic], if no bind phrase is specified, random keys are generated (non-deterministic)\n",
+                "wfb-keygen [-b bind_phrase,deterministic], if no bind phrase is specified, random keys are generated (non-deterministic) %s\n",
                 argv[0]);
         exit(1);
     }

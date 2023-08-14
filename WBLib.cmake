@@ -21,18 +21,21 @@ add_library(wifibroadcast::wifibroadcast ALIAS wifibroadcast)
 #target_compile_options(wifibroadcast INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
 
 # Well, let's just build everything together
-target_sources(wifibroadcast PUBLIC
+target_sources(wifibroadcast PRIVATE
         # radiotap and fec
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec_base.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/FECEnabled.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/FECStream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamRx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamTx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBTxRx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/Ieee80211Header.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/RadiotapHeader.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/RSSIAccumulator.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/wifibroadcast_spdlog.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/Encryption.cpp
         )
+
 target_include_directories(wifibroadcast PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/src/HelperSources
 )

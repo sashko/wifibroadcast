@@ -2,24 +2,17 @@
 // Created by consti10 on 28.06.23.
 //
 
-#ifndef WIFIBROADCAST_FECENABLED_H
-#define WIFIBROADCAST_FECENABLED_H
+#ifndef WIFIBROADCAST_FECSTREAM_H
+#define WIFIBROADCAST_FECSTREAM_H
 
 #include <array>
-#include <cerrno>
-#include <cmath>
-#include <cstdint>
-#include <cstring>
-#include <functional>
-#include <iostream>
+#include <cassert>
 #include <map>
+#include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "FEC.hpp"
 #include "HelperSources/TimeHelper.hpp"
 
 /**
@@ -61,22 +54,18 @@ static constexpr const uint16_t MAX_N_S_FRAGMENTS_PER_BLOCK = 128;
 static constexpr const uint16_t
     MAX_TOTAL_FRAGMENTS_PER_BLOCK = MAX_N_P_FRAGMENTS_PER_BLOCK + MAX_N_S_FRAGMENTS_PER_BLOCK;
 
-// For dynamic block sizes, we switched to a FEC overhead "percentage" value.
-// e.g. the final data throughput ~= original data throughput * fec overhead percentage
-static uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,uint32_t fec_overhead_perc){
-  if(fec_overhead_perc<=0)return 0;
-  const float n_secondary=static_cast<float>(n_primary_fragments) * static_cast<float>(fec_overhead_perc) / 100.0f;
-  if(n_secondary<=1.0){
-    // Always calculate at least one FEC packet
-    return 1;
-  }
-  return std::lroundf(n_secondary);
-}
-// calculate n from k and percentage as used in FEC terms
-// (k: number of primary fragments, n: primary + secondary fragments)
-static unsigned int calculateN(const unsigned int k, const unsigned int percentage) {
-  return k + calculate_n_secondary_fragments(k,percentage);
-}
+/**
+ * For dynamic block sizes, we switched to a FEC overhead "percentage" value.
+ * e.g. the final data throughput ~= original data throughput * fec overhead percentage
+ * Rounds up / down (.5), but always at least 1
+ */
+uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,uint32_t fec_overhead_perc);
+
+/**
+ * calculate n from k and percentage as used in FEC terms
+ * (k: number of primary fragments, n: primary + secondary fragments)
+ */
+unsigned int calculateN(unsigned int k, unsigned int percentage);
 
 class FECEncoder {
  public:
@@ -114,12 +103,7 @@ class RxBlock {
   // @param maxNFragmentsPerBlock max number of primary and secondary fragments for this block.
   // you could just use MAX_TOTAL_FRAGMENTS_PER_BLOCK for that, but if your tx then uses (4:8) for example, you'd
   // allocate much more memory every time for a new RX block than needed.
-  explicit RxBlock(const unsigned int maxNFragmentsPerBlock, const uint64_t blockIdx1)
-      :blockIdx(blockIdx1),
-        fragment_map(maxNFragmentsPerBlock,FragmentStatus::UNAVAILABLE), //after creation of the RxBlock every f. is marked as unavailable
-        blockBuffer(maxNFragmentsPerBlock) {
-    assert(fragment_map.size() == blockBuffer.size());
-  }
+  explicit RxBlock(unsigned int maxNFragmentsPerBlock, uint64_t blockIdx1);
   // No copy constructor for safety
   RxBlock(const RxBlock &) = delete;
   // two blocks are the same if they refer to the same block idx:
@@ -184,7 +168,7 @@ class RxBlock {
   // n of primary fragments that are already pulled out
   int nAlreadyForwardedPrimaryFragments = 0;
   // for each fragment (via fragment_idx) store if it has been received yet
-  std::vector<FragmentStatus> fragment_map;
+  std::vector<bool> fragment_map;
   // holds all the data for all received fragments (if fragment_map says UNAVALIABLE at this position, content is undefined)
   std::vector<std::array<uint8_t, MAX_PAYLOAD_BEFORE_FEC>> blockBuffer;
   // time point when the first fragment for this block was received (via addFragment() )
@@ -285,4 +269,4 @@ class FECDecoder {
 // which means you might lose a couple of blocks once every 4.6 h )
 // and 8 bits holds max 255.
 
-#endif  // WIFIBROADCAST_FECENABLED_H
+#endif  // WIFIBROADCAST_FECSTREAM_H
