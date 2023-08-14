@@ -27,7 +27,7 @@
 #ifdef DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "openhd_spdlog.h"
 #else
-#include "../wifibroadcast-spdlog.h"
+#include "../wifibroadcast_spdlog.h"
 #endif // DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 
 namespace SocketHelper {
