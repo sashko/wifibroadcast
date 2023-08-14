@@ -10,4 +10,4 @@ cd build
 
 cmake ..
 
-make
+make -j$(nproc)
