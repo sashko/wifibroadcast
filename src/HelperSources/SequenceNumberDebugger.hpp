@@ -5,11 +5,14 @@
 #ifndef WIFIBROADCAST_SRC_HELPERSOURCES_SEQUENCENUMBERDEBUGGER_H_
 #define WIFIBROADCAST_SRC_HELPERSOURCES_SEQUENCENUMBERDEBUGGER_H_
 
-#include <vector>
+#include <chrono>
 #include <cstdint>
 #include <iostream>
+#include <vector>
+
+#include "../wifibroadcast_spdlog.h"
+#include <spdlog/spdlog.h>
 #include "StringHelper.hpp"
-#include "../wifibroadcast-spdlog.h"
 
 /**
  * Debug the n lost packets and the n of packet gaps by for a continuous stream of packets with increasing sequence number.

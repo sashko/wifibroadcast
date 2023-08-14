@@ -7,28 +7,20 @@ extern "C" {
 #include "external/radiotap/radiotap.h"
 };
 
+#include <endian.h>
+
+#include <cassert>
+#include <cerrno>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
-#include <cerrno>
-#include <resolv.h>
 #include <cstring>
-#include <utime.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <pcap.h>
-#include <endian.h>
-#include <fcntl.h>
 #include <ctime>
-#include <sys/mman.h>
-#include <endian.h>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <chrono>
-#include <sstream>
-#include <iostream>
-#include <cassert>
 
-#include "wifibroadcast-spdlog.h"
+#include "wifibroadcast_spdlog.h"
 
 // everything must be in little endian byte order http://www.radiotap.org/
 static_assert(__BYTE_ORDER == __LITTLE_ENDIAN, "This code is written for little endian only !");
@@ -160,6 +152,7 @@ static_assert(sizeof(RadiotapHeader) == RadiotapHeader::SIZE_BYTES, "ALWAYS TRUE
 static_assert(sizeof(RadiotapHeaderWithTxFlagsAndMCS) == RadiotapHeader::SIZE_BYTES, "ALWAYS TRUE");
 
 namespace RadiotapHelper {
+
 static std::string toStringRadiotapFlags(uint8_t flags) {
   std::stringstream ss;
   ss << "All IEEE80211_RADIOTAP flags: [";

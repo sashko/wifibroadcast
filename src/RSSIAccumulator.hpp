@@ -7,11 +7,11 @@
 
 #include <optional>
 
-#include "TimeHelper.hpp"
-#include "wifibroadcast-spdlog.h"
+#include "HelperSources/TimeHelper.hpp"
+#include "wifibroadcast_spdlog.h"
 
 /**
- * Helper to accumulate RSSI values
+ * UINT16SeqNrHelper to accumulate RSSI values
  */
 class RSSIAccumulator{
  public:

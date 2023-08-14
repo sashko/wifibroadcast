@@ -5,8 +5,7 @@
 #include "../src/WBStreamRx.h"
 #include "../src/WBStreamTx.h"
 #include "../src/WBTxRx.h"
-#include "../src/wifibroadcast-spdlog.h"
-#include "RandomBufferPot.hpp"
+#include "../src/wifibroadcast_spdlog.h"
 
 /**
  * Simple demo application that sends out hello messages and listens for hello messages.
@@ -41,7 +40,6 @@ int main(int argc, char *const *argv) {
         advanced_debugging= true;
         break ;
       default: /* '?' */
-      show_usage:
         fprintf(stderr,
                 "Example hello %s [-a run as air] [-g run as ground] [-w wifi card to use]\n",
                 argv[0]);

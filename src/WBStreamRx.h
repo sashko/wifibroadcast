@@ -5,17 +5,16 @@
 #ifndef WIFIBROADCAST_WBSTREAMRX_H
 #define WIFIBROADCAST_WBSTREAMRX_H
 
-#include "FECDisabled.hpp"
-#include "FECEnabled.h"
+#include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
+#include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
+#include "FECStream.h"
 #include "HelperSources/Helper.hpp"
-#include "HelperSources/SeqNrHelper.hpp"
 #include "HelperSources/SequenceNumberDebugger.hpp"
 #include "HelperSources/TimeHelper.hpp"
+#include "HelperSources/UINT16SeqNrHelper.hpp"
+#include "SimpleStream.hpp"
 #include "WBTxRx.h"
-#include "wifibroadcast-spdlog.h"
-
-#include "../moodycamel/concurrentqueue/blockingconcurrentqueue.h"
-#include "../moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
+#include "wifibroadcast_spdlog.h"
 
 /**
  * Receiver for a (multiplexed) wifbroadcast stream
@@ -88,7 +87,6 @@ class WBStreamRx {
   // On the rx, either one of those two is active at the same time.
   std::unique_ptr<FECDecoder> m_fec_decoder = nullptr;
   std::unique_ptr<FECDisabledDecoder> m_fec_disabled_decoder = nullptr;
-  seq_nr::Helper m_seq_nr_helper;
   void on_new_packet(uint64_t nonce,int wlan_index,const uint8_t *data, const int data_len);
   void on_new_session();
   void on_decoded_packet(const uint8_t* data,int data_len);

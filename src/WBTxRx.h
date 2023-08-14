@@ -5,21 +5,23 @@
 #ifndef WIFIBROADCAST_WBTXRX_H
 #define WIFIBROADCAST_WBTXRX_H
 
+#include <pcap/pcap.h>
 #include <sys/poll.h>
 
 #include <atomic>
 #include <map>
+#include <mutex>
+#include <optional>
 #include <thread>
 #include <utility>
 
-#include "Encryption.hpp"
+#include "Encryption.h"
 #include "Ieee80211Header.hpp"
-#include "NonceSeqNrHelper.h"
 #include "RSSIAccumulator.hpp"
 #include "RadiotapHeader.hpp"
-#include "SeqNrHelper.hpp"
 #include "SignalQualityAccumulator.hpp"
-#include "TimeHelper.hpp"
+#include "HelperSources/UINT16SeqNrHelper.hpp"
+#include "HelperSources/UINT64SeqNrHelper.hpp"
 
 /**
  * This class exists to provide a clean, working interface to create a
@@ -296,21 +298,15 @@ class WBTxRx {
   std::unique_ptr<std::thread> m_receive_thread;
   std::vector<pollfd> m_receive_pollfds;
   std::chrono::steady_clock::time_point m_last_receiver_error_log=std::chrono::steady_clock::now();
-  seq_nr::Helper m_seq_nr_helper_iee80211;
+  UINT16SeqNrHelper m_seq_nr_helper_iee80211;
   // for calculating the loss and more per rx card (when multiple rx cards are used)
   struct PerCardCalculators{
-    NonceSeqNrHelper seq_nr{};
+    UINT64SeqNrHelper seq_nr{};
     RSSIAccumulator card_rssi{};
     RSSIAccumulator antenna1_rssi{};
     RSSIAccumulator antenna2_rssi{};
     SignalQualityAccumulator signal_quality{};
-    void reset_all(){
-      seq_nr.reset();
-      card_rssi.reset();
-      antenna1_rssi.reset();
-      antenna2_rssi.reset();
-      signal_quality.reset();
-    }
+    void reset_all();
   };
   std::vector<std::shared_ptr<PerCardCalculators>> m_per_card_calc;
   OUTPUT_DATA_CALLBACK m_output_cb= nullptr;

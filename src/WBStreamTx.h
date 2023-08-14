@@ -9,11 +9,11 @@
 #include <thread>
 #include <variant>
 
-#include "../moodycamel/concurrentqueue/blockingconcurrentqueue.h"
-#include "../moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
-#include "FECDisabled.hpp"
-#include "FECEnabled.h"
-#include "TimeHelper.hpp"
+#include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
+#include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
+#include "FECStream.h"
+#include "SimpleStream.hpp"
+#include "HelperSources/TimeHelper.hpp"
 #include "WBTxRx.h"
 
 /**
