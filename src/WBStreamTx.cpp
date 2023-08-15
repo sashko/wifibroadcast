@@ -170,3 +170,7 @@ void WBStreamTx::send_packet(const uint8_t* packet, int packet_len) {
   m_n_injected_packets++;
   m_count_bytes_data_injected+=packet_len;
 }
+int WBStreamTx::get_tx_queue_available_size_approximate() {
+  const auto ret=options.enable_fec ? m_block_queue->size_approx() : m_packet_queue->size_approx();
+  return (int)ret;
+}

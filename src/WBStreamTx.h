@@ -94,6 +94,10 @@ class WBStreamTx {
   void set_encryption(bool encrypt){
     m_enable_encryption=encrypt;
   }
+  /**
+   * Approximation of the remaining items in the tx block / packets queue
+   */
+  int get_tx_queue_available_size_approximate();
  private:
   const Options options;
   std::shared_ptr<WBTxRx> m_txrx;
