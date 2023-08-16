@@ -172,12 +172,13 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
 int WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, int packet_size) {
   // inject via pcap
   // we inject the packet on whatever card has the highest rx rssi right now
-  pcap_t *tx= m_pcap_handles[card_index].tx;
-  const auto len_injected=pcap_inject(tx, packet_buff, packet_size);
-  //const auto len_injected=write(m_receive_pollfds.at(0).fd,packet.data(),packet.size());
+  //pcap_t *tx= m_pcap_handles[card_index].tx;
+  //const auto len_injected=pcap_inject(tx, packet_buff, packet_size);
+  const auto len_injected=write(m_receive_pollfds.at(0).fd,packet_buff,packet_size);
   if (len_injected != (int) packet_size) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
-    m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, pcap_geterr(tx));
+    //m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, pcap_geterr(tx));
+    m_console->warn("raw sock - unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, strerror(errno));
   }
   return len_injected;
 }
