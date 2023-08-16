@@ -99,7 +99,7 @@ struct RssiForAntenna {
   // https://www.radiotap.org/fields/Antenna%20signal.html
   const int8_t rssi;
 };
-struct ParsedRxPcapPacket {
+struct ParsedRxRadiotapPacket {
   // Size can be anything from size=1 to size== N where N is the number of Antennas of this adapter
   const std::vector<RssiForAntenna> allAntennaValues;
   const Ieee80211HeaderRaw *ieee80211Header;
@@ -157,7 +157,7 @@ static std::optional<int8_t> get_best_rssi_of_card(const std::vector<RssiForAnte
 // Returns std::nullopt if radiotap was unable to parse the header
 // else return the *parsed information*
 // To avoid confusion it might help to treat this method as a big black Box :)
-static std::optional<ParsedRxPcapPacket> process_received_radiotap_packet(const uint8_t *pkt,const int pkt_len) {
+static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(const uint8_t *pkt,const int pkt_len) {
   //int pktlen = hdr.caplen;
   int pktlen=pkt_len;
   //
@@ -183,7 +183,7 @@ static std::optional<ParsedRxPcapPacket> process_received_radiotap_packet(const 
   std::optional<int> signal_quality=std::nullopt;
 
   int8_t currentAntenna = -1;
-  // not confirmed yet, but one pcap packet might include stats for multiple antennas
+  // not confirmed yet, but one radiotap packet might include stats for multiple antennas
   std::vector<RssiForAntenna> allAntennaValues;
   while (ret == 0) {
     ret = ieee80211_radiotap_iterator_next(&iterator);
@@ -279,7 +279,7 @@ static std::optional<ParsedRxPcapPacket> process_received_radiotap_packet(const 
     ss<<(int)antsignal<<",";
   }
   std::cout<<ss.str();*/
-  return ParsedRxPcapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck,mcs_index,channel_width,signal_quality};
+  return ParsedRxRadiotapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, frameFailedFcsCheck,mcs_index,channel_width,signal_quality};
 }
 
 // [RadiotapHeader | Ieee80211HeaderRaw | customHeader (if not size 0) | payload (if not size 0)]
