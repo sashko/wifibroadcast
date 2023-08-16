@@ -671,7 +671,8 @@ void WBTxRx::tx_update_ldpc(bool ldpc) {
 }
 
 void WBTxRx::tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams &params) {
-  auto newRadioTapHeader=RadiotapHeader{params};
+  m_radioTapHeaderParams=params;
+  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
   std::lock_guard<std::mutex> guard(m_tx_mutex);
   m_tx_radiotap_header = newRadioTapHeader;
 }
