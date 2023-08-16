@@ -256,7 +256,7 @@ void WBTxRx::loop_receive_packets() {
 }
 
 int WBTxRx::loop_iter(int rx_index) {
-  pcap_t* ppcap=m_pcap_handles[rx_index].rx;
+  /*pcap_t* ppcap=m_pcap_handles[rx_index].rx;
   // loop while incoming queue is not empty
   int nPacketsPolledUntilQueueWasEmpty = 0;
   for (;;) {
@@ -281,6 +281,25 @@ int WBTxRx::loop_iter(int rx_index) {
       }
     }
     on_new_packet(rx_index,pkt,hdr.len);
+    nPacketsPolledUntilQueueWasEmpty++;
+  }
+  return nPacketsPolledUntilQueueWasEmpty;*/
+  // loop while incoming queue is not empty
+  int nPacketsPolledUntilQueueWasEmpty = 0;
+  for (;;) {
+    auto buff=std::vector<uint8_t>(PCAP_MAX_PACKET_SIZE);
+    const int ret= read(m_receive_pollfds[rx_index].fd,buff.data(),buff.size());
+    if (ret<=0) {
+      if(m_options.advanced_latency_debugging_rx){
+        m_n_packets_polled_pcap.add(nPacketsPolledUntilQueueWasEmpty);
+        if(m_n_packets_polled_pcap.get_delta_since_last_reset()>std::chrono::seconds(1)){
+          m_console->debug("m_n_packets_polled_pcap: {}",m_n_packets_polled_pcap.getAvgReadable());
+          m_n_packets_polled_pcap.reset();
+        }
+      }
+      break;
+    }
+    on_new_packet(rx_index,buff.data(),ret);
     nPacketsPolledUntilQueueWasEmpty++;
   }
   return nPacketsPolledUntilQueueWasEmpty;
