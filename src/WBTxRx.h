@@ -337,6 +337,7 @@ class WBTxRx {
   AvgCalculator m_packet_encrypt_time;
   AvgCalculator m_packet_decrypt_time;
  private:
+  int inject_radiotap_packet(int card_index,const uint8_t* packet_buff,int packet_size);
   // we announce the session key in regular intervals if data is currently being injected (tx_ is called)
   void announce_session_key_if_needed();
   // send out the session key

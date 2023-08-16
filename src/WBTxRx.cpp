@@ -8,6 +8,7 @@
 
 #include "pcap_helper.hpp"
 #include "SchedulingHelper.hpp"
+#include "raw_socket_helper.h"
 
 
 WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
@@ -148,12 +149,9 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated
   // (the documentation says 'write up to n bytes' but they probably mean (write exactly n bytes unless an error occurs)
   assert(data_len+crypto_aead_chacha20poly1305_ABYTES == ciphertext_len);
-  // inject via pcap
-  // we inject the packet on whatever card has the highest rx rssi right now
-  pcap_t *tx= m_pcap_handles[m_curr_tx_card].tx;
   const auto before_injection = std::chrono::steady_clock::now();
-  const auto len_injected=pcap_inject(tx, packet_buff, packet_size);
-  //const auto len_injected=write(m_receive_pollfds.at(0).fd,packet.data(),packet.size());
+  // we inject the packet on whatever card has the highest rx rssi right now
+  const auto len_injected= inject_radiotap_packet(m_curr_tx_card.load(),packet_buff,packet_size);
   const auto delta_inject=std::chrono::steady_clock::now()-before_injection;
   if(delta_inject>=MAX_SANE_INJECTION_TIME){
     m_tx_stats.count_tx_injections_error_hint++;
@@ -162,8 +160,6 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
     m_console->debug("Injected packet ret:{} took:{}",len_injected,MyTimeHelper::R(delta_inject));
   }
   if (len_injected != (int) packet_size) {
-    // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
-    m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size,len_injected, pcap_geterr(tx));
     m_tx_stats.count_tx_errors++;
   }else{
     m_tx_stats.n_injected_bytes_excluding_overhead += data_len;
@@ -171,6 +167,19 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
     m_tx_stats.n_injected_packets++;
   }
   announce_session_key_if_needed();
+}
+
+int WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, int packet_size) {
+  // inject via pcap
+  // we inject the packet on whatever card has the highest rx rssi right now
+  pcap_t *tx= m_pcap_handles[card_index].tx;
+  const auto len_injected=pcap_inject(tx, packet_buff, packet_size);
+  //const auto len_injected=write(m_receive_pollfds.at(0).fd,packet.data(),packet.size());
+  if (len_injected != (int) packet_size) {
+    // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
+    m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, pcap_geterr(tx));
+  }
+  return len_injected;
 }
 
 void WBTxRx::rx_register_callback(WBTxRx::OUTPUT_DATA_CALLBACK cb) {
@@ -281,7 +290,8 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
   if(m_options.log_all_received_packets){
     m_console->debug("Got packet {} {}",wlan_idx,hdr.len);
   }
-  const auto parsedPacket = wifibroadcast::pcap_helper::processReceivedPcapPacket(hdr, pkt);
+  const auto parsedPacket =
+      wifibroadcast::pcap_helper::process_received_radiotap_packet(pkt,hdr.len);
   if (parsedPacket == std::nullopt) {
     if(m_options.advanced_debugging_rx){
       m_console->warn("Discarding packet due to pcap parsing error!");
@@ -626,15 +636,16 @@ void WBTxRx::send_session_key() {
 
   auto packet=wifibroadcast::pcap_helper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211HeaderRaw*)&tmp_tx_hdr,
                                                           (uint8_t *)&m_tx_sess_key_packet, sizeof(SessionKeyPacket));
+  const int packet_size=(int)packet.size();
   // NOTE: Session key is always sent via card 0 since otherwise we might pick up the session key intended for the ground unit
   // from the air unit !
-  pcap_t *tx= m_pcap_handles[0].rx;
-  const auto len_injected=pcap_inject(tx,packet.data(),packet.size());
-  if (len_injected != (int) packet.size()) {
-    // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
-    m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet.size(),len_injected, pcap_geterr(tx));
+  const auto len_injected= inject_radiotap_packet(0,packet.data(),packet_size);
+  if (len_injected != (int) packet_size) {
+    m_tx_stats.count_tx_errors++;
   }else{
-    m_tx_stats.n_injected_bytes_including_overhead +=packet.size();
+    // These bytes only count as "including overhead"
+    m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
+    m_tx_stats.n_injected_packets++;
   }
 }
 
@@ -780,6 +791,7 @@ std::string WBTxRx::options_to_string(const std::vector<std::string>& wifi_cards
   return fmt::format("Id:{} Cards:{} Key:{} ",options.use_gnd_identifier ? "Ground":"Air",StringHelper::string_vec_as_string(wifi_cards),
                      options.secure_keypair.has_value() ? "Custom" : "Default(openhd)");
 }
+
 
 void WBTxRx::PerCardCalculators::reset_all() {
     seq_nr.reset();
