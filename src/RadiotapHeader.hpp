@@ -83,6 +83,8 @@ class RadiotapHeader {
     // https://www.digitalairwireless.com/articles/blog/demystifying-modulation-and-coding-scheme-mcs-index-values
     // https://mcsindex.com/
     int mcs_index = 3;
+    // depends on the driver
+    bool set_flag_tx_no_ack= false;
   };
   // Make sure that this is the only constructor
   explicit RadiotapHeader(const UserSelectableParams &params) {
@@ -102,8 +104,12 @@ class RadiotapHeader {
         Radiotap::writePresenceBitfield({IEEE80211_RADIOTAP_TX_FLAGS, IEEE80211_RADIOTAP_MCS});
 
     // in wifibroadcast we never want ack from the receiver
-    radiotapHeaderData.txFlags =
-        IEEE80211_RADIOTAP_F_TX_NOACK; //| IEEE80211_RADIOTAP_F_TX_CTS | IEEE80211_RADIOTAP_F_TX_RTS
+    if(params.set_flag_tx_no_ack){
+      radiotapHeaderData.txFlags =
+          IEEE80211_RADIOTAP_F_TX_NOACK; //| IEEE80211_RADIOTAP_F_TX_CTS | IEEE80211_RADIOTAP_F_TX_RTS
+    }else{
+      radiotapHeaderData.txFlags = 0;
+    }
 
     // now onto the "MCS field"
     radiotapHeaderData.mcs.known =
