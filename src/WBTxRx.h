@@ -157,6 +157,7 @@ class WBTxRx {
    void tx_update_stbc(int stbc);
    void tx_update_guard_interval(bool short_gi);
    void tx_update_ldpc(bool ldpc);
+   void tx_update_set_flag_tx_no_ack(bool enable);
 
    // Statistics
    struct TxStats{

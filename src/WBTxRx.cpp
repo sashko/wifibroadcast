@@ -669,6 +669,10 @@ void WBTxRx::tx_update_ldpc(bool ldpc) {
   m_radioTapHeaderParams.ldpc=ldpc;
   tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
 }
+void WBTxRx::tx_update_set_flag_tx_no_ack(bool enable) {
+  m_radioTapHeaderParams.set_flag_tx_no_ack=enable;
+  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
+}
 
 void WBTxRx::tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams &params) {
   m_radioTapHeaderParams=params;
