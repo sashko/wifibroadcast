@@ -291,7 +291,8 @@ int WBTxRx::loop_iter_raw(const int rx_index) {
   int nPacketsPolledUntilQueueWasEmpty = 0;
   for (;;) {
     auto buff=std::vector<uint8_t>(PCAP_MAX_PACKET_SIZE);
-    const int ret= read(0,buff.data(),buff.size());
+    //const int ret= read(0,buff.data(),buff.size());
+    const int ret= recv(m_receive_pollfds[rx_index].fd,buff.data(),buff.size(),MSG_DONTWAIT);
     if (ret<=0) {
       if(m_options.advanced_latency_debugging_rx){
         m_n_packets_polled_pcap.add(nPacketsPolledUntilQueueWasEmpty);
