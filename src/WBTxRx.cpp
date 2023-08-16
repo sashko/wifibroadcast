@@ -279,19 +279,18 @@ int WBTxRx::loop_iter(int rx_index) {
         m_packet_host_latency.reset();
       }
     }
-    on_new_packet(rx_index,hdr,pkt);
+    on_new_packet(rx_index,pkt,hdr.len);
     nPacketsPolledUntilQueueWasEmpty++;
   }
   return nPacketsPolledUntilQueueWasEmpty;
 }
 
-void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
-                                 const uint8_t *pkt) {
+void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len) {
   if(m_options.log_all_received_packets){
-    m_console->debug("Got packet {} {}",wlan_idx,hdr.len);
+    m_console->debug("Got packet {} {}",wlan_idx,pkt_len);
   }
   const auto parsedPacket =
-      wifibroadcast::pcap_helper::process_received_radiotap_packet(pkt,hdr.len);
+      wifibroadcast::pcap_helper::process_received_radiotap_packet(pkt,pkt_len);
   if (parsedPacket == std::nullopt) {
     if(m_options.advanced_debugging_rx){
       m_console->warn("Discarding packet due to pcap parsing error!");
@@ -306,7 +305,6 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx, const pcap_pkthdr &hdr,
   if(wlan_idx==0){
     m_pollution_total_rx_packets++;
   }
-
   if (parsedPacket->frameFailedFCSCheck) {
     if(m_options.advanced_debugging_rx){
       m_console->debug("Discarding packet due to bad FCS!");

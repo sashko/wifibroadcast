@@ -347,7 +347,7 @@ class WBTxRx {
   // pull data from a pcap handle which has data available
   int loop_iter(int rx_index);
   // called every time we have a new (raw) data packet
-  void on_new_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
+  void on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len);
   // verify and decrypt the packet if possible
   // returns true if packet could be decrypted successfully
   bool process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
