@@ -34,9 +34,9 @@ WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
   for(int i=0;i<m_wifi_cards.size();i++){
     auto tmp=std::make_shared<PerCardCalculators>();
     tmp->seq_nr.set_store_and_debug_gaps(i,m_options.debug_packet_gaps);
-    tmp->card_rssi.set_debug_invalid_rssi(0,m_options.debug_rssi>=1);
-    tmp->antenna1_rssi.set_debug_invalid_rssi(1,m_options.debug_rssi>=1);
-    tmp->antenna2_rssi.set_debug_invalid_rssi(2,m_options.debug_rssi>=1);
+    tmp->card_rssi.set_debug_invalid_rssi(m_options.debug_rssi>=1,0);
+    tmp->antenna1_rssi.set_debug_invalid_rssi(m_options.debug_rssi>=1,1);
+    tmp->antenna2_rssi.set_debug_invalid_rssi(m_options.debug_rssi>=1,2);
     tmp->signal_quality.set_debug_invalid_signal_quality(m_options.debug_rssi>=1);
     m_per_card_calc.push_back(tmp);
     m_card_is_disconnected[i]=false;
