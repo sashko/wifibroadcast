@@ -174,7 +174,7 @@ int WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, in
   // we inject the packet on whatever card has the highest rx rssi right now
   //pcap_t *tx= m_pcap_handles[card_index].tx;
   //const auto len_injected=pcap_inject(tx, packet_buff, packet_size);
-  const auto len_injected=write(m_receive_pollfds.at(0).fd,packet_buff,packet_size);
+  const auto len_injected=write(m_receive_pollfds[card_index].fd,packet_buff,packet_size);
   if (len_injected != (int) packet_size) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
     //m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, pcap_geterr(tx));
@@ -237,7 +237,7 @@ void WBTxRx::loop_receive_packets() {
         }
       }
       if (m_receive_pollfds[i].revents & POLLIN) {
-        const auto n_packets=loop_iter(i);
+        const auto n_packets= loop_iter_pcap(i);
         packets_per_card[i]=n_packets;
         rc -= 1;
       }else{
@@ -255,7 +255,7 @@ void WBTxRx::loop_receive_packets() {
   }
 }
 
-int WBTxRx::loop_iter(int rx_index) {
+int WBTxRx::loop_iter_pcap(const int rx_index) {
   pcap_t* ppcap=m_pcap_handles[rx_index].rx;
   // loop while incoming queue is not empty
   int nPacketsPolledUntilQueueWasEmpty = 0;
@@ -284,11 +284,14 @@ int WBTxRx::loop_iter(int rx_index) {
     nPacketsPolledUntilQueueWasEmpty++;
   }
   return nPacketsPolledUntilQueueWasEmpty;
+}
+
+int WBTxRx::loop_iter_raw(const int rx_index) {
   // loop while incoming queue is not empty
-  /*int nPacketsPolledUntilQueueWasEmpty = 0;
+  int nPacketsPolledUntilQueueWasEmpty = 0;
   for (;;) {
     auto buff=std::vector<uint8_t>(PCAP_MAX_PACKET_SIZE);
-    const int ret= read(m_receive_pollfds[rx_index].fd,buff.data(),buff.size());
+    const int ret= read(0,buff.data(),buff.size());
     if (ret<=0) {
       if(m_options.advanced_latency_debugging_rx){
         m_n_packets_polled_pcap.add(nPacketsPolledUntilQueueWasEmpty);
@@ -302,7 +305,7 @@ int WBTxRx::loop_iter(int rx_index) {
     on_new_packet(rx_index,buff.data(),ret);
     nPacketsPolledUntilQueueWasEmpty++;
   }
-  return nPacketsPolledUntilQueueWasEmpty;*/
+  return nPacketsPolledUntilQueueWasEmpty;
 }
 
 void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len) {
@@ -809,7 +812,6 @@ std::string WBTxRx::options_to_string(const std::vector<std::string>& wifi_cards
   return fmt::format("Id:{} Cards:{} Key:{} ",options.use_gnd_identifier ? "Ground":"Air",StringHelper::string_vec_as_string(wifi_cards),
                      options.secure_keypair.has_value() ? "Custom" : "Default(openhd)");
 }
-
 
 void WBTxRx::PerCardCalculators::reset_all() {
     seq_nr.reset();

@@ -345,14 +345,15 @@ class WBTxRx {
   // called by the receive thread, wait for data to become available then pull data
   void loop_receive_packets();
   // pull data from a pcap handle which has data available
-  int loop_iter(int rx_index);
+  int loop_iter_pcap(int rx_index);
+  int loop_iter_raw(int rx_index);
   // called every time we have a new (raw) data packet
-  void on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len);
+  void on_new_packet(uint8_t wlan_idx,const uint8_t *pkt,int pkt_len);
   // verify and decrypt the packet if possible
   // returns true if packet could be decrypted successfully
   bool process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
   // called avery time we have successfully decrypted a packet
-  void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data,const int data_len);
+  void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data,int data_len);
   static std::string options_to_string(const std::vector<std::string>& wifi_cards,const Options& options);
   void switch_tx_card_if_needed();
  private:
