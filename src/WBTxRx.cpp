@@ -256,7 +256,7 @@ void WBTxRx::loop_receive_packets() {
 }
 
 int WBTxRx::loop_iter(int rx_index) {
-  /*pcap_t* ppcap=m_pcap_handles[rx_index].rx;
+  pcap_t* ppcap=m_pcap_handles[rx_index].rx;
   // loop while incoming queue is not empty
   int nPacketsPolledUntilQueueWasEmpty = 0;
   for (;;) {
@@ -283,9 +283,9 @@ int WBTxRx::loop_iter(int rx_index) {
     on_new_packet(rx_index,pkt,hdr.len);
     nPacketsPolledUntilQueueWasEmpty++;
   }
-  return nPacketsPolledUntilQueueWasEmpty;*/
+  return nPacketsPolledUntilQueueWasEmpty;
   // loop while incoming queue is not empty
-  int nPacketsPolledUntilQueueWasEmpty = 0;
+  /*int nPacketsPolledUntilQueueWasEmpty = 0;
   for (;;) {
     auto buff=std::vector<uint8_t>(PCAP_MAX_PACKET_SIZE);
     const int ret= read(m_receive_pollfds[rx_index].fd,buff.data(),buff.size());
@@ -302,7 +302,7 @@ int WBTxRx::loop_iter(int rx_index) {
     on_new_packet(rx_index,buff.data(),ret);
     nPacketsPolledUntilQueueWasEmpty++;
   }
-  return nPacketsPolledUntilQueueWasEmpty;
+  return nPacketsPolledUntilQueueWasEmpty;*/
 }
 
 void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len) {
