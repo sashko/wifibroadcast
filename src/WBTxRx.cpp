@@ -45,19 +45,24 @@ WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
   for(int i=0;i<m_wifi_cards.size();i++){
     auto wifi_card=m_wifi_cards[i];
     PcapTxRx pcapTxRx{};
+    // RX part - using pcap
     pcapTxRx.rx=wifibroadcast::pcap_helper::open_pcap_rx(wifi_card.name);
-    //pcapTxRx.tx=pcapTxRx.rx;
-    pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card.name);
     if(m_options.pcap_rx_set_direction){
       const auto ret=pcap_setdirection(pcapTxRx.rx, PCAP_D_IN);
       if(ret!=0){
         m_console->debug("pcap_setdirection() returned {}",ret);
       }
     }
-    m_pcap_handles.push_back(pcapTxRx);
-    auto fd = pcap_get_selectable_fd(pcapTxRx.rx);
-    m_receive_pollfds[i].fd = fd;
+    auto rx_pollfd = pcap_get_selectable_fd(pcapTxRx.rx);
+    m_receive_pollfds[i].fd = rx_pollfd;
     m_receive_pollfds[i].events = POLLIN;
+    // TX part - using raw socket or pcap
+    if(m_options.tx_without_pcap){
+      pcapTxRx.tx_sockfd= openWifiInterfaceAsTxRawSocket(wifi_card.name);
+    }else{
+      pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card.name);
+    }
+    m_pcap_handles.push_back(pcapTxRx);
   }
   wb::KeyPairTxRx keypair{};
   if(m_options.secure_keypair.has_value()){
@@ -86,8 +91,15 @@ WBTxRx::~WBTxRx() {
       pcapTxRx.rx= nullptr;
       pcapTxRx.tx= nullptr;
     }else{
-      pcap_close(pcapTxRx.rx);
-      pcap_close(pcapTxRx.tx);
+      if(pcapTxRx.rx!= nullptr){
+        pcap_close(pcapTxRx.rx);
+      }
+      if(pcapTxRx.tx!= nullptr){
+        pcap_close(pcapTxRx.tx);
+      }
+      if(pcapTxRx.tx_sockfd!=-1){
+        close(pcapTxRx.tx_sockfd);
+      }
     }
     //pcap_close(pcapTxRx.rx);
     //pcap_close(pcapTxRx.tx);
@@ -171,10 +183,14 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
 
 int WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, int packet_size) {
   // inject via pcap
+  int len_injected=0;
   // we inject the packet on whatever card has the highest rx rssi right now
-  //pcap_t *tx= m_pcap_handles[card_index].tx;
-  //const auto len_injected=pcap_inject(tx, packet_buff, packet_size);
-  const auto len_injected=write(m_receive_pollfds[card_index].fd,packet_buff,packet_size);
+  if(m_options.tx_without_pcap){
+    len_injected=(int)write(m_pcap_handles[card_index].tx_sockfd,packet_buff,packet_size);
+  }else{
+    len_injected=pcap_inject(m_pcap_handles[card_index].tx, packet_buff, packet_size);
+    //const auto len_injected=write(m_receive_pollfds[card_index].fd,packet_buff,packet_size);
+  }
   if (len_injected != (int) packet_size) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
     //m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, pcap_geterr(tx));
