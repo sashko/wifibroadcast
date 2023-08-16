@@ -157,6 +157,7 @@ class WBTxRx {
    void tx_update_stbc(int stbc);
    void tx_update_guard_interval(bool short_gi);
    void tx_update_ldpc(bool ldpc);
+   void tx_update_set_flag_tx_no_ack(bool enable);
 
    // Statistics
    struct TxStats{
@@ -336,6 +337,7 @@ class WBTxRx {
   AvgCalculator m_packet_encrypt_time;
   AvgCalculator m_packet_decrypt_time;
  private:
+  int inject_radiotap_packet(int card_index,const uint8_t* packet_buff,int packet_size);
   // we announce the session key in regular intervals if data is currently being injected (tx_ is called)
   void announce_session_key_if_needed();
   // send out the session key
@@ -345,7 +347,7 @@ class WBTxRx {
   // pull data from a pcap handle which has data available
   int loop_iter(int rx_index);
   // called every time we have a new (raw) data packet
-  void on_new_packet(uint8_t wlan_idx, const pcap_pkthdr &hdr, const uint8_t *pkt);
+  void on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len);
   // verify and decrypt the packet if possible
   // returns true if packet could be decrypted successfully
   bool process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
