@@ -103,7 +103,8 @@ class RadiotapHeader {
     radiotapHeaderData.presence =
         Radiotap::writePresenceBitfield({IEEE80211_RADIOTAP_TX_FLAGS, IEEE80211_RADIOTAP_MCS});
 
-    // in wifibroadcast we never want ack from the receiver
+    // in wifibroadcast we never want ack from the receiver - well, this is true,
+    // but rtl8812au driver actually uses this one a bit differently
     if(params.set_flag_tx_no_ack){
       radiotapHeaderData.txFlags =
           IEEE80211_RADIOTAP_F_TX_NOACK; //| IEEE80211_RADIOTAP_F_TX_CTS | IEEE80211_RADIOTAP_F_TX_RTS
