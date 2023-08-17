@@ -193,8 +193,12 @@ int WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, in
   }
   if (len_injected != (int) packet_size) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
-    //m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, pcap_geterr(tx));
-    m_console->warn("raw sock - unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, strerror(errno));
+    if(m_options.tx_without_pcap){
+      m_console->warn("raw sock - unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, strerror(errno));
+    }else{
+      m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected,
+                      pcap_geterr(m_pcap_handles[card_index].tx));
+    }
   }
   return len_injected;
 }

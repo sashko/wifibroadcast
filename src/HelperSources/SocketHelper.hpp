@@ -61,6 +61,12 @@ static std::chrono::nanoseconds getCurrentSocketReceiveTimeout(int socketFd) {
   assert(len == sizeof(tv));
   return MyTimeHelper::timevalToDuration(tv);
 }
+static int get_socket_rcvbuf_size(int socketFd) {
+  int recvBufferSize=0;
+  socklen_t len=sizeof(recvBufferSize);
+  getsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, &len);
+  return recvBufferSize;
+}
 // set the receive timeout on the socket
 // throws runtime exception if this step fails (should never fail on linux)
 static void setSocketReceiveTimeout(int socketFd, const std::chrono::nanoseconds timeout) {

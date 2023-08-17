@@ -22,9 +22,7 @@ static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
   struct ifreq ifr{};
   int sock = socket(AF_PACKET, SOCK_RAW, 0);
   if (sock == -1) {
-    std::stringstream ss;
-    ss<<"RawSocketTransmitter:: open socket failed "<<wifi.c_str()<<" "<<strerror(errno);
-    console->error(ss.str());
+    console->error("open socket failed {} {}",wifi.c_str(), strerror(errno));
   }
 
   ll_addr.sll_family = AF_PACKET;
@@ -56,13 +54,13 @@ static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
     console->warn("setsockopt SO_SNDTIMEO");
   }
   // for some reason setting the timeout does not seem to work here, I always get 10ms back
-  //console->debug("RawSocketTransmitter::timeout: {}ms", static_cast<double>(get_socket_timeout_us(sock))/1000.0);
-  //console->debug("RawSocketTransmitter::curr_send_buffer_size:{}",get_socket_send_buffer_size(sock));
+  console->debug("timeout: {}", MyTimeHelper::R(SocketHelper::getCurrentSocketReceiveTimeout(sock)));
+  console->debug("curr_send_buffer_size:{}",StringHelper::memorySizeReadable(SocketHelper::get_socket_rcvbuf_size(sock)));
   const int wanted_sendbuff = 128*1024; //131072
   if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &wanted_sendbuff, sizeof(wanted_sendbuff)) < 0) {
     console->warn("setsockopt SO_SNDBUF");
   }
-  //console->debug("RawSocketTransmitter::applied_send_buffer_size:{}",get_socket_send_buffer_size(sock));
+  console->debug("applied_send_buffer_size:{}",StringHelper::memorySizeReadable(SocketHelper::get_socket_rcvbuf_size(sock)));
   console->error("{} socket opened",wifi);
   return sock;
 }
