@@ -334,7 +334,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
     m_console->debug("Got packet {} {}",wlan_idx,pkt_len);
   }
   const auto parsedPacket =
-      wifibroadcast::pcap_helper::process_received_radiotap_packet(pkt,pkt_len);
+      RadiotapHelper::process_received_radiotap_packet(pkt,pkt_len);
   if (parsedPacket == std::nullopt) {
     if(m_options.advanced_debugging_rx){
       m_console->warn("Discarding packet due to pcap parsing error!");
@@ -676,7 +676,7 @@ void WBTxRx::send_session_key() {
   tmp_tx_hdr.write_ieee80211_seq_nr(m_ieee80211_seq++);
   tmp_tx_hdr.write_nonce(m_nonce++);
 
-  auto packet=wifibroadcast::pcap_helper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211HeaderRaw*)&tmp_tx_hdr,
+  auto packet=RadiotapHelper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211HeaderRaw*)&tmp_tx_hdr,
                                                           (uint8_t *)&m_tx_sess_key_packet, sizeof(SessionKeyPacket));
   const int packet_size=(int)packet.size();
   // NOTE: Session key is always sent via card 0 since otherwise we might pick up the session key intended for the ground unit
