@@ -74,7 +74,14 @@ class UINT64SeqNrHelper {
   // resets the received and missing packet count
   void recalculate_loss_if_needed(){
     const auto elapsed=std::chrono::steady_clock::now()-m_last_loss_perc_recalculation;
-    if(elapsed>=std::chrono::seconds(2) || m_n_received_packets>500){
+    // Recalculate once the following limit(s) are reached:
+    // 1) more than 500 packets (in openhd, air to ground)
+    // 2) after 2 seconds if at least 10 packets are received (low bandwidth, ground to air)
+    // 3) after 5 seconds, regardless of n packets
+    const bool recalculate=(m_n_received_packets>=500) ||
+                             (elapsed>std::chrono::seconds(2) && m_n_received_packets>=10)||
+                             (elapsed>std::chrono::seconds(5));
+    if(recalculate){
       m_last_loss_perc_recalculation=std::chrono::steady_clock::now();
       const auto n_total_packets=m_n_received_packets+m_n_missing_packets;
       //m_console->debug("x_n_missing_packets:{} x_n_received_packets:{} n_total_packets:{}",x_n_missing_packets,x_n_received_packets,n_total_packets);
