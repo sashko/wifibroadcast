@@ -152,6 +152,9 @@ class RadiotapHeader {
   constexpr std::size_t getSize() const {
     return SIZE_BYTES;
   }
+  static std::string user_params_to_string(const UserSelectableParams& params){
+    return fmt::format("BW:{} MCS:{} SGI:{} STBC:{} LDPC:{} NO_ACK:{}",params.bandwidth,params.mcs_index,params.short_gi,params.stbc,params.ldpc,params.set_flag_tx_no_ack);
+  }
  private:
   RadiotapHeaderWithTxFlagsAndMCS radiotapHeaderData;
 }__attribute__ ((packed));
