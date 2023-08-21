@@ -47,5 +47,7 @@ install(TARGETS benchmark DESTINATION bin)
 install(TARGETS udp_generator_validator DESTINATION bin)
 install(TARGETS unit_test DESTINATION bin)
 install(TARGETS socket_helper_test DESTINATION bin)
+install(TARGETS example_hello DESTINATION bin)
+install(TARGETS example_udp DESTINATION bin)
 
 
