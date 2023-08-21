@@ -2,8 +2,8 @@
 // Created by consti10 on 16.08.23.
 //
 
-#ifndef WIFIBROADCAST_RAW_SOCKET_HELPER_H
-#define WIFIBROADCAST_RAW_SOCKET_HELPER_H
+#ifndef WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
+#define WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
 
 #include <linux/if_ether.h>
 #include <net/if.h>
@@ -16,7 +16,7 @@
 // taken from
 // https://github.com/OpenHD/Open.HD/blob/2.0/wifibroadcast-base/tx_rawsock.c#L86
 // open wifi interface using a socket (somehow this works ?!)
-static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
+static int open_wifi_interface_as_raw_socket(const std::string &wifi) {
   auto console=wifibroadcast::log::create_or_get("raw_sock");
   struct sockaddr_ll ll_addr{};
   struct ifreq ifr{};
@@ -47,22 +47,20 @@ static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
     close(sock);
     console->error("bind failed");
   }
-  struct timeval timeout{};
-  timeout.tv_sec = 0;
-  timeout.tv_usec = 1*1000; // timeout of 1 ms
-  if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) != 0) {
-    console->warn("setsockopt SO_SNDTIMEO");
-  }
-  // for some reason setting the timeout does not seem to work here, I always get 10ms back
-  console->debug("timeout: {}", MyTimeHelper::R(SocketHelper::getCurrentSocketReceiveTimeout(sock)));
-  console->debug("curr_send_buffer_size:{}",StringHelper::memorySizeReadable(SocketHelper::get_socket_rcvbuf_size(sock)));
-  const int wanted_sendbuff = 128*1024; //131072
-  if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &wanted_sendbuff, sizeof(wanted_sendbuff)) < 0) {
-    console->warn("setsockopt SO_SNDBUF");
-  }
-  console->debug("applied_send_buffer_size:{}",StringHelper::memorySizeReadable(SocketHelper::get_socket_rcvbuf_size(sock)));
+  SocketHelper::debug_send_rcv_timeout(sock,console);
+  //const auto wanted_send_timeout=std::chrono::milliseconds(20);
+  //console->debug("Setting send timeout to {}",MyTimeHelper::R(wanted_send_timeout));
+  //SocketHelper::set_socket_send_rcv_timeout(sock,std::chrono::milliseconds(20), true);
+  // debug the timeout after setting
+  //SocketHelper::debug_send_rcv_timeout(sock,console);
+  // buff size
+  SocketHelper::set_socket_send_rcv_buffsize(sock,1510*1, true);
+  SocketHelper::debug_send_rcv_buffsize(sock,console);
+  //const int wanted_sendbuff_bytes=128*1024*1024;
+  //SocketHelper::set_socket_send_rcv_buffsize(sock,wanted_sendbuff_bytes, true);
+  // buff size end
   console->error("{} socket opened",wifi);
   return sock;
 }
 
-#endif  // WIFIBROADCAST_RAW_SOCKET_HELPER_H
+#endif  // WIFIBROADCAST_RAW_SOCKET_HELPER_HPP

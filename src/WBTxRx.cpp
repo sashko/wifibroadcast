@@ -6,10 +6,9 @@
 
 #include <utility>
 
-#include "pcap_helper.hpp"
 #include "SchedulingHelper.hpp"
-#include "raw_socket_helper.h"
-
+#include "pcap_helper.hpp"
+#include "raw_socket_helper.hpp"
 
 WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
     : m_options(options1),
@@ -58,7 +57,7 @@ WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
     m_receive_pollfds[i].events = POLLIN;
     // TX part - using raw socket or pcap
     if(m_options.tx_without_pcap){
-      pcapTxRx.tx_sockfd= openWifiInterfaceAsTxRawSocket(wifi_card.name);
+      pcapTxRx.tx_sockfd= open_wifi_interface_as_raw_socket(wifi_card.name);
     }else{
       pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card.name);
     }
@@ -168,8 +167,15 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   if(delta_inject>=MAX_SANE_INJECTION_TIME){
     m_tx_stats.count_tx_injections_error_hint++;
   }
-  if(m_options.advanced_debugging_tx){
-    m_console->debug("Injected packet ret:{} took:{}",len_injected,MyTimeHelper::R(delta_inject));
+  if(m_options.debug_tx_injection_time){
+    m_tx_inject_time.add(delta_inject);
+    if(m_tx_inject_time.get_delta_since_last_reset()>std::chrono::seconds(2)){
+      m_console->debug("packet injection time: {}",m_tx_inject_time.getAvgReadable());
+      m_tx_inject_time.reset();
+    }
+    if(delta_inject>MAX_SANE_INJECTION_TIME){
+      m_console->debug("Injected packet ret:{} took:{}",len_injected,MyTimeHelper::R(delta_inject));
+    }
   }
   if (len_injected != (int) packet_size) {
     m_tx_stats.count_tx_errors++;

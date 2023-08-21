@@ -252,6 +252,7 @@ int main(int argc, char *const *argv) {
   WBTxRx::Options options_txrx{};
   //options_txrx.pcap_rx_set_direction= false;
   options_txrx.log_all_received_validated_packets= false;
+  options_txrx.tx_without_pcap= true;
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
   // No idea if and what effect stbc and ldpc have on the rate, but openhd enables them if possible by default

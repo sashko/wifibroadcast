@@ -20,10 +20,10 @@
 #include <optional>
 #include <thread>
 
-#include "../wifibroadcast_spdlog.h"
-#include <spdlog/spdlog.h>
 #include "StringHelper.hpp"
 #include "TimeHelper.hpp"
+
+#include <spdlog/spdlog.h>
 #ifdef DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "openhd_spdlog.h"
 #else
@@ -53,33 +53,53 @@ static const std::string ADDRESS_LOCALHOST = "127.0.0.1";
 static const std::string ADDRESS_ANY="0.0.0.0";
 
 // returns the current socket receive timeout
-static std::chrono::nanoseconds getCurrentSocketReceiveTimeout(int socketFd) {
+static std::chrono::nanoseconds get_current_socket_send_rcv_timeout(int socketFd,bool send=false) {
   timeval tv{};
   socklen_t len = sizeof(tv);
-  auto res = getsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &tv, &len);
+  auto res = getsockopt(socketFd, SOL_SOCKET, send ? SO_SNDTIMEO : SO_RCVTIMEO, &tv, &len);
   assert(res == 0);
   assert(len == sizeof(tv));
   return MyTimeHelper::timevalToDuration(tv);
 }
-static int get_socket_rcvbuf_size(int socketFd) {
+// Returns size in bytes
+static int get_socket_send_rcv_buff_size(int socketFd,bool send= false) {
   int recvBufferSize=0;
   socklen_t len=sizeof(recvBufferSize);
-  getsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, &recvBufferSize, &len);
+  getsockopt(socketFd, SOL_SOCKET, send ? SO_SNDBUF : SO_RCVBUF, &recvBufferSize, &len);
   return recvBufferSize;
+}
+static void set_socket_send_rcv_buffsize(int socketFd,int buffsize_wanted_bytes,bool send= false) {
+  const auto buffsize_before_bytes=get_socket_send_rcv_buff_size(socketFd,send);
+  const auto res=setsockopt(socketFd, SOL_SOCKET, send ? SO_SNDBUF : SO_RCVBUF, &buffsize_wanted_bytes, sizeof(buffsize_wanted_bytes));
+  if (res < 0) {
+    get_console()->warn("Cannot set socket {} buffsize from {} to {}",
+      send ? "send":"recv",StringHelper::memorySizeReadable(buffsize_before_bytes),
+                        StringHelper::memorySizeReadable(buffsize_wanted_bytes));
+  }
 }
 // set the receive timeout on the socket
 // throws runtime exception if this step fails (should never fail on linux)
-static void setSocketReceiveTimeout(int socketFd, const std::chrono::nanoseconds timeout) {
-  const auto currentTimeout = getCurrentSocketReceiveTimeout(socketFd);
+static void set_socket_send_rcv_timeout(int socketFd, const std::chrono::nanoseconds timeout,bool send= false) {
+  const auto currentTimeout = get_current_socket_send_rcv_timeout(socketFd,send);
   if (currentTimeout != timeout) {
     auto tv =  MyTimeHelper::durationToTimeval(timeout);
-    if (setsockopt(socketFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-      std::stringstream ss;
-      ss<<"Cannot set socket timeout "<<timeout.count();
-      get_console()->warn(ss.str());
+    if (setsockopt(socketFd, SOL_SOCKET, send ? SO_SNDTIMEO : SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+      get_console()->warn("Cannot set socket {} timeout from {} to {}",
+                          send ? "send":"recv",MyTimeHelper::R(currentTimeout),MyTimeHelper::R(timeout));
     }
   }
 }
+static void debug_send_rcv_timeout(int sockfd,std::shared_ptr<spdlog::logger>& console){
+  const auto send_timeout= get_current_socket_send_rcv_timeout(sockfd, true);
+  const auto recv_timeout= get_current_socket_send_rcv_timeout(sockfd, false);
+  console->debug("Socket rcv timeout:{} send timeout:{}",MyTimeHelper::R(recv_timeout),MyTimeHelper::R(send_timeout));
+}
+static void debug_send_rcv_buffsize(int sockfd,std::shared_ptr<spdlog::logger>& console){
+  const auto send_buffsize= get_socket_send_rcv_buff_size(sockfd, true);
+  const auto recv_buffsize= get_socket_send_rcv_buff_size(sockfd, false);
+  console->debug("Socket buff size rcv:{} send:{}",StringHelper::memorySizeReadable(recv_buffsize),StringHelper::memorySizeReadable(send_buffsize));
+}
+
 // Set the reuse flag on the socket, so it doesn't care if there is a broken down process
 // still on the socket or not.
 static void setSocketReuse(int sockfd) {
