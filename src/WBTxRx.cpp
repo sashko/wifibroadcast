@@ -167,8 +167,15 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   if(delta_inject>=MAX_SANE_INJECTION_TIME){
     m_tx_stats.count_tx_injections_error_hint++;
   }
-  if(m_options.advanced_debugging_tx){
-    m_console->debug("Injected packet ret:{} took:{}",len_injected,MyTimeHelper::R(delta_inject));
+  if(m_options.debug_tx_injection_time){
+    m_tx_inject_time.add(delta_inject);
+    if(m_tx_inject_time.get_delta_since_last_reset()>std::chrono::seconds(2)){
+      m_console->debug("packet injection time: {}",m_tx_inject_time.getAvgReadable());
+      m_tx_inject_time.reset();
+    }
+    if(delta_inject>MAX_SANE_INJECTION_TIME){
+      m_console->debug("Injected packet ret:{} took:{}",len_injected,MyTimeHelper::R(delta_inject));
+    }
   }
   if (len_injected != (int) packet_size) {
     m_tx_stats.count_tx_errors++;

@@ -63,10 +63,9 @@ class WBTxRx {
     // log all received packets (regardless where they are from)
     bool log_all_received_packets= false;
     bool log_all_received_validated_packets= false;
-    // more verbose tx logging
-    bool advanced_debugging_tx = false;
     // more verbose rx logging
     bool advanced_debugging_rx = false;
+    bool debug_tx_injection_time = false;
     // advanced latency related debugging
     bool advanced_latency_debugging_rx= false;
     // set sched_param = max realtime on the thread that pulls out the packets
@@ -92,7 +91,7 @@ class WBTxRx {
     // This is only for debugging / testing, inject packets with a fixed MAC - won't be received as valid packets by another rx instance
     bool enable_non_openhd_mode= false;
     // tmp
-
+    bool tx_without_pcap=false;
   };
   // RTL8812AU driver requires a quirk regarding rssi
   static constexpr auto WIFI_CARD_TYPE_UNKNOWN=0;
@@ -339,6 +338,7 @@ class WBTxRx {
   PacketsPerSecondCalculator m_rx_packets_per_second_calculator{};
   AvgCalculator m_packet_encrypt_time;
   AvgCalculator m_packet_decrypt_time;
+  AvgCalculator m_tx_inject_time;
  private:
   int inject_radiotap_packet(int card_index,const uint8_t* packet_buff,int packet_size);
   // we announce the session key in regular intervals if data is currently being injected (tx_ is called)
