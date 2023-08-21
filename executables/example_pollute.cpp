@@ -9,14 +9,8 @@
 #include "RandomBufferPot.hpp"
 
 /**
- * Simple demo application that sends out hello messages and listens for hello messages.
- * You can run it either on 2 different systems (air unit and ground unit)
- * or run it on the same system with 2 different wifi cards for testing.
- *
- * On success, you should see the air unit talking to the ground unit and vice versa.
- *
- * NOTE: Card(s) need to be in monitor mode & on match on the selected frequency !
- * NOTE: This example is as simple as possible, and therefore doesn't even need to use the WBStreamTX / WBStreamRX pair
+ * Simple demo application that pollutes a given wifi space
+ * with a lot of packets with a non-openhd fixed MAC address.
  */
 int main(int argc, char *const *argv) {
   std::string card="wlx244bfeb71c05";
