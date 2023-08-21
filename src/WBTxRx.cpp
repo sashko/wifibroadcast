@@ -6,10 +6,9 @@
 
 #include <utility>
 
-#include "pcap_helper.hpp"
 #include "SchedulingHelper.hpp"
-#include "raw_socket_helper.h"
-
+#include "pcap_helper.hpp"
+#include "raw_socket_helper.hpp"
 
 WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
     : m_options(options1),
@@ -58,7 +57,7 @@ WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
     m_receive_pollfds[i].events = POLLIN;
     // TX part - using raw socket or pcap
     if(m_options.tx_without_pcap){
-      pcapTxRx.tx_sockfd= openWifiInterfaceAsTxRawSocket(wifi_card.name);
+      pcapTxRx.tx_sockfd= open_wifi_interface_as_raw_socket(wifi_card.name);
     }else{
       pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card.name);
     }

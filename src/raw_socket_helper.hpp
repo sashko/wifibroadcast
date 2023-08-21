@@ -2,8 +2,8 @@
 // Created by consti10 on 16.08.23.
 //
 
-#ifndef WIFIBROADCAST_RAW_SOCKET_HELPER_H
-#define WIFIBROADCAST_RAW_SOCKET_HELPER_H
+#ifndef WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
+#define WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
 
 #include <linux/if_ether.h>
 #include <net/if.h>
@@ -16,7 +16,7 @@
 // taken from
 // https://github.com/OpenHD/Open.HD/blob/2.0/wifibroadcast-base/tx_rawsock.c#L86
 // open wifi interface using a socket (somehow this works ?!)
-static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
+static int open_wifi_interface_as_raw_socket(const std::string &wifi) {
   auto console=wifibroadcast::log::create_or_get("raw_sock");
   struct sockaddr_ll ll_addr{};
   struct ifreq ifr{};
@@ -65,4 +65,4 @@ static int openWifiInterfaceAsTxRawSocket(const std::string &wifi) {
   return sock;
 }
 
-#endif  // WIFIBROADCAST_RAW_SOCKET_HELPER_H
+#endif  // WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
