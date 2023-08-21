@@ -20,10 +20,10 @@
 #include <optional>
 #include <thread>
 
-#include "../wifibroadcast_spdlog.h"
-#include <spdlog/spdlog.h>
 #include "StringHelper.hpp"
 #include "TimeHelper.hpp"
+
+#include <spdlog/spdlog.h>
 #ifdef DIRTY_CONSOLE_FROM_OPENHD_SUBMODULES
 #include "openhd_spdlog.h"
 #else

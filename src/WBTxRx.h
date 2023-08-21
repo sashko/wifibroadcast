@@ -92,7 +92,7 @@ class WBTxRx {
     // This is only for debugging / testing, inject packets with a fixed MAC - won't be received as valid packets by another rx instance
     bool enable_non_openhd_mode= false;
     // tmp
-    bool tx_without_pcap=false;
+
   };
   // RTL8812AU driver requires a quirk regarding rssi
   static constexpr auto WIFI_CARD_TYPE_UNKNOWN=0;
