@@ -54,6 +54,7 @@ static int open_wifi_interface_as_raw_socket(const std::string &wifi) {
   // debug the timeout after setting
   //SocketHelper::debug_send_rcv_timeout(sock,console);
   // buff size
+  SocketHelper::set_socket_send_rcv_buffsize(sock,1510*1, true);
   SocketHelper::debug_send_rcv_buffsize(sock,console);
   //const int wanted_sendbuff_bytes=128*1024*1024;
   //SocketHelper::set_socket_send_rcv_buffsize(sock,wanted_sendbuff_bytes, true);

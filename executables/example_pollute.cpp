@@ -42,6 +42,7 @@ int main(int argc, char *const *argv) {
   options_txrx.enable_non_openhd_mode= true;
   options_txrx.tx_without_pcap= false;
   options_txrx.debug_tx_injection_time= true;
+  options_txrx.tx_without_pcap=true;
 
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
   // We do not need receive in this mode
