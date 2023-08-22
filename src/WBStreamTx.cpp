@@ -130,6 +130,14 @@ void WBStreamTx::loop_process_data() {
           m_queue_time_calculator.reset();
         }
         process_enqueued_block(*frame);
+        if(options.log_time_blocks_until_tx){
+          const auto delta=std::chrono::steady_clock::now()-frame->enqueue_time_point;
+          m_block_until_tx_time.add(delta);
+          if(m_block_until_tx_time.get_delta_since_last_reset()>std::chrono::seconds(2)){
+            m_console->debug("Time until tx {}",m_block_until_tx_time.getAvgReadable());
+            m_block_until_tx_time.reset();
+          }
+        }
       }
     }
   }else{

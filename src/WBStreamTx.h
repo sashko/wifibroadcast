@@ -36,6 +36,11 @@ class WBStreamTx {
     bool enable_fec= true;
     // for development, log time items spend in the data queue (it should be close to 0)
     bool log_time_spent_in_atomic_queue=false;
+    // for development, log time blocks (frames) spend in the data queue AND until all fragments of this element are injected
+    // (Basically, the time from when a frame was given to WBStreamTx and when all packets for this frame have been given
+    // to the linux kernel / wifi card)  NOTE: this measures the time until the last FEC packet, aka it can be slightly higher than actual
+    // latency to the rx
+    bool log_time_blocks_until_tx= false;
     // overwrite the console used for logging
     std::shared_ptr<spdlog::logger> opt_console=nullptr;
     // set sched_param = max realtime on the thread that dequeues and injects the packets
@@ -127,6 +132,7 @@ class WBStreamTx {
   uint64_t m_n_dropped_packets=0;
   // Time fragments / blocks spend in the non-blocking atomic queue.
   AvgCalculator m_queue_time_calculator;
+  AvgCalculator m_block_until_tx_time;
   // n of packets fed to the instance
   int64_t m_n_input_packets = 0;
   // count of bytes we got passed (aka for example, what the video encoder produced - does not include FEC)
