@@ -362,6 +362,8 @@ class WBTxRx {
   // called avery time we have successfully decrypted a packet
   void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data,int data_len);
   static std::string options_to_string(const std::vector<std::string>& wifi_cards,const Options& options);
+  // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
+  // (Of all cards currently receiving data, find the one with the highest reported dBm)
   void switch_tx_card_if_needed();
  private:
   // These are 'extra' for calculating some channel pollution value
