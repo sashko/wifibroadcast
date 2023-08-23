@@ -285,6 +285,10 @@ class WBTxRx {
   uint64_t m_nonce=0;
   // For multiple RX cards the card with the highest rx rssi is used to inject packets on
   std::atomic<int> m_curr_tx_card=0;
+  struct ActiveCardCalculationData{
+     int64_t last_received_n_valid_packets=0;
+  };
+  std::vector<ActiveCardCalculationData> m_active_tx_card_data;
   SessionKeyPacket m_tx_sess_key_packet;
   std::unique_ptr<wb::Encryptor> m_encryptor;
   std::unique_ptr<wb::Decryptor> m_decryptor;
