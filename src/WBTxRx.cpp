@@ -204,7 +204,7 @@ bool WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, i
       m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected,
                       pcap_geterr(m_pcap_handles[card_index].tx));
     }
-    m_tx_stats.count_tx_errors++;
+    m_tx_stats.count_tx_dropped_packets++;
     return false;
   }
   return true;
@@ -820,9 +820,9 @@ void WBTxRx::recalculate_pollution_perc() {
 }
 
 std::string WBTxRx::tx_stats_to_string(const WBTxRx::TxStats& data) {
-  return fmt::format("TxStats[injected packets:{} bytes:{} tx errors:{}:{} pps:{} bps:{}:{}]",
+  return fmt::format("TxStats[injected packets:{} bytes:{} tx error hint/dropped:{}:{} pps:{} bps:{}:{}]",
                      data.n_injected_packets,data.n_injected_bytes_including_overhead,
-                     data.count_tx_injections_error_hint,data.count_tx_errors,
+                     data.count_tx_injections_error_hint,data.count_tx_dropped_packets,
                      data.curr_packets_per_second,
                      StringHelper::bitrate_readable(data.curr_bits_per_second_excluding_overhead),
                      StringHelper::bitrate_readable(data.curr_bits_per_second_including_overhead));
