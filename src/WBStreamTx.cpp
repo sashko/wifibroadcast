@@ -81,6 +81,7 @@ bool WBStreamTx::try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8
   const bool res= m_block_queue->try_enqueue(item);
   if(!res){
     m_n_dropped_packets+=fragments.size();
+    m_n_dropped_frames++;
     //m_curr_seq_nr+=fragments.size();
   }
   return res;
@@ -107,11 +108,11 @@ WBStreamTx::Statistics WBStreamTx::get_latest_stats() {
       m_bitrate_calculator_data_provided.get_last_or_recalculate(
           m_count_bytes_data_provided,std::chrono::seconds(2));
   ret.n_dropped_packets=m_n_dropped_packets;
+  ret.n_dropped_frames=m_n_dropped_frames;
   ret.current_injected_packets_per_second=m_packets_per_second_calculator.get_last_or_recalculate(
           m_n_injected_packets,std::chrono::seconds(2));
   return ret;
 }
-
 
 void WBStreamTx::loop_process_data() {
   if(options.dequeue_thread_max_realtime){
