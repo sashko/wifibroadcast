@@ -25,6 +25,7 @@ WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
     assert(false);
   }
   m_receive_pollfds.resize(m_wifi_cards.size());
+  m_active_tx_card_data.resize(m_wifi_cards.size());
   for(int i=0;i<m_wifi_cards.size();i++){
     RxStatsPerCard tmp{};
     tmp.card_index=i;
@@ -560,7 +561,6 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
 }
 
 void WBTxRx::switch_tx_card_if_needed() {
-  // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
   if(m_wifi_cards.size()>1 && m_options.enable_auto_switch_tx_card){
     const auto elapsed=std::chrono::steady_clock::now()-m_last_highest_rssi_adjustment_tp;
     if(elapsed>=HIGHEST_RSSI_ADJUSTMENT_INTERVAL){
@@ -569,10 +569,16 @@ void WBTxRx::switch_tx_card_if_needed() {
       int highest_dbm=INT32_MIN;
       for(int i=0;i< m_wifi_cards.size();i++){
         RxStatsPerCard& this_card_stats=m_rx_stats_per_card.at(i);
-        const auto dbm_average=this_card_stats.card_dbm;
-        if(dbm_average>highest_dbm){
-          idx_card_highest_rssi=i;
-          highest_dbm=(int)dbm_average;
+        // Check if this card is behaving "okay", aka receiving packets at the time
+        const auto delta_valid_packets=this_card_stats.count_p_valid-m_active_tx_card_data[i].last_received_n_valid_packets;
+        m_active_tx_card_data[i].last_received_n_valid_packets=this_card_stats.count_p_valid;
+        if(delta_valid_packets!=0){
+          // Some valid packets on this card, or reset
+          const auto dbm_average=this_card_stats.card_dbm;
+          if(dbm_average>highest_dbm){
+            idx_card_highest_rssi=i;
+            highest_dbm=static_cast<int>(dbm_average); // NOLINT(cert-str34-c)
+          }
         }
         //m_console->debug("Card {} dbm_average:{}",i,dbm_average);
       }

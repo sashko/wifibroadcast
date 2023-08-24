@@ -83,7 +83,9 @@ class WBStreamTx {
     // Sending a lot of small packets for example should be avoided
     uint64_t current_injected_packets_per_second;
     // N of dropped packets, increases when both the internal driver queue and the extra 124 packets queue of the tx fill up
+    // In FEC mode (video), every time a frame is dropped this is increased by the n of fragments in this frame
     uint64_t n_dropped_packets;
+    int32_t n_dropped_frames;
   };
   Statistics get_latest_stats();
   // only valid when actually doing FEC
@@ -130,6 +132,7 @@ class WBStreamTx {
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;
   uint64_t m_n_dropped_packets=0;
+  int32_t m_n_dropped_frames=0;
   // Time fragments / blocks spend in the non-blocking atomic queue.
   AvgCalculator m_queue_time_calculator;
   AvgCalculator m_block_until_tx_time;

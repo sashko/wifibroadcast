@@ -173,7 +173,10 @@ class WBTxRx {
      int curr_bits_per_second_including_overhead=-1;
      // tx error hint, first sign the tx can't keep up with the provided bitrate
      int32_t count_tx_injections_error_hint=0;
-     // actual tx errors
+     // actual tx errors - e.g. packets dropped during injection.
+     // Usually, this shouldn't increase, since "injecting a frame" should be a blocking operation
+     // (until there is space available in the tx queue, aka either linux network or driver packet queue)
+     // and openhd does automatic bitrate adjust at the tx.
      int32_t count_tx_errors=0;
    };
    struct RxStats{
@@ -285,6 +288,10 @@ class WBTxRx {
   uint64_t m_nonce=0;
   // For multiple RX cards the card with the highest rx rssi is used to inject packets on
   std::atomic<int> m_curr_tx_card=0;
+  struct ActiveCardCalculationData{
+     int64_t last_received_n_valid_packets=0;
+  };
+  std::vector<ActiveCardCalculationData> m_active_tx_card_data;
   SessionKeyPacket m_tx_sess_key_packet;
   std::unique_ptr<wb::Encryptor> m_encryptor;
   std::unique_ptr<wb::Decryptor> m_decryptor;
@@ -358,6 +365,8 @@ class WBTxRx {
   // called avery time we have successfully decrypted a packet
   void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data,int data_len);
   static std::string options_to_string(const std::vector<std::string>& wifi_cards,const Options& options);
+  // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
+  // (Of all cards currently receiving data, find the one with the highest reported dBm)
   void switch_tx_card_if_needed();
  private:
   // These are 'extra' for calculating some channel pollution value
