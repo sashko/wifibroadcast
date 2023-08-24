@@ -173,7 +173,10 @@ class WBTxRx {
      int curr_bits_per_second_including_overhead=-1;
      // tx error hint, first sign the tx can't keep up with the provided bitrate
      int32_t count_tx_injections_error_hint=0;
-     // actual tx errors
+     // actual tx errors - e.g. packets dropped during injection.
+     // Usually, this shouldn't increase, since "injecting a frame" should be a blocking operation
+     // (until there is space available in the tx queue, aka either linux network or driver packet queue)
+     // and openhd does automatic bitrate adjust at the tx.
      int32_t count_tx_errors=0;
    };
    struct RxStats{
