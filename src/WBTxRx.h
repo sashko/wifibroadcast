@@ -92,6 +92,8 @@ class WBTxRx {
     bool enable_non_openhd_mode= false;
     // tmp
     bool tx_without_pcap=false;
+    // a tx error hint is thrown if injecting the packet takes longer than max_sane_injection_time
+    std::chrono::milliseconds max_sane_injection_time=std::chrono::milliseconds(5);
   };
   // RTL8812AU driver requires a quirk regarding rssi
   static constexpr auto WIFI_CARD_TYPE_UNKNOWN=0;
@@ -322,9 +324,6 @@ class WBTxRx {
   OUTPUT_DATA_CALLBACK m_output_cb= nullptr;
   RxStats m_rx_stats{};
   TxStats m_tx_stats{};
-  // a tx error hint is thrown if injecting the packet takes longer than MAX_SANE_INJECTION_TIME,
-  // which hints at too much data being fed to the wifi driver.
-  static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
   std::vector<RxStatsPerCard> m_rx_stats_per_card;
   std::map<int,std::shared_ptr<StreamRxHandler>> m_rx_handlers;
   // If each iteration pulls too many packets out your CPU is most likely too slow

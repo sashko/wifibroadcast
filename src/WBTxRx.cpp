@@ -183,7 +183,7 @@ bool WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, i
     //const auto len_injected=write(m_receive_pollfds[card_index].fd,packet_buff,packet_size);
   }
   const auto delta_inject=std::chrono::steady_clock::now()-before_inject;
-  if(delta_inject>=MAX_SANE_INJECTION_TIME){
+  if(delta_inject>=m_options.max_sane_injection_time){
     m_tx_stats.count_tx_injections_error_hint++;
   }
   if(m_options.debug_tx_injection_time){
@@ -192,7 +192,7 @@ bool WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, i
       m_console->debug("packet injection time: {}",m_tx_inject_time.getAvgReadable());
       m_tx_inject_time.reset();
     }
-    if(delta_inject>MAX_SANE_INJECTION_TIME){
+    if(delta_inject>m_options.max_sane_injection_time){
       m_console->debug("Injected packet ret:{} took:{}",len_injected,MyTimeHelper::R(delta_inject));
     }
   }
