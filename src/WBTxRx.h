@@ -322,11 +322,8 @@ class WBTxRx {
   OUTPUT_DATA_CALLBACK m_output_cb= nullptr;
   RxStats m_rx_stats{};
   TxStats m_tx_stats{};
-  // a tx error is thrown if injecting the packet takes longer than MAX_SANE_INJECTION_TIME,
-  // which hints at an overflowing tx queue (unfortunately I don't know a way to directly get the tx queue yet)
-  // However, this hint can be misleading - for example, during testing (MCS set to 3) and with about 5MBit/s video after FEC
-  // I get about 5 tx error(s) per second with my atheros, but it works fine. This workaround also seems to not work at all
-  // with the RTL8812au.
+  // a tx error hint is thrown if injecting the packet takes longer than MAX_SANE_INJECTION_TIME,
+  // which hints at too much data being fed to the wifi driver.
   static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
   std::vector<RxStatsPerCard> m_rx_stats_per_card;
   std::map<int,std::shared_ptr<StreamRxHandler>> m_rx_handlers;
@@ -347,7 +344,11 @@ class WBTxRx {
   AvgCalculator m_packet_decrypt_time;
   AvgCalculator m_tx_inject_time;
  private:
-  int inject_radiotap_packet(int card_index,const uint8_t* packet_buff,int packet_size);
+  // For OpenHD rate control, this method should block until the driver accepted the packet
+  // returns true if packet is now in driver hands, false otherwise.
+  // on failure, m_tx_stats.count_tx_errors is increased by one
+  // if injection takes "really long", tx error hint is increase
+  bool inject_radiotap_packet(int card_index,const uint8_t* packet_buff,int packet_size);
   // we announce the session key in regular intervals if data is currently being injected (tx_ is called)
   void announce_session_key_if_needed();
   // send out the session key

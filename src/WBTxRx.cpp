@@ -161,10 +161,28 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   // we allocate the right size in the beginning, but check if ciphertext_len is actually matching what we calculated
   // (the documentation says 'write up to n bytes' but they probably mean (write exactly n bytes unless an error occurs)
   assert(data_len+crypto_aead_chacha20poly1305_ABYTES == ciphertext_len);
-  const auto before_injection = std::chrono::steady_clock::now();
   // we inject the packet on whatever card has the highest rx rssi right now
-  const auto len_injected= inject_radiotap_packet(m_curr_tx_card.load(),packet_buff,packet_size);
-  const auto delta_inject=std::chrono::steady_clock::now()-before_injection;
+  const bool success= inject_radiotap_packet(m_curr_tx_card.load(),packet_buff,packet_size);
+  if(success){
+    m_tx_stats.n_injected_bytes_excluding_overhead += data_len;
+    m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
+    m_tx_stats.n_injected_packets++;
+  }
+  announce_session_key_if_needed();
+}
+
+bool WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, int packet_size) {
+  // inject via pcap
+  int len_injected=0;
+  // we inject the packet on whatever card has the highest rx rssi right now
+  const auto before_inject=std::chrono::steady_clock::now();
+  if(m_options.tx_without_pcap){
+    len_injected=(int)write(m_pcap_handles[card_index].tx_sockfd,packet_buff,packet_size);
+  }else{
+    len_injected=pcap_inject(m_pcap_handles[card_index].tx, packet_buff, packet_size);
+    //const auto len_injected=write(m_receive_pollfds[card_index].fd,packet_buff,packet_size);
+  }
+  const auto delta_inject=std::chrono::steady_clock::now()-before_inject;
   if(delta_inject>=MAX_SANE_INJECTION_TIME){
     m_tx_stats.count_tx_injections_error_hint++;
   }
@@ -179,26 +197,6 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
     }
   }
   if (len_injected != (int) packet_size) {
-    m_tx_stats.count_tx_errors++;
-  }else{
-    m_tx_stats.n_injected_bytes_excluding_overhead += data_len;
-    m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
-    m_tx_stats.n_injected_packets++;
-  }
-  announce_session_key_if_needed();
-}
-
-int WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, int packet_size) {
-  // inject via pcap
-  int len_injected=0;
-  // we inject the packet on whatever card has the highest rx rssi right now
-  if(m_options.tx_without_pcap){
-    len_injected=(int)write(m_pcap_handles[card_index].tx_sockfd,packet_buff,packet_size);
-  }else{
-    len_injected=pcap_inject(m_pcap_handles[card_index].tx, packet_buff, packet_size);
-    //const auto len_injected=write(m_receive_pollfds[card_index].fd,packet_buff,packet_size);
-  }
-  if (len_injected != (int) packet_size) {
     // This basically should never fail - if the tx queue is full, pcap seems to wait ?!
     if(m_options.tx_without_pcap){
       m_console->warn("raw sock - unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected, strerror(errno));
@@ -206,8 +204,10 @@ int WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, in
       m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",packet_size, len_injected,
                       pcap_geterr(m_pcap_handles[card_index].tx));
     }
+    m_tx_stats.count_tx_errors++;
+    return false;
   }
-  return len_injected;
+  return true;
 }
 
 void WBTxRx::rx_register_callback(WBTxRx::OUTPUT_DATA_CALLBACK cb) {
@@ -693,10 +693,8 @@ void WBTxRx::send_session_key() {
   const int packet_size=(int)packet.size();
   // NOTE: Session key is always sent via card 0 since otherwise we might pick up the session key intended for the ground unit
   // from the air unit !
-  const auto len_injected= inject_radiotap_packet(0,packet.data(),packet_size);
-  if (len_injected != (int) packet_size) {
-    m_tx_stats.count_tx_errors++;
-  }else{
+  const bool success = inject_radiotap_packet(0,packet.data(),packet_size);
+  if(success){
     // These bytes only count as "including overhead"
     m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
     m_tx_stats.n_injected_packets++;
