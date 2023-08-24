@@ -111,6 +111,9 @@ WBStreamTx::Statistics WBStreamTx::get_latest_stats() {
   ret.n_dropped_frames=m_n_dropped_frames;
   ret.current_injected_packets_per_second=m_packets_per_second_calculator.get_last_or_recalculate(
           m_n_injected_packets,std::chrono::seconds(2));
+  ret.curr_block_until_tx_min_us=m_curr_block_until_tx_min_max_avg_us.min;
+  ret.curr_block_until_tx_max_us=m_curr_block_until_tx_min_max_avg_us.max;
+  ret.curr_block_until_tx_avg_us=m_curr_block_until_tx_min_max_avg_us.avg;
   return ret;
 }
 
@@ -120,9 +123,10 @@ void WBStreamTx::loop_process_data() {
   }
   static constexpr std::int64_t timeout_usecs=100*1000;
   if(options.enable_fec){
-    std::shared_ptr<EnqueuedBlock> frame;
+    std::shared_ptr<EnqueuedBlock> frame= nullptr;
     while (m_process_data_thread_run){
       if(m_block_queue->wait_dequeue_timed(frame,timeout_usecs)){
+        // dequeued frame
         m_queue_time_calculator.add(std::chrono::steady_clock::now()-frame->enqueue_time_point);
         if(m_queue_time_calculator.get_delta_since_last_reset()>std::chrono::seconds(1)){
           if(options.log_time_spent_in_atomic_queue){
@@ -131,13 +135,14 @@ void WBStreamTx::loop_process_data() {
           m_queue_time_calculator.reset();
         }
         process_enqueued_block(*frame);
-        if(options.log_time_blocks_until_tx){
-          const auto delta=std::chrono::steady_clock::now()-frame->enqueue_time_point;
-          m_block_until_tx_time.add(delta);
-          if(m_block_until_tx_time.get_delta_since_last_reset()>std::chrono::seconds(2)){
+        const auto delta=std::chrono::steady_clock::now()-frame->enqueue_time_point;
+        m_block_until_tx_time.add(delta);
+        if(m_block_until_tx_time.get_delta_since_last_reset()>std::chrono::seconds(2)){
+          if(options.log_time_blocks_until_tx){
             m_console->debug("Time until tx {}",m_block_until_tx_time.getAvgReadable());
-            m_block_until_tx_time.reset();
           }
+          m_curr_block_until_tx_min_max_avg_us= min_max_avg_as_us(m_block_until_tx_time.getMinMaxAvg());
+          m_block_until_tx_time.reset();
         }
       }
     }
