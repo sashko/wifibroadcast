@@ -86,6 +86,10 @@ class WBStreamTx {
     // In FEC mode (video), every time a frame is dropped this is increased by the n of fragments in this frame
     uint64_t n_dropped_packets;
     int32_t n_dropped_frames;
+    // only for frame (FEC) mode
+    uint32_t curr_block_until_tx_min_us;
+    uint32_t curr_block_until_tx_max_us;
+    uint32_t curr_block_until_tx_avg_us;
   };
   Statistics get_latest_stats();
   // only valid when actually doing FEC
@@ -136,6 +140,7 @@ class WBStreamTx {
   // Time fragments / blocks spend in the non-blocking atomic queue.
   AvgCalculator m_queue_time_calculator;
   AvgCalculator m_block_until_tx_time;
+  MinMaxAvg<uint32_t> m_curr_block_until_tx_min_max_avg_us{0,0,0};
   // n of packets fed to the instance
   int64_t m_n_input_packets = 0;
   // count of bytes we got passed (aka for example, what the video encoder produced - does not include FEC)

@@ -92,6 +92,8 @@ class WBTxRx {
     bool enable_non_openhd_mode= false;
     // tmp
     bool tx_without_pcap=false;
+    // a tx error hint is thrown if injecting the packet takes longer than max_sane_injection_time
+    std::chrono::milliseconds max_sane_injection_time=std::chrono::milliseconds(5);
   };
   // RTL8812AU driver requires a quirk regarding rssi
   static constexpr auto WIFI_CARD_TYPE_UNKNOWN=0;
@@ -177,7 +179,7 @@ class WBTxRx {
      // Usually, this shouldn't increase, since "injecting a frame" should be a blocking operation
      // (until there is space available in the tx queue, aka either linux network or driver packet queue)
      // and openhd does automatic bitrate adjust at the tx.
-     int32_t count_tx_errors=0;
+     int32_t count_tx_dropped_packets=0;
    };
    struct RxStats{
      // Total count of received packets / bytes - can be from another wb tx, but also from someone else using wifi
@@ -322,12 +324,6 @@ class WBTxRx {
   OUTPUT_DATA_CALLBACK m_output_cb= nullptr;
   RxStats m_rx_stats{};
   TxStats m_tx_stats{};
-  // a tx error is thrown if injecting the packet takes longer than MAX_SANE_INJECTION_TIME,
-  // which hints at an overflowing tx queue (unfortunately I don't know a way to directly get the tx queue yet)
-  // However, this hint can be misleading - for example, during testing (MCS set to 3) and with about 5MBit/s video after FEC
-  // I get about 5 tx error(s) per second with my atheros, but it works fine. This workaround also seems to not work at all
-  // with the RTL8812au.
-  static constexpr std::chrono::nanoseconds MAX_SANE_INJECTION_TIME=std::chrono::milliseconds(5);
   std::vector<RxStatsPerCard> m_rx_stats_per_card;
   std::map<int,std::shared_ptr<StreamRxHandler>> m_rx_handlers;
   // If each iteration pulls too many packets out your CPU is most likely too slow
@@ -347,7 +343,11 @@ class WBTxRx {
   AvgCalculator m_packet_decrypt_time;
   AvgCalculator m_tx_inject_time;
  private:
-  int inject_radiotap_packet(int card_index,const uint8_t* packet_buff,int packet_size);
+  // For OpenHD rate control, this method should block until the driver accepted the packet
+  // returns true if packet is now in linux kernel / driver hands, false otherwise.
+  // on failure, m_tx_stats.count_tx_errors is increased by one
+  // if injection takes "really long", tx error hint is increase
+  bool inject_radiotap_packet(int card_index,const uint8_t* packet_buff,int packet_size);
   // we announce the session key in regular intervals if data is currently being injected (tx_ is called)
   void announce_session_key_if_needed();
   // send out the session key

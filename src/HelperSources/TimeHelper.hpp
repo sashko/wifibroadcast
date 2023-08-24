@@ -110,6 +110,12 @@ static std::string min_max_avg_as_string(const MinMaxAvg<T>& minMaxAvg,bool aver
   }
   return ss.str();
 }
+static MinMaxAvg<uint32_t> min_max_avg_as_us(const MinMaxAvg<std::chrono::nanoseconds>& minMaxAvg){
+  const uint32_t min=std::chrono::duration_cast<std::chrono::microseconds>(minMaxAvg.min).count();
+  const uint32_t max=std::chrono::duration_cast<std::chrono::microseconds>(minMaxAvg.max).count();
+  const uint32_t avg=std::chrono::duration_cast<std::chrono::microseconds>(minMaxAvg.avg).count();
+  return {min,max,avg};
+}
 
 // Use this class to compare many samples of the same kind
 // Saves the minimum,maximum and average of all the samples
