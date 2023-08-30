@@ -4,7 +4,7 @@ c++ Library for wifibroadcast video and telemetry streaming. \
 1) Multiplexing and packet validation / encryption
 2) Zero latency overhead FEC video streaming (requires usage of c++)
 3) SIMD accelerated FEC (NEON on ARM, SSSE3 on x86)
-4) Advanced debugging and statistics (e.g. packet loss) [see](https://github.com/OpenHD/wifibroadcast/blob/exp-threading/src/WBTxRx.h#L121)
+4) Advanced debugging and statistics (e.g. packet loss) [see](https://github.com/OpenHD/wifibroadcast/blob/src/WBTxRx.h#L121)
 5) Simple examples to get started
 6) Basic unit tests for FEC
 
@@ -16,11 +16,11 @@ Compile with cmake (./build_cmake.sh)
 ## Examples
 NOTE: You need to first enable monitor mode on your card(s) and the card driver
 needs to support active and passive monitor mode (listening & injecting packets)
-1) example_hello: [link](https://github.com/OpenHD/wifibroadcast/blob/exp-threading/executables/example_hello.cpp) \
+1) example_hello: [link](https://github.com/OpenHD/wifibroadcast/blob/executables/example_hello.cpp) \
     Bidirectional communication between air and ground unit 
-2) benchmark: [link](https://github.com/OpenHD/wifibroadcast/blob/exp-threading/executables/benchmark.cpp) \
+2) benchmark: [link](https://github.com/OpenHD/wifibroadcast/blob/executables/benchmark.cpp) \
     Gives a quick overview over FEC and encryption / decryption performance on your platform 
-3) example_udp: [link](https://github.com/OpenHD/wifibroadcast/blob/exp-threading/executables/example_udp.cpp) \
+3) example_udp: [link](https://github.com/OpenHD/wifibroadcast/blob/executables/example_udp.cpp) \
     Simple unidirectional UDP streaming application, can be used for
     rapid development and shows how you could create your own WB link with 
     multiple unidirectional / bidirectional streams 
