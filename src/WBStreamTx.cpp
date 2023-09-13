@@ -9,9 +9,10 @@
 #include "BlockSizeHelper.hpp"
 #include "SchedulingHelper.hpp"
 
-WBStreamTx::WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options1)
+WBStreamTx::WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options1,std::shared_ptr<RadiotapHeaderHolder> radiotap_header_holder)
     :options(options1),
-      m_txrx(txrx)
+      m_txrx(txrx),
+      m_radiotap_header_holder(std::move(radiotap_header_holder))
 {
   assert(m_txrx);
   if(options.opt_console){
@@ -180,7 +181,9 @@ void WBStreamTx::process_enqueued_block(const WBStreamTx::EnqueuedBlock& block) 
 }
 
 void WBStreamTx::send_packet(const uint8_t* packet, int packet_len) {
-  m_txrx->tx_inject_packet(options.radio_port,packet,packet_len,m_enable_encryption.load());
+  const auto radiotap_header=m_radiotap_header_holder->thread_safe_get();
+  const bool encrypt=m_enable_encryption.load();
+  m_txrx->tx_inject_packet(options.radio_port,packet,packet_len,radiotap_header,encrypt);
   m_n_injected_packets++;
   m_count_bytes_data_injected+=packet_len;
 }

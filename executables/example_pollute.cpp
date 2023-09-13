@@ -34,8 +34,8 @@ int main(int argc, char *const *argv) {
   }
 
   // Create the Tx-RX
-  std::vector<WBTxRx::WifiCard> cards;
-  WBTxRx::WifiCard tmp_card{card,1};
+  std::vector<wifibroadcast::WifiCard> cards;
+  wifibroadcast::WifiCard tmp_card{card,1};
   cards.push_back(tmp_card);
   WBTxRx::Options options_txrx{};
   options_txrx.pcap_rx_set_direction = true;
@@ -44,7 +44,8 @@ int main(int argc, char *const *argv) {
   options_txrx.debug_tx_injection_time= true;
   options_txrx.tx_without_pcap=true;
 
-  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
+  auto radiotap_header_holder=std::make_shared<RadiotapHeaderHolder>();
+  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header_holder);
   // We do not need receive in this mode
   //txrx->start_receiving();
   wifibroadcast::log::get_default()->debug("Example pollute {}ms",sleep_time_ms);
@@ -55,7 +56,8 @@ int main(int argc, char *const *argv) {
     auto message=GenericHelper::createRandomDataBuffer(1024);
     packet_index++;
 
-    txrx->tx_inject_packet(0,(uint8_t*)message.data(),message.size());
+    auto header=radiotap_header_holder->thread_safe_get();
+    txrx->tx_inject_packet(0,(uint8_t*)message.data(),message.size(),header, false);
     // About 100pps
     std::this_thread::sleep_for(std::chrono::milliseconds (sleep_time_ms));
 

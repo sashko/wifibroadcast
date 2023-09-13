@@ -10,14 +10,14 @@
 #include "pcap_helper.hpp"
 #include "raw_socket_helper.hpp"
 
-WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
+WBTxRx::WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards1,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header)
     : m_options(options1),
       m_wifi_cards(std::move(wifi_cards1)),
-      m_tx_radiotap_header(RadiotapHeader::UserSelectableParams{})
+      m_session_key_radiotap_header(std::move(session_key_radiotap_header))
 {
   assert(!m_wifi_cards.empty());
   m_console=wifibroadcast::log::create_or_get("WBTxRx");
-  m_console->debug("{}", options_to_string(get_wifi_card_names(),m_options));
+  m_console->debug("[{}]", options_to_string(wifibroadcast::get_wifi_card_names(m_wifi_cards),m_options));
   // Common error - not run as root
   if(!SchedulingHelper::check_root()){
     std::cerr<<"wifibroadcast needs root"<<std::endl;
@@ -106,7 +106,7 @@ WBTxRx::~WBTxRx() {
   }
 }
 
-void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, int data_len,bool encrypt) {
+void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, int data_len,const RadiotapHeader& tx_radiotap_header,bool encrypt) {
   assert(data_len<=MAX_PACKET_PAYLOAD_SIZE);
   assert(stream_index>= STREAM_INDEX_MIN && stream_index<= STREAM_INDEX_MAX);
   std::lock_guard<std::mutex> guard(m_tx_mutex);
@@ -126,7 +126,7 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
       crypto_aead_chacha20poly1305_ABYTES;
   uint8_t* packet_buff=m_tx_packet_buff.data();
   // radiotap header comes first
-  memcpy(packet_buff, m_tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
+  memcpy(packet_buff, tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
   // Iee80211 header comes next
   // Will most likely be overridden by the driver
   const auto this_packet_ieee80211_seq=m_ieee80211_seq++;
@@ -502,7 +502,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
         auto opt_minmaxavg= this_wifi_card_calc.card_rssi.add_and_recalculate_if_needed(rssi);
         if(opt_minmaxavg.has_value()){
           // See below for how this value is calculated on rtl8812au
-          if(m_wifi_cards[wlan_idx].type!=WIFI_CARD_TYPE_RTL8812AU){
+          if(m_wifi_cards[wlan_idx].type!=wifibroadcast::WIFI_CARD_TYPE_RTL8812AU){
             this_wifi_card_stats.card_dbm=opt_minmaxavg.value().avg;
           }
           if(m_options.debug_rssi>=1){
@@ -530,7 +530,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
           }
         }
       }
-      if(m_wifi_cards[wlan_idx].type==WIFI_CARD_TYPE_RTL8812AU){
+      if(m_wifi_cards[wlan_idx].type==wifibroadcast::WIFI_CARD_TYPE_RTL8812AU){
         // RTL8812AU BUG - general value cannot be used, use max of antennas instead
         this_wifi_card_stats.card_dbm=std::max(this_wifi_card_stats.antenna1_dbm,this_wifi_card_stats.antenna2_dbm);
       }
@@ -677,9 +677,7 @@ void WBTxRx::announce_session_key_if_needed() {
 }
 
 void WBTxRx::send_session_key() {
-  RadiotapHeader tmp_radiotap_header= m_tx_radiotap_header;
-  /*Ieee80211HeaderRaw tmp_ieee_hdr= m_tx_ieee80211_header;
-  tmp_ieee_hdr.writeParams(STREAM_INDEX_SESSION_KEY_PACKETS,0);*/
+  RadiotapHeader tmp_radiotap_header= m_session_key_radiotap_header->thread_safe_get();
   Ieee80211HeaderOpenHD tmp_tx_hdr{};
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   tmp_tx_hdr.write_unique_id_src_dst(unique_tx_id);
@@ -687,7 +685,6 @@ void WBTxRx::send_session_key() {
   tmp_tx_hdr.write_radio_port_src_dst(radio_port_to_uint8_t(radioPort));
   tmp_tx_hdr.write_ieee80211_seq_nr(m_ieee80211_seq++);
   tmp_tx_hdr.write_nonce(m_nonce++);
-
   auto packet=RadiotapHelper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211HeaderRaw*)&tmp_tx_hdr,
                                                           (uint8_t *)&m_tx_sess_key_packet, sizeof(SessionKeyPacket));
   const int packet_size=(int)packet.size();
@@ -699,49 +696,6 @@ void WBTxRx::send_session_key() {
     m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
     m_tx_stats.n_injected_packets++;
   }
-}
-
-void WBTxRx::tx_update_mcs_index(uint8_t mcs_index) {
-  m_console->debug("update_mcs_index {}",mcs_index);
-  m_radioTapHeaderParams.mcs_index=mcs_index;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_update_channel_width(int width_mhz) {
-  m_console->debug("update_channel_width {}",width_mhz);
-  m_radioTapHeaderParams.bandwidth=width_mhz;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_update_stbc(int stbc) {
-  m_console->debug("update_stbc {}",stbc);
-  if(stbc<0 || stbc> 3){
-    m_console->warn("Invalid stbc index");
-    return ;
-  }
-  m_radioTapHeaderParams.stbc=stbc;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_update_guard_interval(bool short_gi) {
-  m_radioTapHeaderParams.short_gi=short_gi;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_update_ldpc(bool ldpc) {
-  m_radioTapHeaderParams.ldpc=ldpc;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-void WBTxRx::tx_update_set_flag_tx_no_ack(bool enable) {
-  m_radioTapHeaderParams.set_flag_tx_no_ack=enable;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams &params) {
-  m_radioTapHeaderParams=params;
-  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
-  std::lock_guard<std::mutex> guard(m_tx_mutex);
-  m_tx_radiotap_header = newRadioTapHeader;
 }
 
 WBTxRx::TxStats WBTxRx::get_tx_stats() {

@@ -52,8 +52,8 @@ int main(int argc, char *const *argv) {
   std::cout<<"Running as "<<(is_air ? "Air" : "Ground")<<" on card "<<card<<"\n";
 
   // Create the Tx-RX
-  std::vector<WBTxRx::WifiCard> cards;
-  WBTxRx::WifiCard tmp_card{card,1};
+  std::vector<wifibroadcast::WifiCard> cards;
+  wifibroadcast::WifiCard tmp_card{card,1};
   cards.push_back(tmp_card);
   WBTxRx::Options options_txrx{};
   options_txrx.pcap_rx_set_direction = true;
@@ -62,8 +62,8 @@ int main(int argc, char *const *argv) {
     options_txrx.log_all_received_validated_packets= true;
     options_txrx.advanced_debugging_rx= true;
   }
-
-  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
+  auto radiotap_header_holder=std::make_shared<RadiotapHeaderHolder>();
+  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header_holder);
 
   txrx->start_receiving();
 
@@ -81,7 +81,9 @@ int main(int argc, char *const *argv) {
 
     // Just use radio port 0 - we don't need multiplexing in this example
     // This message is injected on the wifi card
-    txrx->tx_inject_packet(0,(uint8_t*)message.data(),message.size());
+    const auto radiotap_header=radiotap_header_holder->thread_safe_get();
+    const bool encrypt=false;
+    txrx->tx_inject_packet(0,(uint8_t*)message.data(),message.size(),radiotap_header,encrypt);
 
     std::this_thread::sleep_for(std::chrono::milliseconds (1000));
     const auto elapsed_since_last_log=std::chrono::steady_clock::now()-lastLog;

@@ -19,9 +19,11 @@
 #include "Ieee80211Header.hpp"
 #include "RSSIAccumulator.hpp"
 #include "RadiotapHeader.hpp"
+#include "RadiotapHeaderHolder.hpp"
 #include "SignalQualityAccumulator.hpp"
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "HelperSources/UINT64SeqNrHelper.hpp"
+#include "WiFiCard.h"
 
 /**
  * This class exists to provide a clean, working interface to create a
@@ -95,14 +97,12 @@ class WBTxRx {
     // a tx error hint is thrown if injecting the packet takes longer than max_sane_injection_time
     std::chrono::milliseconds max_sane_injection_time=std::chrono::milliseconds(5);
   };
-  // RTL8812AU driver requires a quirk regarding rssi
-  static constexpr auto WIFI_CARD_TYPE_UNKNOWN=0;
-  static constexpr auto WIFI_CARD_TYPE_RTL8812AU=1;
-  struct WifiCard{
-    std::string name;
-    int type;
-  };
-  explicit WBTxRx(std::vector<WifiCard> wifi_cards,Options options1);
+  /**
+   * @param wifi_cards card(s) used for tx / rx
+   * @param options1 see documentation in options string
+   * @param session_key_radiotap_header radiotap header used when injecting session key packets
+   */
+  explicit WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header);
   WBTxRx(const WBTxRx &) = delete;
   WBTxRx &operator=(const WBTxRx &) = delete;
   ~WBTxRx();
@@ -116,11 +116,11 @@ class WBTxRx {
    * uint8_t but needs to be in range of [MIN,MAX] stream index
    * @param data the packet payload
    * @param data_len the packet payload length
+   * @param tx_radiotap_header can be used to modify injected packet(s) properties
    * @param encrypt: Optionally encrypt the packet, if not encrypted, only a (secure) validation checksum is calculated & checked on rx
    * Encryption results in more CPU load and is therefore not wanted in all cases (e.g. by default, openhd does not encrypt video)
    */
-  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,bool encrypt=false);
-
+  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,const RadiotapHeader& tx_radiotap_header,bool encrypt);
   /**
    * A typical stream RX (aka the receiver for a specific multiplexed stream) needs to react to events during streaming.
    * For lowest latency, we do this via callback(s) that are called directly.
@@ -149,18 +149,6 @@ class WBTxRx {
    */
   void start_receiving();
   void stop_receiving();
-
-   // These are for updating injection parameters at run time. They will be applied on the next injected packet.
-   // They are generally thread-safe. See RadiotapHeader for more information on what these parameters do.
-   // After calling this method, the injected packets will use a different radiotap header
-   // I'd like to use an atomic instead of mutex, but unfortunately some compilers don't eat atomic struct
-   void tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams& params);
-   void tx_update_mcs_index(uint8_t mcs_index);
-   void tx_update_channel_width(int width_mhz);
-   void tx_update_stbc(int stbc);
-   void tx_update_guard_interval(bool short_gi);
-   void tx_update_ldpc(bool ldpc);
-   void tx_update_set_flag_tx_no_ack(bool enable);
 
    // Statistics
    struct TxStats{
@@ -238,6 +226,12 @@ class WBTxRx {
    // (Hints at power issues)
    bool get_card_has_disconnected(int card_idx);
   public:
+   struct SessionExtraData{
+     // OpenHD uses different carrier bandwidths for the session key data (20Mhz, such that it can be always received on 20Mhz BW)
+     // and - if enabled - 40Mhz for the rest of the (video, telemetry) data.
+     // NOTE: To receive 40Mhz data, the RX needs to be configured for 40Mhz receive (and this comes at a slight dBm penalty)
+     uint8_t tx_data_channel_width;
+   }__attribute__((__packed__));
    // Session key used for encrypting outgoing packets
    struct SessionKeyPacket{
      std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};  // random data
@@ -259,17 +253,9 @@ class WBTxRx {
  private:
   const Options m_options;
   std::shared_ptr<spdlog::logger> m_console;
-  const std::vector<WifiCard> m_wifi_cards;
-  std::vector<std::string> get_wifi_card_names(){
-     std::vector<std::string> ret;
-     for(const auto& card:m_wifi_cards){
-       ret.push_back(card.name);
-     }
-     return ret;
-  }
+  std::shared_ptr<RadiotapHeaderHolder> m_session_key_radiotap_header;
+  const std::vector<wifibroadcast::WifiCard> m_wifi_cards;
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
-  RadiotapHeader::UserSelectableParams m_radioTapHeaderParams{};
-  RadiotapHeader m_tx_radiotap_header;
   Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
   std::array<uint8_t,PCAP_MAX_PACKET_SIZE> m_tx_packet_buff{};
   uint16_t m_ieee80211_seq = 0;

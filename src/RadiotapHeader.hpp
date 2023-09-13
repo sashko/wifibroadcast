@@ -111,7 +111,6 @@ class RadiotapHeader {
     }else{
       radiotapHeaderData.txFlags = 0;
     }
-
     // now onto the "MCS field"
     radiotapHeaderData.mcs.known =
         (IEEE80211_RADIOTAP_MCS_HAVE_MCS | IEEE80211_RADIOTAP_MCS_HAVE_BW | IEEE80211_RADIOTAP_MCS_HAVE_GI

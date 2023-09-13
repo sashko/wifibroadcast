@@ -29,21 +29,22 @@ int main(int argc, char *const *argv) {
     }
   }
 
-  std::vector<WBTxRx::WifiCard> cards;
-  WBTxRx::WifiCard tmp_card{card,1};
+  std::vector<wifibroadcast::WifiCard> cards;
+  wifibroadcast::WifiCard tmp_card{card,1};
   cards.push_back(tmp_card);
   WBTxRx::Options options_txrx{};
   //options_txrx.pcap_rx_set_direction= false;
   options_txrx.pcap_rx_set_direction = pcap_setdirection;
   options_txrx.log_all_received_validated_packets= true;
-
-  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
+  auto radiotap_header_holder_tx=std::make_shared<RadiotapHeaderHolder>();
+  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header_holder_tx);
 
   const bool enable_fec= true;
   WBStreamTx::Options options_tx{};
   options_tx.radio_port=10;
   options_tx.enable_fec= enable_fec;
-  std::unique_ptr<WBStreamTx> wb_tx=std::make_unique<WBStreamTx>(txrx,options_tx);
+  auto radiotap_header_holder_rx=std::make_shared<RadiotapHeaderHolder>();
+  std::unique_ptr<WBStreamTx> wb_tx=std::make_unique<WBStreamTx>(txrx,options_tx,radiotap_header_holder_rx);
 
   WBStreamRx::Options options_rx{};
   options_rx.radio_port=10;

@@ -14,7 +14,8 @@
 class WBStreamTxUDP{
  public:
   WBStreamTxUDP(std::shared_ptr<WBTxRx> txrx,WBStreamTx::Options options,int fec_k,int in_udp_port){
-    wb_tx=std::make_unique<WBStreamTx>(txrx,options);
+    radiotap_header_holder=std::make_shared<RadiotapHeaderHolder>();
+    wb_tx=std::make_unique<WBStreamTx>(txrx,options,radiotap_header_holder);
    last_udp_in_packet_ts_ms=MyTimeHelper:: get_curr_time_ms();
     // we need to buffer packets due to udp
     std::vector<std::shared_ptr<std::vector<uint8_t>>> block;
@@ -43,6 +44,7 @@ class WBStreamTxUDP{
     }
   }
   std::unique_ptr<WBStreamTx> wb_tx;
+  std::shared_ptr<RadiotapHeaderHolder> radiotap_header_holder;
   std::unique_ptr<SocketHelper::UDPReceiver> m_udp_in;
   // helps to catch a common newbie mistake of forgetting that this buffers in packets
   int last_udp_in_packet_ts_ms;

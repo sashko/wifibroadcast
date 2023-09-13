@@ -46,7 +46,7 @@ class WBStreamTx {
     // set sched_param = max realtime on the thread that dequeues and injects the packets
     bool dequeue_thread_max_realtime= true;
   };
-  WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options);
+  WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options,std::shared_ptr<RadiotapHeaderHolder> radiotap_header_holder);
   WBStreamTx(const WBStreamTx&) = delete;
   WBStreamTx&operator=(const WBStreamTx&) = delete;
   ~WBStreamTx();
@@ -112,6 +112,7 @@ class WBStreamTx {
  private:
   const Options options;
   std::shared_ptr<WBTxRx> m_txrx;
+  std::shared_ptr<RadiotapHeaderHolder> m_radiotap_header_holder;
   std::shared_ptr<spdlog::logger> m_console;
   // On the tx, either one of those two is active at the same time
   std::unique_ptr<FECEncoder> m_fec_encoder = nullptr;
