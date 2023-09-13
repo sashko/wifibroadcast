@@ -10,14 +10,14 @@
 #include "pcap_helper.hpp"
 #include "raw_socket_helper.hpp"
 
-WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header)
+WBTxRx::WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards1,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header)
     : m_options(options1),
       m_wifi_cards(std::move(wifi_cards1)),
       m_session_key_radiotap_header(std::move(session_key_radiotap_header))
 {
   assert(!m_wifi_cards.empty());
   m_console=wifibroadcast::log::create_or_get("WBTxRx");
-  m_console->debug("{}", options_to_string(get_wifi_card_names(),m_options));
+  m_console->debug("[{}]", options_to_string(wifibroadcast::get_wifi_card_names(m_wifi_cards),m_options));
   // Common error - not run as root
   if(!SchedulingHelper::check_root()){
     std::cerr<<"wifibroadcast needs root"<<std::endl;
@@ -502,7 +502,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
         auto opt_minmaxavg= this_wifi_card_calc.card_rssi.add_and_recalculate_if_needed(rssi);
         if(opt_minmaxavg.has_value()){
           // See below for how this value is calculated on rtl8812au
-          if(m_wifi_cards[wlan_idx].type!=WIFI_CARD_TYPE_RTL8812AU){
+          if(m_wifi_cards[wlan_idx].type!=wifibroadcast::WIFI_CARD_TYPE_RTL8812AU){
             this_wifi_card_stats.card_dbm=opt_minmaxavg.value().avg;
           }
           if(m_options.debug_rssi>=1){
@@ -530,7 +530,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
           }
         }
       }
-      if(m_wifi_cards[wlan_idx].type==WIFI_CARD_TYPE_RTL8812AU){
+      if(m_wifi_cards[wlan_idx].type==wifibroadcast::WIFI_CARD_TYPE_RTL8812AU){
         // RTL8812AU BUG - general value cannot be used, use max of antennas instead
         this_wifi_card_stats.card_dbm=std::max(this_wifi_card_stats.antenna1_dbm,this_wifi_card_stats.antenna2_dbm);
       }

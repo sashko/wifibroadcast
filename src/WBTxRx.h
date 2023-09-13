@@ -23,6 +23,7 @@
 #include "SignalQualityAccumulator.hpp"
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "HelperSources/UINT64SeqNrHelper.hpp"
+#include "WiFiCard.h"
 
 /**
  * This class exists to provide a clean, working interface to create a
@@ -96,14 +97,12 @@ class WBTxRx {
     // a tx error hint is thrown if injecting the packet takes longer than max_sane_injection_time
     std::chrono::milliseconds max_sane_injection_time=std::chrono::milliseconds(5);
   };
-  // RTL8812AU driver requires a quirk regarding rssi
-  static constexpr auto WIFI_CARD_TYPE_UNKNOWN=0;
-  static constexpr auto WIFI_CARD_TYPE_RTL8812AU=1;
-  struct WifiCard{
-    std::string name;
-    int type;
-  };
-  explicit WBTxRx(std::vector<WifiCard> wifi_cards,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header);
+  /**
+   * @param wifi_cards card(s) used for tx / rx
+   * @param options1 see documentation in options string
+   * @param session_key_radiotap_header radiotap header used when injecting session key packets
+   */
+  explicit WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header);
   WBTxRx(const WBTxRx &) = delete;
   WBTxRx &operator=(const WBTxRx &) = delete;
   ~WBTxRx();
@@ -255,14 +254,7 @@ class WBTxRx {
   const Options m_options;
   std::shared_ptr<spdlog::logger> m_console;
   std::shared_ptr<RadiotapHeaderHolder> m_session_key_radiotap_header;
-  const std::vector<WifiCard> m_wifi_cards;
-  std::vector<std::string> get_wifi_card_names(){
-     std::vector<std::string> ret;
-     for(const auto& card:m_wifi_cards){
-       ret.push_back(card.name);
-     }
-     return ret;
-  }
+  const std::vector<wifibroadcast::WifiCard> m_wifi_cards;
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
   Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
   std::array<uint8_t,PCAP_MAX_PACKET_SIZE> m_tx_packet_buff{};

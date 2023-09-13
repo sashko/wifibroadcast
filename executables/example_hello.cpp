@@ -52,8 +52,8 @@ int main(int argc, char *const *argv) {
   std::cout<<"Running as "<<(is_air ? "Air" : "Ground")<<" on card "<<card<<"\n";
 
   // Create the Tx-RX
-  std::vector<WBTxRx::WifiCard> cards;
-  WBTxRx::WifiCard tmp_card{card,1};
+  std::vector<wifibroadcast::WifiCard> cards;
+  wifibroadcast::WifiCard tmp_card{card,1};
   cards.push_back(tmp_card);
   WBTxRx::Options options_txrx{};
   options_txrx.pcap_rx_set_direction = true;
