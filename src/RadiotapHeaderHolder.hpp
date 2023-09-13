@@ -18,6 +18,7 @@
 class RadiotapHeaderHolder{
  public:
   explicit RadiotapHeaderHolder(){
+    m_console=wifibroadcast::log::get_default();
   }
   void thread_safe_set(RadiotapHeader::UserSelectableParams params){
     auto tmp=RadiotapHeader{params};
