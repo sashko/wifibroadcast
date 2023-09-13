@@ -291,7 +291,6 @@ class WBTxRx {
   std::vector<PcapTxRx> m_pcap_handles;
   // temporary
   std::mutex m_tx_mutex;
-  std::mutex m_tx_radiotap_header_mutex;
   bool keep_receiving= true;
   int m_n_receiver_errors=0;
   std::unique_ptr<std::thread> m_receive_thread;
