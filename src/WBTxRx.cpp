@@ -106,7 +106,7 @@ WBTxRx::~WBTxRx() {
   }
 }
 
-void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, int data_len,bool encrypt) {
+void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, int data_len,const RadiotapHeader& tx_radiotap_header,bool encrypt) {
   assert(data_len<=MAX_PACKET_PAYLOAD_SIZE);
   assert(stream_index>= STREAM_INDEX_MIN && stream_index<= STREAM_INDEX_MAX);
   std::lock_guard<std::mutex> guard(m_tx_mutex);
@@ -126,7 +126,7 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
       crypto_aead_chacha20poly1305_ABYTES;
   uint8_t* packet_buff=m_tx_packet_buff.data();
   // radiotap header comes first
-  memcpy(packet_buff, m_tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
+  memcpy(packet_buff, tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
   // Iee80211 header comes next
   // Will most likely be overridden by the driver
   const auto this_packet_ieee80211_seq=m_ieee80211_seq++;
@@ -677,9 +677,7 @@ void WBTxRx::announce_session_key_if_needed() {
 }
 
 void WBTxRx::send_session_key() {
-  RadiotapHeader tmp_radiotap_header= m_tx_radiotap_header;
-  /*Ieee80211HeaderRaw tmp_ieee_hdr= m_tx_ieee80211_header;
-  tmp_ieee_hdr.writeParams(STREAM_INDEX_SESSION_KEY_PACKETS,0);*/
+  RadiotapHeader tmp_radiotap_header= tx_threadsafe_get_radiotap_header();
   Ieee80211HeaderOpenHD tmp_tx_hdr{};
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   tmp_tx_hdr.write_unique_id_src_dst(unique_tx_id);
@@ -687,7 +685,6 @@ void WBTxRx::send_session_key() {
   tmp_tx_hdr.write_radio_port_src_dst(radio_port_to_uint8_t(radioPort));
   tmp_tx_hdr.write_ieee80211_seq_nr(m_ieee80211_seq++);
   tmp_tx_hdr.write_nonce(m_nonce++);
-
   auto packet=RadiotapHelper::create_radiotap_wifi_packet(tmp_radiotap_header,*(Ieee80211HeaderRaw*)&tmp_tx_hdr,
                                                           (uint8_t *)&m_tx_sess_key_packet, sizeof(SessionKeyPacket));
   const int packet_size=(int)packet.size();
@@ -740,8 +737,12 @@ void WBTxRx::tx_update_set_flag_tx_no_ack(bool enable) {
 void WBTxRx::tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams &params) {
   m_radioTapHeaderParams=params;
   auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
-  std::lock_guard<std::mutex> guard(m_tx_mutex);
+  std::lock_guard<std::mutex> guard(m_tx_radiotap_header_mutex);
   m_tx_radiotap_header = newRadioTapHeader;
+}
+RadiotapHeader WBTxRx::tx_threadsafe_get_radiotap_header() {
+  std::lock_guard<std::mutex> guard(m_tx_radiotap_header_mutex);
+  return m_tx_radiotap_header;
 }
 
 WBTxRx::TxStats WBTxRx::get_tx_stats() {

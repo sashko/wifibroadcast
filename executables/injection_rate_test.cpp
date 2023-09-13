@@ -43,7 +43,9 @@ static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int
   // have a limit here though to not run infinitely
   for(int pps=pps_start;pps<7*1000;pps+=pps_increment) {
     auto tx_cb=[&txrx](const uint8_t* data,int data_len){
-      txrx->tx_inject_packet(10,data,data_len);
+      const auto radiotap_header=txrx->tx_threadsafe_get_radiotap_header();
+      const bool encrypt=false;
+      txrx->tx_inject_packet(10,data,data_len,radiotap_header,encrypt);
     };
     auto stream_generator=std::make_unique<DummyStreamGenerator>(tx_cb,TEST_PACKETS_SIZE);
     stream_generator->set_target_pps(pps);
@@ -83,7 +85,9 @@ static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,const 
   m_console->info("Testing MCS {}", mcs);
   txrx->tx_update_mcs_index(mcs);
   auto tx_cb=[&txrx](const uint8_t* data,int data_len){
-    txrx->tx_inject_packet(10,data,data_len);
+    const auto radiotap_header=txrx->tx_threadsafe_get_radiotap_header();
+    const bool encrypt=false;
+    txrx->tx_inject_packet(10,data,data_len,radiotap_header,encrypt);
   };
   auto stream_generator=std::make_unique<DummyStreamGenerator>(tx_cb,TEST_PACKETS_SIZE);
   stream_generator->set_target_pps(10*1000);
@@ -102,7 +106,9 @@ static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int
   m_console->info("Validating {} - {}", mcs,pps);
   txrx->tx_update_mcs_index(mcs);
   auto tx_cb=[&txrx](const uint8_t* data,int data_len){
-    txrx->tx_inject_packet(10,data,data_len);
+    const auto radiotap_header=txrx->tx_threadsafe_get_radiotap_header();
+    const bool encrypt=false;
+    txrx->tx_inject_packet(10,data,data_len,radiotap_header,encrypt);
   };
   auto stream_generator=std::make_unique<DummyStreamGenerator>(tx_cb,TEST_PACKETS_SIZE);
   stream_generator->set_target_pps(pps);
@@ -228,7 +234,8 @@ void test_rates_and_print_results(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
 }
 
 int main(int argc, char *const *argv) {
-  std::string card="wlxac9e17596103";
+  //std::string card="wlxac9e17596103";
+  std::string card = "wlx200db0c3a53c";
   int opt;
   while ((opt = getopt(argc, argv, "w:agd")) != -1) {
     switch (opt) {
@@ -275,10 +282,10 @@ int main(int argc, char *const *argv) {
 
   //long_test(txrx, false);
 
-  //test_rates_and_print_results(txrx, false);
+  test_rates_and_print_results(txrx, false);
   //test_rates_and_print_results(txrx, true);
 
-  validate_rtl8812au_rates(txrx, false);
+  //validate_rtl8812au_rates(txrx, false);
 
   /*const auto res_40mhz= all_mcs_increase_pps_until_fail(txrx);
   print_test_results_rough(res_40mhz);

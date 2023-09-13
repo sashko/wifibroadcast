@@ -180,7 +180,9 @@ void WBStreamTx::process_enqueued_block(const WBStreamTx::EnqueuedBlock& block) 
 }
 
 void WBStreamTx::send_packet(const uint8_t* packet, int packet_len) {
-  m_txrx->tx_inject_packet(options.radio_port,packet,packet_len,m_enable_encryption.load());
+  const auto radiotap_header=m_txrx->tx_threadsafe_get_radiotap_header();
+  const bool encrypt=m_enable_encryption.load();
+  m_txrx->tx_inject_packet(options.radio_port,packet,packet_len,radiotap_header,encrypt);
   m_n_injected_packets++;
   m_count_bytes_data_injected+=packet_len;
 }

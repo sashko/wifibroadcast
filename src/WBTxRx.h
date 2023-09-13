@@ -116,11 +116,11 @@ class WBTxRx {
    * uint8_t but needs to be in range of [MIN,MAX] stream index
    * @param data the packet payload
    * @param data_len the packet payload length
+   * @param tx_radiotap_header can be used to modify injected packet(s) properties
    * @param encrypt: Optionally encrypt the packet, if not encrypted, only a (secure) validation checksum is calculated & checked on rx
    * Encryption results in more CPU load and is therefore not wanted in all cases (e.g. by default, openhd does not encrypt video)
    */
-  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,bool encrypt=false);
-
+  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,const RadiotapHeader& tx_radiotap_header,bool encrypt);
   /**
    * A typical stream RX (aka the receiver for a specific multiplexed stream) needs to react to events during streaming.
    * For lowest latency, we do this via callback(s) that are called directly.
@@ -237,7 +237,14 @@ class WBTxRx {
    // Used by OpenHD on the ground to notify the user of disconnecting card(s)
    // (Hints at power issues)
    bool get_card_has_disconnected(int card_idx);
+   RadiotapHeader tx_threadsafe_get_radiotap_header();
   public:
+   struct SessionExtraData{
+     // OpenHD uses different carrier bandwidths for the session key data (20Mhz, such that it can be always received on 20Mhz BW)
+     // and - if enabled - 40Mhz for the rest of the (video, telemetry) data.
+     // NOTE: To receive 40Mhz data, the RX needs to be configured for 40Mhz receive (and this comes at a slight dBm penalty)
+     uint8_t tx_data_channel_width;
+   }__attribute__((__packed__));
    // Session key used for encrypting outgoing packets
    struct SessionKeyPacket{
      std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};  // random data
@@ -305,6 +312,7 @@ class WBTxRx {
   std::vector<PcapTxRx> m_pcap_handles;
   // temporary
   std::mutex m_tx_mutex;
+  std::mutex m_tx_radiotap_header_mutex;
   bool keep_receiving= true;
   int m_n_receiver_errors=0;
   std::unique_ptr<std::thread> m_receive_thread;
