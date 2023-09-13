@@ -31,10 +31,10 @@ struct TestResult {
   int fail_bps_measured;
 };
 
-static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int mcs,const int pps_start,const int pps_increment){
+static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const int mcs,const int pps_start,const int pps_increment){
   auto m_console=wifibroadcast::log::create_or_get("main");
   m_console->info("Testing MCS {}", mcs);
-  txrx->tx_update_mcs_index(mcs);
+  hdr->update_mcs_index(mcs);
 
   int last_passed_pps_set=0;
   int last_passed_pps_measured=0;
@@ -42,8 +42,8 @@ static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int
   // 7*1000 packets per second are a lot (way over 50MBit/s) but we can reach it in ideal scenarios
   // have a limit here though to not run infinitely
   for(int pps=pps_start;pps<7*1000;pps+=pps_increment) {
-    auto tx_cb=[&txrx](const uint8_t* data,int data_len){
-      const auto radiotap_header=txrx->tx_threadsafe_get_radiotap_header();
+    auto tx_cb=[&txrx,&hdr](const uint8_t* data,int data_len){
+      const auto radiotap_header=hdr->thread_safe_get();
       const bool encrypt=false;
       txrx->tx_inject_packet(10,data,data_len,radiotap_header,encrypt);
     };
@@ -80,12 +80,12 @@ static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int
   return {mcs,0,0,0,0,0};
 }
 
-static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,const int mcs){
+static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const int mcs){
   auto m_console=wifibroadcast::log::create_or_get("main");
   m_console->info("Testing MCS {}", mcs);
-  txrx->tx_update_mcs_index(mcs);
-  auto tx_cb=[&txrx](const uint8_t* data,int data_len){
-    const auto radiotap_header=txrx->tx_threadsafe_get_radiotap_header();
+  hdr->update_mcs_index(mcs);
+  auto tx_cb=[&txrx,&hdr](const uint8_t* data,int data_len){
+    const auto radiotap_header=hdr->thread_safe_get();
     const bool encrypt=false;
     txrx->tx_inject_packet(10,data,data_len,radiotap_header,encrypt);
   };
@@ -99,14 +99,14 @@ static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,const 
   m_console->info("MCS {} max {} {}",mcs,stats.curr_packets_per_second,StringHelper::bitrate_readable(stats.curr_bits_per_second_excluding_overhead));
 }
 
-static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int mcs,const int rate_kbits){
+static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const int mcs,const int rate_kbits){
   auto m_console=wifibroadcast::log::create_or_get("main");
   const auto rate_bps=(rate_kbits*1000)+10; // add a bit more to actually hit the target
   const auto pps=rate_bps / (TEST_PACKETS_SIZE*8);
   m_console->info("Validating {} - {}", mcs,pps);
-  txrx->tx_update_mcs_index(mcs);
-  auto tx_cb=[&txrx](const uint8_t* data,int data_len){
-    const auto radiotap_header=txrx->tx_threadsafe_get_radiotap_header();
+  hdr->update_mcs_index(mcs);
+  auto tx_cb=[&txrx,&hdr](const uint8_t* data,int data_len){
+    const auto radiotap_header=hdr->thread_safe_get();
     const bool encrypt=false;
     txrx->tx_inject_packet(10,data,data_len,radiotap_header,encrypt);
   };
@@ -132,13 +132,13 @@ static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,const int
   m_console->info(ss.str());
   return ss.str();
 }
-static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,const bool is_40mhz){
-  txrx->tx_update_channel_width(is_40mhz ? 40 : 20);
+static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const bool is_40mhz){
+  hdr->update_channel_width(is_40mhz ? 40 : 20);
   std::stringstream log;
   for(int mcs=0;mcs<12;mcs++){
     const auto rate=wifibroadcast::get_practical_rate_5G(mcs);
     const auto rate_kbits=(is_40mhz ? rate.rate_40mhz_kbits : rate.rate_20mhz_kbits);
-    const auto res=validate_specific_rate(txrx,mcs,rate_kbits);
+    const auto res=validate_specific_rate(txrx,hdr,mcs,rate_kbits);
     log<<res<<"\n";
   }
   wifibroadcast::log::get_default()->debug("\n{}",log.str());
@@ -165,7 +165,7 @@ static void print_test_results_and_theoretical(const std::vector<TestResult>& te
   }
 }
 
-static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,const int pps_increment,const int max_mcs=12){
+static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const int pps_increment,const int max_mcs=12){
   assert(max_mcs>=0);
   assert(max_mcs<=32);
   std::vector<TestResult> ret;
@@ -181,7 +181,7 @@ static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<W
       m_console->warn("Didn't pass a prev. rate");
       pps_start=500;
     }
-    auto res = increase_pps_until_fail(txrx,mcs, pps_start, pps_increment);
+    auto res = increase_pps_until_fail(txrx,hdr,mcs, pps_start, pps_increment);
     print_test_results_rough({res});
     // start where the last mcs successfully passed
     pps_start = res.pass_pps_set;
@@ -195,15 +195,15 @@ static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<W
   return ret;
 }
 
-void long_test(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
+void long_test(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,bool use_40mhz){
   auto m_console=wifibroadcast::log::create_or_get("main");
   const int freq_w=use_40mhz ? 40 : 20;
   m_console->info("Long test {}",freq_w);
-  txrx->tx_update_channel_width(freq_w);
+  hdr->update_channel_width(freq_w);
   const int mcs_max=12;
-  const auto res_first= all_mcs_increase_pps_until_fail(txrx, 50,mcs_max);
-  const auto res_second= all_mcs_increase_pps_until_fail(txrx, 50,mcs_max);
-  const auto res_third= all_mcs_increase_pps_until_fail(txrx, 50,mcs_max);
+  const auto res_first= all_mcs_increase_pps_until_fail(txrx,hdr, 50,mcs_max);
+  const auto res_second= all_mcs_increase_pps_until_fail(txrx,hdr, 50,mcs_max);
+  const auto res_third= all_mcs_increase_pps_until_fail(txrx,hdr, 50,mcs_max);
   m_console->info("First run:");
   print_test_results_rough(res_first);
   m_console->info("Second run:");
@@ -225,10 +225,10 @@ void long_test(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
   }
 }
 
-void test_rates_and_print_results(std::shared_ptr<WBTxRx> txrx,bool use_40mhz){
+void test_rates_and_print_results(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,bool use_40mhz){
   const int freq_w=use_40mhz ? 40 : 20;
-  txrx->tx_update_channel_width(freq_w);
-  const auto res_20mhz= all_mcs_increase_pps_until_fail(txrx, 20);
+  hdr->update_channel_width(freq_w);
+  const auto res_20mhz= all_mcs_increase_pps_until_fail(txrx,hdr, 20);
   print_test_results_rough(res_20mhz);
   print_test_results_and_theoretical(res_20mhz, false);
 }
@@ -261,13 +261,14 @@ int main(int argc, char *const *argv) {
   options_txrx.log_all_received_validated_packets= false;
   options_txrx.tx_without_pcap= true;
 
-  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
+  auto radiotap_header=std::make_shared<RadiotapHeaderHolder>();
+  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header);
   // No idea if and what effect stbc and ldpc have on the rate, but openhd enables them if possible by default
   // since they greatly increase range / resiliency
-  txrx->tx_update_stbc(true);
-  txrx->tx_update_ldpc(true);
+  radiotap_header->update_stbc(true);
+  radiotap_header->update_ldpc(true);
   // short GI interval gives slightly higher rates, but also decreases resiliency
-  txrx->tx_update_guard_interval(false);
+  radiotap_header->update_guard_interval(false);
 
   txrx->start_receiving();
 
@@ -282,7 +283,7 @@ int main(int argc, char *const *argv) {
 
   //long_test(txrx, false);
 
-  test_rates_and_print_results(txrx, false);
+  test_rates_and_print_results(txrx,radiotap_header, false);
   //test_rates_and_print_results(txrx, true);
 
   //validate_rtl8812au_rates(txrx, false);

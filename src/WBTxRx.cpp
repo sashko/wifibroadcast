@@ -10,10 +10,10 @@
 #include "pcap_helper.hpp"
 #include "raw_socket_helper.hpp"
 
-WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1)
+WBTxRx::WBTxRx(std::vector<WifiCard> wifi_cards1,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header)
     : m_options(options1),
       m_wifi_cards(std::move(wifi_cards1)),
-      m_tx_radiotap_header(RadiotapHeader::UserSelectableParams{})
+      m_session_key_radiotap_header(std::move(session_key_radiotap_header))
 {
   assert(!m_wifi_cards.empty());
   m_console=wifibroadcast::log::create_or_get("WBTxRx");
@@ -677,7 +677,7 @@ void WBTxRx::announce_session_key_if_needed() {
 }
 
 void WBTxRx::send_session_key() {
-  RadiotapHeader tmp_radiotap_header= tx_threadsafe_get_radiotap_header();
+  RadiotapHeader tmp_radiotap_header= m_session_key_radiotap_header->thread_safe_get();
   Ieee80211HeaderOpenHD tmp_tx_hdr{};
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   tmp_tx_hdr.write_unique_id_src_dst(unique_tx_id);
@@ -696,53 +696,6 @@ void WBTxRx::send_session_key() {
     m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
     m_tx_stats.n_injected_packets++;
   }
-}
-
-void WBTxRx::tx_update_mcs_index(uint8_t mcs_index) {
-  m_console->debug("update_mcs_index {}",mcs_index);
-  m_radioTapHeaderParams.mcs_index=mcs_index;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_update_channel_width(int width_mhz) {
-  m_console->debug("update_channel_width {}",width_mhz);
-  m_radioTapHeaderParams.bandwidth=width_mhz;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_update_stbc(int stbc) {
-  m_console->debug("update_stbc {}",stbc);
-  if(stbc<0 || stbc> 3){
-    m_console->warn("Invalid stbc index");
-    return ;
-  }
-  m_radioTapHeaderParams.stbc=stbc;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_update_guard_interval(bool short_gi) {
-  m_radioTapHeaderParams.short_gi=short_gi;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_update_ldpc(bool ldpc) {
-  m_radioTapHeaderParams.ldpc=ldpc;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-void WBTxRx::tx_update_set_flag_tx_no_ack(bool enable) {
-  m_radioTapHeaderParams.set_flag_tx_no_ack=enable;
-  tx_threadsafe_update_radiotap_header(m_radioTapHeaderParams);
-}
-
-void WBTxRx::tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams &params) {
-  m_radioTapHeaderParams=params;
-  auto newRadioTapHeader=RadiotapHeader{m_radioTapHeaderParams};
-  std::lock_guard<std::mutex> guard(m_tx_radiotap_header_mutex);
-  m_tx_radiotap_header = newRadioTapHeader;
-}
-RadiotapHeader WBTxRx::tx_threadsafe_get_radiotap_header() {
-  std::lock_guard<std::mutex> guard(m_tx_radiotap_header_mutex);
-  return m_tx_radiotap_header;
 }
 
 WBTxRx::TxStats WBTxRx::get_tx_stats() {

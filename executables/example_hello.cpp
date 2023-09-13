@@ -62,8 +62,8 @@ int main(int argc, char *const *argv) {
     options_txrx.log_all_received_validated_packets= true;
     options_txrx.advanced_debugging_rx= true;
   }
-
-  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx);
+  auto radiotap_header_holder=std::make_shared<RadiotapHeaderHolder>();
+  std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header_holder);
 
   txrx->start_receiving();
 
@@ -81,7 +81,7 @@ int main(int argc, char *const *argv) {
 
     // Just use radio port 0 - we don't need multiplexing in this example
     // This message is injected on the wifi card
-    const auto radiotap_header=txrx->tx_threadsafe_get_radiotap_header();
+    const auto radiotap_header=radiotap_header_holder->thread_safe_get();
     const bool encrypt=false;
     txrx->tx_inject_packet(0,(uint8_t*)message.data(),message.size(),radiotap_header,encrypt);
 

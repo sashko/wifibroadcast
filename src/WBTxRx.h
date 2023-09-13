@@ -19,6 +19,7 @@
 #include "Ieee80211Header.hpp"
 #include "RSSIAccumulator.hpp"
 #include "RadiotapHeader.hpp"
+#include "RadiotapHeaderHolder.hpp"
 #include "SignalQualityAccumulator.hpp"
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "HelperSources/UINT64SeqNrHelper.hpp"
@@ -102,7 +103,7 @@ class WBTxRx {
     std::string name;
     int type;
   };
-  explicit WBTxRx(std::vector<WifiCard> wifi_cards,Options options1);
+  explicit WBTxRx(std::vector<WifiCard> wifi_cards,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header);
   WBTxRx(const WBTxRx &) = delete;
   WBTxRx &operator=(const WBTxRx &) = delete;
   ~WBTxRx();
@@ -149,18 +150,6 @@ class WBTxRx {
    */
   void start_receiving();
   void stop_receiving();
-
-   // These are for updating injection parameters at run time. They will be applied on the next injected packet.
-   // They are generally thread-safe. See RadiotapHeader for more information on what these parameters do.
-   // After calling this method, the injected packets will use a different radiotap header
-   // I'd like to use an atomic instead of mutex, but unfortunately some compilers don't eat atomic struct
-   void tx_threadsafe_update_radiotap_header(const RadiotapHeader::UserSelectableParams& params);
-   void tx_update_mcs_index(uint8_t mcs_index);
-   void tx_update_channel_width(int width_mhz);
-   void tx_update_stbc(int stbc);
-   void tx_update_guard_interval(bool short_gi);
-   void tx_update_ldpc(bool ldpc);
-   void tx_update_set_flag_tx_no_ack(bool enable);
 
    // Statistics
    struct TxStats{
@@ -237,7 +226,6 @@ class WBTxRx {
    // Used by OpenHD on the ground to notify the user of disconnecting card(s)
    // (Hints at power issues)
    bool get_card_has_disconnected(int card_idx);
-   RadiotapHeader tx_threadsafe_get_radiotap_header();
   public:
    struct SessionExtraData{
      // OpenHD uses different carrier bandwidths for the session key data (20Mhz, such that it can be always received on 20Mhz BW)
@@ -266,6 +254,7 @@ class WBTxRx {
  private:
   const Options m_options;
   std::shared_ptr<spdlog::logger> m_console;
+  std::shared_ptr<RadiotapHeaderHolder> m_session_key_radiotap_header;
   const std::vector<WifiCard> m_wifi_cards;
   std::vector<std::string> get_wifi_card_names(){
      std::vector<std::string> ret;
@@ -275,8 +264,6 @@ class WBTxRx {
      return ret;
   }
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
-  RadiotapHeader::UserSelectableParams m_radioTapHeaderParams{};
-  RadiotapHeader m_tx_radiotap_header;
   Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
   std::array<uint8_t,PCAP_MAX_PACKET_SIZE> m_tx_packet_buff{};
   uint16_t m_ieee80211_seq = 0;
