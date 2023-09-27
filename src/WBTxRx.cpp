@@ -767,8 +767,10 @@ void WBTxRx::recalculate_pollution_perc() {
     double perc_non_openhd_packets=(double)non_openhd_packets/(double)m_pollution_total_rx_packets*100.0;
     //m_console->debug("Link pollution: {}% [{}:{}]",perc_non_openhd_packets,non_openhd_packets,m_pollution_total_rx_packets);
     m_rx_stats.curr_link_pollution_perc=std::ceil(perc_non_openhd_packets);
-    //curr_link_pollution_perc=std::ceil()
+    //curr_link_pollution_perc=std::ceil();
   }
+  const int elapsed_ms=static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+  m_rx_stats.curr_n_foreign_packets_pps=(int)non_openhd_packets * 1000 / elapsed_ms;
   m_pollution_total_rx_packets=0;
   m_pollution_openhd_rx_packets=0;
 }
