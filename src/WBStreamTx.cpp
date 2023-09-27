@@ -122,7 +122,7 @@ void WBStreamTx::loop_process_data() {
   if(options.dequeue_thread_max_realtime){
     SchedulingHelper::setThreadParamsMaxRealtime();
   }
-  const std::int64_t timeout_usecs=std::chrono::duration_cast<std::chrono::microseconds>(options.dequeue_timeout).count();
+  static constexpr std::int64_t timeout_usecs=100*1000;
   if(options.enable_fec){
     std::shared_ptr<EnqueuedBlock> frame= nullptr;
     while (m_process_data_thread_run){
@@ -159,10 +159,6 @@ void WBStreamTx::loop_process_data() {
           m_queue_time_calculator.reset();
         }
         process_enqueued_packet(*packet);
-      }else{
-        if(options.dequeue_timeout_cb){
-          options.dequeue_timeout_cb(*this);
-        }
       }
     }
   }
