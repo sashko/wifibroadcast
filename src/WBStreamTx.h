@@ -23,7 +23,6 @@
  */
 class WBStreamTx {
  public:
-  typedef std::function<void(WBStreamTx& self)> DEQUEUE_TIMEOUT_CB;
   struct Options {
     // needs to match the radio port of the corresponding rx
     uint8_t radio_port = 0;
@@ -46,10 +45,6 @@ class WBStreamTx {
     std::shared_ptr<spdlog::logger> opt_console=nullptr;
     // set sched_param = max realtime on the thread that dequeues and injects the packets
     bool dequeue_thread_max_realtime= true;
-    // Dirty, for openhd - function that is called from the dequeue thread every time the
-    // de-queueing of a packet timed out (no packet was fed for timeout ms)
-    std::chrono::microseconds dequeue_timeout=std::chrono::milliseconds(100);
-    DEQUEUE_TIMEOUT_CB  dequeue_timeout_cb= nullptr;
   };
   WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options,std::shared_ptr<RadiotapHeaderHolder> radiotap_header_holder);
   WBStreamTx(const WBStreamTx&) = delete;
