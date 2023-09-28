@@ -243,6 +243,7 @@ void WBTxRx::loop_receive_packets() {
       if(m_options.advanced_debugging_rx){
         m_console->debug("Timeout - no packet after 1 second");
       }
+      recalculate_pollution_perc();
       continue;
     }
     // TODO Optimization: If rc>1 we have data on more than one wifi card. It would be better to alternating process a couple of packets from card 1, then card 2 or similar
@@ -279,6 +280,7 @@ void WBTxRx::loop_receive_packets() {
       }
       m_console->debug("{}",ss.str());
     }
+    recalculate_pollution_perc();
   }
 }
 
@@ -448,7 +450,6 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
     if(decrypt_res==wb::Decryptor::SESSION_VALID_NEW || decrypt_res==wb::Decryptor::SESSION_VALID_NOT_NEW){
       if(wlan_idx==0){ // Pollution is calculated only on card0
         m_pollution_openhd_rx_packets++;
-        recalculate_pollution_perc();
       }
       m_likely_wrong_encryption_valid_session_keys++;
     }else{
@@ -547,7 +548,6 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
       }
       if(wlan_idx==0){
         m_pollution_openhd_rx_packets++;
-        recalculate_pollution_perc();
       }
       {
         // Same for iee80211 seq nr
