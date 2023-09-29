@@ -9,6 +9,7 @@
 #include "FEC.hpp"
 #include "wifibroadcast_spdlog.h"
 #include <spdlog/spdlog.h>
+#include <functional>
 
 void FECEncoder::encode_block(
     std::vector<std::shared_ptr<std::vector<uint8_t>>> data_packets,
