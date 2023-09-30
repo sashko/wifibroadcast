@@ -12,6 +12,8 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <functional>
+
 
 #include "HelperSources/TimeHelper.hpp"
 
