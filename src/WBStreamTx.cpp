@@ -9,7 +9,7 @@
 #include "BlockSizeHelper.hpp"
 #include "SchedulingHelper.hpp"
 
-WBStreamTx::WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options1,std::shared_ptr<RadiotapHeaderHolder> radiotap_header_holder)
+WBStreamTx::WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options1,std::shared_ptr<RadiotapHeaderTxHolder> radiotap_header_holder)
     :options(options1),
       m_txrx(txrx),
       m_radiotap_header_holder(std::move(radiotap_header_holder))

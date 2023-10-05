@@ -31,7 +31,7 @@ struct TestResult {
   int fail_bps_measured;
 };
 
-static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const int mcs,const int pps_start,const int pps_increment){
+static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderTxHolder> hdr,const int mcs,const int pps_start,const int pps_increment){
   auto m_console=wifibroadcast::log::create_or_get("main");
   m_console->info("Testing MCS {}", mcs);
   hdr->update_mcs_index(mcs);
@@ -80,7 +80,7 @@ static TestResult increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,std::shar
   return {mcs,0,0,0,0,0};
 }
 
-static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const int mcs){
+static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderTxHolder> hdr,const int mcs){
   auto m_console=wifibroadcast::log::create_or_get("main");
   m_console->info("Testing MCS {}", mcs);
   hdr->update_mcs_index(mcs);
@@ -99,7 +99,7 @@ static void calculate_max_possible_pps_quick(std::shared_ptr<WBTxRx> txrx,std::s
   m_console->info("MCS {} max {} {}",mcs,stats.curr_packets_per_second,StringHelper::bitrate_readable(stats.curr_bits_per_second_excluding_overhead));
 }
 
-static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const int mcs,const int rate_kbits){
+static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderTxHolder> hdr,const int mcs,const int rate_kbits){
   auto m_console=wifibroadcast::log::create_or_get("main");
   const auto rate_bps=(rate_kbits*1000)+10; // add a bit more to actually hit the target
   const auto pps=rate_bps / (TEST_PACKETS_SIZE*8);
@@ -132,7 +132,7 @@ static std::string validate_specific_rate(std::shared_ptr<WBTxRx> txrx,std::shar
   m_console->info(ss.str());
   return ss.str();
 }
-static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const bool is_40mhz){
+static void validate_rtl8812au_rates(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderTxHolder> hdr,const bool is_40mhz){
   hdr->update_channel_width(is_40mhz ? 40 : 20);
   std::stringstream log;
   for(int mcs=0;mcs<12;mcs++){
@@ -165,7 +165,7 @@ static void print_test_results_and_theoretical(const std::vector<TestResult>& te
   }
 }
 
-static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,const int pps_increment,const int max_mcs=12){
+static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderTxHolder> hdr,const int pps_increment,const int max_mcs=12){
   assert(max_mcs>=0);
   assert(max_mcs<=32);
   std::vector<TestResult> ret;
@@ -195,7 +195,7 @@ static std::vector<TestResult> all_mcs_increase_pps_until_fail(std::shared_ptr<W
   return ret;
 }
 
-void long_test(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,bool use_40mhz){
+void long_test(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderTxHolder> hdr,bool use_40mhz){
   auto m_console=wifibroadcast::log::create_or_get("main");
   const int freq_w=use_40mhz ? 40 : 20;
   m_console->info("Long test {}",freq_w);
@@ -225,7 +225,7 @@ void long_test(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder
   }
 }
 
-void test_rates_and_print_results(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderHolder> hdr,bool use_40mhz){
+void test_rates_and_print_results(std::shared_ptr<WBTxRx> txrx,std::shared_ptr<RadiotapHeaderTxHolder> hdr,bool use_40mhz){
   const int freq_w=use_40mhz ? 40 : 20;
   hdr->update_channel_width(freq_w);
   const auto res_20mhz= all_mcs_increase_pps_until_fail(txrx,hdr, 20);
@@ -261,7 +261,7 @@ int main(int argc, char *const *argv) {
   options_txrx.log_all_received_validated_packets= false;
   options_txrx.tx_without_pcap= true;
 
-  auto radiotap_header=std::make_shared<RadiotapHeaderHolder>();
+  auto radiotap_header=std::make_shared<RadiotapHeaderTxHolder>();
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header);
   // No idea if and what effect stbc and ldpc have on the rate, but openhd enables them if possible by default
   // since they greatly increase range / resiliency

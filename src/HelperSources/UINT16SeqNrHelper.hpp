@@ -11,7 +11,7 @@
 
 #include "../wifibroadcast_spdlog.h"
 #include <spdlog/spdlog.h>
-
+#include "../HelperSources/StringHelper.hpp"
 
 // UINT16SeqNrHelper for calculating statistics for a link with a rolling (wrap around) uint16_t sequence number
 class UINT16SeqNrHelper {

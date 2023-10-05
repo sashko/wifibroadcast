@@ -62,7 +62,7 @@ int main(int argc, char *const *argv) {
     options_txrx.log_all_received_validated_packets= true;
     options_txrx.advanced_debugging_rx= true;
   }
-  auto radiotap_header_holder=std::make_shared<RadiotapHeaderHolder>();
+  auto radiotap_header_holder=std::make_shared<RadiotapHeaderTxHolder>();
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header_holder);
 
   txrx->start_receiving();

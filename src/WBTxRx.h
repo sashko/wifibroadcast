@@ -16,14 +16,14 @@
 #include <utility>
 
 #include "Encryption.h"
-#include "Ieee80211Header.hpp"
-#include "RSSIAccumulator.hpp"
-#include "RadiotapHeader.hpp"
-#include "RadiotapHeaderHolder.hpp"
-#include "SignalQualityAccumulator.hpp"
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "HelperSources/UINT64SeqNrHelper.hpp"
+#include "Ieee80211Header.hpp"
+#include "RSSIAccumulator.hpp"
+#include "SignalQualityAccumulator.hpp"
 #include "WiFiCard.h"
+#include "radiotap/RadiotapHeaderTx.hpp"
+#include "radiotap/RadiotapHeaderTxHolder.hpp"
 
 /**
  * This class exists to provide a clean, working interface to create a
@@ -96,13 +96,15 @@ class WBTxRx {
     bool tx_without_pcap=false;
     // a tx error hint is thrown if injecting the packet takes longer than max_sane_injection_time
     std::chrono::milliseconds max_sane_injection_time=std::chrono::milliseconds(5);
+    // debugging of rx radiotap header(s)
+    int rx_radiotap_debug_level=0;
   };
   /**
    * @param wifi_cards card(s) used for tx / rx
    * @param options1 see documentation in options string
    * @param session_key_radiotap_header radiotap header used when injecting session key packets
    */
-  explicit WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header);
+  explicit WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards,Options options1,std::shared_ptr<RadiotapHeaderTxHolder> session_key_radiotap_header);
   WBTxRx(const WBTxRx &) = delete;
   WBTxRx &operator=(const WBTxRx &) = delete;
   ~WBTxRx();
@@ -120,7 +122,7 @@ class WBTxRx {
    * @param encrypt: Optionally encrypt the packet, if not encrypted, only a (secure) validation checksum is calculated & checked on rx
    * Encryption results in more CPU load and is therefore not wanted in all cases (e.g. by default, openhd does not encrypt video)
    */
-  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,const RadiotapHeader& tx_radiotap_header,bool encrypt);
+  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,const RadiotapHeaderTx& tx_radiotap_header,bool encrypt);
   /**
    * A typical stream RX (aka the receiver for a specific multiplexed stream) needs to react to events during streaming.
    * For lowest latency, we do this via callback(s) that are called directly.
@@ -243,7 +245,7 @@ class WBTxRx {
    // the reasoning behind this value: https://github.com/svpcom/wifibroadcast/issues/69
    static constexpr const auto PCAP_MAX_PACKET_SIZE = 1510;
    // This is the max number of bytes usable when injecting
-   static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE = (PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES -
+   static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE = (PCAP_MAX_PACKET_SIZE - RadiotapHeaderTx::SIZE_BYTES -
         IEEE80211_HEADER_SIZE_BYTES);
    static_assert(RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE==1473);
    // and we use some bytes of that for encryption / packet validation
@@ -255,7 +257,7 @@ class WBTxRx {
  private:
   const Options m_options;
   std::shared_ptr<spdlog::logger> m_console;
-  std::shared_ptr<RadiotapHeaderHolder> m_session_key_radiotap_header;
+  std::shared_ptr<RadiotapHeaderTxHolder> m_session_key_radiotap_header;
   const std::vector<wifibroadcast::WifiCard> m_wifi_cards;
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
   Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};

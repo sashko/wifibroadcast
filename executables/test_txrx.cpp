@@ -36,14 +36,14 @@ int main(int argc, char *const *argv) {
   //options_txrx.pcap_rx_set_direction= false;
   options_txrx.pcap_rx_set_direction = pcap_setdirection;
   options_txrx.log_all_received_validated_packets= true;
-  auto radiotap_header_holder_tx=std::make_shared<RadiotapHeaderHolder>();
+  auto radiotap_header_holder_tx=std::make_shared<RadiotapHeaderTxHolder>();
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header_holder_tx);
 
   const bool enable_fec= true;
   WBStreamTx::Options options_tx{};
   options_tx.radio_port=10;
   options_tx.enable_fec= enable_fec;
-  auto radiotap_header_holder_rx=std::make_shared<RadiotapHeaderHolder>();
+  auto radiotap_header_holder_rx=std::make_shared<RadiotapHeaderTxHolder>();
   std::unique_ptr<WBStreamTx> wb_tx=std::make_unique<WBStreamTx>(txrx,options_tx,radiotap_header_holder_rx);
 
   WBStreamRx::Options options_rx{};

@@ -77,7 +77,7 @@ int main(int argc, char *const *argv) {
   //options_txrx.pcap_rx_set_direction= false;
   options_txrx.pcap_rx_set_direction = pcap_setdirection;
   options_txrx.log_all_received_validated_packets= false;
-  auto radiotap_header_holder=std::make_shared<RadiotapHeaderHolder>();
+  auto radiotap_header_holder=std::make_shared<RadiotapHeaderTxHolder>();
   std::shared_ptr<WBTxRx> txrx=std::make_shared<WBTxRx>(cards,options_txrx,radiotap_header_holder);
 
   if(is_air){
