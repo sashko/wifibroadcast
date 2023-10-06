@@ -515,29 +515,26 @@ void WBTxRx::switch_tx_card_if_needed() {
     const auto elapsed=std::chrono::steady_clock::now()-m_last_highest_rssi_adjustment_tp;
     if(elapsed>=HIGHEST_RSSI_ADJUSTMENT_INTERVAL){
       m_last_highest_rssi_adjustment_tp=std::chrono::steady_clock::now();
-      int idx_card_highest_rssi=0;
-      int highest_dbm=INT32_MIN;
+      // NEW: Instead of dealing with RSSI issues, we just take whatever card
+      // received the most amount of packets
+      int idx_card_highest_packet_delta=0;
+      int64_t highest_packet_delta=0;
       for(int i=0;i< m_wifi_cards.size();i++){
         RxStatsPerCard& this_card_stats=m_rx_stats_per_card.at(i);
         // Check if this card is behaving "okay", aka receiving packets at the time
         const auto delta_valid_packets=this_card_stats.count_p_valid-m_active_tx_card_data[i].last_received_n_valid_packets;
         m_active_tx_card_data[i].last_received_n_valid_packets=this_card_stats.count_p_valid;
-        // TODO
-        /*if(delta_valid_packets!=0){
-          // Some valid packets on this card, or reset
-          const auto dbm_average=this_card_stats.card_dbm;
-          if(dbm_average>highest_dbm){
-            idx_card_highest_rssi=i;
-            highest_dbm=static_cast<int>(dbm_average); // NOLINT(cert-str34-c)
-          }
-        }*/
+        if(delta_valid_packets>highest_packet_delta){
+          idx_card_highest_packet_delta=i;
+          highest_packet_delta=delta_valid_packets;
+        }
         //m_console->debug("Card {} dbm_average:{}",i,dbm_average);
       }
-      if(m_curr_tx_card!=idx_card_highest_rssi){
+      if(m_curr_tx_card!=idx_card_highest_packet_delta){
         // TODO
         // to avoid switching too often, only switch if the difference in dBm exceeds a threshold value
-        m_console->debug("Switching to card {}",idx_card_highest_rssi);
-        m_curr_tx_card=idx_card_highest_rssi;
+        m_console->debug("Switching to card {}",idx_card_highest_packet_delta);
+        m_curr_tx_card=idx_card_highest_packet_delta;
       }
     }
   }
