@@ -310,7 +310,7 @@ class WBTxRx {
   // We adjust the TX card in 1 second intervals
   std::chrono::steady_clock::time_point m_last_highest_rssi_adjustment_tp=std::chrono::steady_clock::now();
   static constexpr auto HIGHEST_RSSI_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
-  bool m_disable_all_transmissions= false;
+  std::atomic_bool m_disable_all_transmissions= false;
   std::vector<bool> m_card_is_disconnected;
   BitrateCalculator m_tx_bitrate_calculator_excluding_overhead{};
   BitrateCalculator m_tx_bitrate_calculator_including_overhead{};
