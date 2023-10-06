@@ -492,7 +492,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
       auto &this_wifi_card_stats = m_rx_stats_per_card.at(wlan_idx);
       PerCardCalculators& this_wifi_card_calc= *m_per_card_calc.at(wlan_idx);
       if(m_options.debug_rssi>=2){
-        m_console->debug("{}",radiotap::rx::all_rf_path_to_string(parsedPacket->allAntennaValues));
+        m_console->debug("{}",radiotap::rx::all_rf_path_to_string(parsedPacket->rf_paths));
       }
       this_wifi_card_calc.rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
       this_wifi_card_stats.count_p_valid++;
@@ -562,7 +562,8 @@ bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t stream_index,bool
         m_packet_decrypt_time.reset();
       }
     }
-    on_valid_packet(nonce,wlan_idx,stream_index,decrypted->data(),decrypted->size());
+    on_valid_data_packet(nonce, wlan_idx, stream_index, decrypted->data(),
+                         decrypted->size());
     // Calculate sequence number stats per card
     auto& seq_nr_for_card=m_per_card_calc.at(wlan_idx)->seq_nr;
     seq_nr_for_card.on_new_sequence_number(nonce);
@@ -589,7 +590,7 @@ bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t stream_index,bool
   return false;
 }
 
-void WBTxRx::on_valid_packet(uint64_t nonce,int wlan_index,const uint8_t stream_index,const uint8_t *data, const int data_len) {
+void WBTxRx::on_valid_data_packet(uint64_t nonce,int wlan_index,const uint8_t stream_index,const uint8_t *data, const int data_len) {
   if(m_output_cb!= nullptr){
     m_output_cb(nonce,wlan_index,stream_index,data,data_len);
   }

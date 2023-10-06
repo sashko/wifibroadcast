@@ -38,12 +38,12 @@ struct ParsedAdapter{
 };
 
 struct ParsedRxRadiotapPacket {
-  // Size can be anything from size=1 to size== N where N is the number of Antennas of this adapter
-  const std::vector<ParsedRfPath> allAntennaValues;
   const Ieee80211HeaderRaw *ieee80211Header;
   const uint8_t *payload;
   const std::size_t payloadSize;
-  ParsedAdapter adapter;
+  const ParsedAdapter adapter;
+  // Size can be anything from size=1 to size== N where N is the number of Antennas of this adapter
+  const std::vector<ParsedRfPath> rf_paths;
 };
 
 // Returns std::nullopt if radiotap was unable to parse the header
@@ -68,6 +68,7 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
   // for rtl8812au fixup
   //
   ParsedAdapter parsed_adapter{};
+  std::vector<ParsedRfPath> parsed_rf_paths{};
 
   int8_t currentAntenna = -1;
   // not confirmed yet, but one radiotap packet might include stats for multiple antennas
@@ -163,7 +164,7 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
     ss<<(int)antsignal<<",";
   }
   std::cout<<ss.str();*/
-  return ParsedRxRadiotapPacket{allAntennaValues, ieee80211Header, payload, payloadSize, parsed_adapter};
+  return ParsedRxRadiotapPacket{ieee80211Header, payload, payloadSize, parsed_adapter,parsed_rf_paths};
 }
 
 static std::string rf_path_to_string(const ParsedRfPath& rf_path){
@@ -188,7 +189,7 @@ static std::string all_rf_path_to_string(const std::vector<ParsedRfPath>& all_rf
 
 static std::string parsed_radiotap_to_string(const ParsedRxRadiotapPacket& parsed){
   std::stringstream ss;
-  ss<<all_rf_path_to_string(parsed.allAntennaValues)<<"\n";
+  ss<<all_rf_path_to_string(parsed.rf_paths)<<"\n";
   if(parsed.adapter.radiotap_dbm_antsignal.has_value()){
     ss<<"Antsignal:"<<(int)parsed.adapter.radiotap_dbm_antsignal.value()<<" ";
   }

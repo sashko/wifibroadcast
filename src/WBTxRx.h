@@ -341,7 +341,9 @@ class WBTxRx {
   // returns true if packet could be decrypted successfully
   bool process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
   // called avery time we have successfully decrypted a packet
-  void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data,int data_len);
+  void on_valid_data_packet(uint64_t nonce,int wlan_index,
+                            uint8_t stream_index,const uint8_t *data,
+                            int data_len);
   static std::string options_to_string(const std::vector<std::string>& wifi_cards,const Options& options);
   // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
   // (Of all cards currently receiving data, find the one with the highest reported dBm)
