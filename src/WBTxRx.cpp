@@ -517,22 +517,25 @@ void WBTxRx::switch_tx_card_if_needed() {
       m_last_highest_rssi_adjustment_tp=std::chrono::steady_clock::now();
       // NEW: Instead of dealing with RSSI issues, we just take whatever card
       // received the most amount of packets
-      int idx_card_highest_packet_delta=0;
-      int64_t highest_packet_delta=0;
+      std::vector<int64_t> per_card_packet_delta;
+      per_card_packet_delta.reserve(m_wifi_cards.size());
       for(int i=0;i< m_wifi_cards.size();i++){
         RxStatsPerCard& this_card_stats=m_rx_stats_per_card.at(i);
         // Check if this card is behaving "okay", aka receiving packets at the time
         const auto delta_valid_packets=this_card_stats.count_p_valid-m_active_tx_card_data[i].last_received_n_valid_packets;
         m_active_tx_card_data[i].last_received_n_valid_packets=this_card_stats.count_p_valid;
-        if(delta_valid_packets>highest_packet_delta){
+        per_card_packet_delta.push_back(delta_valid_packets);
+      }
+      int64_t best_packet_delta=per_card_packet_delta[m_curr_tx_card];
+      int idx_card_highest_packet_delta=m_curr_tx_card;
+      for(int i=0;i<m_wifi_cards.size();i++){
+        // Switch card if there is a difference of more than X packets
+        if(per_card_packet_delta[i]>best_packet_delta+50){
+          best_packet_delta=per_card_packet_delta[i];
           idx_card_highest_packet_delta=i;
-          highest_packet_delta=delta_valid_packets;
         }
-        //m_console->debug("Card {} dbm_average:{}",i,dbm_average);
       }
       if(m_curr_tx_card!=idx_card_highest_packet_delta){
-        // TODO
-        // to avoid switching too often, only switch if the difference in dBm exceeds a threshold value
         m_console->debug("Switching to card {}",idx_card_highest_packet_delta);
         m_curr_tx_card=idx_card_highest_packet_delta;
       }
