@@ -18,7 +18,7 @@ namespace radiotap::rx{
 struct ParsedRfPath{
   // which antenna the value refers to,
   // or -1 this dgm value came before a IEEE80211_RADIOTAP_ANTENNA field and the antenna idx is therefore unknown
-  const int8_t antennaIdx;
+  int8_t antennaIdx;
   // https://www.radiotap.org/fields/Antenna%20signal.html
   // IEEE80211_RADIOTAP_DBM_ANTSIGNAL
   int8_t radiotap_dbm_antsignal;
@@ -32,8 +32,6 @@ struct ParsedAdapter{
   // Atheros forwards frames even though the fcs check failed ( this packet is corrupted)
   // This is pretty much the only adapter that does that though
   bool radiotap_f_bad_fcs= false;
-  std::optional<uint8_t> mcs_index=std::nullopt;
-  std::optional<uint8_t> channel_width=std::nullopt;
   std::optional<int8_t> radiotap_dbm_antsignal=std::nullopt;
   std::optional<uint16_t> radiotap_lock_quality=std::nullopt;
   std::optional<int8_t> radiotap_dbm_antnoise=std::nullopt;
@@ -101,7 +99,8 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
         uint8_t flags = iterator.this_arg[1];
         uint8_t mcs = iterator.this_arg[2];
         if(known & IEEE80211_RADIOTAP_MCS_HAVE_MCS){
-          parsed_adapter.mcs_index=static_cast<uint16_t>(mcs);
+          // Not needed for now
+          //parsed_adapter.mcs_index=static_cast<uint16_t>(mcs);
         }
         if (known & IEEE80211_RADIOTAP_MCS_HAVE_BW) {
           const uint8_t bandwidth = flags & IEEE80211_RADIOTAP_MCS_BW_MASK;
@@ -109,10 +108,12 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
             case IEEE80211_RADIOTAP_MCS_BW_20:
             case IEEE80211_RADIOTAP_MCS_BW_20U:
             case IEEE80211_RADIOTAP_MCS_BW_20L:
-              parsed_adapter.channel_width=static_cast<uint16_t>(20);
+              // Not needed for now
+              //parsed_adapter.channel_width=static_cast<uint16_t>(20);
               break;
             case IEEE80211_RADIOTAP_MCS_BW_40:
-              parsed_adapter.channel_width=static_cast<uint16_t>(40);
+              // Not needed for now
+              //parsed_adapter.channel_width=static_cast<uint16_t>(40);
               break;
             default:
               break ;

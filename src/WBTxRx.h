@@ -19,11 +19,12 @@
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "HelperSources/UINT64SeqNrHelper.hpp"
 #include "Ieee80211Header.hpp"
-#include "RSSIAccumulator.hpp"
-#include "SignalQualityAccumulator.hpp"
 #include "WiFiCard.h"
+#include "radiotap/RSSIAccumulator.hpp"
 #include "radiotap/RadiotapHeaderTx.hpp"
 #include "radiotap/RadiotapHeaderTxHolder.hpp"
+#include "radiotap/RadiotapRxRfAggregator.h"
+#include "radiotap/SignalQualityAccumulator.hpp"
 
 /**
  * This class exists to provide a clean, working interface to create a
@@ -186,10 +187,6 @@ class WBTxRx {
      int32_t curr_bits_per_second=-1;
      // n received valid session key packets
      int n_received_valid_session_key_packets=0;
-     // mcs index on the most recent valid data packet, if the card supports reporting it
-     int last_received_packet_mcs_index=-1;
-     // channel width (20Mhz or 40Mhz) on the most recent received valid data packet, if the card supports reporting it
-     int last_received_packet_channel_width=-1;
      // complicated but important metric in our case - how many "big gaps" we had in the last 1 second
      int16_t curr_big_gaps_counter=-1;
      // Percentage of non openhd packets over total n of packets
@@ -207,17 +204,11 @@ class WBTxRx {
      int64_t count_p_any=0;
      int64_t count_p_valid=0;
      int32_t curr_packet_loss=-1;
-     // [0,100] if valid, -1 otherwise
-     int8_t signal_quality=-1;
-     // These values are updated in regular intervals as long as packets are coming in
-     // -128 = invalid, [-127..-1] otherwise
-     int8_t card_dbm=-128; // Depends on driver
-     int8_t antenna1_dbm=-128;
-     int8_t antenna2_dbm=-128;
    };
    TxStats get_tx_stats();
    RxStats get_rx_stats();
    RxStatsPerCard get_rx_stats_for_card(int card_index);
+   RadiotapRxRfAggregator::CardKeyRfIndicators get_rx_rf_stats_for_card(int card_index);
    // used by openhd during frequency scan
    void rx_reset_stats();
    // used by the rate adjustment test executable
@@ -304,10 +295,7 @@ class WBTxRx {
   // for calculating the loss and more per rx card (when multiple rx cards are used)
   struct PerCardCalculators{
     UINT64SeqNrHelper seq_nr{};
-    RSSIAccumulator card_rssi{};
-    RSSIAccumulator antenna1_rssi{};
-    RSSIAccumulator antenna2_rssi{};
-    SignalQualityAccumulator signal_quality{};
+    RadiotapRxRfAggregator rf_aggregator;
     void reset_all();
   };
   std::vector<std::shared_ptr<PerCardCalculators>> m_per_card_calc;

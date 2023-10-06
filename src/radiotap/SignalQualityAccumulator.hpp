@@ -7,8 +7,8 @@
 
 #include <optional>
 
-#include "HelperSources/TimeHelper.hpp"
-#include "wifibroadcast_spdlog.h"
+#include "../wifibroadcast_spdlog.h"
+#include "TimeHelper.hpp"
 
 /**
  * UINT16SeqNrHelper to accumulate (rtl8812au) signal quality values
