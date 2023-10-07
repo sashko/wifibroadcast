@@ -744,7 +744,7 @@ std::string WBTxRx::rx_stats_to_string(const WBTxRx::RxStats& data) {
 }
 std::string WBTxRx::rx_stats_per_card_to_string(
     const WBTxRx::RxStatsPerCard& data) {
-  return fmt::format("Card{}[packets total:{} valid:{}, loss:{}%]",data.card_index,
+  return fmt::format("RxStatsCard{}[packets total:{} valid:{}, loss:{}%]",data.card_index,
                      data.count_p_any,data.count_p_valid,data.curr_packet_loss);
 }
 std::string WBTxRx::options_to_string(const std::vector<std::string>& wifi_cards,const WBTxRx::Options& options) {
