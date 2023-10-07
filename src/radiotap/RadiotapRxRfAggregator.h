@@ -39,6 +39,7 @@ class RadiotapRxRfAggregator {
   CardKeyRfIndicators get_current(){
     return m_current_rx_stats;
   }
+  static std::string card_key_rf_indicators_to_string(const CardKeyRfIndicators& indicators);
  private:
   struct KeyRfAggregators{
     RSSIAccumulator rssi_dbm;
@@ -54,5 +55,10 @@ class RadiotapRxRfAggregator {
   KeyRfAggregators m_agg_antenna2;
   CardKeyRfIndicators m_current_rx_stats{};
 };
+
+static std::ostream& operator<<(std::ostream& strm, const RadiotapRxRfAggregator::CardKeyRfIndicators& data){
+  strm<<RadiotapRxRfAggregator::card_key_rf_indicators_to_string(data);
+  return strm;
+}
 
 #endif  // WIFIBROADCAST_RADIOTAPRXRFAGGREGATOR_H
