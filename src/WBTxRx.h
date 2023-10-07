@@ -187,8 +187,6 @@ class WBTxRx {
      int32_t curr_bits_per_second=-1;
      // n received valid session key packets
      int n_received_valid_session_key_packets=0;
-     // complicated but important metric in our case - how many "big gaps" we had in the last 1 second
-     int16_t curr_big_gaps_counter=-1;
      // Percentage of non openhd packets over total n of packets
      int curr_link_pollution_perc=0;
      // N of non openhd packets in the last second

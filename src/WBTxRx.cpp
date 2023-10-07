@@ -350,6 +350,9 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
     }
     return;
   }
+  //m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
+  //m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
+  //m_per_card_calc[wlan_idx]->rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
   const uint8_t *pkt_payload = parsedPacket->payload;
   const size_t pkt_payload_size = parsedPacket->payloadSize;
   m_rx_stats.count_p_any++;
@@ -661,7 +664,6 @@ WBTxRx::TxStats WBTxRx::get_tx_stats() {
 
 WBTxRx::RxStats WBTxRx::get_rx_stats() {
   WBTxRx::RxStats ret=m_rx_stats;
-  ret.curr_big_gaps_counter=0;
   ret.curr_bits_per_second=m_rx_bitrate_calculator.get_last_or_recalculate(ret.count_bytes_valid);
   ret.curr_packets_per_second=m_rx_packets_per_second_calculator.get_last_or_recalculate(ret.count_p_valid);
   return ret;

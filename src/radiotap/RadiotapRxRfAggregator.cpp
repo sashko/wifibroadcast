@@ -59,7 +59,7 @@ void RadiotapRxRfAggregator::reset() {
 
 std::string RadiotapRxRfAggregator::card_key_rf_indicators_to_string(
     const RadiotapRxRfAggregator::CardKeyRfIndicators& indicators) {
-  return fmt::format("[{}:{}:{} | {}:{}:{} | {}:{}:{}]",indicators.adapter.rssi_dbm,indicators.adapter.noise_dbm,indicators.adapter.card_signal_quality_perc,
+  return fmt::format("[Adapter: {}:{}:{} | Antenna1: {}:{}:{} | Antenna2: {}:{}:{}]",indicators.adapter.rssi_dbm,indicators.adapter.noise_dbm,indicators.adapter.card_signal_quality_perc,
                      indicators.antenna1.rssi_dbm,indicators.antenna1.noise_dbm,indicators.antenna1.card_signal_quality_perc,
                      indicators.antenna2.rssi_dbm,indicators.antenna2.noise_dbm,indicators.antenna2.card_signal_quality_perc);
 }

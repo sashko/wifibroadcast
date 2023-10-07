@@ -81,19 +81,17 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
         const auto antenna_idx= (int8_t)iterator.this_arg[0];
         const int8_t antenna_nr=antenna_idx+1;
         if(antenna_nr>n_antennas)n_antennas=antenna_nr;
-      }
-        break;
+      }break;
       case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
         int8_t value;
         std::memcpy(&value,iterator.this_arg,1);
         radiotap_dbm_antsignal.push_back(value);
-      }
+      } break ;
       case IEEE80211_RADIOTAP_DBM_ANTNOISE:{
         int8_t value;
         std::memcpy(&value,iterator.this_arg,1);
         radiotap_dbm_antnoise.push_back(value);
-      }
-      break;
+      }break;
       case IEEE80211_RADIOTAP_FLAGS:
         tmp_copy_IEEE80211_RADIOTAP_FLAGS = *(uint8_t *) (iterator.this_arg);
         break;
