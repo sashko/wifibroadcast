@@ -9,8 +9,12 @@
 #include "RSSIAccumulator.hpp"
 #include "SignalQualityAccumulator.hpp"
 
+/**
+ * Aggregates all key rf metrics.
+ */
 class RadiotapRxRfAggregator {
  public:
+  // Aggregated (average) key rf metrics
   struct AggKeyRfIndicators {
     // -128 = invalid, [-127..-1] otherwise
     int8_t rssi_dbm=-128;

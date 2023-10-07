@@ -31,7 +31,7 @@ void RadiotapRxRfAggregator::add_if_valid(
 
 void RadiotapRxRfAggregator::on_valid_openhd_packet(
     const radiotap::rx::ParsedRxRadiotapPacket& packet) {
-  add_if_valid(packet.rf_indicators,m_agg_adapter,m_current_rx_stats.adapter);
+  add_if_valid(packet.rf_adapter,m_agg_adapter,m_current_rx_stats.adapter);
   for(int i=0;i<packet.rf_paths.size() && i<2;i++){
     const auto& rf_path=packet.rf_paths[i];
     auto& agg=i==0 ? m_agg_antenna1 : m_agg_antenna2;

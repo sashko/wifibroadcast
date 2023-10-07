@@ -34,7 +34,7 @@ struct ParsedRxRadiotapPacket {
   const std::size_t payloadSize;
   // --- Values generic (not per rf-path) ---
   bool radiotap_f_bad_fcs= false;
-  KeyRfIndicators rf_indicators;
+  KeyRfIndicators rf_adapter;
   // --- Values per rf-path -----
   // first one: antenna 1 (if reported by card), second one: antenna 2 (if reported by card) ...
   std::vector<KeyRfIndicators> rf_paths;
@@ -222,7 +222,7 @@ static std::string all_rf_path_to_string(const std::vector<KeyRfIndicators>& all
 static std::string parsed_radiotap_to_string(const ParsedRxRadiotapPacket& parsed){
   std::stringstream ss;
   ss<<"{signal:noise:lock}\n";
-  ss<<"Adapter:"<<key_rf_indicators_to_string(parsed.rf_indicators)<<"\n";
+  ss<<"Adapter:"<<key_rf_indicators_to_string(parsed.rf_adapter)<<"\n";
   ss<<all_rf_path_to_string(parsed.rf_paths);
   return ss.str();
 }
