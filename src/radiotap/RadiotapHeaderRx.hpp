@@ -52,7 +52,11 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
   struct ieee80211_radiotap_iterator iterator{};
   // With AR9271 I get 39 as length of the radio-tap header
   // With my internal laptop wifi chip I get 36 as length of the radio-tap header.
-  int ret = ieee80211_radiotap_iterator_init(&iterator, (ieee80211_radiotap_header *) pkt, pktlen, NULL);
+  int ret = ieee80211_radiotap_iterator_init(&iterator, (ieee80211_radiotap_header *) pkt, pktlen, nullptr);
+  if(ret){
+    printf("malformed radiotap header (init returns %d)\n", ret);
+    return std::nullopt;
+  }
 
   // This is the best way I came up with of how to seperate the per-adaper and per-rf-path rf metrics from one of another
   // It assumes the driver reports them in order - per-adapter first, then per-rf-paths (for as many rf paths there are)
@@ -94,7 +98,6 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
         tmp_copy_IEEE80211_RADIOTAP_FLAGS = *(uint8_t *) (iterator.this_arg);
         break;
       case IEEE80211_RADIOTAP_LOCK_QUALITY:{
-        //int8_t value;
         uint16_t value;
         std::memcpy(&value,iterator.this_arg,1);
         radiotap_lock_quality.push_back(value);
@@ -103,7 +106,7 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
     }
   }  /* while more rt headers */
   if (ret != -ENOENT) {
-    //wifibroadcast::log::get_default()->warn("Error parsing radiotap header!\n";
+    printf("Cannot parse radiotap header %d\n", ret);
     return std::nullopt;
   }
   bool has_radiotap_f_bad_fcs= false;
