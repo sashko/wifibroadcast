@@ -737,10 +737,11 @@ std::string WBTxRx::tx_stats_to_string(const WBTxRx::TxStats& data) {
                      StringHelper::bitrate_readable(data.curr_bits_per_second_including_overhead));
 }
 std::string WBTxRx::rx_stats_to_string(const WBTxRx::RxStats& data) {
-  return fmt::format("RxStats[packets any:{} session:{} valid:{} Loss:{}% pps:{} bps:{} foreign:{}% likely_key_mismatch:{}]",
+  return fmt::format("RxStats[packets any:{} session:{} valid:{} Loss:{}% pps:{} bps:{} foreign:{}%/{}pps likely_key_mismatch:{}]",
                      data.count_p_any,data.n_received_valid_session_key_packets,data.count_p_valid,
                      data.curr_lowest_packet_loss,data.curr_packets_per_second,data.curr_bits_per_second,
-                     data.curr_link_pollution_perc,data.likely_mismatching_encryption_key);
+                     data.curr_link_pollution_perc,data.curr_n_foreign_packets_pps,
+                     data.likely_mismatching_encryption_key);
 }
 std::string WBTxRx::rx_stats_per_card_to_string(
     const WBTxRx::RxStatsPerCard& data) {
