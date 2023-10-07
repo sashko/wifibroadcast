@@ -358,7 +358,13 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
   if(wlan_idx==0){
     m_pollution_total_rx_packets++;
   }
-  if (parsedPacket->adapter.radiotap_f_bad_fcs) {
+  if(m_options.rx_radiotap_debug_level==1 || m_options.rx_radiotap_debug_level==3){
+    m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
+  }
+  if(m_options.rx_radiotap_debug_level==2 || m_options.rx_radiotap_debug_level==3){
+    m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
+  }
+  if (parsedPacket->radiotap_f_bad_fcs) {
     if(m_options.advanced_debugging_rx){
       m_console->debug("Discarding packet due to bad FCS!");
     }

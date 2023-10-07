@@ -11,7 +11,7 @@
 
 class RadiotapRxRfAggregator {
  public:
-  struct KeyRfIndicators {
+  struct AggKeyRfIndicators {
     // -128 = invalid, [-127..-1] otherwise
     int8_t rssi_dbm=-128;
     int8_t noise_dbm=-128;
@@ -20,10 +20,10 @@ class RadiotapRxRfAggregator {
   };
   struct CardKeyRfIndicators {
     // ------------- PER ADAPTER ------------
-    KeyRfIndicators adapter;
+    AggKeyRfIndicators adapter;
     // -------------- PER ANTENNA ----------
-    KeyRfIndicators antenna1;
-    KeyRfIndicators antenna2;
+    AggKeyRfIndicators antenna1;
+    AggKeyRfIndicators antenna2;
   };
   // Called every time a valid openhd packet is received
   void on_valid_openhd_packet(const radiotap::rx::ParsedRxRadiotapPacket& packet);
@@ -36,19 +36,18 @@ class RadiotapRxRfAggregator {
     return m_current_rx_stats;
   }
  private:
-  void on_per_rf_path(int index,const radiotap::rx::ParsedRfPath& data);
-  // Stats per-adapter
-  RSSIAccumulator adapter_rssi{};
-  RSSIAccumulator adapter_noise{};
-  SignalQualityAccumulator adapter_signal_quality{};
-  // Stats per antenna (we only track up to 2 antenna(s)
-  struct PerAntenna{
+  struct KeyRfAggregators{
     RSSIAccumulator rssi_dbm;
     RSSIAccumulator noise_dbm;
     SignalQualityAccumulator signal_quality;
+    void reset();
   };
-  PerAntenna m_antenna1;
-  PerAntenna m_antenna2;
+  static void add_if_valid(const radiotap::rx::KeyRfIndicators& indicators,
+                           RadiotapRxRfAggregator::KeyRfAggregators& agg,
+                           RadiotapRxRfAggregator::AggKeyRfIndicators& curr);
+  KeyRfAggregators m_agg_adapter;
+  KeyRfAggregators m_agg_antenna1;
+  KeyRfAggregators m_agg_antenna2;
   CardKeyRfIndicators m_current_rx_stats{};
 };
 
