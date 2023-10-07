@@ -42,7 +42,7 @@ struct ParsedRxRadiotapPacket {
 
 // Returns std::nullopt if radiotap was unable to parse the header
 // else return the *parsed information*
-// To avoid confusion it might help to treat this method as a big black Box :)
+// This method is intentionally simple in that it only looks for data relevant to us (right now) inside the radiotap header.
 static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(const uint8_t *pkt,const int pkt_len) {
   //int pktlen = hdr.caplen;
   int pktlen=pkt_len;
@@ -77,7 +77,6 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
         const auto antenna_idx= (int8_t)iterator.this_arg[0];
         const int8_t antenna_nr=antenna_idx+1;
         if(antenna_nr>n_antennas)n_antennas=antenna_nr;
-        //n_antennas=std::max(n_antennas,antenna_idx+1);
       }
         break;
       case IEEE80211_RADIOTAP_DBM_ANTSIGNAL:{
@@ -94,34 +93,6 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
       case IEEE80211_RADIOTAP_FLAGS:
         tmp_copy_IEEE80211_RADIOTAP_FLAGS = *(uint8_t *) (iterator.this_arg);
         break;
-      case IEEE80211_RADIOTAP_MCS:
-      {
-        uint8_t known = iterator.this_arg[0];
-        uint8_t flags = iterator.this_arg[1];
-        uint8_t mcs = iterator.this_arg[2];
-        if(known & IEEE80211_RADIOTAP_MCS_HAVE_MCS){
-          // Not needed for now
-          //parsed_adapter.mcs_index=static_cast<uint16_t>(mcs);
-        }
-        if (known & IEEE80211_RADIOTAP_MCS_HAVE_BW) {
-          const uint8_t bandwidth = flags & IEEE80211_RADIOTAP_MCS_BW_MASK;
-          switch (bandwidth) {
-            case IEEE80211_RADIOTAP_MCS_BW_20:
-            case IEEE80211_RADIOTAP_MCS_BW_20U:
-            case IEEE80211_RADIOTAP_MCS_BW_20L:
-              // Not needed for now
-              //parsed_adapter.channel_width=static_cast<uint16_t>(20);
-              break;
-            case IEEE80211_RADIOTAP_MCS_BW_40:
-              // Not needed for now
-              //parsed_adapter.channel_width=static_cast<uint16_t>(40);
-              break;
-            default:
-              break ;
-          }
-        }
-      }
-      break;
       case IEEE80211_RADIOTAP_LOCK_QUALITY:{
         //int8_t value;
         uint16_t value;

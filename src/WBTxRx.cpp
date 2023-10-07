@@ -346,7 +346,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
       radiotap::rx::process_received_radiotap_packet(pkt,pkt_len);
   if (parsedPacket == std::nullopt) {
     if(m_options.advanced_debugging_rx){
-      m_console->warn("Discarding packet due to pcap parsing error!");
+      m_console->warn("Discarding packet due to radiotap parsing error!");
     }
     return;
   }
