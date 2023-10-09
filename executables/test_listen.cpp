@@ -20,7 +20,7 @@ int main(int argc, char *const *argv) {
       default: /* '?' */
       show_usage:
         fprintf(stderr,
-                "test_listen -w [wifi card to listen on] \n",
+                "test_listen -w [wifi card to listen on] %s\n",
                 argv[0]);
         exit(1);
     }
