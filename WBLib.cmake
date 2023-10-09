@@ -30,9 +30,9 @@ target_sources(wifibroadcast PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamTx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBTxRx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/Ieee80211Header.hpp
-        src/radiotap/RadiotapHeaderTx.hpp
-        src/radiotap/RadiotapHeaderTxHolder.hpp
-        src/radiotap/RSSIAccumulator.hpp
+        ${CMAKE_CURRENT_LIST_DIR}src/radiotap/RadiotapHeaderTx.hpp
+        ${CMAKE_CURRENT_LIST_DIR}src/radiotap/RadiotapHeaderTxHolder.hpp
+        ${CMAKE_CURRENT_LIST_DIR}src/radiotap/RSSIAccumulator.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/wifibroadcast_spdlog.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/Encryption.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapRxRfAggregator.cpp
