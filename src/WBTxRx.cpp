@@ -483,10 +483,10 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
     }
     const bool valid=process_received_data_packet(wlan_idx,radio_port.multiplex_index,radio_port.encrypted,nonce,pkt_payload,pkt_payload_size);
     if(valid){
-      if(m_options.rx_radiotap_debug_level==1 || m_options.rx_radiotap_debug_level==3){
+      if(m_options.rx_radiotap_debug_level==1 || m_options.rx_radiotap_debug_level==4){
         m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
       }
-      if(m_options.rx_radiotap_debug_level==2 || m_options.rx_radiotap_debug_level==3){
+      if(m_options.rx_radiotap_debug_level==2 || m_options.rx_radiotap_debug_level==4){
         m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
       }
       m_rx_stats.count_p_valid++;
@@ -498,6 +498,9 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
         m_console->debug("{}",radiotap::rx::all_rf_path_to_string(parsedPacket->rf_paths));
       }
       this_wifi_card_calc.rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
+      if(m_options.rx_radiotap_debug_level==3 || m_options.rx_radiotap_debug_level==4){
+        m_console->debug("{}",RadiotapRxRfAggregator::card_key_rf_indicators_to_string(this_wifi_card_calc.rf_aggregator.get_current()));
+      }
       this_wifi_card_stats.count_p_valid++;
       if(wlan_idx==0){
         m_pollution_openhd_rx_packets++;
