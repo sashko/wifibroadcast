@@ -59,7 +59,7 @@ static int open_wifi_interface_as_raw_socket(const std::string &wifi) {
   //const int wanted_sendbuff_bytes=128*1024*1024;
   //SocketHelper::set_socket_send_rcv_buffsize(sock,wanted_sendbuff_bytes, true);
   // buff size end
-  console->error("{} socket opened",wifi);
+  console->debug("{} socket opened",wifi);
   return sock;
 }
 
