@@ -96,7 +96,9 @@ static std::optional<ParsedRxRadiotapPacket> process_received_radiotap_packet(co
         tmp_copy_IEEE80211_RADIOTAP_FLAGS = *(uint8_t *) (iterator.this_arg);
         break;
       case IEEE80211_RADIOTAP_LOCK_QUALITY:{
-        uint16_t value;
+        uint16_t value=0;
+        // NOTE: Here we only copy 8 bits - the value is reported in radiotap as uint16_t type,
+        // but only in the 0..100 range, so uint8_t would be sufficient (and works)
         std::memcpy(&value,iterator.this_arg,1);
         radiotap_lock_quality.push_back(value);
       } break ;
