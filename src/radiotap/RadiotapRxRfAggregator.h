@@ -8,6 +8,7 @@
 #include "RadiotapHeaderRx.hpp"
 #include "RSSIAccumulator.hpp"
 #include "SignalQualityAccumulator.hpp"
+#include <chrono>
 
 /**
  * Aggregates all key rf metrics.
@@ -40,6 +41,7 @@ class RadiotapRxRfAggregator {
     return m_current_rx_stats;
   }
   static std::string card_key_rf_indicators_to_string(const CardKeyRfIndicators& indicators);
+  void debug_every_one_second();
  private:
   struct KeyRfAggregators{
     RSSIAccumulator rssi_dbm;
@@ -54,6 +56,7 @@ class RadiotapRxRfAggregator {
   KeyRfAggregators m_agg_antenna1;
   KeyRfAggregators m_agg_antenna2;
   CardKeyRfIndicators m_current_rx_stats{};
+  std::chrono::steady_clock::time_point m_last_debug_log=std::chrono::steady_clock::now();
 };
 
 static std::ostream& operator<<(std::ostream& strm, const RadiotapRxRfAggregator::CardKeyRfIndicators& data){

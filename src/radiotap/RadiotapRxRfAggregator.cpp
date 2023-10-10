@@ -64,6 +64,15 @@ std::string RadiotapRxRfAggregator::card_key_rf_indicators_to_string(
                      indicators.antenna2.rssi_dbm,indicators.antenna2.noise_dbm,indicators.antenna2.card_signal_quality_perc);
 }
 
+void RadiotapRxRfAggregator::debug_every_one_second() {
+  const auto now=std::chrono::steady_clock::now();
+  if(now-m_last_debug_log>=std::chrono::seconds(1)){
+    auto current=get_current();
+    wifibroadcast::log::get_default()->debug("{}",RadiotapRxRfAggregator::card_key_rf_indicators_to_string(current));
+    m_last_debug_log=now;
+  }
+}
+
 void RadiotapRxRfAggregator::KeyRfAggregators::reset() {
   rssi_dbm.reset();
   noise_dbm.reset();

@@ -499,7 +499,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
       }
       this_wifi_card_calc.rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
       if(m_options.rx_radiotap_debug_level==3 || m_options.rx_radiotap_debug_level==4){
-        m_console->debug("{}",RadiotapRxRfAggregator::card_key_rf_indicators_to_string(this_wifi_card_calc.rf_aggregator.get_current()));
+        this_wifi_card_calc.rf_aggregator.debug_every_one_second();
       }
       this_wifi_card_stats.count_p_valid++;
       if(wlan_idx==0){
