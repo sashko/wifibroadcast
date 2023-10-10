@@ -8,9 +8,11 @@
 
 #include "SchedulingHelper.hpp"
 #include "pcap_helper.hpp"
+#include "radiotap/RadiotapHeaderRx.hpp"
 #include "raw_socket_helper.hpp"
+#include "radiotap/radiotap_util.hpp"
 
-WBTxRx::WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards1,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header)
+WBTxRx::WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards1,Options options1,std::shared_ptr<RadiotapHeaderTxHolder> session_key_radiotap_header)
     : m_options(options1),
       m_wifi_cards(std::move(wifi_cards1)),
       m_session_key_radiotap_header(std::move(session_key_radiotap_header))
@@ -35,10 +37,7 @@ WBTxRx::WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards1,Options options1
   for(int i=0;i<m_wifi_cards.size();i++){
     auto tmp=std::make_shared<PerCardCalculators>();
     tmp->seq_nr.set_store_and_debug_gaps(i,m_options.debug_packet_gaps);
-    tmp->card_rssi.set_debug_invalid_rssi(m_options.debug_rssi>=1,0);
-    tmp->antenna1_rssi.set_debug_invalid_rssi(m_options.debug_rssi>=1,1);
-    tmp->antenna2_rssi.set_debug_invalid_rssi(m_options.debug_rssi>=1,2);
-    tmp->signal_quality.set_debug_invalid_signal_quality(m_options.debug_rssi>=1);
+    tmp->rf_aggregator.set_debug_invalid_values(m_options.debug_rssi>=1);
     m_per_card_calc.push_back(tmp);
     m_card_is_disconnected[i]=false;
   }
@@ -106,7 +105,7 @@ WBTxRx::~WBTxRx() {
   }
 }
 
-void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, int data_len,const RadiotapHeader& tx_radiotap_header,bool encrypt) {
+void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, int data_len,const RadiotapHeaderTx& tx_radiotap_header,bool encrypt) {
   assert(data_len<=MAX_PACKET_PAYLOAD_SIZE);
   assert(stream_index>= STREAM_INDEX_MIN && stream_index<= STREAM_INDEX_MAX);
   std::lock_guard<std::mutex> guard(m_tx_mutex);
@@ -117,7 +116,7 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   // new wifi packet
   const auto packet_size=
       // Radiotap header comes first
-      RadiotapHeader::SIZE_BYTES+
+      RadiotapHeaderTx::SIZE_BYTES+
       // Then the Ieee80211 header
       Ieee80211HeaderRaw::SIZE_BYTES+
       // actual data
@@ -126,7 +125,8 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
       crypto_aead_chacha20poly1305_ABYTES;
   uint8_t* packet_buff=m_tx_packet_buff.data();
   // radiotap header comes first
-  memcpy(packet_buff, tx_radiotap_header.getData(), RadiotapHeader::SIZE_BYTES);
+  memcpy(packet_buff, tx_radiotap_header.getData(),
+         RadiotapHeaderTx::SIZE_BYTES);
   // Iee80211 header comes next
   // Will most likely be overridden by the driver
   const auto this_packet_ieee80211_seq=m_ieee80211_seq++;
@@ -144,10 +144,10 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   }
   //m_console->debug("Test Nonce:{}/{} {} {} {}",this_packet_nonce,m_tx_ieee80211_hdr_openhd.get_nonce(),m_tx_ieee80211_hdr_openhd.has_valid_air_gnd_id(),m_tx_ieee80211_hdr_openhd.has_valid_radio_port(),
   //                 m_tx_ieee80211_hdr_openhd.is_data_frame());
-  memcpy(packet_buff+RadiotapHeader::SIZE_BYTES,
+  memcpy(packet_buff+ RadiotapHeaderTx::SIZE_BYTES,
          (uint8_t*)&m_tx_ieee80211_hdr_openhd, Ieee80211HeaderRaw::SIZE_BYTES);
   // Then the encrypted / validated data (including encryption / validation suffix)
-  uint8_t* encrypted_data_p=packet_buff+RadiotapHeader::SIZE_BYTES+ Ieee80211HeaderRaw::SIZE_BYTES;
+  uint8_t* encrypted_data_p=packet_buff+ RadiotapHeaderTx::SIZE_BYTES+ Ieee80211HeaderRaw::SIZE_BYTES;
   m_encryptor->set_encryption_enabled(encrypt);
   const auto before_encrypt=std::chrono::steady_clock::now();
   const auto ciphertext_len= m_encryptor->authenticate_and_encrypt(this_packet_nonce, data, data_len, encrypted_data_p);
@@ -343,13 +343,16 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
     m_console->debug("Got packet {} {}",wlan_idx,pkt_len);
   }
   const auto parsedPacket =
-      RadiotapHelper::process_received_radiotap_packet(pkt,pkt_len);
+      radiotap::rx::process_received_radiotap_packet(pkt,pkt_len);
   if (parsedPacket == std::nullopt) {
     if(m_options.advanced_debugging_rx){
-      m_console->warn("Discarding packet due to pcap parsing error!");
+      m_console->warn("Discarding packet due to radiotap parsing error!");
     }
     return;
   }
+  //m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
+  //m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
+  //m_per_card_calc[wlan_idx]->rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
   const uint8_t *pkt_payload = parsedPacket->payload;
   const size_t pkt_payload_size = parsedPacket->payloadSize;
   m_rx_stats.count_p_any++;
@@ -358,7 +361,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
   if(wlan_idx==0){
     m_pollution_total_rx_packets++;
   }
-  if (parsedPacket->frameFailedFCSCheck) {
+  if (parsedPacket->radiotap_f_bad_fcs) {
     if(m_options.advanced_debugging_rx){
       m_console->debug("Discarding packet due to bad FCS!");
     }
@@ -436,15 +439,6 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
       }
       return;
     }
-    // Issue when using multiple wifi card(s) on ground - by example:
-    // When we inject data on card 1, it is intended for the "air unit" - however,
-    // card 2 on the ground likely picks up such a packet and if we were not to ignore it, we'd get the session key
-    // TODO make it better -
-    // for now, ignore session key packets not from card 0
-    // Not needed anymore, due to unique air / ground id's
-    /*if(wlan_idx!=0){
-      return ;
-    }*/
     SessionKeyPacket &sessionKeyPacket = *((SessionKeyPacket*) parsedPacket->payload);
     const auto decrypt_res=m_decryptor->onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
     if(decrypt_res==wb::Decryptor::SESSION_VALID_NEW || decrypt_res==wb::Decryptor::SESSION_VALID_NOT_NEW){
@@ -489,63 +483,25 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
     }
     const bool valid=process_received_data_packet(wlan_idx,radio_port.multiplex_index,radio_port.encrypted,nonce,pkt_payload,pkt_payload_size);
     if(valid){
+      if(m_options.rx_radiotap_debug_level==1 || m_options.rx_radiotap_debug_level==4){
+        m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
+      }
+      if(m_options.rx_radiotap_debug_level==2 || m_options.rx_radiotap_debug_level==4){
+        m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
+      }
       m_rx_stats.count_p_valid++;
       m_rx_stats.count_bytes_valid+=pkt_payload_size;
       // We only use known "good" packets for those stats.
       auto &this_wifi_card_stats = m_rx_stats_per_card.at(wlan_idx);
       PerCardCalculators& this_wifi_card_calc= *m_per_card_calc.at(wlan_idx);
       if(m_options.debug_rssi>=2){
-        m_console->debug("{}",all_rssi_to_string(parsedPacket->allAntennaValues));
+        m_console->debug("{}",radiotap::rx::all_rf_path_to_string(parsedPacket->rf_paths));
       }
-      // assumes driver gives 1st and 2nd antenna as 2nd and 3rd value
-      if(parsedPacket->allAntennaValues.size()>=1){
-        const auto rssi=parsedPacket->allAntennaValues[0].rssi;
-        auto opt_minmaxavg= this_wifi_card_calc.card_rssi.add_and_recalculate_if_needed(rssi);
-        if(opt_minmaxavg.has_value()){
-          // See below for how this value is calculated on rtl8812au
-          if(m_wifi_cards[wlan_idx].type!=wifibroadcast::WIFI_CARD_TYPE_RTL8812AU){
-            this_wifi_card_stats.card_dbm=opt_minmaxavg.value().avg;
-          }
-          if(m_options.debug_rssi>=1){
-            m_console->debug("Card{}:{}",wlan_idx, RSSIAccumulator::min_max_avg_to_string(opt_minmaxavg.value(), false));
-          }
-        }
-      }
-      if(parsedPacket->allAntennaValues.size()>=2){
-        const auto rssi=parsedPacket->allAntennaValues[1].rssi;
-        auto opt_minmaxavg= this_wifi_card_calc.antenna1_rssi.add_and_recalculate_if_needed(rssi);
-        if(opt_minmaxavg.has_value()){
-          this_wifi_card_stats.antenna1_dbm=opt_minmaxavg.value().avg;
-          if(m_options.debug_rssi>=1){
-            m_console->debug("Card{} Antenna{}:{}",wlan_idx,0, RSSIAccumulator::min_max_avg_to_string(opt_minmaxavg.value(), false));
-          }
-        }
-      }
-      if(parsedPacket->allAntennaValues.size()>=3){
-        const auto rssi=parsedPacket->allAntennaValues[2].rssi;
-        auto opt_minmaxavg= this_wifi_card_calc.antenna2_rssi.add_and_recalculate_if_needed(rssi);
-        if(opt_minmaxavg.has_value()){
-          this_wifi_card_stats.antenna2_dbm=opt_minmaxavg.value().avg;
-          if(m_options.debug_rssi>=1){
-            m_console->debug("Card{} Antenna{}:{}",wlan_idx,1, RSSIAccumulator::min_max_avg_to_string(opt_minmaxavg.value(), false));
-          }
-        }
-      }
-      if(m_wifi_cards[wlan_idx].type==wifibroadcast::WIFI_CARD_TYPE_RTL8812AU){
-        // RTL8812AU BUG - general value cannot be used, use max of antennas instead
-        this_wifi_card_stats.card_dbm=std::max(this_wifi_card_stats.antenna1_dbm,this_wifi_card_stats.antenna2_dbm);
+      this_wifi_card_calc.rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
+      if(m_options.rx_radiotap_debug_level==3 || m_options.rx_radiotap_debug_level==4){
+        this_wifi_card_calc.rf_aggregator.debug_every_one_second();
       }
       this_wifi_card_stats.count_p_valid++;
-      if(parsedPacket->mcs_index.has_value()){
-        m_rx_stats.last_received_packet_mcs_index=parsedPacket->mcs_index.value();
-      }
-      if(parsedPacket->channel_width.has_value()){
-        m_rx_stats.last_received_packet_channel_width=parsedPacket->channel_width.value();
-      }
-      if(parsedPacket->signal_quality.has_value()){
-        this_wifi_card_calc.signal_quality.add_signal_quality(parsedPacket->signal_quality.value());
-        this_wifi_card_stats.signal_quality=this_wifi_card_calc.signal_quality.get_current_signal_quality();
-      }
       if(wlan_idx==0){
         m_pollution_openhd_rx_packets++;
       }
@@ -565,28 +521,29 @@ void WBTxRx::switch_tx_card_if_needed() {
     const auto elapsed=std::chrono::steady_clock::now()-m_last_highest_rssi_adjustment_tp;
     if(elapsed>=HIGHEST_RSSI_ADJUSTMENT_INTERVAL){
       m_last_highest_rssi_adjustment_tp=std::chrono::steady_clock::now();
-      int idx_card_highest_rssi=0;
-      int highest_dbm=INT32_MIN;
+      // NEW: Instead of dealing with RSSI issues, we just take whatever card
+      // received the most amount of packets
+      std::vector<int64_t> per_card_packet_delta;
+      per_card_packet_delta.reserve(m_wifi_cards.size());
       for(int i=0;i< m_wifi_cards.size();i++){
         RxStatsPerCard& this_card_stats=m_rx_stats_per_card.at(i);
         // Check if this card is behaving "okay", aka receiving packets at the time
         const auto delta_valid_packets=this_card_stats.count_p_valid-m_active_tx_card_data[i].last_received_n_valid_packets;
         m_active_tx_card_data[i].last_received_n_valid_packets=this_card_stats.count_p_valid;
-        if(delta_valid_packets!=0){
-          // Some valid packets on this card, or reset
-          const auto dbm_average=this_card_stats.card_dbm;
-          if(dbm_average>highest_dbm){
-            idx_card_highest_rssi=i;
-            highest_dbm=static_cast<int>(dbm_average); // NOLINT(cert-str34-c)
-          }
-        }
-        //m_console->debug("Card {} dbm_average:{}",i,dbm_average);
+        per_card_packet_delta.push_back(delta_valid_packets);
       }
-      if(m_curr_tx_card!=idx_card_highest_rssi){
-        // TODO
-        // to avoid switching too often, only switch if the difference in dBm exceeds a threshold value
-        m_console->debug("Switching to card {}",idx_card_highest_rssi);
-        m_curr_tx_card=idx_card_highest_rssi;
+      int64_t best_packet_delta=per_card_packet_delta[m_curr_tx_card];
+      int idx_card_highest_packet_delta=m_curr_tx_card;
+      for(int i=0;i<m_wifi_cards.size();i++){
+        // Switch card if there is a difference of more than X packets
+        if(per_card_packet_delta[i]>best_packet_delta+50){
+          best_packet_delta=per_card_packet_delta[i];
+          idx_card_highest_packet_delta=i;
+        }
+      }
+      if(m_curr_tx_card!=idx_card_highest_packet_delta){
+        m_console->debug("Switching to card {}",idx_card_highest_packet_delta);
+        m_curr_tx_card=idx_card_highest_packet_delta;
       }
     }
   }
@@ -611,7 +568,8 @@ bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t stream_index,bool
         m_packet_decrypt_time.reset();
       }
     }
-    on_valid_packet(nonce,wlan_idx,stream_index,decrypted->data(),decrypted->size());
+    on_valid_data_packet(nonce, wlan_idx, stream_index, decrypted->data(),
+                         decrypted->size());
     // Calculate sequence number stats per card
     auto& seq_nr_for_card=m_per_card_calc.at(wlan_idx)->seq_nr;
     seq_nr_for_card.on_new_sequence_number(nonce);
@@ -638,7 +596,7 @@ bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t stream_index,bool
   return false;
 }
 
-void WBTxRx::on_valid_packet(uint64_t nonce,int wlan_index,const uint8_t stream_index,const uint8_t *data, const int data_len) {
+void WBTxRx::on_valid_data_packet(uint64_t nonce,int wlan_index,const uint8_t stream_index,const uint8_t *data, const int data_len) {
   if(m_output_cb!= nullptr){
     m_output_cb(nonce,wlan_index,stream_index,data,data_len);
   }
@@ -677,7 +635,7 @@ void WBTxRx::announce_session_key_if_needed() {
 }
 
 void WBTxRx::send_session_key() {
-  RadiotapHeader tmp_radiotap_header= m_session_key_radiotap_header->thread_safe_get();
+  RadiotapHeaderTx tmp_radiotap_header= m_session_key_radiotap_header->thread_safe_get();
   Ieee80211HeaderOpenHD tmp_tx_hdr{};
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   tmp_tx_hdr.write_unique_id_src_dst(unique_tx_id);
@@ -709,7 +667,6 @@ WBTxRx::TxStats WBTxRx::get_tx_stats() {
 
 WBTxRx::RxStats WBTxRx::get_rx_stats() {
   WBTxRx::RxStats ret=m_rx_stats;
-  ret.curr_big_gaps_counter=0;
   ret.curr_bits_per_second=m_rx_bitrate_calculator.get_last_or_recalculate(ret.count_bytes_valid);
   ret.curr_packets_per_second=m_rx_packets_per_second_calculator.get_last_or_recalculate(ret.count_p_valid);
   return ret;
@@ -783,26 +740,28 @@ std::string WBTxRx::tx_stats_to_string(const WBTxRx::TxStats& data) {
                      StringHelper::bitrate_readable(data.curr_bits_per_second_including_overhead));
 }
 std::string WBTxRx::rx_stats_to_string(const WBTxRx::RxStats& data) {
-  return fmt::format("RxStats[packets any:{} session:{} valid:{} Loss:{}% pps:{} bps:{} foreign:{}% likely_key_mismatch:{}]",
+  return fmt::format("RxStats[packets any:{} session:{} valid:{} Loss:{}% pps:{} bps:{} foreign:{}%/{}pps likely_key_mismatch:{}]",
                      data.count_p_any,data.n_received_valid_session_key_packets,data.count_p_valid,
                      data.curr_lowest_packet_loss,data.curr_packets_per_second,data.curr_bits_per_second,
-                     data.curr_link_pollution_perc,data.likely_mismatching_encryption_key);
+                     data.curr_link_pollution_perc,data.curr_n_foreign_packets_pps,
+                     data.likely_mismatching_encryption_key);
 }
 std::string WBTxRx::rx_stats_per_card_to_string(
     const WBTxRx::RxStatsPerCard& data) {
-  return fmt::format("Card{}[packets total:{} valid:{}, loss:{}% RSSI:{}/{},{}]",data.card_index,
-                     data.count_p_any,data.count_p_valid,data.curr_packet_loss,
-                     (int)data.card_dbm,data.antenna1_dbm,data.antenna2_dbm);
+  return fmt::format("RxStatsCard{}[packets total:{} valid:{}, loss:{}%]",data.card_index,
+                     data.count_p_any,data.count_p_valid,data.curr_packet_loss);
 }
 std::string WBTxRx::options_to_string(const std::vector<std::string>& wifi_cards,const WBTxRx::Options& options) {
   return fmt::format("Id:{} Cards:{} Key:{} ",options.use_gnd_identifier ? "Ground":"Air",StringHelper::string_vec_as_string(wifi_cards),
                      options.secure_keypair.has_value() ? "Custom" : "Default(openhd)");
 }
 
+RadiotapRxRfAggregator::CardKeyRfIndicators WBTxRx::get_rx_rf_stats_for_card(
+    int card_index) {
+  return m_per_card_calc.at(card_index)->rf_aggregator.get_current();
+}
+
 void WBTxRx::PerCardCalculators::reset_all() {
     seq_nr.reset();
-    card_rssi.reset();
-    antenna1_rssi.reset();
-    antenna2_rssi.reset();
-    signal_quality.reset();
+    rf_aggregator.reset();
 }

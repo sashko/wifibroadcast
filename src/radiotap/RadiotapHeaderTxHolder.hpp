@@ -5,30 +5,32 @@
 #ifndef WIFIBROADCAST_RADIOTAPHEADERHOLDER_H
 #define WIFIBROADCAST_RADIOTAPHEADERHOLDER_H
 
-#include "RadiotapHeader.hpp"
 #include <mutex>
-#include "wifibroadcast_spdlog.h"
+
+#include "../wifibroadcast_spdlog.h"
+#include "RadiotapHeaderTx.hpp"
 
 /**
- * Thread-safe holder for a radiotap header.
- * ( getter / setter)
+ * Thread-safe holder for a (TX) radiotap header.
+ * ( getter / setter) -
+ * We modify the tx radiotap header in openhd at run time.
  * This kind of "atomic behaviour" is enough for openhd wifibroadcast.
  * TODO: Use std::atomic instead of std::mutex
  */
-class RadiotapHeaderHolder{
+class RadiotapHeaderTxHolder {
  public:
-  explicit RadiotapHeaderHolder(){
+  explicit RadiotapHeaderTxHolder(){
     m_console=wifibroadcast::log::get_default();
   }
-  void thread_safe_set(RadiotapHeader::UserSelectableParams params){
-    auto tmp=RadiotapHeader{params};
+  void thread_safe_set(RadiotapHeaderTx::UserSelectableParams params){
+    auto tmp= RadiotapHeaderTx{params};
     thread_safe_set2(tmp);
   }
-  void thread_safe_set2(RadiotapHeader radiotap_header) {
+  void thread_safe_set2(RadiotapHeaderTx radiotap_header) {
     std::lock_guard<std::mutex> guard(m_radiotap_header_mutex);
     m_radiotap_header = radiotap_header;
   }
-  RadiotapHeader thread_safe_get() {
+  RadiotapHeaderTx thread_safe_get() {
     std::lock_guard<std::mutex> guard(m_radiotap_header_mutex);
     return m_radiotap_header;
   }
@@ -66,8 +68,8 @@ class RadiotapHeaderHolder{
   }
  private:
   std::shared_ptr<spdlog::logger> m_console;
-  RadiotapHeader::UserSelectableParams m_radioTapHeaderParams{};
-  RadiotapHeader m_radiotap_header{RadiotapHeader::UserSelectableParams{}};
+  RadiotapHeaderTx::UserSelectableParams m_radioTapHeaderParams{};
+  RadiotapHeaderTx m_radiotap_header{RadiotapHeaderTx::UserSelectableParams{}};
   std::mutex m_radiotap_header_mutex;
 };
 

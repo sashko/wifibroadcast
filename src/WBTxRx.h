@@ -16,14 +16,15 @@
 #include <utility>
 
 #include "Encryption.h"
-#include "Ieee80211Header.hpp"
-#include "RSSIAccumulator.hpp"
-#include "RadiotapHeader.hpp"
-#include "RadiotapHeaderHolder.hpp"
-#include "SignalQualityAccumulator.hpp"
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "HelperSources/UINT64SeqNrHelper.hpp"
+#include "Ieee80211Header.hpp"
 #include "WiFiCard.h"
+#include "radiotap/RSSIAccumulator.hpp"
+#include "radiotap/RadiotapHeaderTx.hpp"
+#include "radiotap/RadiotapHeaderTxHolder.hpp"
+#include "radiotap/RadiotapRxRfAggregator.h"
+#include "radiotap/SignalQualityAccumulator.hpp"
 
 /**
  * This class exists to provide a clean, working interface to create a
@@ -96,13 +97,15 @@ class WBTxRx {
     bool tx_without_pcap=false;
     // a tx error hint is thrown if injecting the packet takes longer than max_sane_injection_time
     std::chrono::milliseconds max_sane_injection_time=std::chrono::milliseconds(5);
+    // debugging of rx radiotap header(s)
+    int rx_radiotap_debug_level=0;
   };
   /**
    * @param wifi_cards card(s) used for tx / rx
    * @param options1 see documentation in options string
    * @param session_key_radiotap_header radiotap header used when injecting session key packets
    */
-  explicit WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards,Options options1,std::shared_ptr<RadiotapHeaderHolder> session_key_radiotap_header);
+  explicit WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards,Options options1,std::shared_ptr<RadiotapHeaderTxHolder> session_key_radiotap_header);
   WBTxRx(const WBTxRx &) = delete;
   WBTxRx &operator=(const WBTxRx &) = delete;
   ~WBTxRx();
@@ -120,7 +123,7 @@ class WBTxRx {
    * @param encrypt: Optionally encrypt the packet, if not encrypted, only a (secure) validation checksum is calculated & checked on rx
    * Encryption results in more CPU load and is therefore not wanted in all cases (e.g. by default, openhd does not encrypt video)
    */
-  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,const RadiotapHeader& tx_radiotap_header,bool encrypt);
+  void tx_inject_packet(uint8_t stream_index,const uint8_t* data,int data_len,const RadiotapHeaderTx& tx_radiotap_header,bool encrypt);
   /**
    * A typical stream RX (aka the receiver for a specific multiplexed stream) needs to react to events during streaming.
    * For lowest latency, we do this via callback(s) that are called directly.
@@ -184,12 +187,6 @@ class WBTxRx {
      int32_t curr_bits_per_second=-1;
      // n received valid session key packets
      int n_received_valid_session_key_packets=0;
-     // mcs index on the most recent valid data packet, if the card supports reporting it
-     int last_received_packet_mcs_index=-1;
-     // channel width (20Mhz or 40Mhz) on the most recent received valid data packet, if the card supports reporting it
-     int last_received_packet_channel_width=-1;
-     // complicated but important metric in our case - how many "big gaps" we had in the last 1 second
-     int16_t curr_big_gaps_counter=-1;
      // Percentage of non openhd packets over total n of packets
      int curr_link_pollution_perc=0;
      // N of non openhd packets in the last second
@@ -205,17 +202,11 @@ class WBTxRx {
      int64_t count_p_any=0;
      int64_t count_p_valid=0;
      int32_t curr_packet_loss=-1;
-     // [0,100] if valid, -1 otherwise
-     int8_t signal_quality=-1;
-     // These values are updated in regular intervals as long as packets are coming in
-     // -128 = invalid, [-127..-1] otherwise
-     int8_t card_dbm=-128; // Depends on driver
-     int8_t antenna1_dbm=-128;
-     int8_t antenna2_dbm=-128;
    };
    TxStats get_tx_stats();
    RxStats get_rx_stats();
    RxStatsPerCard get_rx_stats_for_card(int card_index);
+   RadiotapRxRfAggregator::CardKeyRfIndicators get_rx_rf_stats_for_card(int card_index);
    // used by openhd during frequency scan
    void rx_reset_stats();
    // used by the rate adjustment test executable
@@ -243,7 +234,7 @@ class WBTxRx {
    // the reasoning behind this value: https://github.com/svpcom/wifibroadcast/issues/69
    static constexpr const auto PCAP_MAX_PACKET_SIZE = 1510;
    // This is the max number of bytes usable when injecting
-   static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE = (PCAP_MAX_PACKET_SIZE - RadiotapHeader::SIZE_BYTES -
+   static constexpr const auto RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE = (PCAP_MAX_PACKET_SIZE - RadiotapHeaderTx::SIZE_BYTES -
         IEEE80211_HEADER_SIZE_BYTES);
    static_assert(RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE==1473);
    // and we use some bytes of that for encryption / packet validation
@@ -255,7 +246,7 @@ class WBTxRx {
  private:
   const Options m_options;
   std::shared_ptr<spdlog::logger> m_console;
-  std::shared_ptr<RadiotapHeaderHolder> m_session_key_radiotap_header;
+  std::shared_ptr<RadiotapHeaderTxHolder> m_session_key_radiotap_header;
   const std::vector<wifibroadcast::WifiCard> m_wifi_cards;
   std::chrono::steady_clock::time_point m_session_key_next_announce_ts{};
   Ieee80211HeaderOpenHD m_tx_ieee80211_hdr_openhd{};
@@ -302,10 +293,7 @@ class WBTxRx {
   // for calculating the loss and more per rx card (when multiple rx cards are used)
   struct PerCardCalculators{
     UINT64SeqNrHelper seq_nr{};
-    RSSIAccumulator card_rssi{};
-    RSSIAccumulator antenna1_rssi{};
-    RSSIAccumulator antenna2_rssi{};
-    SignalQualityAccumulator signal_quality{};
+    RadiotapRxRfAggregator rf_aggregator;
     void reset_all();
   };
   std::vector<std::shared_ptr<PerCardCalculators>> m_per_card_calc;
@@ -320,7 +308,7 @@ class WBTxRx {
   // We adjust the TX card in 1 second intervals
   std::chrono::steady_clock::time_point m_last_highest_rssi_adjustment_tp=std::chrono::steady_clock::now();
   static constexpr auto HIGHEST_RSSI_ADJUSTMENT_INTERVAL=std::chrono::seconds(1);
-  bool m_disable_all_transmissions= false;
+  std::atomic_bool m_disable_all_transmissions= false;
   std::vector<bool> m_card_is_disconnected;
   BitrateCalculator m_tx_bitrate_calculator_excluding_overhead{};
   BitrateCalculator m_tx_bitrate_calculator_including_overhead{};
@@ -351,7 +339,9 @@ class WBTxRx {
   // returns true if packet could be decrypted successfully
   bool process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,uint64_t nonce,const uint8_t *pkt_payload,int pkt_payload_size);
   // called avery time we have successfully decrypted a packet
-  void on_valid_packet(uint64_t nonce,int wlan_index,uint8_t stream_index,const uint8_t *data,int data_len);
+  void on_valid_data_packet(uint64_t nonce,int wlan_index,
+                            uint8_t stream_index,const uint8_t *data,
+                            int data_len);
   static std::string options_to_string(const std::vector<std::string>& wifi_cards,const Options& options);
   // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
   // (Of all cards currently receiving data, find the one with the highest reported dBm)
