@@ -65,7 +65,8 @@ bool WBStreamTx::try_enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet
   return res;
 }
 
-bool WBStreamTx::try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,int max_block_size, int fec_overhead_perc) {
+bool WBStreamTx::try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,int max_block_size, int fec_overhead_perc,
+                                   std::chrono::steady_clock::time_point creation_time) {
   assert(options.enable_fec);
   m_n_input_packets+=fragments.size();
   for(const auto& fragment:fragments){
@@ -79,6 +80,7 @@ bool WBStreamTx::try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8
   item->fragments=fragments;
   item->max_block_size=max_block_size;
   item->fec_overhead_perc=fec_overhead_perc;
+  item->creation_time=creation_time;
   const bool res= m_block_queue->try_enqueue(item);
   if(!res){
     m_n_dropped_packets+=fragments.size();
@@ -136,7 +138,7 @@ void WBStreamTx::loop_process_data() {
           m_queue_time_calculator.reset();
         }
         process_enqueued_block(*frame);
-        const auto delta=std::chrono::steady_clock::now()-frame->enqueue_time_point;
+        const auto delta=std::chrono::steady_clock::now()-frame->creation_time;
         m_block_until_tx_time.add(delta);
         if(m_block_until_tx_time.get_delta_since_last_reset()>std::chrono::seconds(2)){
           if(options.log_time_blocks_until_tx){
