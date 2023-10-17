@@ -70,7 +70,8 @@ class WBStreamTx {
    * If the n of fragments exceeds @param max_block_size, the block is split into one or more sub-blocks.
    * @return true on success (space in the block queue), false otherwise
    */
-  bool try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,int max_block_size,int fec_overhead_perc);
+  bool try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,int max_block_size,int fec_overhead_perc,
+                         std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
   // statistics
   struct Statistics{
     int64_t n_provided_packets;
@@ -125,6 +126,7 @@ class WBStreamTx {
   };
   struct EnqueuedBlock {
     std::chrono::steady_clock::time_point enqueue_time_point=std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now();
     int max_block_size;
     int fec_overhead_perc;
     std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
