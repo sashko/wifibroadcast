@@ -9,8 +9,8 @@
 #include <vector>
 #include <iostream>
 
-#include "HelperSources/Helper.hpp"
-#include "external/fec/fec_base.h"
+#include "../HelperSources/Helper.hpp"
+#include "../external/fec/fec_base.h"
 
 // c++ wrapper around fec library
 // NOTE: When working with FEC, people seem to use the terms block, fragments and more in different context(s).
