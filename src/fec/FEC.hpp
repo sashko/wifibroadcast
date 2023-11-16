@@ -9,6 +9,7 @@
 #include <vector>
 #include <iostream>
 
+#include "FECConstants.hpp"
 #include "../HelperSources/Helper.hpp"
 #include "../external/fec/fec_base.h"
 
@@ -52,9 +53,6 @@ void fecEncode(unsigned int fragmentSize,
   //const auto delta=std::chrono::steady_clock::now()-before;
   //std::cout<<"fec_encode step took:"<<std::chrono::duration_cast<std::chrono::microseconds>(delta).count()<<"us\n";
 }
-
-static constexpr auto FRAGMENT_STATUS_UNAVAILABLE=false;
-static constexpr auto FRAGMENT_STATUS_AVAILABLE=true;
 
 /**
  * @param fragmentSize size of each fragment
