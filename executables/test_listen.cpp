@@ -3,7 +3,7 @@
 // Uses WBTxRx to listen to all (openhd and non openhd) traffic
 //
 #include "../src/WBTxRx.h"
-#include "../src/wifibroadcast_spdlog.h"
+#include "../src/wifibroadcast_spdlog.hpp"
 
 int main(int argc, char *const *argv) {
   std::string card="wlxac9e17596103";

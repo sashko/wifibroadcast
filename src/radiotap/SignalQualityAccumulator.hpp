@@ -7,7 +7,7 @@
 
 #include <optional>
 
-#include "../wifibroadcast_spdlog.h"
+#include "../wifibroadcast_spdlog.hpp"
 #include "TimeHelper.hpp"
 
 /**

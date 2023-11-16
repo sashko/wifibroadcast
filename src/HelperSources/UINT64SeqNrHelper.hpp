@@ -9,7 +9,7 @@
 #include <cmath>
 #include <memory>
 
-#include "../wifibroadcast_spdlog.h"
+#include "../wifibroadcast_spdlog.hpp"
 #include <spdlog/spdlog.h>
 #include "StringHelper.hpp"
 

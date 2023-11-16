@@ -14,7 +14,8 @@
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "SimpleStream.hpp"
 #include "WBTxRx.h"
-#include "wifibroadcast_spdlog.h"
+#include "wifibroadcast_spdlog.hpp"
+#include "fec/FECDecoder.hpp"
 
 /**
  * Receiver for a (multiplexed) wifbroadcast stream

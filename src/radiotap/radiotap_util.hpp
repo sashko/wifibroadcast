@@ -6,7 +6,7 @@
 #ifndef WIFIBROADCAST_RADIOTAP_UTIL_HPP
 #define WIFIBROADCAST_RADIOTAP_UTIL_HPP
 
-#include "../wifibroadcast_spdlog.h"
+#include "../wifibroadcast_spdlog.hpp"
 #include "RadiotapHeaderTx.hpp"
 namespace radiotap::util{
 

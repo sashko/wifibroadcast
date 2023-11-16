@@ -20,7 +20,7 @@ extern "C" {
 #include <string>
 #include <vector>
 
-#include "../wifibroadcast_spdlog.h"
+#include "../wifibroadcast_spdlog.hpp"
 
 // everything must be in little endian byte order http://www.radiotap.org/
 static_assert(__BYTE_ORDER == __LITTLE_ENDIAN, "This code is written for little endian only !");

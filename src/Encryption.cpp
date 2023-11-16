@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include <spdlog/spdlog.h>
-#include "wifibroadcast_spdlog.h"
+#include "wifibroadcast_spdlog.hpp"
 
 wb::KeyPairTxRx wb::generate_keypair_random() {
   KeyPairTxRx ret{};

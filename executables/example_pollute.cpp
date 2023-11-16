@@ -5,7 +5,7 @@
 #include "../src/WBStreamRx.h"
 #include "../src/WBStreamTx.h"
 #include "../src/WBTxRx.h"
-#include "../src/wifibroadcast_spdlog.h"
+#include "../src/wifibroadcast_spdlog.hpp"
 #include "RandomBufferPot.hpp"
 
 /**

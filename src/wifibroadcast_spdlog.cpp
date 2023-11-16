@@ -2,11 +2,11 @@
 // Created by consti10 on 13.08.23.
 //
 
-#include "wifibroadcast_spdlog.h"
+#include "wifibroadcast_spdlog.hpp"
 
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <cassert>
 #include <mutex>
 
 std::shared_ptr<spdlog::logger> wifibroadcast::log::create_or_get(

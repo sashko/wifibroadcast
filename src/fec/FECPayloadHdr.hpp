@@ -1,6 +1,8 @@
 #ifndef FEC_PAYLOAD_HDR_HPP
 #define FEC_PAYLOAD_HDR_HPP
 
+#include <cstdint>
+#include "endian.h"
 /**
  * Encoder and Decoder pair for FEC protected block / packet based data
  * streaming. adds sizeof(FECPayloadHdr) to each fec primary or secondary
