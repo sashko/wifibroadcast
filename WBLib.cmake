@@ -25,10 +25,12 @@ target_sources(wifibroadcast PRIVATE
         # radiotap and fec
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec_base.cpp
+
+        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FEC.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECDecoder.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECEncoder.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECStream.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/fec/RxBlock.cpp
+
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamRx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamTx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBTxRx.cpp

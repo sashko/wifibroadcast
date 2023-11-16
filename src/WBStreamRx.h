@@ -7,7 +7,7 @@
 
 #include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
 #include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
-#include "fec/FECStream.h"
+#include "fec/FEC.hpp"
 #include "HelperSources/Helper.hpp"
 #include "HelperSources/SequenceNumberDebugger.hpp"
 #include "HelperSources/TimeHelper.hpp"

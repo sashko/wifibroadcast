@@ -11,7 +11,7 @@
 
 #include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
 #include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
-#include "fec/FECStream.h"
+#include "fec/FEC.hpp"
 #include "SimpleStream.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "WBTxRx.h"
