@@ -15,6 +15,7 @@
 #include "SimpleStream.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "WBTxRx.h"
+#include "fec/FECEncoder.hpp"
 
 /**
  * Transmitter for a (multiplexed) wifbroadcast stream

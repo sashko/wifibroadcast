@@ -32,6 +32,7 @@
 #include "../src/Ieee80211Header.hpp"
 #include "../src/wifibroadcast_spdlog.hpp"
 #include "../src/fec/FECDecoder.hpp"
+#include "../src/fec/FECEncoder.hpp"
 
 // Simple unit testing for the FEC lib that doesn't require wifi cards
 

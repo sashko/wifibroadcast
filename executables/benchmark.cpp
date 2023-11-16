@@ -35,6 +35,8 @@
 #include "../src/HelperSources/RandomBufferPot.hpp"
 #include "../src/HelperSources/SchedulingHelper.hpp"
 #include "../src/external/fec/fec_base.h"
+#include "../src/fec/FECEncoder.hpp"
+#include "../src/fec/FECConstants.hpp"
 
 // Test the FEC encoding / decoding and Encryption / Decryption performance
 // (throughput) of this system
