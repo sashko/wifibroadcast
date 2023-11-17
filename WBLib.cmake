@@ -39,7 +39,7 @@ target_sources(wifibroadcast PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapHeaderTxHolder.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RSSIAccumulator.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/wifibroadcast_spdlog.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/Encryption.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encription/Encryption.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapRxRfAggregator.cpp
         )
 

@@ -22,7 +22,7 @@
 #include <iostream>
 #include <optional>
 
-#include "../src/Encryption.h"
+#include "../src/encription/Encryption.hpp"
 
 /**
  * Generates a new tx rx keypair and saves it to file for later use.

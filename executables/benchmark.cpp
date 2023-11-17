@@ -30,7 +30,7 @@
 #include <sstream>
 #include <string>
 
-#include "../src/Encryption.h"
+#include "../src/encription/Encryption.hpp"
 #include "../src/fec/FEC.hpp"
 #include "../src/HelperSources/RandomBufferPot.hpp"
 #include "../src/HelperSources/SchedulingHelper.hpp"
