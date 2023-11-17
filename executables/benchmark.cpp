@@ -37,6 +37,8 @@
 #include "../src/external/fec/fec_base.h"
 #include "../src/fec/FECEncoder.hpp"
 #include "../src/fec/FECConstants.hpp"
+#include "../src/encription/Encryptor.hpp"
+#include "../src/encription/Decryptor.hpp"
 
 // Test the FEC encoding / decoding and Encryption / Decryption performance
 // (throughput) of this system

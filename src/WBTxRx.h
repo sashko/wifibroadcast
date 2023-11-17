@@ -20,11 +20,13 @@
 #include "HelperSources/UINT64SeqNrHelper.hpp"
 #include "Ieee80211Header.hpp"
 #include "WiFiCard.h"
+#include "encription/Decryptor.hpp"
 #include "radiotap/RSSIAccumulator.hpp"
 #include "radiotap/RadiotapHeaderTx.hpp"
 #include "radiotap/RadiotapHeaderTxHolder.hpp"
 #include "radiotap/RadiotapRxRfAggregator.h"
 #include "radiotap/SignalQualityAccumulator.hpp"
+#include "encription/Encryptor.hpp"
 
 /**
  * This class exists to provide a clean, working interface to create a

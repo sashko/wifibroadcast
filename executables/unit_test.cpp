@@ -32,6 +32,8 @@
 #include "../src/wifibroadcast_spdlog.hpp"
 #include "../src/fec/FECDecoder.hpp"
 #include "../src/fec/FECEncoder.hpp"
+#include "../src/encription/Encryptor.hpp"
+#include "../src/encription/Decryptor.hpp"
 
 // Simple unit testing for the FEC lib that doesn't require wifi cards
 
