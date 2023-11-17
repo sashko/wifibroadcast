@@ -23,6 +23,7 @@
 #include <optional>
 
 #include "../src/encription/Encryption.hpp"
+#include "../src/encription/EncryptionFsUtils.hpp"
 #include "../src/encription/KeyPairTxRx.hpp"
 
 /**

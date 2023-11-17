@@ -27,6 +27,7 @@
 #include "../src/fec/FEC.hpp"
 
 #include "../src/encription/Encryption.hpp"
+#include "../src/encription/EncryptionFsUtils.hpp"
 #include "../src/HelperSources/Helper.hpp"
 #include "../src/Ieee80211Header.hpp"
 #include "../src/wifibroadcast_spdlog.hpp"

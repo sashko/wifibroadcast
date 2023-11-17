@@ -46,17 +46,6 @@ static constexpr auto DEFAULT_BIND_PHRASE="openhd";
 KeyPairTxRx generate_keypair_from_bind_phrase(const std::string& bind_phrase=DEFAULT_BIND_PHRASE);
 
 /**
- * Saves the KeyPairTxRx as a raw file
- */
-int write_keypair_to_file(const KeyPairTxRx& keypair_txrx,const std::string& filename);
-
-/**
- * Reads a raw KeyPairTxRx from a raw file previusly generated.
- */
-KeyPairTxRx read_keypair_from_file(const std::string& filename);
-
-
-/**
  * https://libsodium.gitbook.io/doc/key_derivation
  * UINT16SeqNrHelper since we both support encryption and one time validation to save cpu performance
  */

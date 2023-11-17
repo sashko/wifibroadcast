@@ -50,37 +50,6 @@ wb::KeyPairTxRx wb::generate_keypair_from_bind_phrase(
   return ret;
 }
 
-int wb::write_keypair_to_file(const wb::KeyPairTxRx& keypair_txrx,
-                              const std::string& filename) {
-  FILE *fp;
-  if ((fp = fopen(filename.c_str(), "w")) == nullptr) {
-    std::cerr<<"Unable to save "<<filename<<std::endl;
-    assert(false);
-    return 1;
-  }
-  assert(fwrite(keypair_txrx.key_1.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_1.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_2.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_2.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  fclose(fp);
-  return 0;
-}
-
-wb::KeyPairTxRx wb::read_keypair_from_file(const std::string& filename) {
-  KeyPairTxRx ret{};
-  FILE *fp;
-  if ((fp = fopen(filename.c_str(), "r")) == nullptr) {
-    std::cerr<<fmt::format("Unable to open {}: {}", filename.c_str(), strerror(errno))<<std::endl;
-    assert(false);
-  }
-  assert(fread(ret.key_1.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_1.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_2.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_2.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  fclose(fp);
-  return ret;
-}
-
 std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> wb::create_onetimeauth_subkey(
     const uint64_t& nonce, const std::array<uint8_t, 32U>& session_key) {
   // sub-key for this packet

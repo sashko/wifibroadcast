@@ -1,7 +1,12 @@
 #ifndef KEY_HPP
 #define KEY_HPP
+#include <sodium/crypto_box.h>
+
+#include <cstdint>
+#include <array>
 
 namespace wb {
+
 
 // A wb key consists of a public and secret key
 struct Key {

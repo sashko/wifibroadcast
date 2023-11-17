@@ -30,6 +30,7 @@ target_sources(wifibroadcast PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/encription/KeyPairTxRx.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/encription/Encryptor.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/encription/Encryption.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encription/EncryptionFsUtils.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/encription/Decryptor.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/src/fec/FEC.cpp
