@@ -22,9 +22,9 @@
 #include <iostream>
 #include <optional>
 
-#include "../src/encription/Encryption.hpp"
-#include "../src/encription/EncryptionFsUtils.hpp"
-#include "../src/encription/KeyPairTxRx.hpp"
+#include "../src/encryption/Encryption.hpp"
+#include "../src/encryption/EncryptionFsUtils.hpp"
+#include "../src/encryption/KeyPairTxRx.hpp"
 
 /**
  * Generates a new tx rx keypair and saves it to file for later use.

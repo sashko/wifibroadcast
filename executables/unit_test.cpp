@@ -26,15 +26,15 @@
 
 #include "../src/fec/FEC.hpp"
 
-#include "../src/encription/Encryption.hpp"
-#include "../src/encription/EncryptionFsUtils.hpp"
+#include "../src/encryption/Encryption.hpp"
+#include "../src/encryption/EncryptionFsUtils.hpp"
 #include "../src/HelperSources/Helper.hpp"
 #include "../src/Ieee80211Header.hpp"
 #include "../src/wifibroadcast_spdlog.hpp"
 #include "../src/fec/FECDecoder.hpp"
 #include "../src/fec/FECEncoder.hpp"
-#include "../src/encription/Encryptor.hpp"
-#include "../src/encription/Decryptor.hpp"
+#include "../src/encryption/Encryptor.hpp"
+#include "../src/encryption/Decryptor.hpp"
 
 // Simple unit testing for the FEC lib that doesn't require wifi cards
 

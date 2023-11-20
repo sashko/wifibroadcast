@@ -26,12 +26,12 @@ target_sources(wifibroadcast PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec_base.cpp
 
-        ${CMAKE_CURRENT_LIST_DIR}/src/encription/Key.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encription/KeyPairTxRx.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encription/Encryptor.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encription/Encryption.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encription/EncryptionFsUtils.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encription/Decryptor.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Key.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/KeyPairTxRx.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryptor.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryption.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/EncryptionFsUtils.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Decryptor.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/src/fec/FEC.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECConstants.hpp
