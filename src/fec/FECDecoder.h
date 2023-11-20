@@ -8,7 +8,7 @@
 #include <deque>
 #include <memory>
 
-#include "RxBlock.hpp"
+#include "RxBlock.h"
 #include "TimeHelper.hpp"
 
 // Takes a continuous stream of packets (data and fec correction packets) and

@@ -1,5 +1,5 @@
-#include "FECDecoder.hpp"
-#include "../wifibroadcast_spdlog.hpp"
+#include "FECDecoder.h"
+#include "../wifibroadcast_spdlog.h"
 
 bool FECDecoder::validate_packet_size(const int data_len) {
   if (data_len < sizeof(FECPayloadHdr)) {

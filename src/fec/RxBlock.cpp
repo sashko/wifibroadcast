@@ -1,5 +1,5 @@
-#include "RxBlock.hpp"
-#include "FEC.hpp"
+#include "RxBlock.h"
+#include "FEC.h"
 
 RxBlock::RxBlock(const unsigned int maxNFragmentsPerBlock,
                  const uint64_t blockIdx1)

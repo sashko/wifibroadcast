@@ -30,15 +30,15 @@
 #include <sstream>
 #include <string>
 
-#include "../src/encryption/Encryption.hpp"
-#include "../src/fec/FEC.hpp"
+#include "../src/encryption/Encryption.h"
+#include "../src/fec/FEC.h"
 #include "../src/HelperSources/RandomBufferPot.hpp"
 #include "../src/HelperSources/SchedulingHelper.hpp"
 #include "../src/external/fec/fec_base.h"
-#include "../src/fec/FECEncoder.hpp"
+#include "../src/fec/FECEncoder.h"
 #include "../src/fec/FECConstants.hpp"
-#include "../src/encryption/Encryptor.hpp"
-#include "../src/encryption/Decryptor.hpp"
+#include "../src/encryption/Encryptor.h"
+#include "../src/encryption/Decryptor.h"
 
 // Test the FEC encoding / decoding and Encryption / Decryption performance
 // (throughput) of this system

@@ -15,18 +15,18 @@
 #include <thread>
 #include <utility>
 
-#include "encryption/Encryption.hpp"
+#include "encryption/Encryption.h"
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "HelperSources/UINT64SeqNrHelper.hpp"
 #include "Ieee80211Header.hpp"
 #include "WiFiCard.h"
-#include "encryption/Decryptor.hpp"
+#include "encryption/Decryptor.h"
 #include "radiotap/RSSIAccumulator.hpp"
 #include "radiotap/RadiotapHeaderTx.hpp"
 #include "radiotap/RadiotapHeaderTxHolder.hpp"
 #include "radiotap/RadiotapRxRfAggregator.h"
 #include "radiotap/SignalQualityAccumulator.hpp"
-#include "encryption/Encryptor.hpp"
+#include "encryption/Encryptor.h"
 
 /**
  * This class exists to provide a clean, working interface to create a

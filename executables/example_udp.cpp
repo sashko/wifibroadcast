@@ -9,7 +9,7 @@
 #include "../src/WBTxRx.h"
 #include "../src/legacy/WBStreamRxUDP.h"
 #include "../src/legacy/WBStreamTxUDP.h"
-#include "../src/wifibroadcast_spdlog.hpp"
+#include "../src/wifibroadcast_spdlog.h"
 #include "RandomBufferPot.hpp"
 
 /**

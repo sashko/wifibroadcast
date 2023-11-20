@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "HelperSources/StringHelper.hpp"
-#include "wifibroadcast_spdlog.hpp"
+#include "wifibroadcast_spdlog.h"
 #include <spdlog/spdlog.h>
 
 // UINT16SeqNrHelper for dealing with the IEEE80211 header in wifibroadcast / openhd

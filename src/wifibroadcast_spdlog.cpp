@@ -2,7 +2,7 @@
 // Created by consti10 on 13.08.23.
 //
 
-#include "wifibroadcast_spdlog.hpp"
+#include "wifibroadcast_spdlog.h"
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 

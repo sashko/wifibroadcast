@@ -5,7 +5,7 @@
 #include "../src/WBStreamRx.h"
 #include "../src/WBStreamTx.h"
 #include "../src/WBTxRx.h"
-#include "../src/wifibroadcast_spdlog.hpp"
+#include "../src/wifibroadcast_spdlog.h"
 
 /**
  * Simple demo application that sends out hello messages and listens for hello messages.

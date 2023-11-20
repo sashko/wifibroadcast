@@ -4,9 +4,9 @@
 
 #include <cmath>
 
-#include "FEC.hpp"
-#include "RxBlock.hpp"
-#include "../wifibroadcast_spdlog.hpp"
+#include "FEC.h"
+#include "RxBlock.h"
+#include "../wifibroadcast_spdlog.h"
 #include <spdlog/spdlog.h>
 
 uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,

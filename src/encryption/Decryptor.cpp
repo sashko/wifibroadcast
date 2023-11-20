@@ -1,12 +1,12 @@
-#include "Decryptor.hpp"
+#include "Decryptor.h"
 
 #include <sodium/crypto_onetimeauth.h>
 
 #include <cassert>
 #include <cstring>
 
-#include "Encryption.hpp"
-#include "../wifibroadcast_spdlog.hpp"
+#include "Encryption.h"
+#include "../wifibroadcast_spdlog.h"
 
 wb::Decryptor::Decryptor(wb::Key key1)
     : rx_secretkey(key1.secret_key), tx_publickey(key1.public_key) {

@@ -2,7 +2,7 @@
 // Created by consti10 on 13.08.23.
 //
 
-#include "EncryptionFsUtils.hpp"
+#include "EncryptionFsUtils.h"
 
 #include <sodium/crypto_box.h>
 
@@ -11,7 +11,7 @@
 #include <iostream>
 
 #include <spdlog/spdlog.h>
-#include "../wifibroadcast_spdlog.hpp"
+#include "../wifibroadcast_spdlog.h"
 
 int wb::write_keypair_to_file(const wb::KeyPairTxRx& keypair_txrx,
                               const std::string& filename) {

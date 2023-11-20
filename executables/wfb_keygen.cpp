@@ -22,8 +22,8 @@
 #include <iostream>
 #include <optional>
 
-#include "../src/encryption/Encryption.hpp"
-#include "../src/encryption/EncryptionFsUtils.hpp"
+#include "../src/encryption/Encryption.h"
+#include "../src/encryption/EncryptionFsUtils.h"
 #include "../src/encryption/KeyPairTxRx.hpp"
 
 /**

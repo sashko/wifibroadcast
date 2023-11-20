@@ -1,4 +1,4 @@
-#include "FECEncoder.hpp"
+#include "FECEncoder.h"
 
 #include <cassert>
 #include <chrono>

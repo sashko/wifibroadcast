@@ -11,7 +11,7 @@
 #include <sys/ioctl.h>
 #include "HelperSources/SocketHelper.hpp"
 
-#include "wifibroadcast_spdlog.hpp"
+#include "wifibroadcast_spdlog.h"
 
 // taken from
 // https://github.com/OpenHD/Open.HD/blob/2.0/wifibroadcast-base/tx_rawsock.c#L86

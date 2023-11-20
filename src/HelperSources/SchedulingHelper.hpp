@@ -12,7 +12,7 @@
 #include <iostream>
 #include <string>
 
-#include "../wifibroadcast_spdlog.hpp"
+#include "../wifibroadcast_spdlog.h"
 #include <spdlog/spdlog.h>
 
 namespace SchedulingHelper {

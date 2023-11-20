@@ -2,14 +2,14 @@
 // Created by consti10 on 13.08.23.
 //
 
-#include "Encryption.hpp"
+#include "Encryption.h"
 
 #include <cassert>
 #include <cstring>
 #include <iostream>
 
 #include <spdlog/spdlog.h>
-#include "../wifibroadcast_spdlog.hpp"
+#include "../wifibroadcast_spdlog.h"
 
 wb::KeyPairTxRx wb::generate_keypair_random() {
   KeyPairTxRx ret{};

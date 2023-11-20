@@ -1,4 +1,4 @@
-#include "Encryptor.hpp"
+#include "Encryptor.h"
 
 #include <sodium/randombytes.h>
 
@@ -6,7 +6,7 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "Encryption.hpp"
+#include "Encryption.h"
 
 void wb::Encryptor::makeNewSessionKey(
     std::array<uint8_t, 24U>& sessionKeyNonce,
