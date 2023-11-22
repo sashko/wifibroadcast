@@ -24,17 +24,86 @@
 #include <sstream>
 #include <string>
 
-#include "../src/FECStream.h"
-#include "../src/FEC.hpp"
+#include "../src/fec/FEC.h"
 
-#include "../src/Encryption.h"
+#include "../src/encryption/Encryption.h"
+#include "../src/encryption/EncryptionFsUtils.h"
 #include "../src/HelperSources/Helper.hpp"
 #include "../src/Ieee80211Header.hpp"
 #include "../src/wifibroadcast_spdlog.h"
+#include "../src/fec/FECDecoder.h"
+#include "../src/fec/FECEncoder.h"
+#include "../src/encryption/Encryptor.h"
+#include "../src/encryption/Decryptor.h"
 
 // Simple unit testing for the FEC lib that doesn't require wifi cards
 
 namespace TestFEC {
+
+// randomly select a possible combination of received indices (either primary or
+// secondary).
+static void testFecCPlusPlusWrapperY(const int nPrimaryFragments,
+                                     const int nSecondaryFragments) {
+  srand(time(NULL));
+  constexpr auto FRAGMENT_SIZE = 1446;
+
+  auto txBlockBuffer = GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(
+      nPrimaryFragments + nSecondaryFragments);
+  std::cout << "XSelected nPrimaryFragments:" << nPrimaryFragments
+            << " nSecondaryFragments:" << nSecondaryFragments << "\n";
+
+  fecEncode(FRAGMENT_SIZE, txBlockBuffer, nPrimaryFragments,
+            nSecondaryFragments);
+  std::cout << "Encode done\n";
+
+  for (int test = 0; test < 100; test++) {
+    // takes nPrimaryFragments random (possible) indices without duplicates
+    // NOTE: Perhaps you could calculate all possible permutations, but these
+    // would be quite a lot. Therefore, I just use n random selections of
+    // received indices
+    auto receivedFragmentIndices = GenericHelper::takeNRandomElements(
+        GenericHelper::createIndices(nPrimaryFragments + nSecondaryFragments),
+        nPrimaryFragments);
+    assert(receivedFragmentIndices.size() == nPrimaryFragments);
+    std::cout << "(Emulated) receivedFragmentIndices"
+              << StringHelper::vectorAsString(receivedFragmentIndices) << "\n";
+
+    auto rxBlockBuffer = std::vector<std::array<uint8_t, FRAGMENT_SIZE>>(
+        nPrimaryFragments + nSecondaryFragments);
+    std::vector<bool> fragmentMap(nPrimaryFragments + nSecondaryFragments,
+                                  FRAGMENT_STATUS_UNAVAILABLE);
+    for (const auto idx : receivedFragmentIndices) {
+      rxBlockBuffer[idx] = txBlockBuffer[idx];
+      fragmentMap[idx] = FRAGMENT_STATUS_AVAILABLE;
+    }
+
+    fecDecode(FRAGMENT_SIZE, rxBlockBuffer, nPrimaryFragments, fragmentMap);
+
+    for (unsigned int i = 0; i < nPrimaryFragments; i++) {
+      // std::cout<<"Comparing fragment:"<<i<<"\n";
+      GenericHelper::assertArraysEqual(txBlockBuffer[i], rxBlockBuffer[i]);
+    }
+  }
+}
+
+// Note: This test will take quite a long time ! (or rather ages :) when trying
+// to do all possible combinations. )
+static void testFecCPlusPlusWrapperX() {
+  std::cout << "testFecCPlusPlusWrapper Begin\n";
+  // constexpr auto MAX_N_P_F=128;
+  // constexpr auto MAX_N_S_F=128;
+  //  else it really takes ages
+  constexpr auto MAX_N_P_F = 32;
+  constexpr auto MAX_N_S_F = 32;
+  for (int nPrimaryFragments = 1; nPrimaryFragments < MAX_N_P_F;
+       nPrimaryFragments++) {
+    for (int nSecondaryFragments = 0; nSecondaryFragments < MAX_N_S_F;
+         nSecondaryFragments++) {
+      testFecCPlusPlusWrapperY(nPrimaryFragments, nSecondaryFragments);
+    }
+  }
+  std::cout << "testFecCPlusPlusWrapper End\n";
+}
 
 // Chooses randomly
 // 1) block size (n fragments in block)
@@ -204,7 +273,7 @@ int main(int argc, char *argv[]) {
           // First test FEC itself
 	  test_gf();
 	  test_fec();
-	  testFecCPlusPlusWrapperX();
+          TestFEC::testFecCPlusPlusWrapperX();
           // and then the FEC streaming implementation
           TestFEC::test_fec_stream_random_bs_fs_overhead_dropped();
 	}

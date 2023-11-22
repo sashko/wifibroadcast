@@ -25,7 +25,20 @@ target_sources(wifibroadcast PRIVATE
         # radiotap and fec
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec_base.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/FECStream.cpp
+
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Key.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/KeyPairTxRx.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryptor.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryption.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/EncryptionFsUtils.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Decryptor.cpp
+
+        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FEC.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECConstants.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECDecoder.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECEncoder.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/fec/RxBlock.cpp
+
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamRx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamTx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBTxRx.cpp
@@ -34,7 +47,6 @@ target_sources(wifibroadcast PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapHeaderTxHolder.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RSSIAccumulator.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/wifibroadcast_spdlog.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/Encryption.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapRxRfAggregator.cpp
         )
 

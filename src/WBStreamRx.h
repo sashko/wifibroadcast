@@ -7,7 +7,7 @@
 
 #include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
 #include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
-#include "FECStream.h"
+#include "fec/FEC.h"
 #include "HelperSources/Helper.hpp"
 #include "HelperSources/SequenceNumberDebugger.hpp"
 #include "HelperSources/TimeHelper.hpp"
@@ -15,6 +15,7 @@
 #include "SimpleStream.hpp"
 #include "WBTxRx.h"
 #include "wifibroadcast_spdlog.h"
+#include "fec/FECDecoder.h"
 
 /**
  * Receiver for a (multiplexed) wifbroadcast stream

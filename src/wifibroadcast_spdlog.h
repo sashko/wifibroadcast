@@ -7,9 +7,7 @@
 
 //#include "wifibroadcast-spdlog-fake.h"
 
-//#include <spdlog/sinks/stdout_color_sinks.h>
-//#include <spdlog/spdlog.h>
-#include <spdlog/fwd.h>
+#include <spdlog/spdlog.h>
 #include <memory>
 
 namespace wifibroadcast::log{

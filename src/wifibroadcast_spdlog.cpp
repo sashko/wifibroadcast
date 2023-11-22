@@ -4,9 +4,9 @@
 
 #include "wifibroadcast_spdlog.h"
 
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <cassert>
 #include <mutex>
 
 std::shared_ptr<spdlog::logger> wifibroadcast::log::create_or_get(

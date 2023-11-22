@@ -9,8 +9,9 @@
 #include <vector>
 #include <iostream>
 
-#include "HelperSources/Helper.hpp"
-#include "external/fec/fec_base.h"
+#include "FECConstants.hpp"
+#include "../HelperSources/Helper.hpp"
+#include "../external/fec/fec_base.h"
 
 // c++ wrapper around fec library
 // NOTE: When working with FEC, people seem to use the terms block, fragments and more in different context(s).
@@ -52,9 +53,6 @@ void fecEncode(unsigned int fragmentSize,
   //const auto delta=std::chrono::steady_clock::now()-before;
   //std::cout<<"fec_encode step took:"<<std::chrono::duration_cast<std::chrono::microseconds>(delta).count()<<"us\n";
 }
-
-static constexpr auto FRAGMENT_STATUS_UNAVAILABLE=false;
-static constexpr auto FRAGMENT_STATUS_AVAILABLE=true;
 
 /**
  * @param fragmentSize size of each fragment
@@ -103,58 +101,31 @@ std::vector<unsigned int> fecDecode(unsigned int fragmentSize,
   return indicesMissingPrimaryFragments;
 }
 
-// randomly select a possible combination of received indices (either primary or secondary).
-static void testFecCPlusPlusWrapperY(const int nPrimaryFragments, const int nSecondaryFragments) {
-  srand(time(NULL));
-  constexpr auto FRAGMENT_SIZE = 1446;
+/**
+ * For dynamic block sizes, we switched to a FEC overhead "percentage" value.
+ * e.g. the final data throughput ~= original data throughput * fec overhead
+ * percentage Rounds up / down (.5), but always at least 1
+ */
+uint32_t calculate_n_secondary_fragments(uint32_t n_primary_fragments,
+                                         uint32_t fec_overhead_perc);
 
-  auto txBlockBuffer = GenericHelper::createRandomDataBuffers<FRAGMENT_SIZE>(nPrimaryFragments + nSecondaryFragments);
-  std::cout << "XSelected nPrimaryFragments:" << nPrimaryFragments << " nSecondaryFragments:" << nSecondaryFragments
-            << "\n";
+/**
+ * calculate n from k and percentage as used in FEC terms
+ * (k: number of primary fragments, n: primary + secondary fragments)
+ */
+uint32_t calculateN(uint32_t k, uint32_t percentage);
 
-  fecEncode(FRAGMENT_SIZE, txBlockBuffer, nPrimaryFragments, nSecondaryFragments);
-  std::cout << "Encode done\n";
+void fec_stream_print_fec_optimization_method();
 
-  for (int test = 0; test < 100; test++) {
-    // takes nPrimaryFragments random (possible) indices without duplicates
-    // NOTE: Perhaps you could calculate all possible permutations, but these would be quite a lot.
-    // Therefore, I just use n random selections of received indices
-    auto receivedFragmentIndices = GenericHelper::takeNRandomElements(
-        GenericHelper::createIndices(nPrimaryFragments + nSecondaryFragments),
-        nPrimaryFragments);
-    assert(receivedFragmentIndices.size() == nPrimaryFragments);
-    std::cout << "(Emulated) receivedFragmentIndices" << StringHelper::vectorAsString(receivedFragmentIndices) << "\n";
-
-    auto rxBlockBuffer = std::vector<std::array<uint8_t, FRAGMENT_SIZE>>(nPrimaryFragments + nSecondaryFragments);
-    std::vector<bool> fragmentMap(nPrimaryFragments + nSecondaryFragments, FRAGMENT_STATUS_UNAVAILABLE);
-    for (const auto idx: receivedFragmentIndices) {
-      rxBlockBuffer[idx] = txBlockBuffer[idx];
-      fragmentMap[idx] = FRAGMENT_STATUS_AVAILABLE;
-    }
-
-    fecDecode(FRAGMENT_SIZE, rxBlockBuffer, nPrimaryFragments, fragmentMap);
-
-    for (unsigned int i = 0; i < nPrimaryFragments; i++) {
-      //std::cout<<"Comparing fragment:"<<i<<"\n";
-      GenericHelper::assertArraysEqual(txBlockBuffer[i], rxBlockBuffer[i]);
-    }
-  }
-}
-
-// Note: This test will take quite a long time ! (or rather ages :) when trying to do all possible combinations. )
-static void testFecCPlusPlusWrapperX() {
-  std::cout << "testFecCPlusPlusWrapper Begin\n";
-  //constexpr auto MAX_N_P_F=128;
-  //constexpr auto MAX_N_S_F=128;
-  // else it really takes ages
-  constexpr auto MAX_N_P_F = 32;
-  constexpr auto MAX_N_S_F = 32;
-  for (int nPrimaryFragments = 1; nPrimaryFragments < MAX_N_P_F; nPrimaryFragments++) {
-    for (int nSecondaryFragments = 0; nSecondaryFragments < MAX_N_S_F; nSecondaryFragments++) {
-      testFecCPlusPlusWrapperY(nPrimaryFragments, nSecondaryFragments);
-    }
-  }
-  std::cout << "testFecCPlusPlusWrapper End\n";
-}
+// quick math regarding sequence numbers:
+// uint32_t holds max 4294967295 . At 10 000 pps (packets per seconds) (which is
+// already completely out of reach) this allows the tx to run for 429496.7295
+// seconds
+// 429496.7295 / 60 / 60 = 119.304647083 hours which is also completely overkill
+// for OpenHD (and after this time span, a "reset" of the sequence number
+// happens anyways) unsigned 24 bits holds 16777215 . At 1000 blocks per second
+// this allows the tx to create blocks for 16777.215 seconds or 4.6 hours. That
+// should cover a flight (and after 4.6h a reset happens, which means you might
+// lose a couple of blocks once every 4.6 h ) and 8 bits holds max 255.
 
 #endif //WIFIBROADCAST_FEC_H

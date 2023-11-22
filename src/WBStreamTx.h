@@ -11,10 +11,11 @@
 
 #include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
 #include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
-#include "FECStream.h"
+#include "fec/FEC.h"
 #include "SimpleStream.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "WBTxRx.h"
+#include "fec/FECEncoder.h"
 
 /**
  * Transmitter for a (multiplexed) wifbroadcast stream
