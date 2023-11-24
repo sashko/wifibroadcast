@@ -335,6 +335,11 @@ class WBTxRx {
   // pull data from a pcap handle which has data available
   int loop_iter_pcap(int rx_index);
   int loop_iter_raw(int rx_index);
+  void processSessionKeyPacket(
+      uint8_t wlan_idx,
+      const std::optional<radiotap::rx::ParsedRxRadiotapPacket>& parsedPacket,
+      size_t pkt_payload_size,
+      const RadioPort& radio_port);
   // called every time we have a new (raw) data packet
   void on_new_packet(uint8_t wlan_idx,const uint8_t *pkt,int pkt_len);
   // verify and decrypt the packet if possible

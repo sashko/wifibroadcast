@@ -338,6 +338,71 @@ int WBTxRx::loop_iter_raw(const int rx_index) {
   return nPacketsPolledUntilQueueWasEmpty;
 }
 
+void WBTxRx::processSessionKeyPacket(
+    const uint8_t wlan_idx,
+    const std::optional<radiotap::rx::ParsedRxRadiotapPacket>& parsedPacket,
+    const size_t pkt_payload_size,
+    const RadioPort& radio_port) {
+  // encryption bit must always be set to off on session key packets, since
+  // encryption serves no purpose here
+  if (radio_port.encrypted) {
+    if (m_options.advanced_debugging_rx) {
+      m_console->warn(
+          "Cannot be session key packet - encryption flag set to true");
+    }
+    return;
+  }
+
+  if (pkt_payload_size != sizeof(SessionKeyPacket)) {
+    if (m_options.advanced_debugging_rx) {
+      m_console->warn("Cannot be session key packet - size mismatch {}",
+                      pkt_payload_size);
+    }
+    return;
+  }
+
+  const SessionKeyPacket& sessionKeyPacket =
+      *((SessionKeyPacket*)parsedPacket->payload);
+  const auto decrypt_res = m_decryptor->onNewPacketSessionKeyData(
+      sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
+  if (decrypt_res == wb::Decryptor::SESSION_VALID_NEW ||
+      decrypt_res == wb::Decryptor::SESSION_VALID_NOT_NEW) {
+    if (wlan_idx == 0) {  // Pollution is calculated only on card0
+      m_pollution_openhd_rx_packets++;
+    }
+    m_likely_wrong_encryption_valid_session_keys++;
+  } else {
+    m_likely_wrong_encryption_invalid_session_keys++;
+  }
+
+  // A lot of invalid session keys and no valid session keys hint at a bind
+  // phrase mismatch
+  const auto elapsed_likely_wrong_key =
+      std::chrono::steady_clock::now() - m_likely_wrong_encryption_last_check;
+  if (elapsed_likely_wrong_key > std::chrono::seconds(5)) {
+    // No valid session key(s) and at least one invalid session key
+    if (m_likely_wrong_encryption_valid_session_keys == 0 &&
+        m_likely_wrong_encryption_invalid_session_keys >= 1) {
+      m_rx_stats.likely_mismatching_encryption_key = true;
+    } else {
+      m_rx_stats.likely_mismatching_encryption_key = false;
+    }
+    m_likely_wrong_encryption_last_check = std::chrono::steady_clock::now();
+    m_likely_wrong_encryption_valid_session_keys = 0;
+    m_likely_wrong_encryption_invalid_session_keys = 0;
+  }
+
+  if (decrypt_res == wb::Decryptor::SESSION_VALID_NEW) {
+    m_console->debug("Initializing new session.");
+    m_rx_stats.n_received_valid_session_key_packets++;
+    for (const auto& handler : m_rx_handlers) {
+      if (auto opt_cb_session = handler.second->cb_session) {
+        opt_cb_session();
+      }
+    }
+  }
+}
+
 void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len) {
   if(m_options.log_all_received_packets){
     m_console->debug("Got packet {} {}",wlan_idx,pkt_len);
@@ -426,52 +491,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
   // Quite likely an openhd packet (I'd say pretty much 100%) but not validated yet
   m_rx_stats.curr_n_likely_openhd_packets++;
   if(radio_port.multiplex_index== STREAM_INDEX_SESSION_KEY_PACKETS){
-    // encryption bit must always be set to off on session key packets, since encryption serves no purpose here
-    if(radio_port.encrypted){
-      if(m_options.advanced_debugging_rx){
-        m_console->warn("Cannot be session key packet - encryption flag set to true");
-      }
-      return;
-    }
-    if (pkt_payload_size != sizeof(SessionKeyPacket)) {
-      if(m_options.advanced_debugging_rx){
-        m_console->warn("Cannot be session key packet - size mismatch {}",pkt_payload_size);
-      }
-      return;
-    }
-    SessionKeyPacket &sessionKeyPacket = *((SessionKeyPacket*) parsedPacket->payload);
-    const auto decrypt_res=m_decryptor->onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-    if(decrypt_res==wb::Decryptor::SESSION_VALID_NEW || decrypt_res==wb::Decryptor::SESSION_VALID_NOT_NEW){
-      if(wlan_idx==0){ // Pollution is calculated only on card0
-        m_pollution_openhd_rx_packets++;
-      }
-      m_likely_wrong_encryption_valid_session_keys++;
-    }else{
-      m_likely_wrong_encryption_invalid_session_keys++;
-    }
-    // A lot of invalid session keys and no valid session keys hint at a bind phrase mismatch
-    const auto elapsed_likely_wrong_key=std::chrono::steady_clock::now()-m_likely_wrong_encryption_last_check;
-    if(elapsed_likely_wrong_key>std::chrono::seconds(5)){
-      // No valid session key(s) and at least one invalid session key
-      if(m_likely_wrong_encryption_valid_session_keys==0 && m_likely_wrong_encryption_invalid_session_keys>=1){
-        m_rx_stats.likely_mismatching_encryption_key= true;
-      }else{
-        m_rx_stats.likely_mismatching_encryption_key= false;
-      }
-      m_likely_wrong_encryption_last_check=std::chrono::steady_clock::now();
-      m_likely_wrong_encryption_valid_session_keys=0;
-      m_likely_wrong_encryption_invalid_session_keys=0;
-    }
-    if (decrypt_res==wb::Decryptor::SESSION_VALID_NEW) {
-      m_console->debug("Initializing new session.");
-      m_rx_stats.n_received_valid_session_key_packets++;
-      for(auto& handler:m_rx_handlers){
-        auto opt_cb_session=handler.second->cb_session;
-        if(opt_cb_session){
-          opt_cb_session();
-        }
-      }
-    }
+    processSessionKeyPacket(wlan_idx, parsedPacket, pkt_payload_size, radio_port);
   }else{
     // the payload needs to include at least one byte of actual payload and the encryption suffix
     static constexpr auto MIN_PACKET_PAYLOAD_SIZE=1+crypto_aead_chacha20poly1305_ABYTES;
