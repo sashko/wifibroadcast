@@ -340,6 +340,15 @@ class WBTxRx {
       const std::optional<radiotap::rx::ParsedRxRadiotapPacket>& parsedPacket,
       size_t pkt_payload_size,
       const RadioPort& radio_port);
+  void processDataPacket(
+      uint8_t wlan_idx,
+      const uint8_t* pkt,
+      int pkt_len,
+      std::optional<radiotap::rx::ParsedRxRadiotapPacket> parsedPacket,
+      const uint8_t* pkt_payload,
+      size_t pkt_payload_size,
+      const RadioPort& radio_port,
+      uint64_t nonce);
   // called every time we have a new (raw) data packet
   void on_new_packet(uint8_t wlan_idx,const uint8_t *pkt,int pkt_len);
   // verify and decrypt the packet if possible
