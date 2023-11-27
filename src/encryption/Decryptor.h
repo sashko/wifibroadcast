@@ -41,6 +41,11 @@ class Decryptor {
   bool authenticate_and_decrypt(const uint64_t& nonce, const uint8_t* encrypted,
                                 int encrypted_size, uint8_t* dest);
 
+  bool decrypt(const uint64_t& nonce, const uint8_t* encrypted,
+                                int encrypted_size, uint8_t* dest);
+
+  bool authenticate(const uint64_t& nonce, const uint8_t* encrypted, int encrypted_size, uint8_t* dest);
+
   /**
    * Easier to use, but usage might require memcpy
    */

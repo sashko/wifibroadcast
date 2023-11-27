@@ -61,6 +61,46 @@ bool wb::Decryptor::authenticate_and_decrypt(const uint64_t& nonce,
   return res != -1;
 }
 
+bool wb::Decryptor::authenticate(
+    const uint64_t& nonce,
+    const uint8_t* encrypted,
+    int encrypted_size,
+    uint8_t* dest) {
+  const auto payload_size = encrypted_size - crypto_onetimeauth_BYTES;
+  assert(payload_size > 0);
+  const uint8_t* sign = encrypted + payload_size;
+  // const int
+  // res=crypto_auth_hmacsha256_verify(sign,msg,payload_size,session_key.data());
+  const auto sub_key = wb::create_onetimeauth_subkey(nonce, session_key);
+  const int res = crypto_onetimeauth_verify(sign, encrypted, payload_size,
+                                            sub_key.data());
+  if (res != -1) {
+    memcpy(dest, encrypted, payload_size);
+    return true;
+  }
+  return false;
+}
+
+bool wb::Decryptor::decrypt(
+    const uint64_t& nonce,
+    const uint8_t* encrypted,
+    int encrypted_size,
+    uint8_t* dest) {
+  unsigned long long mlen;
+  int res = crypto_aead_chacha20poly1305_decrypt(
+      dest,
+      &mlen,
+      nullptr,
+      encrypted,
+      encrypted_size,
+      nullptr,
+      0,
+      (uint8_t*)(&nonce),
+      session_key.data());
+  return res != -1;
+}
+
+
 std::shared_ptr<std::vector<uint8_t>>
 wb::Decryptor::authenticate_and_decrypt_buff(const uint64_t& nonce,
                                              const uint8_t* encrypted,

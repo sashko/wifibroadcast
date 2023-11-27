@@ -612,14 +612,34 @@ void WBTxRx::switch_tx_card_if_needed() {
   }
 }
 
-bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,const uint64_t nonce,const uint8_t *payload_and_enc_suffix,int payload_and_enc_suffix_size) {
+bool WBTxRx::process_received_data_packet(
+    int wlan_idx,
+    uint8_t stream_index,
+    bool encrypted,
+    const uint64_t nonce,
+    const uint8_t *payload_and_enc_suffix,
+    int payload_and_enc_suffix_size) {
   std::shared_ptr<std::vector<uint8_t>> decrypted=std::make_shared<std::vector<uint8_t>>(payload_and_enc_suffix_size-crypto_aead_chacha20poly1305_ABYTES);
   // after that, we have the encrypted data (and the encryption suffix)
   const uint8_t* encrypted_data_with_suffix=payload_and_enc_suffix;
   const auto encrypted_data_with_suffix_len = payload_and_enc_suffix_size;
   m_decryptor->set_encryption_enabled(encrypted);
   const auto before_decrypt=std::chrono::steady_clock::now();
-  const auto res= m_decryptor->authenticate_and_decrypt(nonce, encrypted_data_with_suffix, encrypted_data_with_suffix_len,decrypted->data());
+  bool res;
+  if (encrypted) {
+    res = m_decryptor->decrypt(
+        nonce,
+        encrypted_data_with_suffix,
+        encrypted_data_with_suffix_len,
+        decrypted->data());
+  } else {
+    res = m_decryptor->authenticate(
+        nonce,
+        encrypted_data_with_suffix,
+        encrypted_data_with_suffix_len,
+        decrypted->data());
+  }
+
   if(res){
     if(m_options.log_all_received_validated_packets){
       m_console->debug("Got valid packet nonce:{} wlan_idx:{} encrypted:{} stream_index:{} size:{}",nonce,wlan_idx,encrypted,stream_index,payload_and_enc_suffix_size);
