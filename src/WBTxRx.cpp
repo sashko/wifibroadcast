@@ -338,11 +338,11 @@ int WBTxRx::loop_iter_raw(const int rx_index) {
   return nPacketsPolledUntilQueueWasEmpty;
 }
 
-void WBTxRx::processSessionKeyPacket(
+void WBTxRx::process_session_stream_packet(
     const uint8_t wlan_idx,
+    const RadioPort& radio_port,
     const std::optional<radiotap::rx::ParsedRxRadiotapPacket>& parsedPacket,
-    const size_t pkt_payload_size,
-    const RadioPort& radio_port) {
+    const size_t pkt_payload_size) {
   // encryption bit must always be set to off on session key packets, since
   // encryption serves no purpose here
   if (radio_port.encrypted) {
@@ -403,7 +403,15 @@ void WBTxRx::processSessionKeyPacket(
   }
 }
 
-void WBTxRx::processDataPacket(const uint8_t wlan_idx, const uint8_t* pkt, const int pkt_len, const std::optional<radiotap::rx::ParsedRxRadiotapPacket> parsedPacket, const uint8_t* pkt_payload, const size_t pkt_payload_size, const WBTxRx::RadioPort& radio_port, const uint64_t nonce) {
+void WBTxRx::process_common_stream_packet(
+    const uint8_t wlan_idx,
+    const WBTxRx::RadioPort& radio_port,
+    const uint8_t* pkt,
+    const int pkt_len,
+    const std::optional<radiotap::rx::ParsedRxRadiotapPacket> parsedPacket,
+    const uint8_t* pkt_payload,
+    const size_t pkt_payload_size,
+    const uint64_t nonce) {
   // the payload needs to include at least one byte of actual payload and the encryption suffix
   static constexpr auto MIN_PACKET_PAYLOAD_SIZE=1+crypto_aead_chacha20poly1305_ABYTES;
   if(pkt_payload_size<MIN_PACKET_PAYLOAD_SIZE){
@@ -552,21 +560,21 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
   m_rx_stats.curr_n_likely_openhd_packets++;
 
   if(radio_port.multiplex_index== STREAM_INDEX_SESSION_KEY_PACKETS){
-    processSessionKeyPacket(
+    process_session_stream_packet(
         wlan_idx,
+        radio_port,
         parsedPacket,
-        pkt_payload_size,
-        radio_port);
+        pkt_payload_size);
   }else{
     const auto nonce = rx_iee80211_hdr_openhd.get_nonce();
-    processDataPacket(
+    process_common_stream_packet(
         wlan_idx,
+        radio_port,
         pkt,
         pkt_len,
         parsedPacket,
         pkt_payload,
         pkt_payload_size,
-        radio_port,
         nonce);
   }
 }
