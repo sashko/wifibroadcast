@@ -623,7 +623,7 @@ bool WBTxRx::process_received_data_packet(
   // after that, we have the encrypted data (and the encryption suffix)
   const uint8_t* encrypted_data_with_suffix=payload_and_enc_suffix;
   const auto encrypted_data_with_suffix_len = payload_and_enc_suffix_size;
-  m_decryptor->set_encryption_enabled(encrypted);
+
   const auto before_decrypt=std::chrono::steady_clock::now();
   bool res;
   if (encrypted) {
