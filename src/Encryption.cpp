@@ -64,6 +64,7 @@ bool wb::write_keypair_to_file(const wb::KeyPairTxRx& keypair_txrx,
     fclose(fp);
     return false;
   }
+  fclose(fp);
   return true;
 }
 
@@ -81,6 +82,7 @@ std::optional<wb::KeyPairTxRx> wb::read_keypair_from_file(const std::string& fil
     fclose(fp);
     return std::nullopt;
   }
+  fclose(fp);
   return KeyPairTxRx::from_raw(raw);
 }
 
