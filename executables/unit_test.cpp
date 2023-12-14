@@ -115,7 +115,9 @@ static void test_encrypt_decrypt_validate(const bool use_key_from_file,bool mess
   const std::string KEY_FILENAME="../example_key/txrx.key";
   wb::KeyPairTxRx keyPairTxRx{};
   if(use_key_from_file){
-    keyPairTxRx=wb::read_keypair_from_file(KEY_FILENAME);
+    auto tmp=wb::read_keypair_from_file(KEY_FILENAME);
+    assert(tmp.has_value());
+    keyPairTxRx=tmp.value();
   }else{
     const auto before=std::chrono::steady_clock::now();
     keyPairTxRx=wb::generate_keypair_from_bind_phrase("openhd");
@@ -176,6 +178,13 @@ static void test_encrypt_decrypt_validate(const bool use_key_from_file,bool mess
   }
   fmt::print("Test {} with {} passed\n",TEST_TYPE,TEST_KEY_TYPE);
 }
+static void test_encryption_serialize(){
+  auto keypair1=wb::generate_keypair_from_bind_phrase("openhd");
+  auto raw=wb::KeyPairTxRx::as_raw(keypair1);
+  auto serialized_deserialized=wb::KeyPairTxRx::from_raw(raw);
+  assert(keypair1==serialized_deserialized);
+  fmt::print("Serialize / Deserialize test passed\n");
+}
 
 
 int main(int argc, char *argv[]) {
@@ -210,6 +219,7 @@ int main(int argc, char *argv[]) {
 	}
 	if (test_mode == 0 || test_mode == 2) {
 	  std::cout << "Testing Encryption"<<std::endl;
+          test_encryption_serialize();
           test_encrypt_decrypt_validate(false, false);
           test_encrypt_decrypt_validate(false, true);
           test_encrypt_decrypt_validate(true, false);

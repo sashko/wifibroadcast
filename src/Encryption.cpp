@@ -50,35 +50,38 @@ wb::KeyPairTxRx wb::generate_keypair_from_bind_phrase(
   return ret;
 }
 
-int wb::write_keypair_to_file(const wb::KeyPairTxRx& keypair_txrx,
+bool wb::write_keypair_to_file(const wb::KeyPairTxRx& keypair_txrx,
                               const std::string& filename) {
   FILE *fp;
   if ((fp = fopen(filename.c_str(), "w")) == nullptr) {
     std::cerr<<"Unable to save "<<filename<<std::endl;
-    assert(false);
-    return 1;
+    return false;
   }
-  assert(fwrite(keypair_txrx.key_1.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_1.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_2.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_2.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  fclose(fp);
-  return 0;
+  const auto raw=KeyPairTxRx::as_raw(keypair_txrx);
+  auto res= fwrite(raw.data(),raw.size(),1,fp);
+  if(res!=1){
+    std::cerr<<"Cannot write to file"<<std::endl;
+    fclose(fp);
+    return false;
+  }
+  return true;
 }
 
-wb::KeyPairTxRx wb::read_keypair_from_file(const std::string& filename) {
+std::optional<wb::KeyPairTxRx> wb::read_keypair_from_file(const std::string& filename) {
   KeyPairTxRx ret{};
   FILE *fp;
   if ((fp = fopen(filename.c_str(), "r")) == nullptr) {
     std::cerr<<fmt::format("Unable to open {}: {}", filename.c_str(), strerror(errno))<<std::endl;
-    assert(false);
+    return std::nullopt;
   }
-  assert(fread(ret.key_1.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_1.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_2.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_2.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  fclose(fp);
-  return ret;
+  std::array<uint8_t,KEYPAIR_RAW_SIZE> raw{};
+  auto res= fread(raw.data(),raw.size(),1,fp);
+  if(res!=1){
+    std::cerr<<"Cannot read keypair file"<<std::endl;
+    fclose(fp);
+    return std::nullopt;
+  }
+  return KeyPairTxRx::from_raw(raw);
 }
 
 std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES> wb::create_onetimeauth_subkey(
@@ -197,4 +200,17 @@ wb::Decryptor::authenticate_and_decrypt_buff(const uint64_t& nonce,
     return ret;
   }
   return nullptr;
+}
+
+wb::KeyPairTxRx wb::KeyPairTxRx::from_raw(
+    const std::array<uint8_t, KEYPAIR_RAW_SIZE>& raw) {
+    wb::KeyPairTxRx ret{};
+    memcpy(&ret,raw.data(),KEYPAIR_RAW_SIZE);
+    return ret;
+}
+std::array<uint8_t, wb::KEYPAIR_RAW_SIZE> wb::KeyPairTxRx::as_raw(
+    const wb::KeyPairTxRx& keypair) {
+    std::array<uint8_t, 32 * 4> ret{};
+    memcpy(ret.data(), &keypair,KEYPAIR_RAW_SIZE);
+    return ret;
 }
