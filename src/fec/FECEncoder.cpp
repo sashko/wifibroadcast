@@ -52,8 +52,8 @@ void FECEncoder::fragment_and_encode(const uint8_t* data,int data_len,int n_prim
   while (consumed<data_len){
     const int remaining=data_len-consumed;
     // We want to distribute the data as evenly as possible into the n_primary_fragments
-    const int max_fragment_size=blocksize::div_ceil(data_len,n_primary_fragments-count);
-    if(remaining<=max_fragment_size){
+    const int max_fragment_size_bytes=blocksize::div_ceil(data_len,n_primary_fragments-count);
+    if(remaining<=max_fragment_size_bytes){
       // we are done
       create_forward_save_fragment(data+consumed,remaining);
       create_fec_packets(n_secondary_fragments);
@@ -61,9 +61,10 @@ void FECEncoder::fragment_and_encode(const uint8_t* data,int data_len,int n_prim
       break ;
     }{
       // not yet done
-      create_forward_save_fragment(data+consumed,max_fragment_size);
-      consumed+=max_fragment_size;
+      create_forward_save_fragment(data+consumed,max_fragment_size_bytes);
+      consumed+=max_fragment_size_bytes;
     }
+    count++;
   }
   assert(consumed==data_len);
 }
