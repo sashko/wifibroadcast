@@ -60,6 +60,31 @@ static std::vector<std::vector<std::shared_ptr<std::vector<uint8_t>>>> split_fra
   return ret;
 }
 
+// From https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c
+static int div_ceil(int numerator, int denominator){
+  std::div_t res = std::div(numerator, denominator);
+  return res.rem ? (res.quot + 1) : res.quot;
+}
+
+static int min_num_sub_blocks(int frame_size,int max_block_size,int MTU){
+  const int max_data_size=max_block_size*MTU;
+  return div_ceil(frame_size,max_data_size);
+}
+
+
+static int find_ideal_fragment_size(int frame_size,int max_block_size){
+  // First check if we need to fragment the frame into 2 or more independent blocks due to FEC limitation(s)
+  const int MTU=1446;
+  int min_num_blocks= div_ceil(frame_size,max_block_size*MTU);
+
+
+  // Ideally we want to split the frame into blocks where each block is the size of MTU
+  const int MTU=1446;
+  // We need at least this many fragment(s) with a max MTU as above
+  const int n_fragments= div_ceil(frame_size,MTU);
+
+}
+
 
 }
 #endif  // WIFIBROADCAST_SRC_HELPERSOURCES_BLOCKSIZEHELPER_HPP_

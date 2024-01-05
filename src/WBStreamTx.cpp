@@ -89,6 +89,26 @@ bool WBStreamTx::try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8
   }
   return res;
 }
+bool WBStreamTx::try_enqueue_frame(
+    std::shared_ptr<std::vector<uint8_t>> frame, int max_block_size,
+    int fec_overhead_perc,
+    std::chrono::steady_clock::time_point creation_time) {
+  assert(options.enable_fec);
+  m_n_input_packets+=1;
+  m_count_bytes_data_provided+=frame->size();
+  auto item=std::make_shared<EnqueuedBlock>();
+  item->frame=frame;
+  item->max_block_size=max_block_size;
+  item->fec_overhead_perc=fec_overhead_perc;
+  item->creation_time=creation_time;
+  const bool res= m_block_queue->try_enqueue(item);
+  if(!res){
+    m_n_dropped_packets+=1;
+    m_n_dropped_frames++;
+    //m_curr_seq_nr+=fragments.size();
+  }
+  return res;
+}
 
 WBStreamTx::FECStats WBStreamTx::get_latest_fec_stats() {
   WBStreamTx::FECStats ret{};
@@ -175,11 +195,21 @@ void WBStreamTx::process_enqueued_packet(const WBStreamTx::EnqueuedPacket& packe
 }
 
 void WBStreamTx::process_enqueued_block(const WBStreamTx::EnqueuedBlock& block) {
+  if(block.frame!= nullptr){
+    dirty_process_enqueued_frame(block);
+    return ;
+  }
   auto blocks=blocksize::split_frame_if_needed(block.fragments,block.max_block_size);
   for(auto& x_block :blocks){
     const auto n_secondary_f=calculate_n_secondary_fragments(x_block.size(),block.fec_overhead_perc);
     m_fec_encoder->encode_block(x_block,n_secondary_f);
   }
+}
+
+void WBStreamTx::dirty_process_enqueued_frame(
+    const WBStreamTx::EnqueuedBlock& block) {
+  // Figure out the ideal fragment size for this frame
+
 }
 
 void WBStreamTx::send_packet(const uint8_t* packet, int packet_len) {

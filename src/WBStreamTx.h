@@ -73,6 +73,10 @@ class WBStreamTx {
    */
   bool try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,int max_block_size,int fec_overhead_perc,
                          std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
+  // experimental ;)
+  bool try_enqueue_frame(std::shared_ptr<std::vector<uint8_t>> frame,int max_block_size,int fec_overhead_perc,
+                         std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
+
   // statistics
   struct Statistics{
     int64_t n_provided_packets;
@@ -131,6 +135,7 @@ class WBStreamTx {
     int max_block_size;
     int fec_overhead_perc;
     std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments;
+    std::shared_ptr<std::vector<uint8_t>> frame= nullptr; // replaces fragments
   };
   // Used if fec is disabled, for telemetry data
   std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>> m_packet_queue;
@@ -159,6 +164,7 @@ class WBStreamTx {
   void loop_process_data();
   void process_enqueued_packet(const EnqueuedPacket& packet);
   void process_enqueued_block(const EnqueuedBlock& block);
+  void dirty_process_enqueued_frame(const EnqueuedBlock& block);
   void send_packet(const uint8_t* packet,int packet_len);
   std::atomic<bool> m_enable_encryption=true;
 };
