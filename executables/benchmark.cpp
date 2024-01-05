@@ -86,7 +86,7 @@ void benchmark_fec_encode(const Options &options, bool printBlockTime = false) {
     // called each time we got a new 'packet'
     packetizedBenchmark.doneWithPacket(packet_len);
   };
-  encoder.outputDataCallback = cb;
+  encoder.m_out_cb = cb;
   const auto testBegin = std::chrono::steady_clock::now();
   packetizedBenchmark.begin();
   // run the test for X seconds

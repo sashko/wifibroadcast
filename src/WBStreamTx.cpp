@@ -28,7 +28,7 @@ WBStreamTx::WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options1,std::shared
     auto cb=[this](const uint8_t* packet,int packet_len){
       send_packet(packet,packet_len);
     };
-    m_fec_encoder->outputDataCallback=cb;
+    m_fec_encoder->m_out_cb =cb;
   }else{
     m_packet_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>>(options.packet_data_queue_size);
     m_fec_disabled_encoder = std::make_unique<FECDisabledEncoder>();

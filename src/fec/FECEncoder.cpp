@@ -24,16 +24,14 @@ void FECEncoder::encode_block(
     m_curr_fec_block_sizes = m_block_sizes.getMinMaxAvg();
     m_block_sizes.reset();
   }
-  FECPayloadHdr header{};
-  header.block_idx = m_curr_block_idx;
+  m_primary_fragments_data_p.clear();
+  m_max_packet_size=-1;
+  m_fragment_index=0;
+  m_fec_payload_hdr.block_idx = m_curr_block_idx;
   m_curr_block_idx++;
-  header.n_primary_fragments = n_primary_fragments;
+  m_fec_payload_hdr.n_primary_fragments = n_primary_fragments;
   // write and forward all the data packets first
   // also calculate the size of the biggest data packet
-  size_t max_packet_size = 0;
-  // Store a pointer where the FEC data begins for performing the FEC step later
-  // on
-  std::vector<const uint8_t*> primary_fragments_data_p;
   for (int i = 0; i < data_packets.size(); i++) {
     const auto& data_fragment = data_packets[i];
     // wifibroadcast::log::get_default()->debug("In:{}",(int)data_fragment->size());
@@ -44,24 +42,30 @@ void FECEncoder::encode_block(
   create_fec_packets(n_secondary_fragments);
 }
 
-void FECEncoder::fragment_and_encode(const uint8_t* data,int data_len,int max_fragment_size,int n_primary_fragments,int n_secondary_fragments) {
+void FECEncoder::fragment_and_encode(const uint8_t* data,int data_len,int n_primary_fragments,int n_secondary_fragments) {
   FECPayloadHdr header{};
   header.block_idx = m_curr_block_idx;
   m_curr_block_idx++;
   header.n_primary_fragments = n_primary_fragments;
   int consumed=0;
+  int count=0;
   while (consumed<data_len){
     const int remaining=data_len-consumed;
+    // We want to distribute the data as evenly as possible into the n_primary_fragments
+    const int max_fragment_size=blocksize::div_ceil(data_len,n_primary_fragments-count);
     if(remaining<=max_fragment_size){
       // we are done
       create_forward_save_fragment(data+consumed,remaining);
       create_fec_packets(n_secondary_fragments);
+      consumed+=remaining;
+      break ;
     }{
       // not yet done
       create_forward_save_fragment(data+consumed,max_fragment_size);
       consumed+=max_fragment_size;
     }
   }
+  assert(consumed==data_len);
 }
 
 void FECEncoder::create_forward_save_fragment(const uint8_t* data,int data_len) {
@@ -80,13 +84,12 @@ void FECEncoder::create_forward_save_fragment(const uint8_t* data,int data_len) 
          MAX_PAYLOAD_BEFORE_FEC - writtenDataSize);
   m_max_packet_size = std::max(m_max_packet_size, data_len);
   // we can forward the data packet immediately via the callback
-  if (outputDataCallback) {
-    outputDataCallback(buffer_p, writtenDataSize);
+  if (m_out_cb) {
+    m_out_cb(buffer_p, static_cast<int>(writtenDataSize));
   }
-  // NOTE: FECPayloadHdr::data_size needs to be included during the fec encode
-  // step
-  m_primary_fragments_data_p.push_back(buffer_p + sizeof(FECPayloadHdr) -
-                                     sizeof(uint16_t));
+  // Store a pointer where the FEC data begins for performing the FEC step later on -
+  // NOTE: The fec data includes FECPayloadHdr::data_size but not the other stuff from the header
+  m_primary_fragments_data_p.push_back(buffer_p + sizeof(FECPayloadHdr) -sizeof(uint16_t));
   m_fragment_index++;
 }
 
@@ -124,8 +127,8 @@ void FECEncoder::create_fec_packets(int n_secondary_fragments) {
   // and forward all the FEC correction packets
   for (int i = 0; i < n_secondary_fragments; i++) {
     auto fragment_index = i + m_fragment_index;
-    if (outputDataCallback) {
-      outputDataCallback(m_block_buffer[fragment_index].data(),
+    if (m_out_cb) {
+      m_out_cb(m_block_buffer[fragment_index].data(),
                          sizeof(FECPayloadHdr) + m_max_packet_size);
     }
   }

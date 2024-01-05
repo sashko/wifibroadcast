@@ -154,7 +154,7 @@ static void test_fec_stream_random_bs_fs_overhead_dropped(){
     GenericHelper::assertVectorsEqual(fragmented_frames_sequential_in[out_index],buff);
     out_index++;
   };
-  encoder.outputDataCallback = cb1;
+  encoder.m_out_cb = cb1;
   decoder.mSendDecodedPayloadCallback = cb2;
   for(int i=0;i<fragmented_frames_in.size();i++){
     auto fragmented_frame=fragmented_frames_in[i];
