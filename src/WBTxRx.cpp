@@ -338,10 +338,133 @@ int WBTxRx::loop_iter_raw(const int rx_index) {
   return nPacketsPolledUntilQueueWasEmpty;
 }
 
+void WBTxRx::process_session_stream_packet(
+    const uint8_t wlan_idx,
+    const RadioPort& radio_port,
+    const std::optional<radiotap::rx::ParsedRxRadiotapPacket>& parsedPacket,
+    const size_t pkt_payload_size) {
+  // encryption bit must always be set to off on session key packets, since
+  // encryption serves no purpose here
+  if (radio_port.encrypted) {
+    if (m_options.advanced_debugging_rx) {
+      m_console->warn(
+          "Cannot be session key packet - encryption flag set to true");
+    }
+    return;
+  }
+
+  if (pkt_payload_size != sizeof(SessionKeyPacket)) {
+    if (m_options.advanced_debugging_rx) {
+      m_console->warn("Cannot be session key packet - size mismatch {}",
+                      pkt_payload_size);
+    }
+    return;
+  }
+
+  const SessionKeyPacket& sessionKeyPacket =
+      *((SessionKeyPacket*)parsedPacket->payload);
+  const auto decrypt_res = m_decryptor->onNewPacketSessionKeyData(
+      sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
+  if (decrypt_res == wb::Decryptor::SESSION_VALID_NEW ||
+      decrypt_res == wb::Decryptor::SESSION_VALID_NOT_NEW) {
+    if (wlan_idx == 0) {  // Pollution is calculated only on card0
+      m_pollution_openhd_rx_packets++;
+    }
+    m_likely_wrong_encryption_valid_session_keys++;
+  } else {
+    m_likely_wrong_encryption_invalid_session_keys++;
+  }
+
+  // A lot of invalid session keys and no valid session keys hint at a bind
+  // phrase mismatch
+  const auto elapsed_likely_wrong_key =
+      std::chrono::steady_clock::now() - m_likely_wrong_encryption_last_check;
+  if (elapsed_likely_wrong_key > std::chrono::seconds(5)) {
+    // No valid session key(s) and at least one invalid session key
+    if (m_likely_wrong_encryption_valid_session_keys == 0 &&
+        m_likely_wrong_encryption_invalid_session_keys >= 1) {
+      m_rx_stats.likely_mismatching_encryption_key = true;
+    } else {
+      m_rx_stats.likely_mismatching_encryption_key = false;
+    }
+    m_likely_wrong_encryption_last_check = std::chrono::steady_clock::now();
+    m_likely_wrong_encryption_valid_session_keys = 0;
+    m_likely_wrong_encryption_invalid_session_keys = 0;
+  }
+
+  if (decrypt_res == wb::Decryptor::SESSION_VALID_NEW) {
+    m_console->debug("Initializing new session.");
+    m_rx_stats.n_received_valid_session_key_packets++;
+    for (const auto& handler : m_rx_handlers) {
+      if (auto opt_cb_session = handler.second->cb_session) {
+        opt_cb_session();
+      }
+    }
+  }
+}
+
+void WBTxRx::process_common_stream_packet(
+    const uint8_t wlan_idx,
+    const WBTxRx::RadioPort& radio_port,
+    const uint8_t* pkt,
+    const int pkt_len,
+    const std::optional<radiotap::rx::ParsedRxRadiotapPacket> parsedPacket,
+    const uint8_t* pkt_payload,
+    const size_t pkt_payload_size,
+    const uint64_t nonce) {
+  // the payload needs to include at least one byte of actual payload and the encryption suffix
+  static constexpr auto MIN_PACKET_PAYLOAD_SIZE=1+crypto_aead_chacha20poly1305_ABYTES;
+  if(pkt_payload_size<MIN_PACKET_PAYLOAD_SIZE){
+    if(m_options.advanced_debugging_rx){
+      m_console->debug("Got packet with payload of {} (min:{})",pkt_payload_size,MIN_PACKET_PAYLOAD_SIZE);
+    }
+    return;
+  }
+
+  const bool valid=process_received_data_packet(wlan_idx,radio_port.multiplex_index,radio_port.encrypted,nonce,pkt_payload,pkt_payload_size);
+  if(valid){
+    if(m_options.rx_radiotap_debug_level==1 || m_options.rx_radiotap_debug_level==4){
+      m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
+    }
+
+    if(m_options.rx_radiotap_debug_level==2 || m_options.rx_radiotap_debug_level==4){
+      m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
+    }
+
+    m_rx_stats.count_p_valid++;
+    m_rx_stats.count_bytes_valid+=pkt_payload_size;
+
+    // We only use known "good" packets for those stats.
+    auto &this_wifi_card_stats = m_rx_stats_per_card.at(wlan_idx);
+    PerCardCalculators& this_wifi_card_calc= *m_per_card_calc.at(wlan_idx);
+    if(m_options.debug_rssi>=2){
+      m_console->debug("{}",radiotap::rx::all_rf_path_to_string(parsedPacket->rf_paths));
+    }
+
+    this_wifi_card_calc.rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
+    if(m_options.rx_radiotap_debug_level==3 || m_options.rx_radiotap_debug_level==4){
+      this_wifi_card_calc.rf_aggregator.debug_every_one_second();
+    }
+
+    this_wifi_card_stats.count_p_valid++;
+    if(wlan_idx==0){
+      m_pollution_openhd_rx_packets++;
+    }
+    {
+      // Same for iee80211 seq nr
+      //uint16_t iee_seq_nr=parsedPacket->ieee80211Header->getSequenceNumber();
+      //m_seq_nr_helper_iee80211.on_new_sequence_number(iee_seq_nr);
+      //m_console->debug("IEE SEQ NR PACKET LOSS {}",m_seq_nr_helper_iee80211.get_current_loss_percent());
+    }
+    switch_tx_card_if_needed();
+  }
+}
+
 void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len) {
   if(m_options.log_all_received_packets){
     m_console->debug("Got packet {} {}",wlan_idx,pkt_len);
   }
+
   const auto parsedPacket =
       radiotap::rx::process_received_radiotap_packet(pkt,pkt_len);
   if (parsedPacket == std::nullopt) {
@@ -350,6 +473,7 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
     }
     return;
   }
+
   //m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
   //m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
   //m_per_card_calc[wlan_idx]->rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
@@ -361,12 +485,14 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
   if(wlan_idx==0){
     m_pollution_total_rx_packets++;
   }
+
   if (parsedPacket->radiotap_f_bad_fcs) {
     if(m_options.advanced_debugging_rx){
       m_console->debug("Discarding packet due to bad FCS!");
     }
     return;
   }
+
   const auto& rx_iee80211_hdr_openhd=*((Ieee80211HeaderOpenHD*)parsedPacket->ieee80211Header);
   //m_console->debug(parsedPacket->ieee80211Header->header_as_string());
   if (!rx_iee80211_hdr_openhd.is_data_frame()) {
@@ -376,22 +502,26 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
     }
     return;
   }
+
   // All these edge cases should NEVER happen if using a proper tx/rx setup and the wifi driver isn't complete crap
   if (parsedPacket->payloadSize <= 0 || parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
     m_console->warn("Discarding packet due to no actual payload !");
     return;
   }
+
   // Generic packet validation end - now to the openhd specific validation(s)
   if (parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
     m_console->warn("Discarding packet due to payload exceeding max {}",(int) parsedPacket->payloadSize);
     return;
   }
+
   if(!rx_iee80211_hdr_openhd.has_valid_air_gnd_id()){
     if(m_options.advanced_debugging_rx){
       m_console->debug("Got packet that has not a valid unique id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
     }
     return;
   }
+
   const auto unique_air_gnd_id=rx_iee80211_hdr_openhd.get_valid_air_gnd_id();
   const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
   const auto unique_rx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR : OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND;
@@ -411,108 +541,41 @@ void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int p
         m_console->debug("Got packet with invalid unique air gnd id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
       }
     }
-    return ;
+
+    return;
   }
+
   if(!rx_iee80211_hdr_openhd.has_valid_radio_port()){
     if(m_options.advanced_debugging_rx){
       m_console->debug("Got packet that has not a valid radio port{}",rx_iee80211_hdr_openhd.debug_radio_ports());
     }
     return;
   }
+
   const auto radio_port_raw=rx_iee80211_hdr_openhd.get_valid_radio_port();
   const RadioPort& radio_port=*(RadioPort*)&radio_port_raw;
-  const auto nonce=rx_iee80211_hdr_openhd.get_nonce();
+
   //m_console->debug("Packet enc:{} stream_idx:{} nonce:{}",radio_port.encrypted,radio_port.multiplex_index,nonce);
   // Quite likely an openhd packet (I'd say pretty much 100%) but not validated yet
   m_rx_stats.curr_n_likely_openhd_packets++;
+
   if(radio_port.multiplex_index== STREAM_INDEX_SESSION_KEY_PACKETS){
-    // encryption bit must always be set to off on session key packets, since encryption serves no purpose here
-    if(radio_port.encrypted){
-      if(m_options.advanced_debugging_rx){
-        m_console->warn("Cannot be session key packet - encryption flag set to true");
-      }
-      return;
-    }
-    if (pkt_payload_size != sizeof(SessionKeyPacket)) {
-      if(m_options.advanced_debugging_rx){
-        m_console->warn("Cannot be session key packet - size mismatch {}",pkt_payload_size);
-      }
-      return;
-    }
-    SessionKeyPacket &sessionKeyPacket = *((SessionKeyPacket*) parsedPacket->payload);
-    const auto decrypt_res=m_decryptor->onNewPacketSessionKeyData(sessionKeyPacket.sessionKeyNonce, sessionKeyPacket.sessionKeyData);
-    if(decrypt_res==wb::Decryptor::SESSION_VALID_NEW || decrypt_res==wb::Decryptor::SESSION_VALID_NOT_NEW){
-      if(wlan_idx==0){ // Pollution is calculated only on card0
-        m_pollution_openhd_rx_packets++;
-      }
-      m_likely_wrong_encryption_valid_session_keys++;
-    }else{
-      m_likely_wrong_encryption_invalid_session_keys++;
-    }
-    // A lot of invalid session keys and no valid session keys hint at a bind phrase mismatch
-    const auto elapsed_likely_wrong_key=std::chrono::steady_clock::now()-m_likely_wrong_encryption_last_check;
-    if(elapsed_likely_wrong_key>std::chrono::seconds(5)){
-      // No valid session key(s) and at least one invalid session key
-      if(m_likely_wrong_encryption_valid_session_keys==0 && m_likely_wrong_encryption_invalid_session_keys>=1){
-        m_rx_stats.likely_mismatching_encryption_key= true;
-      }else{
-        m_rx_stats.likely_mismatching_encryption_key= false;
-      }
-      m_likely_wrong_encryption_last_check=std::chrono::steady_clock::now();
-      m_likely_wrong_encryption_valid_session_keys=0;
-      m_likely_wrong_encryption_invalid_session_keys=0;
-    }
-    if (decrypt_res==wb::Decryptor::SESSION_VALID_NEW) {
-      m_console->debug("Initializing new session.");
-      m_rx_stats.n_received_valid_session_key_packets++;
-      for(auto& handler:m_rx_handlers){
-        auto opt_cb_session=handler.second->cb_session;
-        if(opt_cb_session){
-          opt_cb_session();
-        }
-      }
-    }
+    process_session_stream_packet(
+        wlan_idx,
+        radio_port,
+        parsedPacket,
+        pkt_payload_size);
   }else{
-    // the payload needs to include at least one byte of actual payload and the encryption suffix
-    static constexpr auto MIN_PACKET_PAYLOAD_SIZE=1+crypto_aead_chacha20poly1305_ABYTES;
-    if(pkt_payload_size<MIN_PACKET_PAYLOAD_SIZE){
-      if(m_options.advanced_debugging_rx){
-        m_console->debug("Got packet with payload of {} (min:{})",pkt_payload_size,MIN_PACKET_PAYLOAD_SIZE);
-      }
-      return ;
-    }
-    const bool valid=process_received_data_packet(wlan_idx,radio_port.multiplex_index,radio_port.encrypted,nonce,pkt_payload,pkt_payload_size);
-    if(valid){
-      if(m_options.rx_radiotap_debug_level==1 || m_options.rx_radiotap_debug_level==4){
-        m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
-      }
-      if(m_options.rx_radiotap_debug_level==2 || m_options.rx_radiotap_debug_level==4){
-        m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
-      }
-      m_rx_stats.count_p_valid++;
-      m_rx_stats.count_bytes_valid+=pkt_payload_size;
-      // We only use known "good" packets for those stats.
-      auto &this_wifi_card_stats = m_rx_stats_per_card.at(wlan_idx);
-      PerCardCalculators& this_wifi_card_calc= *m_per_card_calc.at(wlan_idx);
-      if(m_options.debug_rssi>=2){
-        m_console->debug("{}",radiotap::rx::all_rf_path_to_string(parsedPacket->rf_paths));
-      }
-      this_wifi_card_calc.rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
-      if(m_options.rx_radiotap_debug_level==3 || m_options.rx_radiotap_debug_level==4){
-        this_wifi_card_calc.rf_aggregator.debug_every_one_second();
-      }
-      this_wifi_card_stats.count_p_valid++;
-      if(wlan_idx==0){
-        m_pollution_openhd_rx_packets++;
-      }
-      {
-        // Same for iee80211 seq nr
-        //uint16_t iee_seq_nr=parsedPacket->ieee80211Header->getSequenceNumber();
-        //m_seq_nr_helper_iee80211.on_new_sequence_number(iee_seq_nr);
-        //m_console->debug("IEE SEQ NR PACKET LOSS {}",m_seq_nr_helper_iee80211.get_current_loss_percent());
-      }
-      switch_tx_card_if_needed();
-    }
+    const auto nonce = rx_iee80211_hdr_openhd.get_nonce();
+    process_common_stream_packet(
+        wlan_idx,
+        radio_port,
+        pkt,
+        pkt_len,
+        parsedPacket,
+        pkt_payload,
+        pkt_payload_size,
+        nonce);
   }
 }
 
@@ -549,14 +612,34 @@ void WBTxRx::switch_tx_card_if_needed() {
   }
 }
 
-bool WBTxRx::process_received_data_packet(int wlan_idx,uint8_t stream_index,bool encrypted,const uint64_t nonce,const uint8_t *payload_and_enc_suffix,int payload_and_enc_suffix_size) {
+bool WBTxRx::process_received_data_packet(
+    int wlan_idx,
+    uint8_t stream_index,
+    bool encrypted,
+    const uint64_t nonce,
+    const uint8_t *payload_and_enc_suffix,
+    int payload_and_enc_suffix_size) {
   std::shared_ptr<std::vector<uint8_t>> decrypted=std::make_shared<std::vector<uint8_t>>(payload_and_enc_suffix_size-crypto_aead_chacha20poly1305_ABYTES);
   // after that, we have the encrypted data (and the encryption suffix)
   const uint8_t* encrypted_data_with_suffix=payload_and_enc_suffix;
   const auto encrypted_data_with_suffix_len = payload_and_enc_suffix_size;
-  m_decryptor->set_encryption_enabled(encrypted);
+
   const auto before_decrypt=std::chrono::steady_clock::now();
-  const auto res= m_decryptor->authenticate_and_decrypt(nonce, encrypted_data_with_suffix, encrypted_data_with_suffix_len,decrypted->data());
+  bool res;
+  if (encrypted) {
+    res = m_decryptor->decrypt(
+        nonce,
+        encrypted_data_with_suffix,
+        encrypted_data_with_suffix_len,
+        decrypted->data());
+  } else {
+    res = m_decryptor->authenticate(
+        nonce,
+        encrypted_data_with_suffix,
+        encrypted_data_with_suffix_len,
+        decrypted->data());
+  }
+
   if(res){
     if(m_options.log_all_received_validated_packets){
       m_console->debug("Got valid packet nonce:{} wlan_idx:{} encrypted:{} stream_index:{} size:{}",nonce,wlan_idx,encrypted,stream_index,payload_and_enc_suffix_size);

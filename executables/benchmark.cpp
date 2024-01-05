@@ -111,7 +111,7 @@ void benchmark_crypt(const Options &options,const bool packet_validation_only) {
   wb::Encryptor encryptor{keyPairTxRx.key_1};
   encryptor.set_encryption_enabled(!packet_validation_only);
   wb::Decryptor decryptor{keyPairTxRx.key_1};
-  decryptor.set_encryption_enabled(!packet_validation_only);
+  auto decryptor_encryption_enabled = !packet_validation_only;
   std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};
   std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES> sessionKeyData{};
   encryptor.makeNewSessionKey(sessionKeyNonce, sessionKeyData);
@@ -173,7 +173,8 @@ void benchmark_crypt(const Options &options,const bool packet_validation_only) {
             durationBenchmark.start();
             auto decrypted= decryptor.authenticate_and_decrypt_buff(
                 encrypted.nonce, encrypted.data->data(),
-                encrypted.data->size());
+                encrypted.data->size(),
+                decryptor_encryption_enabled);
             assert(!decrypted->empty());
             durationBenchmark.stop();
             packetizedBenchmark.doneWithPacket(decrypted->size());

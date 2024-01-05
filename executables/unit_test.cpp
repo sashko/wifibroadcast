@@ -194,7 +194,7 @@ static void test_encrypt_decrypt_validate(const bool use_key_from_file,bool mess
   wb::Encryptor encryptor{keyPairTxRx.get_tx_key(true)};// We send from air unit
   encryptor.set_encryption_enabled(!message_signing_only);
   wb::Decryptor decryptor{keyPairTxRx.get_rx_key(false)}; // To the ground unit
-  decryptor.set_encryption_enabled(!message_signing_only);
+  auto decryptor_encryption_enabled = !message_signing_only;
   struct SessionStuff{
     std::array<uint8_t, crypto_box_NONCEBYTES> sessionKeyNonce{};  // filled with random data
     std::array<uint8_t, crypto_aead_chacha20poly1305_KEYBYTES + crypto_box_MACBYTES> sessionKeyData{};
@@ -213,13 +213,14 @@ static void test_encrypt_decrypt_validate(const bool use_key_from_file,bool mess
         {
             // Correct usage - let packets through and get the original data back
             const auto decrypted = decryptor.authenticate_and_decrypt_buff(
-          nonce, encrypted->data(), encrypted->size());
+          nonce, encrypted->data(), encrypted->size(), decryptor_encryption_enabled);
             assert(GenericHelper::compareVectors(data, *decrypted) == true);
         }
         {
             // tamper with the nonce - shouldn't let packets through
             const auto decrypted = decryptor.authenticate_and_decrypt_buff(
-                nonce + 1, encrypted->data(), encrypted->size());
+                nonce + 1, encrypted->data(), encrypted->size(),
+                decryptor_encryption_enabled);
             assert(decrypted== nullptr);
         }
         {
@@ -229,7 +230,7 @@ static void test_encrypt_decrypt_validate(const bool use_key_from_file,bool mess
             encrypted_wrong_sing->at(encrypted_wrong_sing->size()-2)=0;
             const auto decrypted = decryptor.authenticate_and_decrypt_buff(
                 nonce, encrypted_wrong_sing->data(),
-                encrypted_wrong_sing->size());
+                encrypted_wrong_sing->size(), decryptor_encryption_enabled);
             assert(decrypted== nullptr);
         }
   }
@@ -240,7 +241,8 @@ static void test_encrypt_decrypt_validate(const bool use_key_from_file,bool mess
         enrypted_wrong_sign->resize(data.size()+ENCRYPTION_ADDITIONAL_VALIDATION_DATA);
         memcpy(enrypted_wrong_sign->data(),data.data(),data.size());
         const auto decrypted = decryptor.authenticate_and_decrypt_buff(
-            nonce, enrypted_wrong_sign->data(), enrypted_wrong_sign->size());
+            nonce, enrypted_wrong_sign->data(), enrypted_wrong_sign->size(),
+            decryptor_encryption_enabled);
         assert(decrypted== nullptr);
   }
   fmt::print("Test {} with {} passed\n",TEST_TYPE,TEST_KEY_TYPE);
