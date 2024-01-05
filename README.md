@@ -31,7 +31,7 @@ needs to support active and passive monitor mode (listening & injecting packets)
 
 ### Pre unify tx / rx
 The design principle of running multiple instances of an application (e.g. wifibroadcast tx / rx) 
-has a couple of disadvantages. 
+has a couple of disadvantages.
 It makes debugging quite hard (you now have multiple applications for video tx, video rx, and telemetry tx, telemetry rx),
 makes threading and sequencing harder and also increases latency on the tx with the udp & rtp approach.
 Doing more in c++ and less scripting makes it easy to solve those issues.
