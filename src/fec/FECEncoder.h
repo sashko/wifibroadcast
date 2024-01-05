@@ -37,7 +37,7 @@ class FECEncoder {
              MAX_TOTAL_FRAGMENTS_PER_BLOCK>
       m_block_buffer{};
   uint32_t m_curr_block_idx = 0;
-  static_assert(sizeof(m_cur_block_idx) == sizeof(FECPayloadHdr::block_idx));
+  static_assert(sizeof(m_curr_block_idx) == sizeof(FECPayloadHdr::block_idx));
   AvgCalculator m_fec_block_encode_time;
   MinMaxAvg<std::chrono::nanoseconds> m_curr_fec_block_encode_time{};
   BaseAvgCalculator<uint16_t> m_block_sizes{};
