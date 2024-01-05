@@ -26,8 +26,8 @@ target_sources(wifibroadcast PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
         ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec_base.cpp
 
-        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Key.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/KeyPairTxRx.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/KeyPair.h
+        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/KeyPair.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryptor.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryption.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/encryption/EncryptionFsUtils.cpp

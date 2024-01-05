@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-#include "Key.hpp"
+#include "KeyPair.h"
 
 namespace wb {
 class Encryptor {

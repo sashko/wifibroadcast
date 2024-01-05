@@ -13,33 +13,38 @@
 #include <spdlog/spdlog.h>
 #include "../wifibroadcast_spdlog.h"
 
-int wb::write_keypair_to_file(const wb::KeyPairTxRx& keypair_txrx,
-                              const std::string& filename) {
+bool wb::write_keypair_to_file(const wb::KeyPairTxRx& keypair_txrx,
+                               const std::string& filename) {
   FILE *fp;
   if ((fp = fopen(filename.c_str(), "w")) == nullptr) {
     std::cerr<<"Unable to save "<<filename<<std::endl;
-    assert(false);
-    return 1;
+    return false;
   }
-  assert(fwrite(keypair_txrx.key_1.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_1.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_2.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fwrite(keypair_txrx.key_2.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
+  const auto raw=KeyPairTxRx::as_raw(keypair_txrx);
+  auto res= fwrite(raw.data(),raw.size(),1,fp);
+  if(res!=1){
+    std::cerr<<"Cannot write to file"<<std::endl;
+    fclose(fp);
+    return false;
+  }
   fclose(fp);
-  return 0;
+  return true;
 }
 
-wb::KeyPairTxRx wb::read_keypair_from_file(const std::string& filename) {
+std::optional<wb::KeyPairTxRx> wb::read_keypair_from_file(const std::string& filename) {
   KeyPairTxRx ret{};
   FILE *fp;
   if ((fp = fopen(filename.c_str(), "r")) == nullptr) {
     std::cerr<<fmt::format("Unable to open {}: {}", filename.c_str(), strerror(errno))<<std::endl;
-    assert(false);
+    return std::nullopt;
   }
-  assert(fread(ret.key_1.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_1.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_2.secret_key.data(), crypto_box_SECRETKEYBYTES, 1, fp)==1);
-  assert(fread(ret.key_2.public_key.data(), crypto_box_PUBLICKEYBYTES, 1, fp)==1);
+  std::array<uint8_t,KEYPAIR_RAW_SIZE> raw{};
+  auto res= fread(raw.data(),raw.size(),1,fp);
+  if(res!=1){
+    std::cerr<<"Cannot read keypair file"<<std::endl;
+    fclose(fp);
+    return std::nullopt;
+  }
   fclose(fp);
-  return ret;
+  return KeyPairTxRx::from_raw(raw);
 }

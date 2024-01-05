@@ -55,5 +55,12 @@ int main(int argc, char *const *argv) {
     keyPairTxRx=wb::generate_keypair_random();
   }
   //auto keypair=wb::generate_keypair_from_bind_phrase("openhd");
-  return wb::write_keypair_to_file(keyPairTxRx,"txrx.key");
+  auto res= wb::write_keypair_to_file(keyPairTxRx, "txrx.key");
+  if(res){
+    std::cout<<"Wrote keypair to file"<<std::endl;
+    return 0;
+  }else{
+    std::cout<<"Cannot write keypair to file"<<std::endl;
+    return -1;
+  }
 }
