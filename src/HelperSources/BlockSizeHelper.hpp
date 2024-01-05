@@ -25,6 +25,24 @@ static int calc_min_n_of_blocks(int fragments_in_this_frame,int max_block_size){
   return std::ceil(static_cast<float>(fragments_in_this_frame)/static_cast<float>(max_block_size));
 }
 
+// Algorithm:
+// Given some amount of balls, fill the minimum amount of buckets as equally distributed as possible with balls
+// such that each bucket has not more than max_block_size balls
+static std::vector<int> fill_buckets_evenly(int count,int max_size_of_bucket){
+  if(count<=max_size_of_bucket){
+    return {count};
+  }
+  int consumed=0;
+  std::vector<int> ret;
+  while (consumed<count){
+    int remaining=count-consumed;
+    const int fill= div_ceil(remaining,max_size_of_bucket);
+    ret.push_back(fill);
+    consumed+=fill;
+  }
+  return ret;
+}
+
 static std::vector<uint32_t> calculate_best_fit_block_sizes(int fragments_in_this_frame,int max_block_size){
   if(fragments_in_this_frame<=max_block_size){
     // We can do this whole frame in one FEC block
@@ -66,6 +84,10 @@ static std::vector<std::vector<std::shared_ptr<std::vector<uint8_t>>>> split_fra
   }
   return ret;
 }
+
+// Given the size of a frame and the max n of primary fragments we can do on the given platform
+// calculate how we should distribute the data (into one or more fec blocks, and how many fragments each
+// fec block shall have
 
 static int min_num_sub_blocks(int frame_size,int max_block_size,int MTU){
   const int max_data_size=max_block_size*MTU;

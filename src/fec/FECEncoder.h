@@ -35,7 +35,7 @@ class FECEncoder {
  private:
   // Creates the (next) primary fragment
   // forward it via the data cb (such that it can be sent out as soon as possible)
-  // store the fragment for later use (fec_encode)
+  // and store the fragment for later use (fec_encode)
   void create_forward_save_fragment(const uint8_t* data,int data_len);
   // performs fec_encode (on the previously saved data) then forward all the fec packets one after another.
   void create_fec_packets(int n_secondary_fragments);

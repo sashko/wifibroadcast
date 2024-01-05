@@ -208,8 +208,12 @@ void WBStreamTx::process_enqueued_block(const WBStreamTx::EnqueuedBlock& block) 
 
 void WBStreamTx::dirty_process_enqueued_frame(
     const WBStreamTx::EnqueuedBlock& block) {
-  // Figure out the ideal fragment size for this frame
-
+  //TODO: Figure out the ideal fragment size for this frame
+  const int MTU=1446;
+  const int n_primary_fragments=blocksize::div_ceil(block.frame->size(),MTU);
+  const int n_secondary_fragments= calculate_n_secondary_fragments(n_primary_fragments,block.fec_overhead_perc);
+  m_fec_encoder->fragment_and_encode(block.frame->data(),block.frame->size(),n_primary_fragments,
+                                     n_secondary_fragments);
 }
 
 void WBStreamTx::send_packet(const uint8_t* packet, int packet_len) {

@@ -102,7 +102,7 @@ void FECEncoder::create_fec_packets(int n_secondary_fragments) {
     return;
   }
   const auto before = std::chrono::steady_clock::now();
-  // Now we perform the actual FEC encode step
+  // data pointers where the FEC data is stored
   std::vector<uint8_t*> secondary_fragments_data_p;
   for (int i = 0; i < n_secondary_fragments; i++) {
     auto fragment_index = i + m_fragment_index;
@@ -128,8 +128,8 @@ void FECEncoder::create_fec_packets(int n_secondary_fragments) {
   for (int i = 0; i < n_secondary_fragments; i++) {
     auto fragment_index = i + m_fragment_index;
     if (m_out_cb) {
-      m_out_cb(m_block_buffer[fragment_index].data(),
-                         sizeof(FECPayloadHdr) + m_max_packet_size);
+      const int fec_packet_len=sizeof(FECPayloadHdr) + m_max_packet_size;
+      m_out_cb(m_block_buffer[fragment_index].data(),fec_packet_len);
     }
   }
 }
