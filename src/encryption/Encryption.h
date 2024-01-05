@@ -8,7 +8,7 @@
 
 #include <sodium.h>
 
-#include "KeyPairTxRx.hpp"
+#include "KeyPair.h"
 
 // Namespace that can be used to add encryption+packet validation
 // (Or packet validation only to save CPU resources)

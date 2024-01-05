@@ -4,7 +4,7 @@
 #include <optional>
 #include <string>
 
-#include "KeyPairTxRx.hpp"
+#include "KeyPair.h"
 
 namespace wb {
 

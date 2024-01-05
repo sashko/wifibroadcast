@@ -6,8 +6,6 @@
 #include <array>
 
 namespace wb {
-
-
 // A wb key consists of a public and secret key
 struct Key {
   std::array<uint8_t,crypto_box_PUBLICKEYBYTES> public_key;
@@ -18,6 +16,7 @@ struct Key {
   }
 }__attribute__ ((packed));;
 static_assert(sizeof(Key)==crypto_box_PUBLICKEYBYTES+crypto_box_SECRETKEYBYTES);
+
 // A wb keypair are 2 keys, one for transmitting, one for receiving
 // (Since both ground and air unit talk bidirectional)
 // We use a different key for the down-link / uplink, respective
