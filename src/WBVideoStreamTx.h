@@ -22,6 +22,7 @@ class WBVideoStreamTx {
   struct Options {
     // needs to match the radio port of the corresponding rx
     uint8_t radio_port = 0;
+    int frame_queue_size=2;
     // overwrite the console used for logging
     std::shared_ptr<spdlog::logger> opt_console=nullptr;
     // set sched_param = max realtime on the thread that dequeues and injects the packets
@@ -40,8 +41,11 @@ class WBVideoStreamTx {
     std::shared_ptr<std::vector<uint8_t>> frame= nullptr; // replaces fragments
   };
   void set_config_data(uint8_t codec_type,std::shared_ptr<std::vector<uint8_t>> codec_config);
-  void enqueue_frame(std::shared_ptr<std::vector<uint8_t>> codec_config);
+  void enqueue_frame(std::shared_ptr<std::vector<uint8_t>> frame);
   void reset();
+  std::atomic_int32_t in_fps=0;
+  std::atomic_int32_t in_bps=0;
+  std::atomic_int32_t out_pps=0;
  private:
   const Options options;
   std::shared_ptr<WBTxRx> m_txrx;
@@ -53,7 +57,9 @@ class WBVideoStreamTx {
   std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>> m_block_queue;
   bool m_process_data_thread_run=true;
   void loop_process_data();
-  void process_enqueued_block(const EnqueuedBlock& block);
+  void process_enqueued_frame(const EnqueuedBlock& block);
+  void send_packet(const uint8_t* packet,int packet_len);
+  std::shared_ptr<std::vector<uint8_t>> m_codec_config=nullptr;
 };
 
 #endif  // WIFIBROADCAST_WBVIDEOSTREAMTX_H
