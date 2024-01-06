@@ -29,6 +29,7 @@ void FECEncoder::encode_block(
 }
 
 void FECEncoder::fragment_and_encode(const uint8_t* data,int data_len,int n_primary_fragments,int n_secondary_fragments) {
+  assert(data_len<=FEC_PACKET_MAX_PAYLOAD_SIZE*n_primary_fragments);
   init_block(n_primary_fragments);
   int consumed=0;
   int count=0;
