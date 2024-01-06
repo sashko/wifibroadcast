@@ -35,7 +35,7 @@ void FECEncoder::fragment_and_encode(const uint8_t* data,int data_len,int n_prim
   while (consumed<data_len){
     const int remaining=data_len-consumed;
     // We want to distribute the data as evenly as possible into the n_primary_fragments
-    const int max_fragment_size_bytes=blocksize::div_ceil(data_len,n_primary_fragments-count);
+    const int max_fragment_size_bytes=blocksize::div_ceil(remaining,n_primary_fragments-count);
     if(remaining<=max_fragment_size_bytes){
       // we are done
       create_forward_save_fragment(data+consumed,remaining);
