@@ -39,6 +39,7 @@ class FECEncoder {
   void create_forward_save_fragment(const uint8_t* data,int data_len);
   // performs fec_encode (on the previously saved data) then forward all the fec packets one after another.
   void create_fec_packets(int n_secondary_fragments);
+  void init_block(int n_primary_fragments);
   // Pre-allocated to have space for storing primary fragments (they are needed
   // once the fec step needs to be performed) and creating the wanted amount of
   // secondary packets
