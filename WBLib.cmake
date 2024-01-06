@@ -41,6 +41,7 @@ target_sources(wifibroadcast PRIVATE
 
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamRx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamTx.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/src/WBVideoStreamTx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/WBTxRx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/Ieee80211Header.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapHeaderTx.hpp

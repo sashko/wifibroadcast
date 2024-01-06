@@ -15,25 +15,11 @@ void FECEncoder::encode_block(
     int n_secondary_fragments) {
   assert(data_packets.size() <= MAX_N_P_FRAGMENTS_PER_BLOCK);
   assert(n_secondary_fragments <= MAX_N_S_FRAGMENTS_PER_BLOCK);
-  const auto n_primary_fragments = data_packets.size();
-  // nice to have statistic
-  m_block_sizes.add(n_primary_fragments);
-  if (m_block_sizes.get_delta_since_last_reset() >= std::chrono::seconds(1)) {
-    // wifibroadcast::log::get_default()->debug("Block sizes:
-    // {}",m_block_sizes.getAvgReadable());
-    m_curr_fec_block_sizes = m_block_sizes.getMinMaxAvg();
-    m_block_sizes.reset();
-  }
-  m_primary_fragments_data_p.clear();
-  m_max_packet_size=-1;
-  m_fragment_index=0;
-  m_fec_payload_hdr.block_idx = m_curr_block_idx;
-  m_curr_block_idx++;
-  m_fec_payload_hdr.n_primary_fragments = n_primary_fragments;
+  const int n_primary_fragments = static_cast<int>(data_packets.size());
+  init_block(n_primary_fragments);
   // write and forward all the data packets first
   // also calculate the size of the biggest data packet
-  for (int i = 0; i < data_packets.size(); i++) {
-    const auto& data_fragment = data_packets[i];
+  for (const auto & data_fragment : data_packets) {
     // wifibroadcast::log::get_default()->debug("In:{}",(int)data_fragment->size());
     assert(!data_fragment->empty());
     assert(data_fragment->size() <= FEC_PACKET_MAX_PAYLOAD_SIZE);
@@ -43,16 +29,14 @@ void FECEncoder::encode_block(
 }
 
 void FECEncoder::fragment_and_encode(const uint8_t* data,int data_len,int n_primary_fragments,int n_secondary_fragments) {
-  FECPayloadHdr header{};
-  header.block_idx = m_curr_block_idx;
-  m_curr_block_idx++;
-  header.n_primary_fragments = n_primary_fragments;
+  assert(data_len<=FEC_PACKET_MAX_PAYLOAD_SIZE*n_primary_fragments);
+  init_block(n_primary_fragments);
   int consumed=0;
   int count=0;
   while (consumed<data_len){
     const int remaining=data_len-consumed;
     // We want to distribute the data as evenly as possible into the n_primary_fragments
-    const int max_fragment_size_bytes=blocksize::div_ceil(data_len,n_primary_fragments-count);
+    const int max_fragment_size_bytes=blocksize::div_ceil(remaining,n_primary_fragments-count);
     if(remaining<=max_fragment_size_bytes){
       // we are done
       create_forward_save_fragment(data+consumed,remaining);
@@ -100,6 +84,7 @@ void FECEncoder::create_fec_packets(int n_secondary_fragments) {
     // wifibroadcast::log::get_default()->debug("No FEC step performed");
     //  no FEC step is actually performed, usefully for debugging / performance
     //  evaluation
+    m_curr_block_idx++;
     return;
   }
   const auto before = std::chrono::steady_clock::now();
@@ -133,4 +118,24 @@ void FECEncoder::create_fec_packets(int n_secondary_fragments) {
       m_out_cb(m_block_buffer[fragment_index].data(),fec_packet_len);
     }
   }
+  m_curr_block_idx++;
+}
+
+
+void FECEncoder::init_block(int n_primary_fragments) {
+  // nice to have statistic
+  m_block_sizes.add(n_primary_fragments);
+  if (m_block_sizes.get_delta_since_last_reset() >= std::chrono::seconds(1)) {
+    // wifibroadcast::log::get_default()->debug("Block sizes:
+    // {}",m_block_sizes.getAvgReadable());
+    m_curr_fec_block_sizes = m_block_sizes.getMinMaxAvg();
+    m_block_sizes.reset();
+  }
+  // Will be filled one after another until fec is performed
+  m_primary_fragments_data_p.clear();
+  // Known once we went through all primary fragments
+  m_max_packet_size=-1;
+  m_fragment_index=0;
+  m_fec_payload_hdr.block_idx = m_curr_block_idx;
+  m_fec_payload_hdr.n_primary_fragments = n_primary_fragments;
 }
