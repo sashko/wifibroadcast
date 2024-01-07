@@ -42,6 +42,8 @@ class WBStreamRx {
     int packet_queue_size=20;
     // enable fec debug log, obviously only if fec is enbaled
     bool enable_fec_debug_log=false;
+    // dirty
+    bool forward_gapped_fragments= true;
   };
   WBStreamRx(std::shared_ptr<WBTxRx> txrx,Options options1);
   ~WBStreamRx();

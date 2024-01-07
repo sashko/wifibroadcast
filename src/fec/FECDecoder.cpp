@@ -221,7 +221,7 @@ void FECDecoder::process_with_rx_queue(const FECPayloadHdr& header,
                                                  block.getBlockIdx());
       }
       while (block != *rx_queue.front()) {
-        forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), true);
+        forwardMissingPrimaryFragmentsIfAvailable(*rx_queue.front(), m_forward_gapped_fragments);
         rxQueuePopFront();
       }
       // then process the block who is fully recoverable or has no gaps in the
