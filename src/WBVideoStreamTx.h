@@ -32,6 +32,13 @@ class WBVideoStreamTx {
   WBVideoStreamTx(const WBVideoStreamTx&) = delete;
   WBVideoStreamTx&operator=(const WBVideoStreamTx&) = delete;
   ~WBVideoStreamTx();
+  void set_config_data(uint8_t codec_type,std::shared_ptr<std::vector<uint8_t>> config_buff);
+  bool enqueue_frame(std::shared_ptr<std::vector<uint8_t>> frame,int max_block_size,int fec_overhead_perc,
+                     std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
+  std::atomic_int32_t in_fps=0;
+  std::atomic_int32_t in_bps=0;
+  std::atomic_int32_t out_pps=0;
+ private:
   struct EnqueuedFrame {
     std::chrono::steady_clock::time_point enqueue_time_point=std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now();
@@ -43,12 +50,6 @@ class WBVideoStreamTx {
     uint8_t codec_type;
     std::shared_ptr<std::vector<uint8_t>> config_buff=nullptr;
   };
-  void set_config_data(uint8_t codec_type,std::shared_ptr<std::vector<uint8_t>> config_buff);
-  bool enqueue_frame(std::shared_ptr<std::vector<uint8_t>> frame,int max_block_size,int fec_overhead_perc,
-                     std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
-  std::atomic_int32_t in_fps=0;
-  std::atomic_int32_t in_bps=0;
-  std::atomic_int32_t out_pps=0;
  private:
   const Options options;
   std::shared_ptr<WBTxRx> m_txrx;

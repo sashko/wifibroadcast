@@ -42,6 +42,28 @@ WBVideoStreamTx::~WBVideoStreamTx() {
   }
 }
 
+void WBVideoStreamTx::set_config_data(
+    uint8_t codec_type, std::shared_ptr<std::vector<uint8_t>> config_buff) {
+  auto config=std::make_shared<CodecConfigData>();
+  config->codec_type=codec_type;
+  config->config_buff=config_buff;
+  std::lock_guard<std::mutex> guard(m_codec_config_mutex);
+  m_codec_config=config;
+}
+
+bool WBVideoStreamTx::enqueue_frame(
+    std::shared_ptr<std::vector<uint8_t>> frame, int max_block_size,
+    int fec_overhead_perc,
+    std::chrono::steady_clock::time_point creation_time) {
+  auto item=std::make_shared<EnqueuedFrame>();
+  item->frame=frame;
+  item->max_block_size=max_block_size;
+  item->fec_overhead_perc=fec_overhead_perc;
+  item->creation_time=creation_time;
+  const bool res= m_block_queue->try_enqueue(item);
+  return res;
+}
+
 void WBVideoStreamTx::loop_process_data() {
   if(options.dequeue_thread_max_realtime){
     SchedulingHelper::setThreadParamsMaxRealtime();
@@ -71,28 +93,6 @@ void WBVideoStreamTx::process_enqueued_frame(const EnqueuedFrame & enq_frame) {
                                      n_secondary_fragments);
 }
 
-void WBVideoStreamTx::set_config_data(
-    uint8_t codec_type, std::shared_ptr<std::vector<uint8_t>> config_buff) {
-  auto config=std::make_shared<CodecConfigData>();
-  config->codec_type=codec_type;
-  config->config_buff=config_buff;
-  std::lock_guard<std::mutex> guard(m_codec_config_mutex);
-  m_codec_config=config;
-}
-
-bool WBVideoStreamTx::enqueue_frame(
-    std::shared_ptr<std::vector<uint8_t>> frame, int max_block_size,
-    int fec_overhead_perc,
-    std::chrono::steady_clock::time_point creation_time) {
-  auto item=std::make_shared<EnqueuedFrame>();
-  item->frame=frame;
-  item->max_block_size=max_block_size;
-  item->fec_overhead_perc=fec_overhead_perc;
-  item->creation_time=creation_time;
-  const bool res= m_block_queue->try_enqueue(item);
-  return res;
-}
-
 void WBVideoStreamTx::send_packet(const uint8_t *packet, int packet_len) {
   const auto radiotap_header=m_radiotap_header_holder->thread_safe_get();
   const bool encrypt=m_enable_encryption.load();
@@ -102,7 +102,6 @@ void WBVideoStreamTx::send_packet(const uint8_t *packet, int packet_len) {
 bool WBVideoStreamTx::send_video_config() {
   std::lock_guard<std::mutex> guard(m_codec_config_mutex);
   if(m_codec_config== nullptr)return false;
-  auto& codec_config=*m_codec_config;
   auto& config_buff=*m_codec_config->config_buff;
   assert(!config_buff.empty() && config_buff.size()<MAX_PAYLOAD_BEFORE_FEC);
   m_fec_encoder->fragment_and_encode(config_buff.data(),config_buff.size(),1,0);
