@@ -43,25 +43,31 @@ WBTxRx::WBTxRx(std::vector<wifibroadcast::WifiCard> wifi_cards1,Options options1
   }
   for(int i=0;i<m_wifi_cards.size();i++){
     auto wifi_card=m_wifi_cards[i];
-    PcapTxRx pcapTxRx{};
-    // RX part - using pcap
-    pcapTxRx.rx=wifibroadcast::pcap_helper::open_pcap_rx(wifi_card.name);
-    if(m_options.pcap_rx_set_direction){
-      const auto ret=pcap_setdirection(pcapTxRx.rx, PCAP_D_IN);
-      if(ret!=0){
-        m_console->debug("pcap_setdirection() returned {}",ret);
-      }
-    }
-    auto rx_pollfd = pcap_get_selectable_fd(pcapTxRx.rx);
-    m_receive_pollfds[i].fd = rx_pollfd;
-    m_receive_pollfds[i].events = POLLIN;
-    // TX part - using raw socket or pcap
-    if(m_options.tx_without_pcap){
-      pcapTxRx.tx_sockfd= open_wifi_interface_as_raw_socket(wifi_card.name);
+    if(wifi_card.type==wifibroadcast::WIFI_CARD_TYPE_EMULATE_GND){
+      m_optional_dummy_link=std::make_unique<DummyLink>(false);
+    }else if(wifi_card.type==wifibroadcast::WIFI_CARD_TYPE_EMULATE_AIR){
+      m_optional_dummy_link=std::make_unique<DummyLink>(true);
     }else{
-      pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card.name);
+      PcapTxRx pcapTxRx{};
+      // RX part - using pcap
+      pcapTxRx.rx=wifibroadcast::pcap_helper::open_pcap_rx(wifi_card.name);
+      if(m_options.pcap_rx_set_direction){
+        const auto ret=pcap_setdirection(pcapTxRx.rx, PCAP_D_IN);
+        if(ret!=0){
+          m_console->debug("pcap_setdirection() returned {}",ret);
+        }
+      }
+      auto rx_pollfd = pcap_get_selectable_fd(pcapTxRx.rx);
+      m_receive_pollfds[i].fd = rx_pollfd;
+      m_receive_pollfds[i].events = POLLIN;
+      // TX part - using raw socket or pcap
+      if(m_options.tx_without_pcap){
+        pcapTxRx.tx_sockfd= open_wifi_interface_as_raw_socket(wifi_card.name);
+      }else{
+        pcapTxRx.tx=wifibroadcast::pcap_helper::open_pcap_tx(wifi_card.name);
+      }
+      m_pcap_handles.push_back(pcapTxRx);
     }
-    m_pcap_handles.push_back(pcapTxRx);
   }
   wb::KeyPairTxRx keypair{};
   if(m_options.secure_keypair.has_value()){
@@ -176,7 +182,10 @@ bool WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, i
   int len_injected=0;
   // we inject the packet on whatever card has the highest rx rssi right now
   const auto before_inject=std::chrono::steady_clock::now();
-  if(m_options.tx_without_pcap){
+  if(m_optional_dummy_link){
+    m_optional_dummy_link->tx_radiotap(packet_buff,packet_size);
+    len_injected=packet_size;
+  }else if(m_options.tx_without_pcap){
     len_injected=(int)write(m_pcap_handles[card_index].tx_sockfd,packet_buff,packet_size);
   }else{
     len_injected=pcap_inject(m_pcap_handles[card_index].tx, packet_buff, packet_size);
@@ -230,6 +239,13 @@ void WBTxRx::loop_receive_packets() {
   std::vector<int> packets_per_card{};
   packets_per_card.resize(m_wifi_cards.size());
   while (keep_receiving){
+    if(m_optional_dummy_link){
+      auto packet=m_optional_dummy_link->rx_radiotap();
+      if(packet){
+        on_new_packet(0,packet->data(),packet->size());
+      }
+      continue ;
+    }
     const int timeoutMS = (int) std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::seconds(1)).count();
     int rc = poll(m_receive_pollfds.data(), m_receive_pollfds.size(), timeoutMS);
 

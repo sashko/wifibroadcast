@@ -15,18 +15,19 @@
 #include <thread>
 #include <utility>
 
-#include "encryption/Encryption.h"
 #include "HelperSources/UINT16SeqNrHelper.hpp"
 #include "HelperSources/UINT64SeqNrHelper.hpp"
 #include "Ieee80211Header.hpp"
 #include "WiFiCard.h"
+#include "dummy_link/DummyLink.h"
 #include "encryption/Decryptor.h"
+#include "encryption/Encryption.h"
+#include "encryption/Encryptor.h"
 #include "radiotap/RSSIAccumulator.hpp"
 #include "radiotap/RadiotapHeaderTx.hpp"
 #include "radiotap/RadiotapHeaderTxHolder.hpp"
 #include "radiotap/RadiotapRxRfAggregator.h"
 #include "radiotap/SignalQualityAccumulator.hpp"
-#include "encryption/Encryptor.h"
 
 /**
  * This class exists to provide a clean, working interface to create a
@@ -372,6 +373,7 @@ class WBTxRx {
   uint32_t m_likely_wrong_encryption_valid_session_keys=0;
   std::chrono::steady_clock::time_point m_likely_wrong_encryption_last_check=std::chrono::steady_clock::now();
   uint32_t m_likely_wrong_encryption_invalid_session_keys=0;
+  std::unique_ptr<DummyLink> m_optional_dummy_link= nullptr;
 };
 
 static std::ostream& operator<<(std::ostream& strm, const WBTxRx::TxStats& data){
