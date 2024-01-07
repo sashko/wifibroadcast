@@ -119,6 +119,7 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
   if(m_disable_all_transmissions){
     return ;
   }
+  announce_session_key_if_needed();
   // new wifi packet
   const auto packet_size=
       // Radiotap header comes first
@@ -174,7 +175,6 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index,const uint8_t* data, in
     m_tx_stats.n_injected_bytes_including_overhead +=packet_size;
     m_tx_stats.n_injected_packets++;
   }
-  announce_session_key_if_needed();
 }
 
 bool WBTxRx::inject_radiotap_packet(int card_index,const uint8_t* packet_buff, int packet_size) {
@@ -709,9 +709,7 @@ void WBTxRx::on_valid_data_packet(uint64_t nonce,int wlan_index,const uint8_t st
 
 void WBTxRx::start_receiving() {
   keep_receiving= true;
-  m_receive_thread=std::make_unique<std::thread>([this](){
-    loop_receive_packets();
-  });
+  m_receive_thread=std::make_unique<std::thread>(&WBTxRx::loop_receive_packets, this);
 }
 
 void WBTxRx::stop_receiving() {
