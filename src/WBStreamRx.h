@@ -72,6 +72,10 @@ class WBStreamRx {
   };
   FECRxStats2 get_latest_fec_stats();
   void reset_stream_stats();
+  // DIRTY AF !
+  typedef std::function<void(uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded)>
+      ON_BLOCK_DONE_CB;
+  void set_on_fec_block_done_cb(ON_BLOCK_DONE_CB cb);
  private:
   const Options m_options;
   std::shared_ptr<WBTxRx> m_txrx;

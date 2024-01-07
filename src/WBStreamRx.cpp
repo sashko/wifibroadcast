@@ -151,3 +151,7 @@ void WBStreamRx::reset_stream_stats() {
   m_n_input_bytes=0;
   m_n_input_packets=0;
 }
+
+void WBStreamRx::set_on_fec_block_done_cb(WBStreamRx::ON_BLOCK_DONE_CB cb) {
+  m_fec_decoder->m_block_done_cb=cb;
+}

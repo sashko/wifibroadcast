@@ -89,6 +89,7 @@ class RxBlock {
   std::optional<int> get_missing_primary_packets() const;
   std::string get_missing_primary_packets_readable() const;
   int get_n_primary_fragments() const;
+  int get_n_forwarded_primary_fragments()const;
 
  private:
   // the block idx marks which block this element refers to

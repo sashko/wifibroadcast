@@ -71,6 +71,12 @@ void FECDecoder::rxQueuePopFront() {
           block.get_missing_primary_packets_readable());
     }
   }
+  if(m_block_done_cb){
+    auto& block = *rx_queue.front();
+    const int n_p_fragments=block.get_n_primary_fragments();
+    const int n_p_fragments_forwarded=block.get_n_forwarded_primary_fragments();
+    m_block_done_cb(block.getBlockIdx(),n_p_fragments,n_p_fragments_forwarded);
+  }
   rx_queue.pop_front();
 }
 

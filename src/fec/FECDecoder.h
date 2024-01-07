@@ -43,6 +43,10 @@ class FECDecoder {
       SEND_DECODED_PACKET;
   // WARNING: Don't forget to register this callback !
   SEND_DECODED_PACKET mSendDecodedPayloadCallback;
+  // Experimental
+  typedef std::function<void(uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded)>
+      ON_BLOCK_DONE_CB;
+  ON_BLOCK_DONE_CB m_block_done_cb= nullptr;
   // A value too high doesn't really give much benefit and increases memory
   // usage
   const unsigned int RX_QUEUE_MAX_SIZE;
