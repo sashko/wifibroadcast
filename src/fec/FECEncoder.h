@@ -25,7 +25,11 @@ class FECEncoder {
   void encode_block(
       std::vector<std::shared_ptr<std::vector<uint8_t>>> data_packets,
       int n_secondary_fragments);
-  //
+  /**
+   * Distributes data evenly into @param n_primary_fragments and calculates
+   * @param n_secondary_fragments afterwards. Reduces latency to a minimum by forwarding
+   * packets via the cb as soon as possible (primary fragments are forwarded before the fec step is performed).
+   */
   void fragment_and_encode(const uint8_t* data,int data_len,int n_primary_fragments,int n_secondary_fragments);
   OUTPUT_DATA_CALLBACK m_out_cb= nullptr;
   AvgCalculator m_fec_block_encode_time;
