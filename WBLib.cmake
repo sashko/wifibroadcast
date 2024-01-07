@@ -32,6 +32,8 @@ target_sources(wifibroadcast PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryption.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/encryption/EncryptionFsUtils.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Decryptor.cpp
+        ##
+        ${CMAKE_CURRENT_LIST_DIR}/src/dummy_link/DummyLink.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/src/fec/FEC.cpp
         ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECConstants.hpp

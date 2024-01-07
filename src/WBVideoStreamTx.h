@@ -9,7 +9,6 @@
 #include <thread>
 #include <variant>
 
-#include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
 #include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
 #include "fec/FEC.h"
 #include "SimpleStream.hpp"
@@ -33,19 +32,24 @@ class WBVideoStreamTx {
   WBVideoStreamTx(const WBVideoStreamTx&) = delete;
   WBVideoStreamTx&operator=(const WBVideoStreamTx&) = delete;
   ~WBVideoStreamTx();
-  struct EnqueuedBlock {
+  void set_config_data(uint8_t codec_type,std::shared_ptr<std::vector<uint8_t>> config_buff);
+  bool enqueue_frame(std::shared_ptr<std::vector<uint8_t>> frame,int max_block_size,int fec_overhead_perc,
+                     std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
+  std::atomic_int32_t in_fps=0;
+  std::atomic_int32_t in_bps=0;
+  std::atomic_int32_t out_pps=0;
+ private:
+  struct EnqueuedFrame {
     std::chrono::steady_clock::time_point enqueue_time_point=std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now();
     int max_block_size;
     int fec_overhead_perc;
-    std::shared_ptr<std::vector<uint8_t>> frame= nullptr; // replaces fragments
+    std::shared_ptr<std::vector<uint8_t>> frame= nullptr;
   };
-  void set_config_data(uint8_t codec_type,std::shared_ptr<std::vector<uint8_t>> codec_config);
-  void enqueue_frame(std::shared_ptr<std::vector<uint8_t>> frame);
-  void reset();
-  std::atomic_int32_t in_fps=0;
-  std::atomic_int32_t in_bps=0;
-  std::atomic_int32_t out_pps=0;
+  struct CodecConfigData{
+    uint8_t codec_type;
+    std::shared_ptr<std::vector<uint8_t>> config_buff=nullptr;
+  };
  private:
   const Options options;
   std::shared_ptr<WBTxRx> m_txrx;
@@ -54,12 +58,15 @@ class WBVideoStreamTx {
   // On the tx, either one of those two is active at the same time
   std::unique_ptr<FECEncoder> m_fec_encoder = nullptr;
   std::unique_ptr<std::thread> m_process_data_thread;
-  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>> m_block_queue;
+  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedFrame>>> m_block_queue;
   bool m_process_data_thread_run=true;
   void loop_process_data();
-  void process_enqueued_frame(const EnqueuedBlock& block);
+  void process_enqueued_frame(const EnqueuedFrame& enq_frame);
   void send_packet(const uint8_t* packet,int packet_len);
-  std::shared_ptr<std::vector<uint8_t>> m_codec_config=nullptr;
+  bool send_video_config();
+  std::shared_ptr<CodecConfigData> m_codec_config= nullptr;
+  std::mutex m_codec_config_mutex;
+  std::atomic<bool> m_enable_encryption=true;
 };
 
 #endif  // WIFIBROADCAST_WBVIDEOSTREAMTX_H

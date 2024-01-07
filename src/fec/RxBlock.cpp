@@ -163,3 +163,6 @@ std::string RxBlock::get_missing_primary_packets_readable() const {
 int RxBlock::get_n_primary_fragments() const {
   return m_n_primary_fragments_in_block;
 }
+int RxBlock::get_n_forwarded_primary_fragments() const {
+  return nAlreadyForwardedPrimaryFragments;
+}

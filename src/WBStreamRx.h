@@ -42,6 +42,8 @@ class WBStreamRx {
     int packet_queue_size=20;
     // enable fec debug log, obviously only if fec is enbaled
     bool enable_fec_debug_log=false;
+    // dirty
+    bool forward_gapped_fragments= true;
   };
   WBStreamRx(std::shared_ptr<WBTxRx> txrx,Options options1);
   ~WBStreamRx();
@@ -72,6 +74,10 @@ class WBStreamRx {
   };
   FECRxStats2 get_latest_fec_stats();
   void reset_stream_stats();
+  // DIRTY AF !
+  typedef std::function<void(uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded)>
+      ON_BLOCK_DONE_CB;
+  void set_on_fec_block_done_cb(ON_BLOCK_DONE_CB cb);
  private:
   const Options m_options;
   std::shared_ptr<WBTxRx> m_txrx;

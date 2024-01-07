@@ -29,10 +29,13 @@ class FECDecoder {
   explicit FECDecoder(
       const unsigned int rx_queue_max_depth,
       const unsigned int maxNFragmentsPerBlock = MAX_TOTAL_FRAGMENTS_PER_BLOCK,
-      bool enable_log_debug = false)
+      bool enable_log_debug = false,
+      bool forward_gapped_fragments= true)
       : RX_QUEUE_MAX_SIZE(rx_queue_max_depth),
         maxNFragmentsPerBlock(maxNFragmentsPerBlock),
-        m_enable_log_debug(enable_log_debug) {
+        m_enable_log_debug(enable_log_debug),
+        m_forward_gapped_fragments(forward_gapped_fragments)
+  {
     assert(rx_queue_max_depth < 20);
     assert(rx_queue_max_depth >= 1);
   }
@@ -43,11 +46,16 @@ class FECDecoder {
       SEND_DECODED_PACKET;
   // WARNING: Don't forget to register this callback !
   SEND_DECODED_PACKET mSendDecodedPayloadCallback;
+  // Experimental
+  typedef std::function<void(uint64_t block_idx,int n_fragments_total,int n_fragments_forwarded)>
+      ON_BLOCK_DONE_CB;
+  ON_BLOCK_DONE_CB m_block_done_cb= nullptr;
   // A value too high doesn't really give much benefit and increases memory
   // usage
   const unsigned int RX_QUEUE_MAX_SIZE;
   const unsigned int maxNFragmentsPerBlock;
   const bool m_enable_log_debug;
+  const bool m_forward_gapped_fragments;
   AvgCalculator m_fec_decode_time{};
 
  public:
