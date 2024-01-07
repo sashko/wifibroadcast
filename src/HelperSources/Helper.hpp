@@ -116,6 +116,20 @@ static void assertVectorsOfVectorsEqual(const std::vector<std::vector<uint8_t>> 
     assertVectorsEqual(sb,rb);
   }
 }
+static std::vector<std::vector<uint8_t>> shared_to(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& in){
+  std::vector<std::vector<uint8_t>> ret;
+  for(auto& element:in){
+    ret.emplace_back(element->begin(),element->end());
+  }
+  return ret;
+}
+static void assertVectorsOfVectorsEqual(const std::vector<std::shared_ptr<std::vector<uint8_t>>>& sbl, const std::vector<std::vector<uint8_t>> &rbl){
+  for(int i=0;i<sbl.size();i++){
+    const auto& sb=sbl[i];
+    const auto& rb=rbl[i];
+    assertVectorsEqual(*sb,rb);
+  }
+}
 template<std::size_t S>
 static void assertArraysEqual(const std::array<uint8_t, S> &sb, const std::array<uint8_t, S> &rb) {
   const int result = memcmp(sb.data(), rb.data(), sb.size());
