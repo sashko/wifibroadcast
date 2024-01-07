@@ -16,6 +16,8 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 /* function prototypes and related defs are in radiotap_iter.h */
 
 static const struct radiotap_align_size rtap_namespace_sizes[] = {
@@ -387,3 +389,4 @@ int ieee80211_radiotap_iterator_next(
 }
 
 #pragma clang diagnostic pop
+#pragma GCC diagnostic pop
