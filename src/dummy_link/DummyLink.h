@@ -8,10 +8,11 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <queue>
+#include <random>
 #include <string>
 #include <thread>
 #include <vector>
-#include <queue>
 
 // TODO: Write something that emulates a wb link (tx, rx)
 // using linux shm or similar
@@ -32,6 +33,13 @@ private:
     std::unique_ptr<std::thread> m_receive_thread;
     void loop_rx();
     bool m_keep_receiving= true;
+    // Drop packets with a probability of 5%
+    bool should_drop();
+    int next_random_number_0_100(){
+      return m_dist100(m_mt);
+    }
+    std::mt19937 m_mt;
+    std::uniform_int_distribution<> m_dist100{0,100};
 };
 
 

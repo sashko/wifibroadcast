@@ -102,7 +102,10 @@ DummyLink::~DummyLink() {
 }
 
 void DummyLink::tx_radiotap(const uint8_t *packet_buff, int packet_size) {
-  send_data(m_fd_tx,m_fn_tx,packet_buff,packet_size);
+  const bool drop=should_drop();
+  if(!should_drop()){
+    send_data(m_fd_tx,m_fn_tx,packet_buff,packet_size);
+  }
 }
 
 std::shared_ptr<std::vector<uint8_t>> DummyLink::rx_radiotap() {
@@ -127,3 +130,10 @@ void DummyLink::loop_rx() {
   }
 }
 
+bool DummyLink::should_drop() {
+  int rand=next_random_number_0_100();
+  if(rand <=5){
+    return true;
+  }
+  return false;
+}
