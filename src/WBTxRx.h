@@ -221,6 +221,8 @@ class WBTxRx {
    // Used by OpenHD on the ground to notify the user of disconnecting card(s)
    // (Hints at power issues)
    bool get_card_has_disconnected(int card_idx);
+   // For development only
+   std::shared_ptr<DummyLink> get_dummy_link();
   public:
    struct SessionExtraData{
      // OpenHD uses different carrier bandwidths for the session key data (20Mhz, such that it can be always received on 20Mhz BW)
@@ -364,8 +366,6 @@ class WBTxRx {
   // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
   // (Of all cards currently receiving data, find the one with the highest reported dBm)
   void switch_tx_card_if_needed();
-  // For development only
-  std::shared_ptr<DummyLink> get_dummy_link();
  private:
   // These are 'extra' for calculating some channel pollution value
   uint32_t m_pollution_total_rx_packets=0;
