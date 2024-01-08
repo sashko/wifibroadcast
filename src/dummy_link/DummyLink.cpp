@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "../HelperSources/SocketHelper.hpp"
+
 // From http://www.atakansarioglu.com/linux-ipc-inter-process-messaging-linux-domain-socket-fifo-pipe-shared-memory-shm-example/
 
 static sockaddr_un create_adr(const std::string& name){
@@ -90,7 +92,10 @@ DummyLink::DummyLink(bool is_air):m_is_air(is_air) {
     m_fn_rx="air";
   }
   m_fd_rx=create_socket_read(m_fn_rx);
+  //SocketHelper::set_socket_send_rcv_timeout(m_fd_rx,std::chrono::milliseconds(10), true);
   m_fd_tx=create_socket_send();
+  m_rx_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<DummyLink::RxPacket>>>(
+      1000);
   m_keep_receiving= true;
   m_receive_thread=std::make_unique<std::thread>(&DummyLink::loop_rx, this);
 }
@@ -102,18 +107,19 @@ DummyLink::~DummyLink() {
 }
 
 void DummyLink::tx_radiotap(const uint8_t *packet_buff, int packet_size) {
-  const bool drop=should_drop();
+  //const bool drop=should_drop();
+  const bool drop= false;
   if(!should_drop()){
     send_data(m_fd_tx,m_fn_tx,packet_buff,packet_size);
   }
 }
 
 std::shared_ptr<std::vector<uint8_t>> DummyLink::rx_radiotap() {
-  std::lock_guard<std::mutex> guard(m_rx_mutex);
-  if(!m_rx_queue.empty()){
-    auto packet=m_rx_queue.front();
-    m_rx_queue.pop();
-    return packet;
+  std::shared_ptr<DummyLink::RxPacket> packet= nullptr;
+  static constexpr std::int64_t timeout_usecs=100*1000;
+  if(m_rx_queue->wait_dequeue_timed(packet,timeout_usecs)) {
+    // dequeued frame
+    return packet->buff;
   }
   return nullptr;
 }
@@ -123,8 +129,14 @@ void DummyLink::loop_rx() {
     auto packet= read_data(m_fd_rx);
     if(packet!= nullptr){
       //std::cout<<"Got packet"<<packet->size()<<std::endl;
-      std::lock_guard<std::mutex> guard(m_rx_mutex);
-      m_rx_queue.push(packet);
+      auto item=std::make_shared<DummyLink::RxPacket>();
+      item->buff=packet;
+      //auto success=m_rx_queue->try_enqueue(item);
+      static constexpr std::int64_t timeout_usecs=100*1000;
+      auto success=m_rx_queue->wait_enqueue_timed(item,timeout_usecs);
+      if(!success){
+        //std::cout<<"Cannot enqueue packet"<<std::endl;
+      }
     }
     //std::cout<<"ARGH"<<std::endl;
   }

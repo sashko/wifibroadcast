@@ -14,6 +14,8 @@
 #include <thread>
 #include <vector>
 
+#include "../moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
+
 // TODO: Write something that emulates a wb link (tx, rx)
 // using linux shm or similar
 class DummyLink {
@@ -28,8 +30,6 @@ private:
     int m_fd_rx;
     std::string m_fn_tx;
     std::string m_fn_rx;
-    std::queue<std::shared_ptr<std::vector<uint8_t>>> m_rx_queue;
-    std::mutex m_rx_mutex;
     std::unique_ptr<std::thread> m_receive_thread;
     void loop_rx();
     bool m_keep_receiving= true;
@@ -40,6 +40,10 @@ private:
     }
     std::mt19937 m_mt;
     std::uniform_int_distribution<> m_dist100{0,100};
+    struct RxPacket{
+      std::shared_ptr<std::vector<uint8_t>> buff;
+    };
+    std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<RxPacket>>> m_rx_queue;
 };
 
 
