@@ -354,11 +354,122 @@ int WBTxRx::loop_iter_raw(const int rx_index) {
   return nPacketsPolledUntilQueueWasEmpty;
 }
 
+void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len) {
+  if(m_options.log_all_received_packets){
+    m_console->debug("Got packet {} {}",wlan_idx,pkt_len);
+  }
+  const auto parsedPacket =
+      radiotap::rx::process_received_radiotap_packet(pkt,pkt_len);
+  if (parsedPacket == std::nullopt) {
+    // Radiotap header malformed - should never happen
+    if(m_options.advanced_debugging_rx){
+      m_console->warn("Discarding packet due to radiotap parsing error!");
+    }
+    return;
+  }
+  if (parsedPacket->radiotap_f_bad_fcs) {
+    // Bad FCS - treat as not a usable packet
+    if(m_options.advanced_debugging_rx){
+      m_console->debug("Discarding packet due to bad FCS!");
+    }
+    return;
+  }
+  //m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
+  //m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
+  //m_per_card_calc[wlan_idx]->rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
+  const uint8_t *pkt_payload = parsedPacket->payload;
+  const size_t pkt_payload_size = parsedPacket->payloadSize;
+  m_rx_stats.count_p_any++;
+  m_rx_stats.count_bytes_any+=pkt_payload_size;
+  m_rx_stats_per_card[wlan_idx].count_p_any++;
+  if(wlan_idx==0){
+    m_pollution_total_rx_packets++;
+  }
+  const auto& rx_iee80211_hdr_openhd=*((Ieee80211HeaderOpenHD*)parsedPacket->ieee80211Header);
+  //m_console->debug(parsedPacket->ieee80211Header->header_as_string());
+  if (!rx_iee80211_hdr_openhd.is_data_frame()) {
+    if(m_options.advanced_debugging_rx){
+      // we only process data frames
+      m_console->debug("Got packet that is not a data packet {}",rx_iee80211_hdr_openhd.debug_control_field());
+    }
+    return;
+  }
+  // All these edge cases should NEVER happen if using a proper tx/rx setup and the wifi driver isn't complete crap
+  if (parsedPacket->payloadSize <= 0 || parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
+    m_console->warn("Discarding packet due to no actual payload !");
+    return;
+  }
+  // Generic packet validation end - now to the openhd specific validation(s)
+  if (parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
+    m_console->warn("Discarding packet due to payload exceeding max {}",(int) parsedPacket->payloadSize);
+    return;
+  }
+  if(!rx_iee80211_hdr_openhd.has_valid_air_gnd_id()){
+    if(m_options.advanced_debugging_rx){
+      m_console->debug("Got packet that has not a valid unique id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
+    }
+    return;
+  }
+  const auto unique_air_gnd_id=rx_iee80211_hdr_openhd.get_valid_air_gnd_id();
+  const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
+  const auto unique_rx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR : OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND;
+  if(unique_air_gnd_id!=unique_rx_id){
+    // Rare case - when multiple RX-es are used, we might get a packet we sent on this air / gnd unit
+    // And on AR9271, there is a bug where the card itself gives injected packets back to us
+    if(unique_air_gnd_id==unique_tx_id){
+      // Packet (most likely) originated from this unit
+      if(m_options.advanced_debugging_rx){
+        m_console->debug("Got packet back on rx {} that was injected (bug or multi rx) {}",wlan_idx,rx_iee80211_hdr_openhd.debug_unique_ids());
+      }
+      if(wlan_idx==0){
+        m_pollution_total_rx_packets--;
+      }
+    }else{
+      if(m_options.advanced_debugging_rx){
+        m_console->debug("Got packet with invalid unique air gnd id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
+      }
+    }
+    return;
+  }
+  if(!rx_iee80211_hdr_openhd.has_valid_radio_port()){
+    if(m_options.advanced_debugging_rx){
+      m_console->debug("Got packet that has not a valid radio port{}",rx_iee80211_hdr_openhd.debug_radio_ports());
+    }
+    return;
+  }
+  const auto radio_port_raw=rx_iee80211_hdr_openhd.get_valid_radio_port();
+  const RadioPort& radio_port=*(RadioPort*)&radio_port_raw;
+
+  //m_console->debug("Packet enc:{} stream_idx:{} nonce:{}",radio_port.encrypted,radio_port.multiplex_index,nonce);
+  // Quite likely an openhd packet (I'd say pretty much 100%) but not validated yet
+  m_rx_stats.curr_n_likely_openhd_packets++;
+  const auto nonce = rx_iee80211_hdr_openhd.get_nonce();
+  if(radio_port.multiplex_index== STREAM_INDEX_SESSION_KEY_PACKETS){
+    process_session_stream_packet(
+        wlan_idx,
+        radio_port,
+        parsedPacket,
+        pkt_payload_size,
+        nonce);
+  }else{
+    process_common_stream_packet(
+        wlan_idx,
+        radio_port,
+        pkt,
+        pkt_len,
+        parsedPacket,
+        pkt_payload,
+        pkt_payload_size,
+        nonce);
+  }
+}
+
 void WBTxRx::process_session_stream_packet(
     const uint8_t wlan_idx,
     const RadioPort& radio_port,
     const std::optional<radiotap::rx::ParsedRxRadiotapPacket>& parsedPacket,
-    const size_t pkt_payload_size) {
+    const size_t pkt_payload_size,
+    uint64_t nonce) {
   // encryption bit must always be set to off on session key packets, since
   // encryption serves no purpose here
   if (radio_port.encrypted) {
@@ -376,7 +487,6 @@ void WBTxRx::process_session_stream_packet(
     }
     return;
   }
-
   const SessionKeyPacket& sessionKeyPacket =
       *((SessionKeyPacket*)parsedPacket->payload);
   const auto decrypt_res = m_decryptor->onNewPacketSessionKeyData(
@@ -387,6 +497,9 @@ void WBTxRx::process_session_stream_packet(
       m_pollution_openhd_rx_packets++;
     }
     m_likely_wrong_encryption_valid_session_keys++;
+    auto& seq_nr_for_card=m_per_card_calc.at(wlan_idx)->seq_nr;
+    seq_nr_for_card.on_new_sequence_number(nonce);
+    m_rx_stats_per_card.at(wlan_idx).curr_packet_loss=seq_nr_for_card.get_current_loss_percent();
   } else {
     m_likely_wrong_encryption_invalid_session_keys++;
   }
@@ -473,125 +586,6 @@ void WBTxRx::process_common_stream_packet(
       //m_console->debug("IEE SEQ NR PACKET LOSS {}",m_seq_nr_helper_iee80211.get_current_loss_percent());
     }
     switch_tx_card_if_needed();
-  }
-}
-
-void WBTxRx::on_new_packet(const uint8_t wlan_idx,const uint8_t *pkt,const int pkt_len) {
-  if(m_options.log_all_received_packets){
-    m_console->debug("Got packet {} {}",wlan_idx,pkt_len);
-  }
-
-  const auto parsedPacket =
-      radiotap::rx::process_received_radiotap_packet(pkt,pkt_len);
-  if (parsedPacket == std::nullopt) {
-    if(m_options.advanced_debugging_rx){
-      m_console->warn("Discarding packet due to radiotap parsing error!");
-    }
-    return;
-  }
-
-  //m_console->debug("{}",radiotap::util::radiotap_header_to_string(pkt,pkt_len));
-  //m_console->debug("{}",radiotap::rx::parsed_radiotap_to_string(parsedPacket.value()));
-  //m_per_card_calc[wlan_idx]->rf_aggregator.on_valid_openhd_packet(parsedPacket.value());
-  const uint8_t *pkt_payload = parsedPacket->payload;
-  const size_t pkt_payload_size = parsedPacket->payloadSize;
-  m_rx_stats.count_p_any++;
-  m_rx_stats.count_bytes_any+=pkt_payload_size;
-  m_rx_stats_per_card[wlan_idx].count_p_any++;
-  if(wlan_idx==0){
-    m_pollution_total_rx_packets++;
-  }
-
-  if (parsedPacket->radiotap_f_bad_fcs) {
-    if(m_options.advanced_debugging_rx){
-      m_console->debug("Discarding packet due to bad FCS!");
-    }
-    return;
-  }
-
-  const auto& rx_iee80211_hdr_openhd=*((Ieee80211HeaderOpenHD*)parsedPacket->ieee80211Header);
-  //m_console->debug(parsedPacket->ieee80211Header->header_as_string());
-  if (!rx_iee80211_hdr_openhd.is_data_frame()) {
-    if(m_options.advanced_debugging_rx){
-      // we only process data frames
-      m_console->debug("Got packet that is not a data packet {}",rx_iee80211_hdr_openhd.debug_control_field());
-    }
-    return;
-  }
-
-  // All these edge cases should NEVER happen if using a proper tx/rx setup and the wifi driver isn't complete crap
-  if (parsedPacket->payloadSize <= 0 || parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
-    m_console->warn("Discarding packet due to no actual payload !");
-    return;
-  }
-
-  // Generic packet validation end - now to the openhd specific validation(s)
-  if (parsedPacket->payloadSize > RAW_WIFI_FRAME_MAX_PAYLOAD_SIZE) {
-    m_console->warn("Discarding packet due to payload exceeding max {}",(int) parsedPacket->payloadSize);
-    return;
-  }
-
-  if(!rx_iee80211_hdr_openhd.has_valid_air_gnd_id()){
-    if(m_options.advanced_debugging_rx){
-      m_console->debug("Got packet that has not a valid unique id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
-    }
-    return;
-  }
-
-  const auto unique_air_gnd_id=rx_iee80211_hdr_openhd.get_valid_air_gnd_id();
-  const auto unique_tx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND : OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR;
-  const auto unique_rx_id= m_options.use_gnd_identifier ? OPENHD_IEEE80211_HEADER_UNIQUE_ID_AIR : OPENHD_IEEE80211_HEADER_UNIQUE_ID_GND;
-  if(unique_air_gnd_id!=unique_rx_id){
-    // Rare case - when multiple RX-es are used, we might get a packet we sent on this air / gnd unit
-    // And on AR9271, there is a bug where the card itself gives injected packets back to us
-    if(unique_air_gnd_id==unique_tx_id){
-      // Packet (most likely) originated from this unit
-      if(m_options.advanced_debugging_rx){
-        m_console->debug("Got packet back on rx {} that was injected (bug or multi rx) {}",wlan_idx,rx_iee80211_hdr_openhd.debug_unique_ids());
-      }
-      if(wlan_idx==0){
-        m_pollution_total_rx_packets--;
-      }
-    }else{
-      if(m_options.advanced_debugging_rx){
-        m_console->debug("Got packet with invalid unique air gnd id {}",rx_iee80211_hdr_openhd.debug_unique_ids());
-      }
-    }
-
-    return;
-  }
-
-  if(!rx_iee80211_hdr_openhd.has_valid_radio_port()){
-    if(m_options.advanced_debugging_rx){
-      m_console->debug("Got packet that has not a valid radio port{}",rx_iee80211_hdr_openhd.debug_radio_ports());
-    }
-    return;
-  }
-
-  const auto radio_port_raw=rx_iee80211_hdr_openhd.get_valid_radio_port();
-  const RadioPort& radio_port=*(RadioPort*)&radio_port_raw;
-
-  //m_console->debug("Packet enc:{} stream_idx:{} nonce:{}",radio_port.encrypted,radio_port.multiplex_index,nonce);
-  // Quite likely an openhd packet (I'd say pretty much 100%) but not validated yet
-  m_rx_stats.curr_n_likely_openhd_packets++;
-
-  if(radio_port.multiplex_index== STREAM_INDEX_SESSION_KEY_PACKETS){
-    process_session_stream_packet(
-        wlan_idx,
-        radio_port,
-        parsedPacket,
-        pkt_payload_size);
-  }else{
-    const auto nonce = rx_iee80211_hdr_openhd.get_nonce();
-    process_common_stream_packet(
-        wlan_idx,
-        radio_port,
-        pkt,
-        pkt_len,
-        parsedPacket,
-        pkt_payload,
-        pkt_payload_size,
-        nonce);
   }
 }
 

@@ -339,11 +339,14 @@ class WBTxRx {
   // pull data from a pcap handle which has data available
   int loop_iter_pcap(int rx_index);
   int loop_iter_raw(int rx_index);
+  // returns true if the packet has a valid layout and is aimed at this receiver
   void process_session_stream_packet(
       uint8_t wlan_idx,
       const RadioPort& radio_port,
       const std::optional<radiotap::rx::ParsedRxRadiotapPacket>& parsedPacket,
-      size_t pkt_payload_size);
+      size_t pkt_payload_size,
+      uint64_t nonce);
+  // returns true if the packet has a valid layout and is aimed at this receiver
   void process_common_stream_packet(
       uint8_t wlan_idx,
       const RadioPort& radio_port,
