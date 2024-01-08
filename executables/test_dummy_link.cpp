@@ -21,6 +21,7 @@ static std::vector<std::shared_ptr<std::vector<uint8_t>>> pull_all_buffered_pack
 static void test_dummy_socket_impl(){
   auto dummy_air=std::make_shared<DummyLink>(true);
   auto dummy_gnd=std::make_shared<DummyLink>(false);
+  dummy_gnd->set_drop_mode(0);
   auto dummy_packets1=GenericHelper::createRandomDataBuffers(20,1024,1024);
   auto dummy_packets2=GenericHelper::createRandomDataBuffers(20,1024,1024);
   for(auto& packet:dummy_packets1){

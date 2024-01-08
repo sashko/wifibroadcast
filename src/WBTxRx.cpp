@@ -858,6 +858,10 @@ RadiotapRxRfAggregator::CardKeyRfIndicators WBTxRx::get_rx_rf_stats_for_card(
   return m_per_card_calc.at(card_index)->rf_aggregator.get_current();
 }
 
+std::shared_ptr<DummyLink> WBTxRx::get_dummy_link() {
+  return m_optional_dummy_link;
+}
+
 void WBTxRx::PerCardCalculators::reset_all() {
     seq_nr.reset();
     rf_aggregator.reset();

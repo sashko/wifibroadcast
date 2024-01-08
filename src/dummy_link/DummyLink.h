@@ -24,6 +24,7 @@ public:
     ~DummyLink();
     void tx_radiotap(const uint8_t* packet_buff, int packet_size);
     std::shared_ptr<std::vector<uint8_t>> rx_radiotap();
+    void set_drop_mode(int drop_mode);
 private:
     const bool m_is_air;
     int m_fd_tx;
@@ -34,7 +35,7 @@ private:
     void loop_rx();
     bool m_keep_receiving= true;
     // Drop packets with a probability of 5%
-    bool should_drop();
+    bool should_drop_packet();
     int next_random_number_0_100(){
       return m_dist100(m_mt);
     }
@@ -44,6 +45,7 @@ private:
       std::shared_ptr<std::vector<uint8_t>> buff;
     };
     std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<RxPacket>>> m_rx_queue;
+    std::atomic_int m_drop_mode=0;
 };
 
 

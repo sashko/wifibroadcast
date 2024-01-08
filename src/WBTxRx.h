@@ -364,6 +364,8 @@ class WBTxRx {
   // Adjustment of which card is used for injecting packets in case there are multiple RX card(s)
   // (Of all cards currently receiving data, find the one with the highest reported dBm)
   void switch_tx_card_if_needed();
+  // For development only
+  std::shared_ptr<DummyLink> get_dummy_link();
  private:
   // These are 'extra' for calculating some channel pollution value
   uint32_t m_pollution_total_rx_packets=0;
@@ -374,7 +376,7 @@ class WBTxRx {
   uint32_t m_likely_wrong_encryption_valid_session_keys=0;
   std::chrono::steady_clock::time_point m_likely_wrong_encryption_last_check=std::chrono::steady_clock::now();
   uint32_t m_likely_wrong_encryption_invalid_session_keys=0;
-  std::unique_ptr<DummyLink> m_optional_dummy_link= nullptr;
+  std::shared_ptr<DummyLink> m_optional_dummy_link= nullptr;
 };
 
 static std::ostream& operator<<(std::ostream& strm, const WBTxRx::TxStats& data){

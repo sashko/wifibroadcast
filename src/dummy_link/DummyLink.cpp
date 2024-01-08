@@ -107,9 +107,8 @@ DummyLink::~DummyLink() {
 }
 
 void DummyLink::tx_radiotap(const uint8_t *packet_buff, int packet_size) {
-  //const bool drop=should_drop();
-  const bool drop= false;
-  if(!should_drop()){
+  const bool drop= should_drop_packet();
+  if(!drop){
     send_data(m_fd_tx,m_fn_tx,packet_buff,packet_size);
   }
 }
@@ -142,10 +141,15 @@ void DummyLink::loop_rx() {
   }
 }
 
-bool DummyLink::should_drop() {
+bool DummyLink::should_drop_packet() {
+  if(m_drop_mode==0)return false;
   int rand=next_random_number_0_100();
-  if(rand <=5){
+  if(rand <=m_drop_mode){
     return true;
   }
   return false;
+}
+
+void DummyLink::set_drop_mode(int drop_mode) {
+  m_drop_mode=drop_mode;
 }
