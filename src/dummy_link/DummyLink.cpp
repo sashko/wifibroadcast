@@ -62,7 +62,7 @@ static int create_socket_send(){
 static void send_data(int fd,const std::string& name,const uint8_t* data,int data_len){
   auto address= create_adr(name);
   if(sendto(fd, data,data_len, 0, (struct sockaddr *)&address, sizeof(sockaddr_un)) !=data_len) {
-    std::cout << "Client: Cannot send" << std::endl;
+    //std::cout << "Client: Cannot send" << std::endl;
   }
   //std::cout<<"Sent:"<<data_len<<std::endl;
 }
