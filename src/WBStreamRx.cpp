@@ -89,6 +89,9 @@ void WBStreamRx::on_new_session() {
   if(m_fec_decoder){
     m_fec_decoder->reset_rx_queue();
   }
+  if(m_fec_disabled_decoder){
+    m_fec_disabled_decoder->reset_packets_map();
+  }
   reset_stream_stats();
 }
 

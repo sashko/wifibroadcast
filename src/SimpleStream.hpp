@@ -107,6 +107,10 @@ class FECDisabledDecoder {
       m_known_sequence_numbers.erase(m_known_sequence_numbers.begin());
     }
   }
+  //
+  void reset_packets_map(){
+    m_known_sequence_numbers.clear();
+  }
 };
 
 #endif  // WIFIBROADCAST_SIMPLESTREAM_HPP
