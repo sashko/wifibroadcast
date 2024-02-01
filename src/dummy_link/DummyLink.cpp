@@ -90,10 +90,11 @@ DummyLink::DummyLink(bool is_air):m_is_air(is_air) {
 }
 
 DummyLink::~DummyLink() {
-  close(m_fd_rx);
   m_keep_receiving= false;
+  close(m_fd_rx);
   m_receive_thread->join();
   m_receive_thread= nullptr;
+  close(m_fd_tx);
 }
 
 void DummyLink::tx_radiotap(const uint8_t *packet_buff, int packet_size) {
