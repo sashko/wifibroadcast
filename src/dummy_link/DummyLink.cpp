@@ -81,7 +81,7 @@ DummyLink::DummyLink(bool is_air):m_is_air(is_air) {
     m_fn_rx="air";
   }
   m_fd_rx=create_socket_read(m_fn_rx);
-  //SocketHelper::set_socket_send_rcv_timeout(m_fd_rx,std::chrono::milliseconds(10), true);
+  SocketHelper::set_socket_send_rcv_timeout(m_fd_rx,std::chrono::milliseconds(1000), true);
   m_fd_tx=create_socket_send();
   m_rx_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<DummyLink::RxPacket>>>(
       1000);
