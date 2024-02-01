@@ -91,6 +91,7 @@ DummyLink::DummyLink(bool is_air):m_is_air(is_air) {
 
 DummyLink::~DummyLink() {
   m_keep_receiving= false;
+  shutdown(m_fd_rx, SHUT_RDWR);
   close(m_fd_rx);
   m_receive_thread->join();
   m_receive_thread= nullptr;
