@@ -71,17 +71,6 @@ static void send_data(int fd,const std::string& name,const uint8_t* data,int dat
 
 static constexpr auto MAX_MTU_INCLUDING_HEADER=2000;
 
-static std::shared_ptr<std::vector<uint8_t>> read_data(int fd){
-  auto buff=std::make_shared<std::vector<uint8_t>>();
-  buff->resize(MAX_MTU_INCLUDING_HEADER);
-  auto size=recvfrom(fd, buff->data(), buff->size(), MSG_DONTWAIT, NULL, NULL);
-  if(size>0){
-    buff->resize(size);
-    return buff;
-  }
-  return nullptr;
-}
-
 DummyLink::DummyLink(bool is_air):m_is_air(is_air) {
   if(m_is_air){
     m_fn_tx="air";
@@ -101,6 +90,7 @@ DummyLink::DummyLink(bool is_air):m_is_air(is_air) {
 }
 
 DummyLink::~DummyLink() {
+  close(m_fd_rx);
   m_keep_receiving= false;
   m_receive_thread->join();
   m_receive_thread= nullptr;
@@ -124,9 +114,13 @@ std::shared_ptr<std::vector<uint8_t>> DummyLink::rx_radiotap() {
 }
 
 void DummyLink::loop_rx() {
+  auto read_buffer=std::make_shared<std::vector<uint8_t>>(MAX_MTU_INCLUDING_HEADER);
   while (m_keep_receiving){
-    auto packet= read_data(m_fd_rx);
-    if(packet!= nullptr){
+    //auto packet= read_data(m_fd_rx);
+    //auto size=recvfrom(fd, buff->data(), buff->size(), MSG_DONTWAIT, NULL, NULL);
+    auto size = recv(m_fd_rx, read_buffer->data(), read_buffer->size(), MSG_WAITALL);
+    if(size>0){
+      auto packet=std::make_shared<std::vector<uint8_t>>(read_buffer->data(),read_buffer->data()+size);
       //std::cout<<"Got packet"<<packet->size()<<std::endl;
       auto item=std::make_shared<DummyLink::RxPacket>();
       item->buff=packet;
