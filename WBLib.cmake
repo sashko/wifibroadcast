@@ -63,6 +63,14 @@ set(WIFIBROADCAST_FEC_OPTIMIZATION_FLAGS_ARM_NEON -mfpu=neon -march=armv7-a -mar
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-mssse3" COMPILER_SUPPORTS_X86_SSSE3)
 check_cxx_compiler_flag("-mfpu=neon" COMPILER_SUPPORTS_NEON)
+# ARMv8 always supports neon
+if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+    # ARMv8 supports asimd aka neon
+    message(STATUS "ARMV8 / ASIMD")
+    set(COMPILER_SUPPORTS_ASIMD true)
+endif()
+
+
 # SSSE3 if supported and option WB_ENABLE_SIMD_OPTIMIZATIONS is true
 if(COMPILER_SUPPORTS_X86_SSSE3)
     message(STATUS "Compiler supports SSSE3")
