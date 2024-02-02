@@ -76,6 +76,9 @@ class WBStreamTx {
   // experimental ;)
   bool try_enqueue_frame(std::shared_ptr<std::vector<uint8_t>> frame,int max_block_size,int fec_overhead_perc,
                          std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
+  // Temporary - drop all currently enqueued blocks
+  // atomic behaviour - after this call returns, there are quaranteed no more blocks in the queue
+  int try_remove_queued_blocks();
 
   // statistics
   struct Statistics{

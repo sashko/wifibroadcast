@@ -89,6 +89,19 @@ bool WBStreamTx::try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8
   }
   return res;
 }
+
+int WBStreamTx::try_remove_queued_blocks() {
+  int n_dropped_items=0;
+  for(int i=0;i<options.block_data_queue_size;i++){
+    std::shared_ptr<EnqueuedBlock> item= nullptr;
+    if(m_block_queue->try_dequeue(item)){
+      // Discard item
+      n_dropped_items++;
+    }
+  }
+  return n_dropped_items;
+}
+
 bool WBStreamTx::try_enqueue_frame(
     std::shared_ptr<std::vector<uint8_t>> frame, int max_block_size,
     int fec_overhead_perc,
