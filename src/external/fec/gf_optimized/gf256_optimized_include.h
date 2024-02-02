@@ -12,10 +12,6 @@
 #ifndef WIFIBROADCAST_GF256_SIMPLE_INCLUDE_H
 #define WIFIBROADCAST_GF256_SIMPLE_INCLUDE_H
 
-// we always use the flat table - either as fallback or for chunks not of size X
-#include "gf256_flat_table.h"
-#include "alignment_check.h"
-
 /*#ifdef __arm__
 #define FEC_GF256_USE_ARM_NEON
 #endif*/
@@ -42,12 +38,19 @@
 
 // include the optimized methods if enabled
 #ifdef FEC_GF256_USE_ARM_NEON
+#ifndef __arm__
+#define __arm__
+#endif
 #include "gf256_neon.h"
 #endif
 
 #ifdef FEC_GF256_USE_X86_SSSE3
 #include "gf256_ssse3.h"
 #endif
+
+// we always use the flat table - either as fallback or for chunks not of size X
+#include "gf256_flat_table.h"
+#include "alignment_check.h"
 
 #include <iostream>
 #include <cassert>

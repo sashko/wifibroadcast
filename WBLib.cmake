@@ -68,7 +68,9 @@ if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
     # ARMv8 supports asimd aka neon
     message(STATUS "ARMV8 / ASIMD")
     set(COMPILER_SUPPORTS_ASIMD true)
-endif()
+else ()
+    set(COMPILER_SUPPORTS_ASIMD false)
+endif ()
 
 
 # SSSE3 if supported and option WB_ENABLE_SIMD_OPTIMIZATIONS is true
@@ -93,6 +95,13 @@ if(COMPILER_SUPPORTS_NEON)
         target_compile_definitions(wifibroadcast PUBLIC WIFIBROADCAST_HAS_ARM_NEON)
     endif()
 endif()
+if(COMPILER_SUPPORTS_ASIMD)
+    message(STATUS "Compiler supports ASIMD")
+    if(WB_ENABLE_SIMD_OPTIMIZATIONS)
+        message(STATUS "WB compile with ASIMD")
+        target_compile_definitions(wifibroadcast PUBLIC WIFIBROADCAST_HAS_ARM_NEON)
+    endif ()
+endif ()
 ## FEC Optimizations end ---------------------------------
 
 # We need pcap and libsodium to build wifibroadcast
