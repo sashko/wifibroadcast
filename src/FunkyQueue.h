@@ -25,16 +25,6 @@ class FunkyQueue {
     queue.push(element);
     cv.notify_one();
   }
-  // Removes all currently enqueued elements, then enqueues the given element.
-  // Return: N of elements removed.
-  int remove_and_enqueue(T element){
-    std::unique_lock<std::mutex> lk(mtx);
-    const int count_removed=queue.size();
-    while (!queue.empty())queue.pop();
-    queue.push(element);
-    cv.notify_one();
-    return count_removed;
-  }
   // If there is enough space on the queue, enqueue the given element and return 0;
   // Otherwise, remove all elements currently in the queue, then enqueue the given element,
   // and return the n of removed elements
@@ -56,6 +46,11 @@ class FunkyQueue {
   // Wait up to timeout until element is available.
   std::optional<T> wait_dequeue_timed(std::chrono::nanoseconds timeout){
     std::unique_lock<std::mutex> ul(mtx);
+    if(!queue.empty()){
+      auto tmp=queue.front();
+      queue.pop();
+      return tmp;
+    }
     const auto res=cv.wait_for(ul,timeout,[this](){
       return !queue.empty();
     });
