@@ -11,7 +11,11 @@
 #include <queue>
 #include <optional>
 
-
+/**
+ * Thread-safe queue for the openhd use case where there is one producer thread (encoder) and one consumer
+ * thread (link).
+ * Funky because the operations are a bit funky (but make sense in this use case).
+ */
 template<class T>
 class FunkyQueue {
  public:
@@ -56,13 +60,14 @@ class FunkyQueue {
     const auto res=cv.wait_for(ul,timeout,[this](){
       return !queue.empty();
     });
-    if(res){
-      assert(!queue.empty());
-      auto tmp=queue.front();
-      queue.pop();
-      return tmp;
+    if(!res){
+      // Timeout
+      return std::nullopt;
     }
-    return std::nullopt;
+    assert(!queue.empty());
+    auto tmp=queue.front();
+    queue.pop();
+    return tmp;
   }
   int get_current_size(){
     std::unique_lock<std::mutex> ul(mtx);
