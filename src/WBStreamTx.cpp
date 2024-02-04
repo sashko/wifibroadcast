@@ -60,11 +60,23 @@ bool WBStreamTx::try_enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet
   const bool res= m_packet_queue->try_enqueue(item);
   if(!res){
     m_n_dropped_packets++;
-    // TODO not exactly the correct solution - include dropped packets in the seq nr, such that they are included
-    // in the loss (perc) on the ground
-    //m_curr_seq_nr++;
   }
   return res;
+}
+
+int WBStreamTx::enqueue_packet_dropping(
+    std::shared_ptr<std::vector<uint8_t>> packet, int n_injections) {
+  assert(!options.enable_fec);
+  m_n_input_packets++;
+  m_count_bytes_data_provided+=packet->size();
+  auto item=std::make_shared<EnqueuedPacket>();
+  item->data=std::move(packet);
+  item->n_injections=n_injections;
+  const int n_dropped= m_packet_queue->enqueue_or_clear_enqueue(item);
+  if(n_dropped>0){
+    m_n_dropped_packets+=n_dropped;
+  }
+  return n_dropped;
 }
 
 bool WBStreamTx::try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,int max_block_size, int fec_overhead_perc,
@@ -263,4 +275,3 @@ int WBStreamTx::get_tx_queue_available_size_approximate() {
   if(options.enable_fec)return m_block_queue->get_current_size();
   return m_packet_queue->get_current_size();
 }
-

@@ -10,6 +10,7 @@
 #include <mutex>
 #include <queue>
 #include <optional>
+#include <cassert>
 
 /**
  * Thread-safe queue for the openhd use case where there is one producer thread (encoder) and one consumer

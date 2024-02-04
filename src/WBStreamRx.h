@@ -5,8 +5,7 @@
 #ifndef WIFIBROADCAST_WBSTREAMRX_H
 #define WIFIBROADCAST_WBSTREAMRX_H
 
-#include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
-#include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
+#include "FunkyQueue.h"
 #include "fec/FEC.h"
 #include "HelperSources/Helper.hpp"
 #include "HelperSources/SequenceNumberDebugger.hpp"
@@ -101,7 +100,8 @@ class WBStreamRx {
   struct EnqueuedPacket{
     std::shared_ptr<std::vector<uint8_t>> data;
   };
-  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>> m_packet_queue;
+  using PacketQueueType=FunkyQueue<std::shared_ptr<EnqueuedPacket>>;
+  std::unique_ptr<PacketQueueType> m_packet_queue;
   bool m_process_data_thread_run=true;
   std::unique_ptr<std::thread> m_process_data_thread;
   void loop_process_data();

@@ -65,6 +65,9 @@ class WBStreamTx {
    * @return true on success (space in the packet queue), false otherwise
    */
   bool try_enqueue_packet(std::shared_ptr<std::vector<uint8_t>> packet,int n_injections=1);
+  // OpenHD - if the telemetry queue runs full, instead of dropping the most recent packet,
+  // we clear all previous packets, then enqueue the new one.
+  int enqueue_packet_dropping(std::shared_ptr<std::vector<uint8_t>> packet,int n_injections=1);
   /**
    * Enqueue a block (most likely a frame) to be processed, FEC needs to be enabled in this mode.
    * Guaranteed to return immediately.
@@ -144,11 +147,9 @@ class WBStreamTx {
   };
   // Used if fec is disabled, for telemetry data
   using PacketQueueType=FunkyQueue<std::shared_ptr<EnqueuedPacket>>;
-  //std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>> m_packet_queue;
   std::unique_ptr<PacketQueueType> m_packet_queue;
   // Used if fec is enabled, for video data
   using BlockQueueType=FunkyQueue<std::shared_ptr<EnqueuedBlock>>;
-  //std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>> m_block_queue;
   std::unique_ptr<BlockQueueType> m_block_queue;
   // The thread that consumes the provided packets or blocks, set to sched param realtime
   std::unique_ptr<std::thread> m_process_data_thread;

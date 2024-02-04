@@ -40,7 +40,7 @@ WBStreamRx::WBStreamRx(std::shared_ptr<WBTxRx> txrx,Options options1)
   auto handler=std::make_shared<WBTxRx::StreamRxHandler>(m_options.radio_port,cb_packet,cb_sesssion);
   m_txrx->rx_register_stream_handler(handler);
   if(m_options.enable_threading){
-    m_packet_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>>(m_options.packet_queue_size);
+    m_packet_queue=std::make_unique<PacketQueueType>(m_options.packet_queue_size);
     m_process_data_thread_run=true;
     m_process_data_thread=std::make_unique<std::thread>(&WBStreamRx::loop_process_data, this);
   }
@@ -99,7 +99,9 @@ void WBStreamRx::loop_process_data() {
   std::shared_ptr<EnqueuedPacket> packet;
   static constexpr std::int64_t timeout_usecs=1000*1000;
   while (m_process_data_thread_run) {
-    if (m_packet_queue->wait_dequeue_timed(packet, timeout_usecs)) {
+    auto opt_packet=m_packet_queue->wait_dequeue_timed(std::chrono::milliseconds(100));
+    if(opt_packet.has_value()){
+      auto packet=opt_packet.value();
       process_queued_packet(*packet);
     }
   }
