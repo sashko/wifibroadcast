@@ -68,6 +68,11 @@ static void test_wb_tx_rx_dummy(){
     tx_rx_air->tx_inject_packet(5,packet.data(),packet.size(),radiotap_header_holder_tx->thread_safe_get(), true);
     std::this_thread::sleep_for(std::chrono::milliseconds (100));
   }
+  // Sleep a bit to make sure all queues are empty
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  const auto rx_stats=tx_rx_gnd->get_rx_stats();
+  // RX should have received all the packets
+  assert(rx_stats.count_p_valid==dummy_packets1.size());
   tx_rx_air->stop_receiving();
   tx_rx_gnd->stop_receiving();
 }

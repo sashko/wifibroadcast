@@ -83,7 +83,7 @@ DummyLink::DummyLink(bool is_air):m_is_air(is_air) {
   m_fd_rx=create_socket_read(m_fn_rx);
   SocketHelper::set_socket_send_rcv_timeout(m_fd_rx,std::chrono::milliseconds(1000), true);
   m_fd_tx=create_socket_send();
-  m_rx_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<DummyLink::RxPacket>>>(
+  m_rx_queue=std::make_unique<RxPacketQueueType>(
       1000);
   m_keep_receiving= true;
   m_receive_thread=std::make_unique<std::thread>(&DummyLink::loop_rx, this);
@@ -108,9 +108,10 @@ void DummyLink::tx_radiotap(const uint8_t *packet_buff, int packet_size) {
 std::shared_ptr<std::vector<uint8_t>> DummyLink::rx_radiotap() {
   std::shared_ptr<DummyLink::RxPacket> packet= nullptr;
   static constexpr std::int64_t timeout_usecs=100*1000;
-  if(m_rx_queue->wait_dequeue_timed(packet,timeout_usecs)) {
+  auto opt_packet=m_rx_queue->wait_dequeue_timed(std::chrono::milliseconds(100));
+  if(opt_packet.has_value()){
     // dequeued frame
-    return packet->buff;
+    return opt_packet.value()->buff;
   }
   return nullptr;
 }
@@ -126,11 +127,9 @@ void DummyLink::loop_rx() {
       //std::cout<<"Got packet"<<packet->size()<<std::endl;
       auto item=std::make_shared<DummyLink::RxPacket>();
       item->buff=packet;
-      //auto success=m_rx_queue->try_enqueue(item);
-      static constexpr std::int64_t timeout_usecs=100*1000;
-      auto success=m_rx_queue->wait_enqueue_timed(item,timeout_usecs);
+      const auto success=m_rx_queue->try_enqueue(item);
       if(!success){
-        //std::cout<<"Cannot enqueue packet"<<std::endl;
+        // Should never happen
       }
     }
     //std::cout<<"ARGH"<<std::endl;

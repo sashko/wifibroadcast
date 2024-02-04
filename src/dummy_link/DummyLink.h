@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-
+#include "../FunkyQueue.h"
 #include "../moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
 
 // TODO: Write something that emulates a wb link (tx, rx)
@@ -44,7 +44,8 @@ private:
     struct RxPacket{
       std::shared_ptr<std::vector<uint8_t>> buff;
     };
-    std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<RxPacket>>> m_rx_queue;
+    using RxPacketQueueType=FunkyQueue<std::shared_ptr<RxPacket>>;
+    std::unique_ptr<RxPacketQueueType> m_rx_queue;
     std::atomic_int m_drop_mode=0;
 };
 
