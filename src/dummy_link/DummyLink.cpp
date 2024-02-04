@@ -6,8 +6,8 @@
 
 #include <fcntl.h>
 #include <memory.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
