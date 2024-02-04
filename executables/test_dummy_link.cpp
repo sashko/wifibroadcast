@@ -66,7 +66,7 @@ static void test_wb_tx_rx_dummy(){
 
   for(auto& packet:dummy_packets1){
     tx_rx_air->tx_inject_packet(5,packet.data(),packet.size(),radiotap_header_holder_tx->thread_safe_get(), true);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds (100));
   }
   tx_rx_air->stop_receiving();
   tx_rx_gnd->stop_receiving();

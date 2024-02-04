@@ -25,4 +25,6 @@ jobs:
         run: |
           cd build
           ./unit_test
+          ./test_queue
+          sudo ./test_dummy_link
 

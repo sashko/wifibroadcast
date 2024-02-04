@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <thread>
+#include <atomic>
 
 #include "../src/FunkyQueue.h"
 #include "../src/HelperSources/Helper.hpp"
@@ -55,9 +56,10 @@ int main(int argc, char *const *argv) {
 
   // Now queue is empty again
   int poll_thread_n_dequeued_packets=0;
-  auto poll_thread=std::make_unique<std::thread>([&funky_queue,&poll_thread_n_dequeued_packets]{
+  std::atomic_bool poll_thread_run= true;
+  auto poll_thread=std::make_unique<std::thread>([&funky_queue,&poll_thread_n_dequeued_packets,&poll_thread_run]{
     const auto begin=std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now()-begin<std::chrono::seconds(10)){
+    while (poll_thread_run){
       auto tmp=funky_queue->wait_dequeue_timed(std::chrono::milliseconds(100));
       if(tmp.has_value()){
         auto& dequeued=*tmp.value();
@@ -66,12 +68,14 @@ int main(int argc, char *const *argv) {
       }
     }
   });
-  for(int i=0;i<10;i++){
+  for(int i=0;i<100;i++){
     auto packet=make_test_element();
     assert(funky_queue->try_enqueue(packet)== true);
     // During this time the poll_thread should dequeue the packet
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(33));
   }
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  poll_thread_run= false;
   poll_thread->join();
   assert(funky_queue->get_current_size()==0);
 
