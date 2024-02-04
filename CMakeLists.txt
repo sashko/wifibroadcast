@@ -45,6 +45,9 @@ target_link_libraries(test_listen PRIVATE ${WB_TARGET_LINK_LIBRARIES})
 add_executable(test_dummy_link executables/test_dummy_link.cpp)
 target_link_libraries(test_dummy_link PRIVATE ${WB_TARGET_LINK_LIBRARIES})
 
+add_executable(test_queue executables/test_queue.cpp)
+target_link_libraries(test_queue PRIVATE ${WB_TARGET_LINK_LIBRARIES})
+
 # When it is a static library, we don't need to install it.
 # But if it is a shared library, we need to install it.
 #install(TARGETS wifibroadcast DESTINATION lib)

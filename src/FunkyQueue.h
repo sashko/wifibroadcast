@@ -24,6 +24,7 @@ class FunkyQueue {
     }
     queue.push(element);
     cv.notify_one();
+    return true;
   }
   // If there is enough space on the queue, enqueue the given element and return 0;
   // Otherwise, remove all elements currently in the queue, then enqueue the given element,
@@ -44,7 +45,8 @@ class FunkyQueue {
     return 0;
   }
   // Wait up to timeout until element is available.
-  std::optional<T> wait_dequeue_timed(std::chrono::nanoseconds timeout){
+  template<typename Rep, typename Period>
+  std::optional<T> wait_dequeue_timed(std::chrono::duration<Rep, Period> const& timeout){
     std::unique_lock<std::mutex> ul(mtx);
     if(!queue.empty()){
       auto tmp=queue.front();
@@ -54,13 +56,17 @@ class FunkyQueue {
     const auto res=cv.wait_for(ul,timeout,[this](){
       return !queue.empty();
     });
-    if(res== std::cv_status::no_timeout){
+    if(res){
       assert(!queue.empty());
       auto tmp=queue.front();
       queue.pop();
       return tmp;
     }
     return std::nullopt;
+  }
+  int get_current_size(){
+    std::unique_lock<std::mutex> ul(mtx);
+    return queue.size();
   }
 private:
  const int m_capacity;
