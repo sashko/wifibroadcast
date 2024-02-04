@@ -9,8 +9,6 @@
 #include <thread>
 #include <variant>
 
-#include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
-#include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
 #include "FunkyQueue.h"
 #include "fec/FEC.h"
 #include "SimpleStream.hpp"
