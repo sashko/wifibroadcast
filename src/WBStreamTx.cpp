@@ -96,7 +96,26 @@ int WBStreamTx::enqueue_block_dropping(
     std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,
     int max_block_size, int fec_overhead_perc,
     std::chrono::steady_clock::time_point creation_time) {
-  return 0;
+  assert(options.enable_fec);
+  m_n_input_packets+=fragments.size();
+  for(const auto& fragment:fragments){
+    if (fragment->empty() || fragment->size() > FEC_PACKET_MAX_PAYLOAD_SIZE) {
+      m_console->warn("Fed fragment with incompatible size:{}",fragment->size());
+      return false;
+    }
+    m_count_bytes_data_provided+=fragment->size();
+  }
+  auto item=std::make_shared<EnqueuedBlock>();
+  item->fragments=fragments;
+  item->max_block_size=max_block_size;
+  item->fec_overhead_perc=fec_overhead_perc;
+  item->creation_time=creation_time;
+  const int ret=m_block_queue->enqueue_or_clear_enqueue(item);
+  if(ret!=0){
+    m_n_dropped_packets+=fragments.size();
+    m_n_dropped_frames+=ret;
+  }
+  return ret;
 }
 
 
