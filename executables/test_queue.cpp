@@ -63,8 +63,11 @@ int main(int argc, char *const *argv) {
       auto tmp=funky_queue->wait_dequeue_timed(std::chrono::milliseconds(100));
       if(tmp.has_value()){
         auto& dequeued=*tmp.value();
-        std::cout<<"Got element, delay:"<<MyTimeHelper::R(std::chrono::steady_clock::now()-dequeued.tp)<<std::endl;
+        const auto delta_enqueue_dequeue=std::chrono::steady_clock::now()-dequeued.tp;
+        std::cout<<"Got element, delay:"<<MyTimeHelper::R(delta_enqueue_dequeue)<<std::endl;
         poll_thread_n_dequeued_packets++;
+        // As long as the OS is not overloaded / has issues scheduling tasks ...
+        assert(delta_enqueue_dequeue<=std::chrono::milliseconds(10));
       }
     }
   });
