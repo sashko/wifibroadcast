@@ -11,6 +11,7 @@
 
 #include "moodycamel/concurrentqueue/blockingconcurrentqueue.h"
 #include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
+#include "FunkyQueue.h"
 #include "fec/FEC.h"
 #include "SimpleStream.hpp"
 #include "HelperSources/TimeHelper.hpp"
@@ -76,9 +77,10 @@ class WBStreamTx {
   // experimental ;)
   bool try_enqueue_frame(std::shared_ptr<std::vector<uint8_t>> frame,int max_block_size,int fec_overhead_perc,
                          std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
-  // Temporary - drop all currently enqueued blocks
-  // atomic behaviour - after this call returns, there are quaranteed no more blocks in the queue
-  int try_remove_queued_blocks();
+  // Temporary - for IDR frame(s)
+  // Returns the n of dropped elements, or 0 if no elements were dropped
+  int enqueue_block_dropping(std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,int max_block_size,int fec_overhead_perc,
+                             std::chrono::steady_clock::time_point creation_time=std::chrono::steady_clock::now());
 
   // statistics
   struct Statistics{
@@ -141,9 +143,13 @@ class WBStreamTx {
     std::shared_ptr<std::vector<uint8_t>> frame= nullptr; // replaces fragments
   };
   // Used if fec is disabled, for telemetry data
-  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>> m_packet_queue;
+  using PacketQueueType=FunkyQueue<std::shared_ptr<EnqueuedPacket>>;
+  //std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>> m_packet_queue;
+  std::unique_ptr<PacketQueueType> m_packet_queue;
   // Used if fec is enabled, for video data
-  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>> m_block_queue;
+  using BlockQueueType=FunkyQueue<std::shared_ptr<EnqueuedBlock>>;
+  //std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>> m_block_queue;
+  std::unique_ptr<BlockQueueType> m_block_queue;
   // The thread that consumes the provided packets or blocks, set to sched param realtime
   std::unique_ptr<std::thread> m_process_data_thread;
   bool m_process_data_thread_run=true;

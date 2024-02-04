@@ -23,14 +23,16 @@ WBStreamTx::WBStreamTx(std::shared_ptr<WBTxRx> txrx,Options options1,std::shared
   assert(m_console);
   m_console->info("WBTransmitter radio_port: {} fec:{}", options.radio_port, options.enable_fec ? "Y" : "N");
   if(options.enable_fec){
-    m_block_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>>(options.block_data_queue_size);
+    //m_block_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedBlock>>>(options.block_data_queue_size);
+    m_block_queue=std::make_unique<BlockQueueType>(options.block_data_queue_size);
     m_fec_encoder = std::make_unique<FECEncoder>();
     auto cb=[this](const uint8_t* packet,int packet_len){
       send_packet(packet,packet_len);
     };
     m_fec_encoder->m_out_cb =cb;
   }else{
-    m_packet_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>>(options.packet_data_queue_size);
+    //m_packet_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedPacket>>>(options.packet_data_queue_size);
+    m_packet_queue=std::make_unique<PacketQueueType>(options.packet_data_queue_size);
     m_fec_disabled_encoder = std::make_unique<FECDisabledEncoder>();
     auto cb=[this](const uint8_t* packet,int packet_len){
       send_packet(packet,packet_len);
@@ -90,17 +92,13 @@ bool WBStreamTx::try_enqueue_block(std::vector<std::shared_ptr<std::vector<uint8
   return res;
 }
 
-int WBStreamTx::try_remove_queued_blocks() {
-  int n_dropped_items=0;
-  for(int i=0;i<options.block_data_queue_size;i++){
-    std::shared_ptr<EnqueuedBlock> item= nullptr;
-    if(m_block_queue->try_dequeue(item)){
-      // Discard item
-      n_dropped_items++;
-    }
-  }
-  return n_dropped_items;
+int WBStreamTx::enqueue_block_dropping(
+    std::vector<std::shared_ptr<std::vector<uint8_t>>> fragments,
+    int max_block_size, int fec_overhead_perc,
+    std::chrono::steady_clock::time_point creation_time) {
+  return 0;
 }
+
 
 bool WBStreamTx::try_enqueue_frame(
     std::shared_ptr<std::vector<uint8_t>> frame, int max_block_size,
@@ -159,9 +157,10 @@ void WBStreamTx::loop_process_data() {
   }
   static constexpr std::int64_t timeout_usecs=100*1000;
   if(options.enable_fec){
-    std::shared_ptr<EnqueuedBlock> frame= nullptr;
     while (m_process_data_thread_run){
-      if(m_block_queue->wait_dequeue_timed(frame,timeout_usecs)){
+      auto opt_frame=m_block_queue->wait_dequeue_timed(std::chrono::milliseconds(100));
+      if(opt_frame.has_value()){
+        auto frame=opt_frame.value();
         // dequeued frame
         m_queue_time_calculator.add(std::chrono::steady_clock::now()-frame->enqueue_time_point);
         if(m_queue_time_calculator.get_delta_since_last_reset()>std::chrono::seconds(1)){
@@ -185,7 +184,9 @@ void WBStreamTx::loop_process_data() {
   }else{
     std::shared_ptr<EnqueuedPacket> packet;
     while (m_process_data_thread_run){
-      if(m_packet_queue->wait_dequeue_timed(packet,timeout_usecs)){
+      auto opt_packet=m_packet_queue->wait_dequeue_timed(std::chrono::milliseconds(100));
+      if(opt_packet.has_value()){
+        auto packet=opt_packet.value();
         m_queue_time_calculator.add(std::chrono::steady_clock::now()-packet->enqueue_time_point);
         if(m_queue_time_calculator.get_delta_since_last_reset()>std::chrono::seconds(1)){
           if(options.log_time_spent_in_atomic_queue){
@@ -236,7 +237,11 @@ void WBStreamTx::send_packet(const uint8_t* packet, int packet_len) {
   m_n_injected_packets++;
   m_count_bytes_data_injected+=packet_len;
 }
+
 int WBStreamTx::get_tx_queue_available_size_approximate() {
-  const auto ret=options.enable_fec ? m_block_queue->size_approx() : m_packet_queue->size_approx();
-  return (int)ret;
+  //const auto ret=options.enable_fec ? m_block_queue->size_approx() : m_packet_queue->size_approx();
+  //return (int)ret;
+  if(options.enable_fec)return m_block_queue->get_current_size();
+  return m_packet_queue->get_current_size();
 }
+
