@@ -55,56 +55,56 @@
 #include <iostream>
 #include <cassert>
 
-// computes dst[] = c * wifibroadcast[]
+// computes dst[] = c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_mul_optimized(uint8_t *dst, const uint8_t *src, gf c, const int sz) {
 #ifdef FEC_GF256_USE_X86_SSSE3
   const int sizeSlow = sz % 16;
   const int sizeFast = sz - sizeSlow;
   if(sizeFast>0){
-      mulrc256_shuffle_ssse3(dst,src,c,sizeFast);
+    mulrc256_shuffle_ssse3(dst,src,c,sizeFast);
   }
   if(sizeSlow>0){
-      mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
   }
 #elif defined(FEC_GF256_USE_ARM_NEON)
   const int sizeSlow = sz % 8;
   const int sizeFast = sz - sizeSlow;
   if(sizeFast>0){
-      mulrc256_shuffle_neon_64(dst,wifibroadcast,c,sizeFast);
+    mulrc256_shuffle_neon_64(dst,src,c,sizeFast);
   }
   if(sizeSlow>0){
-      mulrc256_flat_table(&dst[sizeFast],&wifibroadcast[sizeFast],c,sizeSlow);
+    mulrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
   }
 #else
-  mulrc256_flat_table(dst, wifibroadcast, c, sz);
+  mulrc256_flat_table(dst, src, c, sz);
 #endif
 }
 
-// computes dst[] = dst[] + c * wifibroadcast[]
+// computes dst[] = dst[] + c * src[]
 // where '+', '*' are gf256 operations
 static void gf256_madd_optimized(uint8_t *dst, const uint8_t *src, gf c, const int sz) {
 #ifdef FEC_GF256_USE_X86_SSSE3
   const int sizeSlow = sz % 16;
   const int sizeFast = sz - sizeSlow;
   if(sizeFast>0){
-      maddrc256_shuffle_ssse3(dst,src,c,sizeFast);
+    maddrc256_shuffle_ssse3(dst,src,c,sizeFast);
   }
   if(sizeSlow>0){
-      maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
+    maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
   }
-  //maddrc256_flat_table(dst,wifibroadcast,c,sz);
+  //maddrc256_flat_table(dst,src,c,sz);
 #elif defined(FEC_GF256_USE_ARM_NEON)
   const int sizeSlow = sz % 8;
   const int sizeFast = sz - sizeSlow;
   if(sizeFast>0){
-      maddrc256_shuffle_neon_64(dst,wifibroadcast,c,sizeFast);
+    maddrc256_shuffle_neon_64(dst,src,c,sizeFast);
   }
   if(sizeSlow>0){
-      maddrc256_flat_table(&dst[sizeFast],&wifibroadcast[sizeFast],c,sizeSlow);
+    maddrc256_flat_table(&dst[sizeFast],&src[sizeFast],c,sizeSlow);
   }
 #else
-  maddrc256_flat_table(dst, wifibroadcast, c, sz);
+  maddrc256_flat_table(dst, src, c, sz);
 #endif
 }
 
