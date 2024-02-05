@@ -14,6 +14,7 @@
 #include <thread>
 #include <vector>
 #include "../FunkyQueue.h"
+#include <atomic>
 
 // TODO: Write something that emulates a wb link (tx, rx)
 // using linux shm or similar
