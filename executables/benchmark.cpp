@@ -16,7 +16,17 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
 #include "../wifibroadcast/HelperSources/Benchmark.hpp"
+
+#include <unistd.h>
+
+#include <cassert>
+#include <chrono>
+#include <memory>
+#include <sstream>
+#include <string>
+
 #include "../wifibroadcast/HelperSources/RandomBufferPot.hpp"
 #include "../wifibroadcast/HelperSources/SchedulingHelper.hpp"
 #include "../wifibroadcast/encryption/Decryptor.h"
@@ -24,13 +34,6 @@
 #include "../wifibroadcast/encryption/Encryptor.h"
 #include "../wifibroadcast/fec/FEC.h"
 #include "../wifibroadcast/fec/FECEncoder.h"
-
-#include <unistd.h>
-#include <cassert>
-#include <chrono>
-#include <memory>
-#include <sstream>
-#include <string>
 
 // Test the FEC encoding / decoding and Encryption / Decryption performance
 // (throughput) of this system
