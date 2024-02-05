@@ -25,7 +25,7 @@ WBVideoStreamTx::WBVideoStreamTx(
     m_console=wifibroadcast::log::create_or_get("wb_tx"+std::to_string(options.radio_port));
   }
   assert(m_console);
-  m_block_queue=std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedFrame>>>(options.frame_queue_size);
+  m_block_queue=std::make_unique<FrameQueueType>(options.frame_queue_size);
   m_fec_encoder = std::make_unique<FECEncoder>();
   auto cb=[this](const uint8_t* packet,int packet_len){
     send_packet(packet,packet_len);
@@ -68,11 +68,11 @@ void WBVideoStreamTx::loop_process_data() {
   if(options.dequeue_thread_max_realtime){
     SchedulingHelper::setThreadParamsMaxRealtime();
   }
-  static constexpr std::int64_t timeout_usecs=100*1000;
-  std::shared_ptr<EnqueuedFrame> frame= nullptr;
   std::chrono::steady_clock::time_point last_config=std::chrono::steady_clock::now();
   while (m_process_data_thread_run){
-    if(m_block_queue->wait_dequeue_timed(frame,timeout_usecs)){
+    auto opt_frame=m_block_queue->wait_dequeue_timed(std::chrono::milliseconds(100));
+    if(opt_frame.has_value()){
+      auto frame=opt_frame.value();
       process_enqueued_frame(*frame);
     }
     const auto now=std::chrono::steady_clock::now();

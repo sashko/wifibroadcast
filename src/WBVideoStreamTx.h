@@ -9,12 +9,12 @@
 #include <thread>
 #include <variant>
 
-#include "moodycamel/readerwriterqueue/readerwritercircularbuffer.h"
 #include "fec/FEC.h"
 #include "SimpleStream.hpp"
 #include "HelperSources/TimeHelper.hpp"
 #include "WBTxRx.h"
 #include "fec/FECEncoder.h"
+#include "FunkyQueue.h"
 
 class WBVideoStreamTx {
  public:
@@ -58,7 +58,8 @@ class WBVideoStreamTx {
   // On the tx, either one of those two is active at the same time
   std::unique_ptr<FECEncoder> m_fec_encoder = nullptr;
   std::unique_ptr<std::thread> m_process_data_thread;
-  std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<std::shared_ptr<EnqueuedFrame>>> m_block_queue;
+  using FrameQueueType=FunkyQueue<std::shared_ptr<EnqueuedFrame>>;
+  std::unique_ptr<FrameQueueType> m_block_queue;
   bool m_process_data_thread_run=true;
   void loop_process_data();
   void process_enqueued_frame(const EnqueuedFrame& enq_frame);
