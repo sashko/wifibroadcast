@@ -8,9 +8,9 @@
 #include <thread>
 #include <atomic>
 
-#include "../src/FunkyQueue.h"
-#include "../src/HelperSources/Helper.hpp"
-#include "../src/HelperSources/TimeHelper.hpp"
+#include "../wifibroadcast//FunkyQueue.h"
+#include "../wifibroadcast//HelperSources/Helper.hpp"
+#include "../wifibroadcast//HelperSources/TimeHelper.hpp"
 
 struct TestElement{
   std::chrono::steady_clock::time_point tp;

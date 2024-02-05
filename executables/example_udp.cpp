@@ -2,14 +2,14 @@
 // Created by consti10 on 30.06.23.
 //
 
-#include "../src/HelperSources/SocketHelper.hpp"
-#include "../src/HelperSources/TimeHelper.hpp"
-#include "../src/WBStreamRx.h"
-#include "../src/WBStreamTx.h"
-#include "../src/WBTxRx.h"
-#include "../src/legacy/WBStreamRxUDP.h"
-#include "../src/legacy/WBStreamTxUDP.h"
-#include "../src/wifibroadcast_spdlog.h"
+#include "../wifibroadcast/HelperSources/SocketHelper.hpp"
+#include "../wifibroadcast/HelperSources/TimeHelper.hpp"
+#include "../wifibroadcast/WBStreamRx.h"
+#include "../wifibroadcast/WBStreamTx.h"
+#include "../wifibroadcast/WBTxRx.h"
+#include "../wifibroadcast/legacy/WBStreamRxUDP.h"
+#include "../wifibroadcast/legacy/WBStreamTxUDP.h"
+#include "../wifibroadcast/wifibroadcast_spdlog.h"
 #include "RandomBufferPot.hpp"
 
 /**

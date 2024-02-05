@@ -2,7 +2,7 @@
 // Created by consti10 on 21.04.22.
 //
 
-#include "../src/HelperSources/SocketHelper.hpp"
+#include "../wifibroadcast/HelperSources/SocketHelper.hpp"
 
 static void test_send_and_receive() {
   static constexpr auto XPORT = 5600;

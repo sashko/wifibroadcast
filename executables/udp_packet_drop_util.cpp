@@ -2,8 +2,8 @@
 // Created by consti10 on 20.04.22.
 // This one just exists to test the compilation with cmake,nothing else.
 //
-#include "../src/HelperSources/SocketHelper.hpp"
-#include "../src/HelperSources/EmulatedPacketDrop.hpp"
+#include "../wifibroadcast/HelperSources/SocketHelper.hpp"
+#include "../wifibroadcast/HelperSources/EmulatedPacketDrop.hpp"
 
 #include <memory>
 

@@ -107,7 +107,7 @@ struct Ieee80211HeaderOpenHD{
   bool has_valid_air_gnd_id()const{
     return mac_src_unique_id_part==mac_dst_unique_id_part;
   }
-  // Check - last byte of src and dst mac needs to match (radio port)
+  // Check - last byte of wifibroadcast and dst mac needs to match (radio port)
   bool has_valid_radio_port()const{
     return mac_src_radio_port==mac_dst_radio_port;
   }

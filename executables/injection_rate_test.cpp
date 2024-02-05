@@ -2,10 +2,10 @@
 // Created by consti10 on 25.07.23.
 //
 
-#include "../src/WBStreamRx.h"
-#include "../src/WBStreamTx.h"
-#include "../src/WBTxRx.h"
-#include "../src/wifibroadcast_spdlog.h"
+#include "../wifibroadcast/WBStreamRx.h"
+#include "../wifibroadcast/WBStreamTx.h"
+#include "../wifibroadcast/WBTxRx.h"
+#include "../wifibroadcast/wifibroadcast_spdlog.h"
 #include "DummyStreamGenerator.hpp"
 #include "RandomBufferPot.hpp"
 #include "Rates.hpp"

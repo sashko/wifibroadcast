@@ -22,8 +22,8 @@
 #include <iostream>
 #include <optional>
 
-#include "../src/encryption/Encryption.h"
-#include "../src/encryption/EncryptionFsUtils.h"
+#include "../wifibroadcast/encryption/Encryption.h"
+#include "../wifibroadcast/encryption/EncryptionFsUtils.h"
 
 /**
  * Generates a new tx rx keypair and saves it to file for later use.

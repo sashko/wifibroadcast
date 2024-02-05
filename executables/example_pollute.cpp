@@ -2,11 +2,11 @@
 // Created by consti10 on 09.08.23.
 //
 
-#include "../src/WBStreamRx.h"
-#include "../src/WBStreamTx.h"
-#include "../src/WBTxRx.h"
-#include "../src/wifibroadcast_spdlog.h"
-#include "RandomBufferPot.hpp"
+#include "../wifibroadcast/WBStreamRx.h"
+#include "../wifibroadcast/WBStreamTx.h"
+#include "../wifibroadcast/WBTxRx.h"
+#include "../wifibroadcast/wifibroadcast_spdlog.h"
+#include "../wifibroadcast/HelperSources/RandomBufferPot.hpp"
 
 /**
  * Simple demo application that pollutes a given wifi space

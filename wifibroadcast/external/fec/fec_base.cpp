@@ -34,12 +34,11 @@
  * OF SUCH DAMAGE.
  */
 
-
 /*
  * The following parameter defines how many bits are used for
  * field elements. The code only supports 8.
  */
-#define GF_BITS  8    /* code over GF(2^GF_BITS) - DO NOT CHANGE*/
+#define GF_BITS 8 /* code over GF(2^GF_BITS) - DO NOT CHANGE*/
 
 #include "fec_base.h"
 
@@ -48,10 +47,12 @@
 #include <stdlib.h>
 #include <string.h>
 /**
- * Include our optimized GF256 math functions - since FEC mostly boils down to "Galois field" mul / madd on big memory blocks
- * this is the most straight forward optimization, and it really speeds up the code by a lot (see paper and my benchmark results)
- * The previous optimization by Alain Knaff used a lookup table. This optimization is still used as a backup, but faster options exists
- * depending on the architecture the code is running on.
+ * Include our optimized GF256 math functions - since FEC mostly boils down to
+ * "Galois field" mul / madd on big memory blocks this is the most straight
+ * forward optimization, and it really speeds up the code by a lot (see paper
+ * and my benchmark results) The previous optimization by Alain Knaff used a
+ * lookup table. This optimization is still used as a backup, but faster options
+ * exists depending on the architecture the code is running on.
  */
 #include "gf_optimized//gf256_optimized_include.h"
 #include "gf_simple/gf_simple.h"
@@ -60,27 +61,33 @@
  * stuff used for testing purposes only
  */
 
-#ifdef    TEST
+#ifdef TEST
 #define DEB(x)
 #define DDB(x) x
-#define	DEBUG	0	/* minimal debugging */
+#define DEBUG 0 /* minimal debugging */
 
 #include <sys/time.h>
-#define DIFF_T(a,b) \
-    (1+ 1000000*(a.tv_sec - b.tv_sec) + (a.tv_usec - b.tv_usec) )
+#define DIFF_T(a, b) \
+  (1 + 1000000 * (a.tv_sec - b.tv_sec) + (a.tv_usec - b.tv_usec))
 
-#define TICK(t) \
-    {struct timeval x ; \
-    gettimeofday(&x, NULL) ; \
-    t = x.tv_usec + 1000000* (x.tv_sec & 0xff ) ; \
-    }
-#define TOCK(t) \
-    { u_long t1 ; TICK(t1) ; \
-      if (t1 < t) t = 256000000 + t1 - t ; \
-      else t = t1 - t ; \
-      if (t == 0) t = 1 ;}
+#define TICK(t)                                  \
+  {                                              \
+    struct timeval x;                            \
+    gettimeofday(&x, NULL);                      \
+    t = x.tv_usec + 1000000 * (x.tv_sec & 0xff); \
+  }
+#define TOCK(t)               \
+  {                           \
+    u_long t1;                \
+    TICK(t1);                 \
+    if (t1 < t)               \
+      t = 256000000 + t1 - t; \
+    else                      \
+      t = t1 - t;             \
+    if (t == 0) t = 1;        \
+  }
 
-u_long ticks[10];	/* vars for timekeeping */
+u_long ticks[10]; /* vars for timekeeping */
 #else
 #define DEB(x)
 #define DDB(x)
@@ -88,17 +95,23 @@ u_long ticks[10];	/* vars for timekeeping */
 #define TOCK(x)
 #endif /* TEST */
 
-
 /**
- * Consti10 - the original implementation supported variable GF_BITS values. However, with the optimizations
- * and the HW developments since 1997 it makes no sense to use anything lower than GF(2^8). And the optimizations by
- * Alain Knaff made GF_BITS == 8 an requirement anyways
+ * Consti10 - the original implementation supported variable GF_BITS values.
+ * However, with the optimizations and the HW developments since 1997 it makes
+ * no sense to use anything lower than GF(2^8). And the optimizations by Alain
+ * Knaff made GF_BITS == 8 an requirement anyways
  */
 #if (GF_BITS != 8)
 #error "GF_BITS must be 8"
 #endif
 
-#define SWAP(a, b, t) {t tmp; tmp=a; a=b; b=tmp;}
+#define SWAP(a, b, t) \
+  {                   \
+    t tmp;            \
+    tmp = a;          \
+    a = b;            \
+    b = tmp;          \
+  }
 /*
  * invert_mat() takes a matrix and produces its inverse
  * k is the size of the matrix.
@@ -106,8 +119,7 @@ u_long ticks[10];	/* vars for timekeeping */
  * Return non-zero if singular.
  */
 DEB(int pivloops = 0; int pivswaps = 0; /* diagnostic */)
-static int
-invert_mat(gf *src, int k) {
+static int invert_mat(gf *src, int k) {
   gf c, *p;
   int irow, icol, row, col, i, ix;
 
@@ -118,12 +130,11 @@ invert_mat(gf *src, int k) {
   gf id_row[k];
 
   memset(id_row, 0, k * sizeof(gf));
-  DEB(pivloops = 0; pivswaps = 0; /* diagnostic */ )
+  DEB(pivloops = 0; pivswaps = 0; /* diagnostic */)
   /*
    * ipiv marks elements already used as pivots.
    */
-  for (i = 0; i < k; i++)
-    ipiv[i] = 0;
+  for (i = 0; i < k; i++) ipiv[i] = 0;
 
   for (col = 0; col < k; col++) {
     gf *pivot_row;
@@ -158,7 +169,7 @@ invert_mat(gf *src, int k) {
       fprintf(stderr, "XXX pivot not found!\n");
       goto fail;
     }
-    found_piv:
+  found_piv:
     ++(ipiv[icol]);
     /*
      * swap rows irow and icol, so afterwards the diagonal
@@ -186,8 +197,7 @@ invert_mat(gf *src, int k) {
       DEB(pivswaps++;)
       c = gf256_inverse(c);
       pivot_row[icol] = 1;
-      for (ix = 0; ix < k; ix++)
-        pivot_row[ix] = gf256_mul(c, pivot_row[ix]);
+      for (ix = 0; ix < k; ix++) pivot_row[ix] = gf256_mul(c, pivot_row[ix]);
     }
     /*
      * from all rows, remove multiples of the selected row
@@ -220,10 +230,9 @@ invert_mat(gf *src, int k) {
     }
   }
   error = 0;
-  fail:
+fail:
   return error;
 }
-
 
 /**
  * Simplified re-implementation of Fec-Bourbon
@@ -310,8 +319,6 @@ invert_mat(gf *src, int k) {
  *       possible otherwise
  */
 
-
-
 /* We do the matrix multiplication columns by column, instead of the
  * usual row-by-row, in order to capitalize on the cache freshness of
  * each data block . The data block only needs to be fetched once, and
@@ -320,10 +327,8 @@ invert_mat(gf *src, int k) {
  * few (typically, 4 or 8) that they will fit easily in the cache (even
  * in the L2 cache...)
  */
-void fec_encode(unsigned int blockSize,
-                const gf **data_blocks,
-                unsigned int nrDataBlocks,
-                gf **fec_blocks,
+void fec_encode(unsigned int blockSize, const gf **data_blocks,
+                unsigned int nrDataBlocks, gf **fec_blocks,
                 unsigned int nrFecBlocks) {
   unsigned int blockNo; /* loop for block counter */
   unsigned int row, col;
@@ -331,17 +336,16 @@ void fec_encode(unsigned int blockSize,
   assert(nrDataBlocks <= 128);
   assert(nrFecBlocks <= 128);
 
-  if (!nrDataBlocks)
-    return;
+  if (!nrDataBlocks) return;
 
   for (row = 0; row < nrFecBlocks; row++)
-    gf256_mul_optimized(fec_blocks[row], data_blocks[0], gf256_inverse(128 ^ row), blockSize);
+    gf256_mul_optimized(fec_blocks[row], data_blocks[0],
+                        gf256_inverse(128 ^ row), blockSize);
 
   for (col = 129, blockNo = 1; blockNo < nrDataBlocks; col++, blockNo++) {
     for (row = 0; row < nrFecBlocks; row++)
       gf256_madd_optimized(fec_blocks[row], data_blocks[blockNo],
-                           gf256_inverse(row ^ col),
-                           blockSize);
+                           gf256_inverse(row ^ col), blockSize);
   }
 }
 
@@ -351,10 +355,8 @@ void fec_encode(unsigned int blockSize,
  * (with size being number of blocks lost, rather than number of data blocks
  * + fec)
  */
-static inline void reduce(unsigned int blockSize,
-                          gf **data_blocks,
-                          unsigned int nr_data_blocks,
-                          gf **fec_blocks,
+static inline void reduce(unsigned int blockSize, gf **data_blocks,
+                          unsigned int nr_data_blocks, gf **fec_blocks,
                           const unsigned int fec_block_nos[],
                           const unsigned int erased_blocks[],
                           unsigned short nr_fec_blocks) {
@@ -371,7 +373,8 @@ static inline void reduce(unsigned int blockSize,
       int j;
       for (j = 0; j < nr_fec_blocks; j++) {
         int blno = fec_block_nos[j];
-        gf256_madd_optimized(fec_blocks[j], src, gf256_inverse(blno ^ col ^ 128), blockSize);
+        gf256_madd_optimized(fec_blocks[j], src,
+                             gf256_inverse(blno ^ col ^ 128), blockSize);
       }
     }
   }
@@ -383,9 +386,7 @@ static inline void reduce(unsigned int blockSize,
  * Resolves reduced system. Constructs "mini" encoding matrix, inverts
  * it, and multiply reduced vector by it.
  */
-static inline void resolve(int blockSize,
-                           gf **data_blocks,
-                           gf **fec_blocks,
+static inline void resolve(int blockSize, gf **data_blocks, gf **fec_blocks,
                            const unsigned int fec_block_nos[],
                            const unsigned int erased_blocks[],
                            short nr_fec_blocks) {
@@ -436,83 +437,80 @@ static inline void resolve(int blockSize,
   }
 }
 
-void fec_decode(unsigned int blockSize,
-                gf **data_blocks,
-                unsigned int nr_data_blocks,
-                gf **fec_blocks,
+void fec_decode(unsigned int blockSize, gf **data_blocks,
+                unsigned int nr_data_blocks, gf **fec_blocks,
                 const unsigned int fec_block_nos[],
                 const unsigned int erased_blocks[],
                 unsigned short nr_fec_blocks) {
-  reduce(blockSize, data_blocks, nr_data_blocks,
-         fec_blocks, fec_block_nos, erased_blocks, nr_fec_blocks);
+  reduce(blockSize, data_blocks, nr_data_blocks, fec_blocks, fec_block_nos,
+         erased_blocks, nr_fec_blocks);
   //
-  resolve(blockSize, data_blocks,
-          fec_blocks, fec_block_nos, erased_blocks,
+  resolve(blockSize, data_blocks, fec_blocks, fec_block_nos, erased_blocks,
           nr_fec_blocks);
 }
 
-
 void fec_license() {
-  fprintf(stderr,
-          "   wifibroadcast and its FEC code are free software\n"
-          "\n"
-          "   you can redistribute wifibroadcast core functionality and/or\n"
-          "   it them under the terms of the GNU General Public License as\n"
-          "   published by the Free Software Foundation; either version 2 of\n"
-          "   the License.\n"
-          "\n"
-          "   This program is distributed in the hope that it will be useful,\n"
-          "   but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-          "   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-          "   GNU General Public License for more details.\n"
-          "\n"
-          "   You should have received a copy of the GNU General Public License\n"
-          "   along with this program; see the file COPYING.\n"
-          "   If not, write to the Free Software Foundation, Inc.,\n"
-          "   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
-          "\n"
-          "the FEC code is covered by the following license:\n"
-          "fec.c -- forward error correction based on Vandermonde matrices\n"
-          "980624\n"
-          "(C) 1997-98 Luigi Rizzo (luigi@iet.unipi.it)\n"
-          "(C) 2001 Alain Knaff (alain@knaff.lu)\n"
-          "(C) 2022 Constantin Geier (optimize using libmoepgf source code)\n"
-          "\n"
-          "Portions derived from code by Phil Karn (karn@ka9q.ampr.org),\n"
-          "Robert Morelos-Zaragoza (robert@spectra.eng.hawaii.edu) and Hari\n"
-          "Thirumoorthy (harit@spectra.eng.hawaii.edu), Aug 1995\n"
-          "\n"
-          "Redistribution and use in source and binary forms, with or without\n"
-          "modification, are permitted provided that the following conditions\n"
-          "are met:\n"
-          "\n"
-          "1. Redistributions of source code must retain the above copyright\n"
-          "   notice, this list of conditions and the following disclaimer.\n"
-          "2. Redistributions in binary form must reproduce the above\n"
-          "   copyright notice, this list of conditions and the following\n"
-          "   disclaimer in the documentation and/or other materials\n"
-          "   provided with the distribution.\n"
-          "\n"
-          "THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND\n"
-          "ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,\n"
-          "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A\n"
-          "PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS\n"
-          "BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,\n"
-          "OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\n"
-          "PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,\n"
-          "OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n"
-          "THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR\n"
-          "TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT\n"
-          "OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY\n"
-          "OF SUCH DAMAGE.\n"
-  );
+  fprintf(
+      stderr,
+      "   wifibroadcast and its FEC code are free software\n"
+      "\n"
+      "   you can redistribute wifibroadcast core functionality and/or\n"
+      "   it them under the terms of the GNU General Public License as\n"
+      "   published by the Free Software Foundation; either version 2 of\n"
+      "   the License.\n"
+      "\n"
+      "   This program is distributed in the hope that it will be useful,\n"
+      "   but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+      "   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+      "   GNU General Public License for more details.\n"
+      "\n"
+      "   You should have received a copy of the GNU General Public License\n"
+      "   along with this program; see the file COPYING.\n"
+      "   If not, write to the Free Software Foundation, Inc.,\n"
+      "   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
+      "\n"
+      "the FEC code is covered by the following license:\n"
+      "fec.c -- forward error correction based on Vandermonde matrices\n"
+      "980624\n"
+      "(C) 1997-98 Luigi Rizzo (luigi@iet.unipi.it)\n"
+      "(C) 2001 Alain Knaff (alain@knaff.lu)\n"
+      "(C) 2022 Constantin Geier (optimize using libmoepgf source code)\n"
+      "\n"
+      "Portions derived from code by Phil Karn (karn@ka9q.ampr.org),\n"
+      "Robert Morelos-Zaragoza (robert@spectra.eng.hawaii.edu) and Hari\n"
+      "Thirumoorthy (harit@spectra.eng.hawaii.edu), Aug 1995\n"
+      "\n"
+      "Redistribution and use in source and binary forms, with or without\n"
+      "modification, are permitted provided that the following conditions\n"
+      "are met:\n"
+      "\n"
+      "1. Redistributions of source code must retain the above copyright\n"
+      "   notice, this list of conditions and the following disclaimer.\n"
+      "2. Redistributions in binary form must reproduce the above\n"
+      "   copyright notice, this list of conditions and the following\n"
+      "   disclaimer in the documentation and/or other materials\n"
+      "   provided with the distribution.\n"
+      "\n"
+      "THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND\n"
+      "ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,\n"
+      "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A\n"
+      "PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS\n"
+      "BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,\n"
+      "OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\n"
+      "PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,\n"
+      "OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n"
+      "THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR\n"
+      "TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT\n"
+      "OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY\n"
+      "OF SUCH DAMAGE.\n");
   exit(0);
 }
 
-// ---------------------------------- C++ code ------------------------------------------------------------
+// ---------------------------------- C++ code
+// ------------------------------------------------------------
 #include <algorithm>
-#include <vector>
 #include <iostream>
+#include <vector>
 
 namespace BuffHelper {
 static void fillBufferWithRandomData(std::vector<uint8_t> &data) {
@@ -526,7 +524,8 @@ std::vector<uint8_t> createRandomDataBuffer(const ssize_t sizeBytes) {
   fillBufferWithRandomData(buf);
   return buf;
 }
-void assertVectorsEqual(const std::vector<uint8_t> &sb, const std::vector<uint8_t> &rb) {
+void assertVectorsEqual(const std::vector<uint8_t> &sb,
+                        const std::vector<uint8_t> &rb) {
   assert(sb.size() == rb.size());
   const int result = memcmp(sb.data(), rb.data(), sb.size());
   if (result != 0) {
@@ -535,35 +534,38 @@ void assertVectorsEqual(const std::vector<uint8_t> &sb, const std::vector<uint8_
   }
   assert(result == 0);
 }
-std::vector<std::vector<uint8_t>> createRandomDataBuffers(const std::size_t nBuffers, const std::size_t sizeB) {
+std::vector<std::vector<uint8_t>> createRandomDataBuffers(
+    const std::size_t nBuffers, const std::size_t sizeB) {
   std::vector<std::vector<uint8_t>> buffers;
   for (std::size_t i = 0; i < nBuffers; i++) {
     buffers.push_back(createRandomDataBuffer(sizeB));
   }
   return buffers;
 }
-template<typename Container>
-static std::vector<const uint8_t *> convertToP(const std::vector<Container> &buffs) {
+template <typename Container>
+static std::vector<const uint8_t *> convertToP(
+    const std::vector<Container> &buffs) {
   std::vector<const uint8_t *> ret;
-  for (const auto &buf: buffs) {
+  for (const auto &buf : buffs) {
     ret.push_back(buf.data());
   }
   return ret;
 }
-template<typename Container>
+template <typename Container>
 static std::vector<uint8_t *> convertToP(std::vector<Container> &buffs) {
   std::vector<uint8_t *> ret;
-  for (auto &buf: buffs) {
+  for (auto &buf : buffs) {
     ret.push_back(buf.data());
   }
   return ret;
 }
-// create a indices list for the decodeable case of loosing @param nDroppedDataPackets
-// aka this method first takes (nDataPackets-nDroppedDataPackets) data packets
-// then takes as many fec packets as were lost
-static std::vector<int> createDecodeableIndexList(const int nDataPackets,
-                                                  const int nFecPackets,
-                                                  const int nDroppedDataPackets) {
+// create a indices list for the decodeable case of loosing @param
+// nDroppedDataPackets aka this method first takes
+// (nDataPackets-nDroppedDataPackets) data packets then takes as many fec
+// packets as were lost
+static std::vector<int> createDecodeableIndexList(
+    const int nDataPackets, const int nFecPackets,
+    const int nDroppedDataPackets) {
   assert(nFecPackets >= nDroppedDataPackets);
   const int nReceivedDataPackets = nDataPackets - nDroppedDataPackets;
   std::vector<int> indices;
@@ -583,7 +585,8 @@ static int binomialCoefficients(int n, int k) {
 }
 // code taken from https://www.geeksforgeeks.org/make-combinations-size-k/
 // slightly modified to fit my needs
-void makeCombiUtil(std::vector<std::vector<int>> &ans, std::vector<int> &tmp, int n, int left, int k) {
+void makeCombiUtil(std::vector<std::vector<int>> &ans, std::vector<int> &tmp,
+                   int n, int left, int k) {
   if (k == 0) {
     ans.push_back(tmp);
     return;
@@ -596,119 +599,134 @@ void makeCombiUtil(std::vector<std::vector<int>> &ans, std::vector<int> &tmp, in
 }
 // create all combinations of size k of numbers
 // from [0..n[
-std::vector<std::vector<int> > makeCombi(int n, int k) {
+std::vector<std::vector<int>> makeCombi(int n, int k) {
   std::vector<std::vector<int>> ans;
   std::vector<int> tmp;
   makeCombiUtil(ans, tmp, n - 1, 0, k);
   return ans;
 }
-// create all permutations of recoverable scenarios of received data and fec packets
-// returns as many lists of indices as there are permutations
-static std::vector<std::vector<int>> createAllDecodablePermutations(const int nDataPackets, const int nFecPackets) {
-  // The task is as following: given the set I is all the indices from 0...(nDataPackets+nFecPackets-1)
-  // Create all permutations of taking nDatapackets indices from this list
+// create all permutations of recoverable scenarios of received data and fec
+// packets returns as many lists of indices as there are permutations
+static std::vector<std::vector<int>> createAllDecodablePermutations(
+    const int nDataPackets, const int nFecPackets) {
+  // The task is as following: given the set I is all the indices from
+  // 0...(nDataPackets+nFecPackets-1) Create all permutations of taking
+  // nDatapackets indices from this list
   const int nDataAndFecPackets = nDataPackets + nFecPackets;
   auto result = makeCombi(nDataAndFecPackets, nDataPackets);
-  assert(result.size() == binomialCoefficients(nDataAndFecPackets, nDataPackets));
+  assert(result.size() ==
+         binomialCoefficients(nDataAndFecPackets, nDataPackets));
   return result;
 }
-}
+}  // namespace BuffHelper
 
 // see header for documentation
 void fec_encode2(unsigned int fragmentSize,
                  const std::vector<const uint8_t *> &primaryFragments,
                  const std::vector<uint8_t *> &secondaryFragments) {
-  fec_encode(fragmentSize,
-             (const gf **) primaryFragments.data(),
-             primaryFragments.size(),
-             (gf **) secondaryFragments.data(),
+  fec_encode(fragmentSize, (const gf **)primaryFragments.data(),
+             primaryFragments.size(), (gf **)secondaryFragments.data(),
              secondaryFragments.size());
 }
-void fec_decode2(unsigned int fragmentSize,
-                 const std::vector<uint8_t *> &primaryFragments,
-                 const std::vector<unsigned int> &indicesMissingPrimaryFragments,
-                 const std::vector<uint8_t *> &secondaryFragmentsReceived,
-                 const std::vector<unsigned int> &indicesOfSecondaryFragmentsReceived) {
-  for (const auto &idx: indicesMissingPrimaryFragments) {
+void fec_decode2(
+    unsigned int fragmentSize, const std::vector<uint8_t *> &primaryFragments,
+    const std::vector<unsigned int> &indicesMissingPrimaryFragments,
+    const std::vector<uint8_t *> &secondaryFragmentsReceived,
+    const std::vector<unsigned int> &indicesOfSecondaryFragmentsReceived) {
+  for (const auto &idx : indicesMissingPrimaryFragments) {
     assert(idx < primaryFragments.size());
   }
-  //This assertion is not always true - as an example,you might have gotten FEC secondary packets 0 and 4, but these 2 are enough to perform the fec step.
-  //Then packet index 0 is inside @param secondaryFragmentsReceived at position 0, but packet index 4 at position 1
-  //for(const auto& idx:indicesOfSecondaryFragmentsReceived){
-  //    assert(idx<secondaryFragmentsReceived.size());
-  //}
-  assert(indicesMissingPrimaryFragments.size() <= indicesOfSecondaryFragmentsReceived.size());
-  assert(indicesMissingPrimaryFragments.size() == secondaryFragmentsReceived.size());
-  assert(secondaryFragmentsReceived.size() == indicesOfSecondaryFragmentsReceived.size());
-  fec_decode(fragmentSize,
-             (gf **) primaryFragments.data(),
-             primaryFragments.size(),
-             (gf **) secondaryFragmentsReceived.data(),
-             (unsigned int *) indicesOfSecondaryFragmentsReceived.data(),
-             (unsigned int *) indicesMissingPrimaryFragments.data(),
+  // This assertion is not always true - as an example,you might have gotten FEC
+  // secondary packets 0 and 4, but these 2 are enough to perform the fec step.
+  // Then packet index 0 is inside @param secondaryFragmentsReceived at position
+  // 0, but packet index 4 at position 1 for(const auto&
+  // idx:indicesOfSecondaryFragmentsReceived){
+  //     assert(idx<secondaryFragmentsReceived.size());
+  // }
+  assert(indicesMissingPrimaryFragments.size() <=
+         indicesOfSecondaryFragmentsReceived.size());
+  assert(indicesMissingPrimaryFragments.size() ==
+         secondaryFragmentsReceived.size());
+  assert(secondaryFragmentsReceived.size() ==
+         indicesOfSecondaryFragmentsReceived.size());
+  fec_decode(fragmentSize, (gf **)primaryFragments.data(),
+             primaryFragments.size(), (gf **)secondaryFragmentsReceived.data(),
+             (unsigned int *)indicesOfSecondaryFragmentsReceived.data(),
+             (unsigned int *)indicesMissingPrimaryFragments.data(),
              indicesMissingPrimaryFragments.size());
 }
 
 // see header for documentation
-template<class Container1, class Container2>
-void fec_encode3(unsigned int fragmentSize, const std::vector<Container1> &primaryFragments,
+template <class Container1, class Container2>
+void fec_encode3(unsigned int fragmentSize,
+                 const std::vector<Container1> &primaryFragments,
                  std::vector<Container2> &secondaryFragments) {
   fec_encode2(fragmentSize, BuffHelper::convertToP(primaryFragments),
               BuffHelper::convertToP(secondaryFragments));
 }
-template<class Container1, class Container2>
-void fec_decode3(unsigned int fragmentSize,
-                 std::vector<Container1> &primaryFragments,
-                 const std::vector<unsigned int> &indicesMissingPrimaryFragments,
-                 std::vector<Container2> &secondaryFragmentsReceived,
-                 const std::vector<unsigned int> &indicesOfSecondaryFragmentsReceived) {
-  fec_decode2(fragmentSize, BuffHelper::convertToP(primaryFragments), indicesMissingPrimaryFragments,
-              BuffHelper::convertToP(secondaryFragmentsReceived), indicesOfSecondaryFragmentsReceived);
+template <class Container1, class Container2>
+void fec_decode3(
+    unsigned int fragmentSize, std::vector<Container1> &primaryFragments,
+    const std::vector<unsigned int> &indicesMissingPrimaryFragments,
+    std::vector<Container2> &secondaryFragmentsReceived,
+    const std::vector<unsigned int> &indicesOfSecondaryFragmentsReceived) {
+  fec_decode2(fragmentSize, BuffHelper::convertToP(primaryFragments),
+              indicesMissingPrimaryFragments,
+              BuffHelper::convertToP(secondaryFragmentsReceived),
+              indicesOfSecondaryFragmentsReceived);
 }
 
 /**
- * Testing the fec encoding and decoding is quite difficult due to the many permutations of either losing data packets,
- * fec packets, or both. This test works as follows:
- * 1) Use the data packets to create @param nFecPackets fec protection packets
- * 2) go through @param receivedDataOrFecPacketsIndices. Write received data and/or fec packets.
- * 3) perform the reconstruction step
- * 4) make sure that after the reconstruction process the content of the data packets matches the input data packets contents.
- * @param dataPackets the data packets whose content will be used to perform the test
+ * Testing the fec encoding and decoding is quite difficult due to the many
+ * permutations of either losing data packets, fec packets, or both. This test
+ * works as follows: 1) Use the data packets to create @param nFecPackets fec
+ * protection packets 2) go through @param receivedDataOrFecPacketsIndices.
+ * Write received data and/or fec packets. 3) perform the reconstruction step 4)
+ * make sure that after the reconstruction process the content of the data
+ * packets matches the input data packets contents.
+ * @param dataPackets the data packets whose content will be used to perform the
+ * test
  * @param nFecPackets n of fec packets to create
- * @param receivedDataOrFecPacketsIndices indices of received data and fec packets. Note that the valid range for these indices starts at 0 and
- * ends at (nDataPackets+nFecPackets-1). E.g the FEC packet indices don't loopUntilError at 0, like in the c-style code.
+ * @param receivedDataOrFecPacketsIndices indices of received data and fec
+ * packets. Note that the valid range for these indices starts at 0 and ends at
+ * (nDataPackets+nFecPackets-1). E.g the FEC packet indices don't loopUntilError
+ * at 0, like in the c-style code.
  */
-static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>> &dataPackets, const int nFecPackets,
-                                       const std::vector<int> &receivedDataOrFecPacketsIndices) {
+static void test_fec_encode_and_decode(
+    const std::vector<std::vector<uint8_t>> &dataPackets, const int nFecPackets,
+    const std::vector<int> &receivedDataOrFecPacketsIndices) {
   const int nDataPackets = dataPackets.size();
   const int packetSize = dataPackets.at(0).size();
   // all data packets need to have the same size
-  for (const auto &packet: dataPackets) {
+  for (const auto &packet : dataPackets) {
     assert(packetSize == packet.size());
   }
   // we need enough received data and fec packet indices
   // else it is not recoverable
   assert(receivedDataOrFecPacketsIndices.size() >= nDataPackets);
   // check the indices were not messed up
-  for (const auto &idx: receivedDataOrFecPacketsIndices) {
+  for (const auto &idx : receivedDataOrFecPacketsIndices) {
     assert(idx < dataPackets.size() + nFecPackets);
   }
   // allocate memory for the fec packets
-  std::vector<std::vector<uint8_t>> fecPackets(nFecPackets, std::vector<uint8_t>(packetSize));
+  std::vector<std::vector<uint8_t>> fecPackets(
+      nFecPackets, std::vector<uint8_t>(packetSize));
   assert(fecPackets.size() == nFecPackets);
   // encode data packets, store in fec packets
   fec_encode3(packetSize, dataPackets, fecPackets);
   // FEC will fill the not received data packets
-  std::vector<std::vector<uint8_t>> fullyReconstructedDataPackets(nDataPackets, std::vector<uint8_t>(packetSize));
+  std::vector<std::vector<uint8_t>> fullyReconstructedDataPackets(
+      nDataPackets, std::vector<uint8_t>(packetSize));
   std::vector<unsigned int> erasedDataPacketsIndices;
   // write as many data packets as we have "received"
   // and  mark the rest as missing
   for (int i = 0; i < nDataPackets; i++) {
-    const bool
-        received = std::find(receivedDataOrFecPacketsIndices.begin(), receivedDataOrFecPacketsIndices.end(), i) !=
-        receivedDataOrFecPacketsIndices.end();
+    const bool received = std::find(receivedDataOrFecPacketsIndices.begin(),
+                                    receivedDataOrFecPacketsIndices.end(),
+                                    i) != receivedDataOrFecPacketsIndices.end();
     if (received) {
-      memcpy(fullyReconstructedDataPackets[i].data(), dataPackets[i].data(), packetSize);
+      memcpy(fullyReconstructedDataPackets[i].data(), dataPackets[i].data(),
+             packetSize);
     } else {
       erasedDataPacketsIndices.push_back(i);
     }
@@ -718,8 +736,9 @@ static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>> &
   std::vector<std::vector<uint8_t>> receivedFecPackets;
   std::vector<unsigned int> receivedFecPacketsIndices;
   for (int i = nDataPackets; i < nDataPackets + nFecPackets; i++) {
-    const bool received = std::find(receivedDataOrFecPacketsIndices.begin(), receivedDataOrFecPacketsIndices.end(), i)
-        != receivedDataOrFecPacketsIndices.end();
+    const bool received = std::find(receivedDataOrFecPacketsIndices.begin(),
+                                    receivedDataOrFecPacketsIndices.end(),
+                                    i) != receivedDataOrFecPacketsIndices.end();
     if (received) {
       const int fecIdx = i - nDataPackets;
       receivedFecPackets.push_back(fecPackets[fecIdx]);
@@ -728,24 +747,24 @@ static void test_fec_encode_and_decode(const std::vector<std::vector<uint8_t>> &
   }
   // perform the (reconstructing) fec step
   fec_decode3(packetSize,
-      // data packets (missing will be filled)
-              fullyReconstructedDataPackets,
-              erasedDataPacketsIndices,
-      // fec packets (used for reconstruction)
-              receivedFecPackets,
-              receivedFecPacketsIndices
-  );
+              // data packets (missing will be filled)
+              fullyReconstructedDataPackets, erasedDataPacketsIndices,
+              // fec packets (used for reconstruction)
+              receivedFecPackets, receivedFecPacketsIndices);
   // make sure everything was reconstructed properly
   for (int i = 0; i < nDataPackets; i++) {
-    BuffHelper::assertVectorsEqual(dataPackets[i], fullyReconstructedDataPackets[i]);
-    //std::cout<<i<<"\n";
+    BuffHelper::assertVectorsEqual(dataPackets[i],
+                                   fullyReconstructedDataPackets[i]);
+    // std::cout<<i<<"\n";
   }
-  //std::cout<<"SUCCESS: N data packets:"<<nDataPackets<<" N fec packets:"<<nFecPackets<<" N lost&reconstructed data packets:"<<nLostDataPackets<<"\n";
+  // std::cout<<"SUCCESS: N data packets:"<<nDataPackets<<" N fec
+  // packets:"<<nFecPackets<<" N lost&reconstructed data
+  // packets:"<<nLostDataPackets<<"\n";
 }
 
 /**
- * This test doesn't test all permutations, but rather drops @param nLostDataPackets data packets
- * and then receives exactly this many FEC packets
+ * This test doesn't test all permutations, but rather drops @param
+ * nLostDataPackets data packets and then receives exactly this many FEC packets
  */
 static void test_fec_encode_and_decode_simple(const int nDataPackets,
                                               const int nFecPackets,
@@ -755,12 +774,14 @@ static void test_fec_encode_and_decode_simple(const int nDataPackets,
   const auto dataPackets =
       BuffHelper::createRandomDataBuffers(nDataPackets, packetSize);
   assert(dataPackets.size() == nDataPackets);
-  const auto indices = BuffHelper::createDecodeableIndexList(nDataPackets, nFecPackets, nLostDataPackets);
+  const auto indices = BuffHelper::createDecodeableIndexList(
+      nDataPackets, nFecPackets, nLostDataPackets);
   assert(indices.size() == nDataPackets);
   test_fec_encode_and_decode(dataPackets, nFecPackets, indices);
 }
 /**
- * Test all permutations of received data and FEC packets that are still recoverable
+ * Test all permutations of received data and FEC packets that are still
+ * recoverable
  */
 static void test_fec_encode_and_decode_all_permutations(const int nDataPackets,
                                                         const int nFecPackets,
@@ -772,15 +793,14 @@ static void test_fec_encode_and_decode_all_permutations(const int nDataPackets,
   // build the indices lists
   const auto permutations =
       BuffHelper::createAllDecodablePermutations(nDataPackets, nFecPackets);
-  for (const auto &permutation: permutations) {
+  for (const auto &permutation : permutations) {
     test_fec_encode_and_decode(dataPackets, nFecPackets, permutation);
   }
-  std::cout << "Tested all permutations for k:" << nDataPackets << " n:" << nFecPackets << "\n";
+  std::cout << "Tested all permutations for k:" << nDataPackets
+            << " n:" << nFecPackets << "\n";
 }
 
-void print_optimization_method() {
-  gf256_print_optimization_method();
-}
+void print_optimization_method() { gf256_print_optimization_method(); }
 
 void test_fec() {
   gf256_print_optimization_method();

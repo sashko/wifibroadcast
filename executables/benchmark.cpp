@@ -16,29 +16,23 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "../src/HelperSources/Benchmark.hpp"
+#include "../wifibroadcast//HelperSources/Benchmark.hpp"
 
-#include <poll.h>
 #include <unistd.h>
 
 #include <cassert>
 #include <chrono>
-#include <cinttypes>
-#include <cstdio>
-#include <list>
 #include <memory>
 #include <sstream>
 #include <string>
 
-#include "../src/encryption/Encryption.h"
-#include "../src/fec/FEC.h"
-#include "../src/HelperSources/RandomBufferPot.hpp"
-#include "../src/HelperSources/SchedulingHelper.hpp"
-#include "../src/external/fec/fec_base.h"
-#include "../src/fec/FECEncoder.h"
-#include "../src/fec/FECConstants.hpp"
-#include "../src/encryption/Encryptor.h"
-#include "../src/encryption/Decryptor.h"
+#include "../wifibroadcast/encryption/Encryption.h"
+#include "../wifibroadcast/fec/FEC.h"
+#include "../wifibroadcast/HelperSources/RandomBufferPot.hpp"
+#include "../wifibroadcast/HelperSources/SchedulingHelper.hpp"
+#include "../wifibroadcast/fec/FECEncoder.h"
+#include "../wifibroadcast/encryption/Encryptor.h"
+#include "../wifibroadcast/encryption/Decryptor.h"
 
 // Test the FEC encoding / decoding and Encryption / Decryption performance
 // (throughput) of this system

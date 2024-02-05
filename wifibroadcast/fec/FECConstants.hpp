@@ -21,4 +21,4 @@ static constexpr const uint16_t MAX_N_S_FRAGMENTS_PER_BLOCK = 128;
 static constexpr const uint16_t MAX_TOTAL_FRAGMENTS_PER_BLOCK =
     MAX_N_P_FRAGMENTS_PER_BLOCK + MAX_N_S_FRAGMENTS_PER_BLOCK;
 
-#endif // FEC_CONSTANTS_HPP
+#endif  // FEC_CONSTANTS_HPP

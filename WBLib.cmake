@@ -23,39 +23,34 @@ add_library(wifibroadcast::wifibroadcast ALIAS wifibroadcast)
 # Well, let's just build everything together
 target_sources(wifibroadcast PRIVATE
         # radiotap and fec
-        ${CMAKE_CURRENT_LIST_DIR}/src/external/radiotap/radiotap.c
-        ${CMAKE_CURRENT_LIST_DIR}/src/external/fec/fec_base.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/external/radiotap/radiotap.c
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/external/fec/fec_base.cpp
 
-        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/KeyPair.h
-        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/KeyPair.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryptor.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Encryption.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/EncryptionFsUtils.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/encryption/Decryptor.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/encryption/KeyPair.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/encryption/Encryptor.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/encryption/Encryption.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/encryption/EncryptionFsUtils.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/encryption/Decryptor.cpp
         ##
-        ${CMAKE_CURRENT_LIST_DIR}/src/dummy_link/DummyLink.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/dummy_link/DummyLink.cpp
 
-        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FEC.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECConstants.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECDecoder.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/fec/FECEncoder.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/fec/RxBlock.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/fec/FEC.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/fec/FECConstants.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/fec/FECDecoder.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/fec/FECEncoder.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/fec/RxBlock.cpp
 
-        ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamRx.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/WBStreamTx.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/WBVideoStreamTx.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/WBTxRx.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/Ieee80211Header.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/FunkyQueue.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapHeaderTx.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapHeaderTxHolder.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RSSIAccumulator.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/wifibroadcast_spdlog.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/src/radiotap/RadiotapRxRfAggregator.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/WBStreamRx.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/WBStreamTx.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/WBVideoStreamTx.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/WBTxRx.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/FunkyQueue.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/wifibroadcast_spdlog.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/radiotap/RadiotapRxRfAggregator.cpp
         )
 
 target_include_directories(wifibroadcast PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/src/HelperSources
+        ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast/HelperSources
 )
 
 ## FEC Optimizations begin ---------------------------------
@@ -126,6 +121,6 @@ endif ()
 target_link_libraries(wifibroadcast PRIVATE spdlog::spdlog)
 
 SET(WB_TARGET_LINK_LIBRARIES wifibroadcast)
-SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/src)
+SET(WB_INCLUDE_DIRECTORES ${CMAKE_CURRENT_LIST_DIR}/wifibroadcast)
 
 # ----------------------------------

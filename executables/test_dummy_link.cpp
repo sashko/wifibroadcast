@@ -4,8 +4,8 @@
 
 #include <iostream>
 
-#include "../src/WBTxRx.h"
-#include "../src/dummy_link/DummyLink.h"
+#include "../wifibroadcast/WBTxRx.h"
+#include "../wifibroadcast/dummy_link/DummyLink.h"
 #include "Helper.hpp"
 
 static std::vector<std::shared_ptr<std::vector<uint8_t>>> pull_all_buffered_packets(DummyLink& dummyLink){

@@ -24,17 +24,17 @@
 #include <sstream>
 #include <string>
 
-#include "../src/fec/FEC.h"
+#include "../wifibroadcast/fec/FEC.h"
 
-#include "../src/encryption/Encryption.h"
-#include "../src/encryption/EncryptionFsUtils.h"
-#include "../src/HelperSources/Helper.hpp"
-#include "../src/Ieee80211Header.hpp"
-#include "../src/wifibroadcast_spdlog.h"
-#include "../src/fec/FECDecoder.h"
-#include "../src/fec/FECEncoder.h"
-#include "../src/encryption/Encryptor.h"
-#include "../src/encryption/Decryptor.h"
+#include "../wifibroadcast/encryption/Encryption.h"
+#include "../wifibroadcast/encryption/EncryptionFsUtils.h"
+#include "../wifibroadcast/HelperSources/Helper.hpp"
+#include "../wifibroadcast/Ieee80211Header.hpp"
+#include "../wifibroadcast/wifibroadcast_spdlog.h"
+#include "../wifibroadcast/fec/FECDecoder.h"
+#include "../wifibroadcast/fec/FECEncoder.h"
+#include "../wifibroadcast/encryption/Encryptor.h"
+#include "../wifibroadcast/encryption/Decryptor.h"
 
 // Simple unit testing for the FEC lib that doesn't require wifi cards
 

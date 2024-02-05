@@ -10,7 +10,6 @@
 
 #include "FECConstants.hpp"
 
-
 // This encapsulates everything you need when working on a single FEC block on
 // the receiver for example, addFragment() or pullAvailablePrimaryFragments() it
 // also provides convenient methods to query if the block is fully forwarded or
@@ -89,7 +88,7 @@ class RxBlock {
   std::optional<int> get_missing_primary_packets() const;
   std::string get_missing_primary_packets_readable() const;
   int get_n_primary_fragments() const;
-  int get_n_forwarded_primary_fragments()const;
+  int get_n_forwarded_primary_fragments() const;
 
  private:
   // the block idx marks which block this element refers to
@@ -116,4 +115,4 @@ class RxBlock {
   int m_n_available_secondary_fragments = 0;
 };
 
-#endif // RX_BLOCK_HPP
+#endif  // RX_BLOCK_HPP
