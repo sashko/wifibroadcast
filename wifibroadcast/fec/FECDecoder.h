@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <deque>
 #include <memory>
+#include <functional>
 
 #include "FECConstants.hpp"
 #include "RxBlock.h"
