@@ -115,7 +115,9 @@ target_link_libraries(wifibroadcast PUBLIC Threads::Threads)
 # spdlog might be already exist as a target in OpenHD - only use package manager's spdlog if needed
 if(WB_USE_SPDLOG_EXTERNALLY)
     message(STATUS "spdlog needs to be already provided by top cmake")
-    target_link_libraries(wifibroadcast PRIVATE spdlog)
+    # LOL- In openhd we build spdlog into OHDCommonLib and get it from there
+    # There were some weird issues with using their cmake and buildroot
+    target_link_libraries(wifibroadcast PRIVATE OHDCommonLib)
 else ()
     message(STATUS "Using spdlog from package manager")
     find_package(spdlog REQUIRED)
