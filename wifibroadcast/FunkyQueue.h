@@ -28,6 +28,7 @@ class FunkyQueue {
       return false;
     }
     queue.push(element);
+    lk.unlock();
     cv.notify_one();
     return true;
   }
@@ -41,11 +42,13 @@ class FunkyQueue {
       const int count_removed=queue.size();
       while (!queue.empty())queue.pop();
       queue.push(element);
+      lk.unlock();
       cv.notify_one();
       return count_removed;
     }
     // enough space
     queue.push(element);
+    lk.unlock();
     cv.notify_one();
     return 0;
   }
