@@ -21,8 +21,16 @@ jobs:
       - name: Test generate keys
         run: |
           ./build/wfb_keygen
-      - name: Unit test
+      - name: Unit test 1
         run: |
           cd build
           ./unit_test
+      - name: Unit test 2
+        run: |
+          cd build
+          ./test_queue
+      - name: Unit test 3
+        run: |
+          cd build
+          sudo ./test_dummy_link
 

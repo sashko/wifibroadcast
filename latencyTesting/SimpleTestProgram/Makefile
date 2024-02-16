@@ -1,5 +1,5 @@
 
-# bring in the helper from the parent / src / HelperSources File
+# bring in the helper from the parent / wifibroadcast / HelperSources File
 # kinda dirty (fixme but how)
 HELPER_DIR := ../../src/HelperSources/
 

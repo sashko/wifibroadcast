@@ -4,6 +4,8 @@ project(Wifibroadcast)
 set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope -fsanitize=address")
 
+# Get spdlog from package manager for those tests
+set(WB_USE_SPDLOG_EXTERNALLY OFF)
 include(WBLib.cmake)
 
 add_executable(wfb_keygen executables/wfb_keygen.cpp)
@@ -41,6 +43,12 @@ target_link_libraries(example_pollute PRIVATE ${WB_TARGET_LINK_LIBRARIES})
 
 add_executable(test_listen executables/test_listen.cpp)
 target_link_libraries(test_listen PRIVATE ${WB_TARGET_LINK_LIBRARIES})
+
+add_executable(test_dummy_link executables/test_dummy_link.cpp)
+target_link_libraries(test_dummy_link PRIVATE ${WB_TARGET_LINK_LIBRARIES})
+
+add_executable(test_queue executables/test_queue.cpp)
+target_link_libraries(test_queue PRIVATE ${WB_TARGET_LINK_LIBRARIES})
 
 # When it is a static library, we don't need to install it.
 # But if it is a shared library, we need to install it.
