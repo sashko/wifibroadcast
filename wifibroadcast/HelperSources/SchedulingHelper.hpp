@@ -15,20 +15,6 @@
 
 namespace SchedulingHelper {
 
-static int get_current_thread_priority(){
-  int which = PRIO_PROCESS;
-  id_t pid = (id_t) getpid();
-  int priority = getpriority(which, pid);
-  return priority;
-}
-
-static void print_current_thread_priority(const std::string& name) {
-  const auto priority=get_current_thread_priority();
-  std::stringstream ss;
-  ss<<name<<" has priority: "<<priority;
-  std::cout<<ss.str()<<std::endl;
-}
-
 // this thread should run as close to realtime as possible
 // https://youtu.be/NrjXEaTSyrw?t=647
 // COMMENT: Please don't ever use 99 for your application, there are some kernel threads that run at 99 that are really important
