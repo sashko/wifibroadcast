@@ -11,42 +11,34 @@
 
 #include <iostream>
 #include <string>
-
-#include "../wifibroadcast_spdlog.h"
-#include <spdlog/spdlog.h>
+#include <sstream>
 
 namespace SchedulingHelper {
-static void printCurrentThreadPriority(const std::string& name) {
-  int which = PRIO_PROCESS;
-  id_t pid = (id_t) getpid();
-  int priority = getpriority(which, pid);
-  wifibroadcast::log::get_default()->debug("{} has priority {}",name,priority);
-}
-
-static void printCurrentThreadSchedulingPolicy(const std::string& name) {
-  auto self = pthread_self();
-  int policy;
-  sched_param param{};
-  auto result = pthread_getschedparam(self, &policy, &param);
-  if (result != 0) {
-    wifibroadcast::log::get_default()->warn( "Cannot get thread scheduling policy");
-  }
-  wifibroadcast::log::get_default()->debug("{} has policy {} and priority {}",name,policy,param.sched_priority);
-}
 
 // this thread should run as close to realtime as possible
-static void setThreadParamsMaxRealtime(pthread_t target) {
+// https://youtu.be/NrjXEaTSyrw?t=647
+// COMMENT: Please don't ever use 99 for your application, there are some kernel threads that run at 99 that are really important
+// So ... lets use 90 for now
+static void set_thread_params_max_realtime(const std::string& tag,const int priority=90) {
+  pthread_t target=pthread_self();
   int policy = SCHED_FIFO;
   sched_param param{};
-  param.sched_priority = sched_get_priority_max(policy);
+  //param.sched_priority = sched_get_priority_max(policy);
+  param.sched_priority=priority;
   auto result = pthread_setschedparam(target, policy, &param);
   if (result != 0) {
-    wifibroadcast::log::get_default()->warn("cannot set ThreadParamsMaxRealtime");
+    std::stringstream ss;
+    ss<<"Cannot setThreadParamsMaxRealtime "<<result;
+    std::cerr<<ss.str()<<std::endl;
+  }else{
+    std::stringstream ss;
+    ss<<"Changed prio ";
+    if(!tag.empty()){
+      ss<<"for "<<tag<<" ";
+    }
+    ss<<"to SCHED_FIFO:"<<param.sched_priority;
+    std::cout<<ss.str()<<std::endl;
   }
-}
-
-static void setThreadParamsMaxRealtime() {
-  setThreadParamsMaxRealtime(pthread_self());
 }
 
 static bool check_root() {

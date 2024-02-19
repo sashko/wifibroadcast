@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "../HelperSources/SocketHelper.hpp"
+#include "../HelperSources/SchedulingHelper.hpp"
 
 // From http://www.atakansarioglu.com/linux-ipc-inter-process-messaging-linux-domain-socket-fifo-pipe-shared-memory-shm-example/
 
@@ -117,6 +118,7 @@ std::shared_ptr<std::vector<uint8_t>> DummyLink::rx_radiotap() {
 }
 
 void DummyLink::loop_rx() {
+  SchedulingHelper::set_thread_params_max_realtime("DummyLink::loop_rx");
   auto read_buffer=std::make_shared<std::vector<uint8_t>>(MAX_MTU_INCLUDING_HEADER);
   while (m_keep_receiving){
     //auto packet= read_data(m_fd_rx);

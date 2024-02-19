@@ -234,7 +234,7 @@ void WBTxRx::rx_unregister_stream_handler(uint8_t radio_port) {
 
 void WBTxRx::loop_receive_packets() {
   if(m_options.receive_thread_max_realtime){
-    SchedulingHelper::setThreadParamsMaxRealtime();
+    SchedulingHelper::set_thread_params_max_realtime("WBTxRx::loop_receive_packets");
   }
   std::vector<int> packets_per_card{};
   packets_per_card.resize(m_wifi_cards.size());
