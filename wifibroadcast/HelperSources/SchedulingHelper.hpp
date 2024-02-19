@@ -30,7 +30,7 @@ static void print_current_thread_priority(const std::string& name) {
 }
 
 // this thread should run as close to realtime as possible
-static void set_thread_params_max_realtime() {
+static void set_thread_params_max_realtime(const std::string& tag="") {
   pthread_t target=pthread_self();
   int policy = SCHED_FIFO;
   sched_param param{};
@@ -40,6 +40,14 @@ static void set_thread_params_max_realtime() {
     std::stringstream ss;
     ss<<"Cannot setThreadParamsMaxRealtime "<<result;
     std::cerr<<ss.str()<<std::endl;
+  }else{
+    std::stringstream ss;
+    ss<<"Changed prio ";
+    if(!tag.empty()){
+      ss<<"for "<<tag<<" ";
+    }
+    ss<<"to SCHED_FIFO:"<<param.sched_priority;
+    std::cout<<ss.str()<<std::endl;
   }
 }
 

@@ -184,8 +184,7 @@ WBStreamTx::Statistics WBStreamTx::get_latest_stats() {
 
 void WBStreamTx::loop_process_data() {
   if(options.dequeue_thread_max_realtime){
-    SchedulingHelper::set_thread_params_max_realtime();
-    SchedulingHelper::print_current_thread_priority("WBStreamTx::loop_process_data");
+    SchedulingHelper::set_thread_params_max_realtime("WBStreamTx::loop_process_data");
   }
   static constexpr std::int64_t timeout_usecs=100*1000;
   if(options.enable_fec){

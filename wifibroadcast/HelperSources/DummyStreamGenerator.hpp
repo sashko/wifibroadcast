@@ -46,7 +46,7 @@ class DummyStreamGenerator{
     }
   }
   void loop_generate_data(){
-    SchedulingHelper::set_thread_params_max_realtime();
+    SchedulingHelper::set_thread_params_max_realtime("DummyStreamGenerator");
     std::chrono::steady_clock::time_point last_packet=std::chrono::steady_clock::now();
     const uint64_t delay_between_packets_ns=1000*1000*1000 / m_target_pps;
     const auto delay_between_packets=std::chrono::nanoseconds(delay_between_packets_ns);

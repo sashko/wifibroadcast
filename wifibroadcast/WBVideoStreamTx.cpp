@@ -66,8 +66,7 @@ bool WBVideoStreamTx::enqueue_frame(
 
 void WBVideoStreamTx::loop_process_data() {
   if(options.dequeue_thread_max_realtime){
-    SchedulingHelper::set_thread_params_max_realtime();
-    SchedulingHelper::print_current_thread_priority("WBVideoStreamTx::loop");
+    SchedulingHelper::set_thread_params_max_realtime("WBVideoStreamTx::loop");
   }
   std::chrono::steady_clock::time_point last_config=std::chrono::steady_clock::now();
   while (m_process_data_thread_run){
