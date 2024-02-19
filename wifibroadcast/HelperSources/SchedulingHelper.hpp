@@ -11,42 +11,36 @@
 
 #include <iostream>
 #include <string>
-
-#include "../wifibroadcast_spdlog.h"
-#include <spdlog/spdlog.h>
+#include <sstream>
 
 namespace SchedulingHelper {
-static void printCurrentThreadPriority(const std::string& name) {
+
+static int get_current_thread_priority(){
   int which = PRIO_PROCESS;
   id_t pid = (id_t) getpid();
   int priority = getpriority(which, pid);
-  wifibroadcast::log::get_default()->debug("{} has priority {}",name,priority);
+  return priority;
 }
 
-static void printCurrentThreadSchedulingPolicy(const std::string& name) {
-  auto self = pthread_self();
-  int policy;
-  sched_param param{};
-  auto result = pthread_getschedparam(self, &policy, &param);
-  if (result != 0) {
-    wifibroadcast::log::get_default()->warn( "Cannot get thread scheduling policy");
-  }
-  wifibroadcast::log::get_default()->debug("{} has policy {} and priority {}",name,policy,param.sched_priority);
+static void print_current_thread_priority(const std::string& name) {
+  const auto priority=get_current_thread_priority();
+  std::stringstream ss;
+  ss<<name<<" has priority: "<<priority;
+  std::cout<<ss.str()<<std::endl;
 }
 
 // this thread should run as close to realtime as possible
-static void setThreadParamsMaxRealtime(pthread_t target) {
+static void set_thread_params_max_realtime() {
+  pthread_t target=pthread_self();
   int policy = SCHED_FIFO;
   sched_param param{};
   param.sched_priority = sched_get_priority_max(policy);
   auto result = pthread_setschedparam(target, policy, &param);
   if (result != 0) {
-    wifibroadcast::log::get_default()->warn("cannot set ThreadParamsMaxRealtime");
+    std::stringstream ss;
+    ss<<"Cannot setThreadParamsMaxRealtime "<<result;
+    std::cerr<<ss.str()<<std::endl;
   }
-}
-
-static void setThreadParamsMaxRealtime() {
-  setThreadParamsMaxRealtime(pthread_self());
 }
 
 static bool check_root() {

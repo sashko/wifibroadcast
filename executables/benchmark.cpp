@@ -199,9 +199,8 @@ int main(int argc, char *const *argv) {
   int opt;
   Options options{};
   print_optimization_method();
-  SchedulingHelper::setThreadParamsMaxRealtime();
-  SchedulingHelper::printCurrentThreadPriority("TEST_MAIN");
-  SchedulingHelper::printCurrentThreadSchedulingPolicy("TEST_MAIN");
+  SchedulingHelper::set_thread_params_max_realtime();
+  SchedulingHelper::print_current_thread_priority("TEST_MAIN");
 
   while ((opt = getopt(argc, argv, "s:k:p:x:t:")) != -1) {
     switch (opt) {
