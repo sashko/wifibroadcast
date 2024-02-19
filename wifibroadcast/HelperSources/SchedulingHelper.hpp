@@ -30,11 +30,15 @@ static void print_current_thread_priority(const std::string& name) {
 }
 
 // this thread should run as close to realtime as possible
-static void set_thread_params_max_realtime(const std::string& tag="") {
+// https://youtu.be/NrjXEaTSyrw?t=647
+// COMMENT: Please don't ever use 99 for your application, there are some kernel threads that run at 99 that are really important
+// So ... lets use 90 for now
+static void set_thread_params_max_realtime(const std::string& tag,const int priority=90) {
   pthread_t target=pthread_self();
   int policy = SCHED_FIFO;
   sched_param param{};
-  param.sched_priority = sched_get_priority_max(policy);
+  //param.sched_priority = sched_get_priority_max(policy);
+  param.sched_priority=priority;
   auto result = pthread_setschedparam(target, policy, &param);
   if (result != 0) {
     std::stringstream ss;
