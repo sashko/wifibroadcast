@@ -283,8 +283,8 @@ class UDPMultiForwarder {
       udpForwarder->forwardPacketViaUDP(packet, packetSize);
     }
   }
-  [[nodiscard]] const std::list<std::unique_ptr<SocketHelper::UDPForwarder>> &
-  getForwarders() const {
+  [[nodiscard]] const std::list<std::unique_ptr<SocketHelper::UDPForwarder>>
+      &getForwarders() const {
     return udpForwarders;
   }
 
