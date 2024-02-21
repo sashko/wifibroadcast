@@ -1,9 +1,12 @@
 #!/bin/bash
 
 # OpenHD clang-format checking.
+# Performed steps:
 # Step1: Generate list of all .cpp / .h / .hpp files of this project
 #        (excluding subdirectories)
 # Step 2: Run clang-format
+# Arguments: run with 'f' to fix things (otherwise, default, only check and report
+# error if clang-format finds any issues
 
 
 function append_all_sources_headers() {
@@ -39,5 +42,10 @@ function fix_warnings() {
     clang-format --verbose -i --style=file $FILE_LIST
 }
 
-#fix_warnings
-check_warning
+if [ "$1" == "f" ]; then
+   echo "Fixing warnings"
+   fix_warnings
+else
+  echo "Checking warnings"
+  check_warning
+fi
