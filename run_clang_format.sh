@@ -1,24 +1,36 @@
 #!/bin/bash
 
-# From https://stackoverflow.com/a/65988393
+# OpenHD clang-format checking.
+# Step1: Generate list of all .cpp / .h / .hpp files of this project
+#        (excluding subdirectories)
+# Step 2: Run clang-format
+
+
+function append_all_sources_headers() {
+    # We use .h, .cpp and .hpp in OpenHD
+    TMP_FILE_LIST="$(find "$1" | grep -E ".*(\.cpp|\.h|\.hpp)$")"
+    #TMP_FILE_LIST+='\n'
+    FILE_LIST+=$'\n'
+    FILE_LIST+=$TMP_FILE_LIST
+}
+
 
 THIS_PATH="$(realpath "$0")"
 THIS_DIR="$(dirname "$THIS_PATH")"
 
-EXCLUDED_DIRECTORIES="external"
 
-# Find all files in THIS_DIR which end in .ino, .cpp, etc., as specified
-# in the regular expression just below
-FILE_LIST="$(find "$THIS_DIR/src" -not -path "$THIS_DIR/src/external/*" | grep -E ".*(\.ino|\.cpp|\.c|\.h|\.hpp|\.hh)$")"
+append_all_sources_headers "$THIS_DIR/wifibroadcast/inc"
 
-echo -e "Files found to format = \n\"\"\"\n$FILE_LIST\n\"\"\""
+echo "Files found to format = \n\"\"\"\n$FILE_LIST\n\"\"\""
 
 # Format each file.
 # - NB: do NOT put quotes around `$FILE_LIST` below or else the `clang-format` command will
 #   mistakenly see the entire blob of newline-separated file names as a SINGLE file name instead
 #   of as a new-line separated list of *many* file names!
-#clang-format --verbose -i --style=file $FILE_LIST
+clang-format --dry-run --Werror --verbose -i --style=file $FILE_LIST
 
-# Create a directory where we can build with ninja & generate the list of files for clang tidy
-cmake -G Ninja -S . -B build_clang_format -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-#clang-tidy -format-style=file -p build_clang_format $FILE_LIST
+if [ "$?" -eq "0" ]; then
+  echo "Everything formatted correctly"
+else
+  echo "There are formatting errors ! Please fix first."
+fi

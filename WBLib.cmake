@@ -2,9 +2,6 @@
 # Defines WB_TARGET_LINK_LIBRARIES
 # which can then be used to integrate wifibroadcast into your project
 
-cmake_minimum_required(VERSION 3.16.3)
-set(CMAKE_CXX_STANDARD 17)
-
 option(WB_ENABLE_SIMD_OPTIMIZATIONS "Enable NEON on ARM and SSSE3 on X86 if the platform/compiler supports it" ON)
 option(WB_USE_SPDLOG_EXTERNALLY "Do not find and link to spdlog installed on system" ON)
 #if(WIFIBROADCAST_LIBRARIES_ALREADY_BUILD)
