@@ -9,7 +9,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../../external/fec/fec_base.h"
+#include "../../lib/fec/fec_base.h"
 #include "FECConstants.hpp"
 #include "Helper.hpp"
 

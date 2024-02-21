@@ -5,7 +5,7 @@
 #include <cstring>
 #include <memory>
 
-#include "../../external/fec/fec_base.h"
+#include "../../lib/fec/fec_base.h"
 #include "BlockSizeHelper.hpp"
 #include "FECConstants.hpp"
 

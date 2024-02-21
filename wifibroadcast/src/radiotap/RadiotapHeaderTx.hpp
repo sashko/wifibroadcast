@@ -3,8 +3,8 @@
 
 #include "Helper.hpp"
 extern "C" {
-#include "../../external/radiotap/radiotap.h"
-#include "../../external/radiotap/radiotap_iter.h"
+#include "../../lib/radiotap/radiotap.h"
+#include "../../lib/radiotap/radiotap_iter.h"
 };
 
 #include <endian.h>

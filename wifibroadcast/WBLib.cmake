@@ -18,11 +18,11 @@ add_library(wifibroadcast STATIC) # initialized below
 add_library(wifibroadcast::wifibroadcast ALIAS wifibroadcast)
 #target_compile_options(wifibroadcast INTERFACE -Wno-address-of-packed-member -Wno-cast-align)
 
-# the stuff in external is a bit extra
+# the stuff in lib is a bit extra
 target_sources(wifibroadcast PRIVATE
         # radiotap and fec
-        ${CMAKE_CURRENT_LIST_DIR}/external/radiotap/radiotap.c
-        ${CMAKE_CURRENT_LIST_DIR}/external/fec/fec_base.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/lib/radiotap/radiotap.c
+        ${CMAKE_CURRENT_LIST_DIR}/lib/fec/fec_base.cpp
 )
 
 # Well, let's just build everything together
