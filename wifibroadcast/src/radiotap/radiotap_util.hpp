@@ -179,7 +179,7 @@ static std::string radiotap_header_to_string(const uint8_t *pkt, int pktlen) {
       case IEEE80211_RADIOTAP_DBM_ANTSIGNAL: {
         // This field	contains a single signed 8-bit value that indicates
         //	     the RF signal power at the	antenna, in decibels difference
-        //from 	     1mW.
+        // from 	     1mW.
         int8_t value = *(int8_t *)iterator.this_arg;
         ss << "IEEE80211_RADIOTAP_DBM_ANTSIGNAL:" << (int)value
            << "dBm size:" << curr_arg_size << "\n";

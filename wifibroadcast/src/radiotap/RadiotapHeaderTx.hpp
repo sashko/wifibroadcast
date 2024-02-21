@@ -116,7 +116,7 @@ class RadiotapHeaderTx {
     if (params.set_flag_tx_no_ack) {
       radiotapHeaderData.txFlags =
           IEEE80211_RADIOTAP_F_TX_NOACK;  //| IEEE80211_RADIOTAP_F_TX_CTS |
-                                          //IEEE80211_RADIOTAP_F_TX_RTS
+                                          // IEEE80211_RADIOTAP_F_TX_RTS
     } else {
       radiotapHeaderData.txFlags = 0;
     }

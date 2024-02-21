@@ -180,14 +180,13 @@ class Ieee80211HeaderRaw {
   std::array<uint8_t, SIZE_BYTES> data = {
       0x08, 0x01,  // first 2 bytes control fiels
       0x00, 0x00,  // 2 bytes duration (has this even an effect ?!)
-      0xFF, 0xFF, 0xFF, 0xFF,
-      0xFF, 0xFF,  // something MAC ( 6 bytes), I think Receiver address (MAC of
-                   // AP)
-      0x13, 0x22, 0x33, 0x44,
-      0x55, 0x66,  // something MAC ( 6 bytes), I think SRC MAC  (mac of source
-                   // STA)- last byte is used as radio port
-      0x13, 0x22, 0x33, 0x44,
-      0x55, 0x66,  // something MAC ( 6 bytes), I think DEST MAC (mac of dest
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // something MAC ( 6 bytes), I think
+                                           // Receiver address (MAC of AP)
+      0x13, 0x22, 0x33, 0x44, 0x55,
+      0x66,  // something MAC ( 6 bytes), I think SRC MAC  (mac of source
+             // STA)- last byte is used as radio port
+      0x13, 0x22, 0x33, 0x44, 0x55,
+      0x66,        // something MAC ( 6 bytes), I think DEST MAC (mac of dest
                    // STA)  - last byte is als used as radio port
       0x00, 0x00,  // iee80211 sequence control ( 2 bytes )
   };

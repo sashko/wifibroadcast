@@ -5,8 +5,6 @@
 #ifndef WIFIBROADCAST_SRC_WIFIBROADCAST_SPDLOG_H_
 #define WIFIBROADCAST_SRC_WIFIBROADCAST_SPDLOG_H_
 
-//#include "wifibroadcast-spdlog-fake.h"
-
 #include <spdlog/spdlog.h>
 
 #include <memory>
