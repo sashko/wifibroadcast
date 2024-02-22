@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include "SchedulingHelper.hpp"
+
 WBStreamRx::WBStreamRx(std::shared_ptr<WBTxRx> txrx, Options options1)
     : m_txrx(txrx), m_options(options1) {
   assert(m_txrx);
@@ -75,15 +77,7 @@ void WBStreamRx::on_new_packet(uint64_t nonce, int wlan_index,
       m_console->warn("Cannot enqueue packet");
     }
   } else {
-    if (m_options.enable_fec) {
-      if (!FECDecoder::validate_packet_size(data_len)) {
-        m_console->debug("invalid fec packet size {}", data_len);
-        return;
-      }
-      m_fec_decoder->process_valid_packet(data, data_len);
-    } else {
-      m_fec_disabled_decoder->process_packet(data, data_len);
-    }
+    internal_process_packet(data, data_len);
   }
 }
 
@@ -98,31 +92,18 @@ void WBStreamRx::on_new_session() {
 }
 
 void WBStreamRx::loop_process_data() {
-  std::shared_ptr<EnqueuedPacket> packet;
+  if (m_options.threading_enabled_set_max_realtime) {
+    SchedulingHelper::set_thread_params_max_realtime(
+        "WBStreamRx::loop_process_data", 80);
+  }
   static constexpr std::int64_t timeout_usecs = 1000 * 1000;
   while (m_process_data_thread_run) {
     auto opt_packet =
         m_packet_queue->wait_dequeue_timed(std::chrono::milliseconds(100));
     if (opt_packet.has_value()) {
       auto packet = opt_packet.value();
-      process_queued_packet(*packet);
+      internal_process_packet(packet->data->data(), (int)packet->data->size());
     }
-  }
-}
-
-void WBStreamRx::process_queued_packet(
-    const WBStreamRx::EnqueuedPacket &packet) {
-  assert(m_options.enable_threading == true);
-  if (m_options.enable_fec) {
-    if (!FECDecoder::validate_packet_size(packet.data->size())) {
-      m_console->debug("invalid fec packet size {}", packet.data->size());
-      return;
-    }
-    m_fec_decoder->process_valid_packet(packet.data->data(),
-                                        packet.data->size());
-  } else {
-    m_fec_disabled_decoder->process_packet(packet.data->data(),
-                                           packet.data->size());
   }
 }
 
@@ -169,4 +150,16 @@ void WBStreamRx::reset_stream_stats() {
 
 void WBStreamRx::set_on_fec_block_done_cb(WBStreamRx::ON_BLOCK_DONE_CB cb) {
   m_fec_decoder->m_block_done_cb = cb;
+}
+
+void WBStreamRx::internal_process_packet(const uint8_t *data, int data_len) {
+  if (m_options.enable_fec) {
+    if (!FECDecoder::validate_packet_size(data_len)) {
+      m_console->debug("invalid fec packet size {}", data_len);
+      return;
+    }
+    m_fec_decoder->process_valid_packet(data, data_len);
+  } else {
+    m_fec_disabled_decoder->process_packet(data, data_len);
+  }
 }
