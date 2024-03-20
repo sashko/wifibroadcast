@@ -66,8 +66,16 @@ WBTxRx::WBTxRx(
       // TX part - using raw socket or pcap
       if (m_options.tx_without_pcap) {
         pcapTxRx.tx_sockfd = open_wifi_interface_as_raw_socket(wifi_card.name);
+        if (m_options.set_tx_sock_qdisc_bypass) {
+          wifibroadcast::pcap_helper::set_tx_sock_qdisc_bypass(
+              pcapTxRx.tx_sockfd);
+        }
       } else {
         pcapTxRx.tx = wifibroadcast::pcap_helper::open_pcap_tx(wifi_card.name);
+        if (m_options.set_tx_sock_qdisc_bypass) {
+          wifibroadcast::pcap_helper::pcap_set_tx_sock_qdisc_bypass(
+              pcapTxRx.tx);
+        }
       }
       m_pcap_handles.push_back(pcapTxRx);
     }

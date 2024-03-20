@@ -67,6 +67,7 @@ class WBTxRx {
     // on the rx pcap rx fd, set direction PCAP_D_IN (aka only packets received
     // by the card) - doesn't work on AR9271
     bool pcap_rx_set_direction = true;
+    bool set_tx_sock_qdisc_bypass = false;
     // thy spam the console, but usefully for debugging
     // log all received packets (regardless where they are from)
     bool log_all_received_packets = false;

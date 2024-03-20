@@ -9,8 +9,12 @@
 #include "BlockSizeHelper.hpp"
 #include "FECConstants.hpp"
 
+FECEncoder::FECEncoder() {
+  m_primary_fragments_data_p.reserve(MAX_N_P_FRAGMENTS_PER_BLOCK);
+}
+
 void FECEncoder::encode_block(
-    std::vector<std::shared_ptr<std::vector<uint8_t>>> data_packets,
+    const std::vector<std::shared_ptr<std::vector<uint8_t>>>& data_packets,
     int n_secondary_fragments) {
   assert(data_packets.size() <= MAX_N_P_FRAGMENTS_PER_BLOCK);
   assert(n_secondary_fragments <= MAX_N_S_FRAGMENTS_PER_BLOCK);

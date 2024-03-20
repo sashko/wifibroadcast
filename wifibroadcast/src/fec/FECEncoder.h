@@ -11,7 +11,7 @@ class FECEncoder {
  public:
   typedef std::function<void(const uint8_t* packet, int packet_len)>
       OUTPUT_DATA_CALLBACK;
-  explicit FECEncoder() = default;
+  explicit FECEncoder();
   FECEncoder(const FECEncoder& other) = delete;
 
  public:
@@ -24,7 +24,7 @@ class FECEncoder {
    * should be created
    */
   void encode_block(
-      std::vector<std::shared_ptr<std::vector<uint8_t>>> data_packets,
+      const std::vector<std::shared_ptr<std::vector<uint8_t>>>& data_packets,
       int n_secondary_fragments);
   /**
    * Distributes data evenly into @param n_primary_fragments and calculates

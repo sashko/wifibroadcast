@@ -40,6 +40,7 @@ class WBStreamRx {
     // enable / disable multi threading (decouples the processing of data from
     // the thread that provided the data, e.g. the thread inside WBTxRx
     bool enable_threading = false;
+    bool threading_enabled_set_max_realtime = false;
     // only if threading is enabled
     int packet_queue_size = 20;
     // enable fec debug log, obviously only if fec is enbaled
@@ -101,9 +102,10 @@ class WBStreamRx {
   std::unique_ptr<FECDecoder> m_fec_decoder = nullptr;
   std::unique_ptr<FECDisabledDecoder> m_fec_disabled_decoder = nullptr;
   void on_new_packet(uint64_t nonce, int wlan_index, const uint8_t *data,
-                     const int data_len);
+                     int data_len);
   void on_new_session();
   void on_decoded_packet(const uint8_t *data, int data_len);
+  void internal_process_packet(const uint8_t *data, int data_len);
   // used only if threading is enabled
   struct EnqueuedPacket {
     std::shared_ptr<std::vector<uint8_t>> data;
@@ -113,7 +115,6 @@ class WBStreamRx {
   bool m_process_data_thread_run = true;
   std::unique_ptr<std::thread> m_process_data_thread;
   void loop_process_data();
-  void process_queued_packet(const EnqueuedPacket &packet);
 };
 
 #endif  // WIFIBROADCAST_WBSTREAMRX_H
