@@ -205,6 +205,10 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index, const uint8_t* data,
     m_tx_stats.n_injected_bytes_excluding_overhead += data_len;
     m_tx_stats.n_injected_bytes_including_overhead += packet_size;
     m_tx_stats.n_injected_packets++;
+  }else{
+    m_console->debug("inject error, sleeping ...");
+    //m_tx_mutex.unlock(); for now, don't unlock ... therefore we block all threads calling inject
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 
