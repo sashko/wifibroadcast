@@ -5,6 +5,7 @@
 #ifndef WIFIBROADCAST_SRC_PCAP_HELPER_H_
 #define WIFIBROADCAST_SRC_PCAP_HELPER_H_
 
+#include <netpacket/packet.h>
 #include <pcap/pcap.h>
 
 #include <string>
@@ -111,6 +112,22 @@ static pcap_t *open_pcap_tx(const std::string &wlan) {
   // wifibroadcast::log::get_default()->warn(string_format("set_nonblock failed:
   // %s", errbuf));
   return p;
+}
+
+static void set_tx_sock_qdisc_bypass(int fd) {
+  /* setting PACKET_QDISC_BYPASS to 1 ?? */
+  int32_t sock_qdisc_bypass = 1;
+  const auto ret = setsockopt(fd, SOL_PACKET, PACKET_QDISC_BYPASS,
+                              &sock_qdisc_bypass, sizeof(sock_qdisc_bypass));
+  if (ret != 0) {
+    wifibroadcast::log::get_default()->warn("Cannot set PACKET_QDISC_BYPASS");
+  } else {
+    wifibroadcast::log::get_default()->debug("PACKET_QDISC_BYPASS set");
+  }
+}
+static void pcap_set_tx_sock_qdisc_bypass(pcap_t *handle) {
+  auto fd = pcap_get_selectable_fd(handle);
+  set_tx_sock_qdisc_bypass(fd);
 }
 
 }  // namespace wifibroadcast::pcap_helper
