@@ -256,7 +256,8 @@ bool WBTxRx::inject_radiotap_packet(int card_index, const uint8_t* packet_buff,
       m_console->warn(
           "raw sock - unable to inject packet size:{} ret:{} err:[{}]",
           packet_size, len_injected, strerror(errno));
-      if (errno == ENODEV) {
+      if (errno == ENXIO) {
+        // See https://man7.org/linux/man-pages/man3/errno.3.html
         m_console->warn("Fatal error, no device");
         has_fatal_error = true;
       }
