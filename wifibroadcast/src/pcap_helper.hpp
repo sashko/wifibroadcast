@@ -5,9 +5,9 @@
 #ifndef WIFIBROADCAST_SRC_PCAP_HELPER_H_
 #define WIFIBROADCAST_SRC_PCAP_HELPER_H_
 
-#include <sys/socket.h>
 #include <netpacket/packet.h>
 #include <pcap/pcap.h>
+#include <sys/socket.h>
 
 #include <string>
 
