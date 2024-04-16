@@ -15,6 +15,11 @@
 
 namespace SchedulingHelper {
 
+// Only 'low' in comparison to other realtime tasks
+static constexpr int PRIORITY_REALTIME_LOW = 30;
+static constexpr int PRIORITY_REALTIME_MID = 40;
+static constexpr int PRIORITY_REALTIME_HIGH = 50;
+
 // this thread should run as close to realtime as possible
 // https://youtu.be/NrjXEaTSyrw?t=647
 // COMMENT: Please don't ever use 99 for your application, there are some kernel

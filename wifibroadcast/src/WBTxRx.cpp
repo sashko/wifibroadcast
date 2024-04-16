@@ -205,6 +205,11 @@ void WBTxRx::tx_inject_packet(const uint8_t stream_index, const uint8_t* data,
     m_tx_stats.n_injected_bytes_excluding_overhead += data_len;
     m_tx_stats.n_injected_bytes_including_overhead += packet_size;
     m_tx_stats.n_injected_packets++;
+  } else {
+    m_console->debug("inject error, sleeping ...");
+    // m_tx_mutex.unlock(); for now, don't unlock ... therefore we block all
+    // threads calling inject
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 
@@ -246,16 +251,27 @@ bool WBTxRx::inject_radiotap_packet(int card_index, const uint8_t* packet_buff,
   if (len_injected != (int)packet_size) {
     // This basically should never fail - if the tx queue is full, pcap seems to
     // wait ?!
+    bool has_fatal_error = false;
     if (m_options.tx_without_pcap) {
       m_console->warn(
           "raw sock - unable to inject packet size:{} ret:{} err:[{}]",
           packet_size, len_injected, strerror(errno));
+      if (errno == ENXIO) {
+        // See https://man7.org/linux/man-pages/man3/errno.3.html
+        m_console->warn("Fatal error, no device");
+        has_fatal_error = true;
+      }
     } else {
       m_console->warn("pcap -unable to inject packet size:{} ret:{} err:[{}]",
                       packet_size, len_injected,
                       pcap_geterr(m_pcap_handles[card_index].tx));
     }
     m_tx_stats.count_tx_dropped_packets++;
+    if (has_fatal_error) {
+      if (m_fatal_error_cb != nullptr) {
+        m_fatal_error_cb(errno);
+      }
+    }
     return false;
   }
   return true;

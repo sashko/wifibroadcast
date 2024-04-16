@@ -7,6 +7,7 @@
 
 #include <netpacket/packet.h>
 #include <pcap/pcap.h>
+#include <sys/socket.h>
 
 #include <string>
 

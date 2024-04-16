@@ -182,7 +182,10 @@ class WBTxRx {
   // register callback that is called each time a valid packet is received (any
   // multiplexed stream)
   void rx_register_callback(OUTPUT_DATA_CALLBACK cb);
-
+  // register callback that is called when the wifi card (probably)
+  // disconneccted
+  typedef std::function<void(int error)> DEVICE_FATAL_ERROR_CALLBACK;
+  DEVICE_FATAL_ERROR_CALLBACK m_fatal_error_cb = nullptr;
   /**
    * Receiving packets happens in the background in another thread.
    */
