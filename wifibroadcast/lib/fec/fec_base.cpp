@@ -46,6 +46,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+
 /**
  * Include our optimized GF256 math functions - since FEC mostly boils down to
  * "Galois field" mul / madd on big memory blocks this is the most straight

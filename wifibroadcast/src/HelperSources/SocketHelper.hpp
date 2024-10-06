@@ -13,7 +13,9 @@
 #include <spdlog/spdlog.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <termio.h>
+#include <sys/time.h>
+
+// #include <termio.h>
 #include <unistd.h>
 
 #include <list>
@@ -283,8 +285,8 @@ class UDPMultiForwarder {
       udpForwarder->forwardPacketViaUDP(packet, packetSize);
     }
   }
-  [[nodiscard]] const std::list<std::unique_ptr<SocketHelper::UDPForwarder>>
-      &getForwarders() const {
+  [[nodiscard]] const std::list<std::unique_ptr<SocketHelper::UDPForwarder>> &
+  getForwarders() const {
     return udpForwarders;
   }
 

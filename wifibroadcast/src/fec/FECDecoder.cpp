@@ -1,5 +1,7 @@
 #include "FECDecoder.h"
 
+#include <sys/time.h>
+
 #include "../wifibroadcast_spdlog.h"
 
 bool FECDecoder::validate_packet_size(const int data_len) {

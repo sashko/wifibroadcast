@@ -5,6 +5,8 @@
 #ifndef WIFIBROADCAST_HELPER_H
 #define WIFIBROADCAST_HELPER_H
 
+#include <sys/time.h>
+
 #include <algorithm>
 #include <cassert>
 #include <chrono>
