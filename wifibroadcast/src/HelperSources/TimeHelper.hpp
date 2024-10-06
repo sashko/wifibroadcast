@@ -5,12 +5,13 @@
 #ifndef LIVEVIDEO10MS_TIMEHELPER_HPP
 #define LIVEVIDEO10MS_TIMEHELPER_HPP
 
+#include <sys/time.h>
+
 #include <algorithm>
 #include <chrono>
 #include <deque>
 #include <iostream>
 #include <sstream>
-#include <sys/time.h>
 
 #include "StringHelper.hpp"
 
