@@ -13,6 +13,8 @@
 #include <spdlog/spdlog.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+
 // #include <termio.h>
 #include <unistd.h>
 

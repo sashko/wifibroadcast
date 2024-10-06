@@ -10,6 +10,7 @@
 #include <deque>
 #include <iostream>
 #include <sstream>
+#include <sys/time.h>
 
 #include "StringHelper.hpp"
 
