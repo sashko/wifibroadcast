@@ -5,7 +5,6 @@
 #ifndef WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
 #define WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
 
-#include <linux/if_ether.h>
 #include <net/if.h>
 #include <netpacket/packet.h>
 #include <sys/ioctl.h>
