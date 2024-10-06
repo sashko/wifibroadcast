@@ -5,13 +5,7 @@
 #ifndef WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
 #define WIFIBROADCAST_RAW_SOCKET_HELPER_HPP
 
-// Conditional inclusion to avoid struct ethhdr redefinition
-#if defined(__linux__)
-#include <linux/if_ether.h>  // Only include for Linux systems
-#else
-#include <netinet/if_ether.h> // Fallback or platform specific (if needed)
-#endif
-
+#include <linux/if_ether.h>
 #include <net/if.h>
 #include <netpacket/packet.h>
 #include <sys/ioctl.h>
