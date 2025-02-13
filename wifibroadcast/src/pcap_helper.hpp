@@ -5,6 +5,10 @@
 #ifndef WIFIBROADCAST_SRC_PCAP_HELPER_H_
 #define WIFIBROADCAST_SRC_PCAP_HELPER_H_
 
+#ifndef PACKET_QDISC_BYPASS
+#define PACKET_QDISC_BYPASS 20  // Quick compile fix for buildroot ARMHF builds
+#endif
+
 #include <netpacket/packet.h>
 #include <pcap/pcap.h>
 #include <sys/socket.h>
