@@ -35,12 +35,11 @@ static void set_thread_params_max_realtime(const std::string& tag,
   param.sched_priority = priority;
   auto result = pthread_setschedparam(target, policy, &param);
 
-  {
+  
     std::ifstream file("/usr/share/openhd/debug.txt");
-    if (!file.good()) {
-      return;
-    }
-  }
+    if (file.good()) {
+
+  
 
   if (result != 0) {
     std::stringstream ss;
@@ -55,6 +54,7 @@ static void set_thread_params_max_realtime(const std::string& tag,
     ss << "to SCHED_FIFO:" << param.sched_priority;
     std::cout << ss.str() << std::endl;
   }
+}
 }
 
 static bool check_root() {
