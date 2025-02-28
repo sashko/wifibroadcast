@@ -13,6 +13,8 @@
 #include <sstream>
 #include <string>
 
+#include <fstream>
+
 namespace SchedulingHelper {
 
 // Only 'low' in comparison to other realtime tasks
@@ -32,6 +34,14 @@ static void set_thread_params_max_realtime(const std::string& tag,
   // param.sched_priority = sched_get_priority_max(policy);
   param.sched_priority = priority;
   auto result = pthread_setschedparam(target, policy, &param);
+
+  {
+    std::ifstream file("/usr/share/openhd/debug.txt");
+    if (!file.good()) {
+      return;
+    }
+  }
+
   if (result != 0) {
     std::stringstream ss;
     ss << "Cannot setThreadParamsMaxRealtime " << result;
