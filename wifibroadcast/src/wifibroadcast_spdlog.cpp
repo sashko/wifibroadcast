@@ -18,9 +18,9 @@ std::shared_ptr<spdlog::logger> wifibroadcast::log::create_or_get(
 
     std::ifstream file("/usr/share/openhd/debug.txt");
     if (file.good()) {
-      created->set_level(spdlog::level::warn);
-    } else {
       created->set_level(spdlog::level::debug);
+    } else {
+      created->set_level(spdlog::level::warn);
     }
 
     assert(created);
