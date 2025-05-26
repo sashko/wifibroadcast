@@ -96,7 +96,7 @@ class RadiotapHeaderTx {
       throw std::runtime_error(
           fmt::format("Unsupported MCS index {}", params.mcs_index));
     }
-    if (!(params.bandwidth == 20 || params.bandwidth == 40)) {
+    if (!(params.bandwidth == 5 || params.bandwidth == 10 || params.bandwidth == 20 || params.bandwidth == 40)) {
       throw std::runtime_error(
           fmt::format("Unsupported bandwidth: {}", params.bandwidth));
     }
